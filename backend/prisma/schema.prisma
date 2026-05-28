@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(STUDENT)
+  rating       Int      @default(1500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  participations Participation[]
+  ratingHistory  RatingHistory[]
+
+  @@map("users")
+}
+
+model Contest {
+  id              String        @id @default(uuid())
+  title           String
+  startTime       DateTime      @map("start_time")
+  durationMinutes Int           @map("duration_minutes")
+  negativeMarks   Decimal       @default(0.5) @map("negative_marks")
+  sectionLimits   Json?         @map("section_limits") // { QUANT: 25, REASONING: 20, ENGLISH: 25, GK: 20 }
+  status          ContestStatus @default(SCHEDULED)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  contestQuestions ContestQuestion[]
+  participations   Participation[]
+  ratingHistory    RatingHistory[]
+
+  @@map("contests")
+}
+
+model Question {
+  id            String     @id @default(uuid())
+  text          String
+  imageUrl      String?    @map("image_url")
+  optionA       String     @map("option_a")
+  optionB       String     @map("option_b")
+  optionC       String     @map("option_c")
+  optionD       String     @map("option_d")
+  correctOption String     @map("correct_option")
+  subject       Subject
+  difficulty    Difficulty @default(MEDIUM)
+
+  contestQuestions ContestQuestion[]
+
+  @@map("questions")
+}
+
+model ContestQuestion {
+  contestId     String  @map("contest_id")
+  questionId    String  @map("question_id")
+  displayOrder  Int     @map("display_order")
+  marks         Decimal @default(2)
+  negativeMarks Decimal @default(0.5) @map("negative_marks")
+
+  contest  Contest  @relation(fields: [contestId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@id([contestId, questionId])
+  @@map("contest_questions")
+}
+
+model Participation {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  contestId    String    @map("contest_id")
+  score        Decimal   @default(0)
+  draftAnswers Json?     @default("{}") @map("draft_answers")
+  answers      Json?
+  timeSpent    Json?     @map("time_spent")
+  startedAt    DateTime  @default(now()) @map("started_at")
+  submittedAt  DateTime? @map("submitted_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  contest Contest @relation(fields: [contestId], references: [id])
+
+  @@unique([userId, contestId])
+  @@map("participations")
+}
+
+model RatingHistory {
+  id                String   @id @default(uuid())
+  userId            String   @map("user_id")
+  contestId         String   @map("contest_id")
+  oldRating         Int      @map("old_rating")
+  newRating         Int      @map("new_rating")
+  rank              Int
+  totalParticipants Int      @map("total_participants")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  contest Contest @relation(fields: [contestId], references: [id])
+
+  @@unique([userId, contestId])
+  @@map("rating_history")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum ContestStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+enum Subject {
+  QUANT
+  REASONING
+  ENGLISH
+  GK
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
