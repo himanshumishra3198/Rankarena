@@ -55,6 +55,7 @@ export default function ContestRoom() {
   const [phase, setPhase] = useState<Phase>('loading')
   const [timeLeft, setTimeLeft] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [initError, setInitError] = useState<string | null>(null)
 
   // ── Feature 1: Instructions modal ─────────────────────────────────────
   const [showInstructions, setShowInstructions] = useState(false)
@@ -143,13 +144,17 @@ export default function ContestRoom() {
           initialAnswers = backendDraft
           localStorage.setItem(`draft-${contestId}`, JSON.stringify(backendDraft))
         } else {
-          const local = localStorage.getItem(`draft-${contestId}`)
-          if (local) initialAnswers = JSON.parse(local)
+          try {
+            const local = localStorage.getItem(`draft-${contestId}`)
+            if (local) initialAnswers = JSON.parse(local)
+          } catch { /* corrupted localStorage — start fresh */ }
         }
         setAnswers(initialAnswers)
 
-        const savedSections = localStorage.getItem(`submitted-sections-${contestId}`)
-        if (savedSections) setSubmittedSections(new Set(JSON.parse(savedSections)))
+        try {
+          const savedSections = localStorage.getItem(`submitted-sections-${contestId}`)
+          if (savedSections) setSubmittedSections(new Set(JSON.parse(savedSections)))
+        } catch { /* corrupted localStorage — start fresh */ }
 
         const firstSec = (SECTIONS.find(s => qs.some(q => q.subject === s)) ?? 'QUANT') as string
         const firstQ = qs.find(q => q.subject === firstSec)
@@ -158,7 +163,12 @@ export default function ContestRoom() {
           setCurrentQId(firstQ.id)
           setVisited(new Set([firstQ.id]))
         }
-      } catch {}
+      } catch (err: any) {
+        const msg = err?.response?.status === 403
+          ? 'You have not joined this contest.'
+          : 'Failed to load contest. Please refresh the page.'
+        setInitError(msg)
+      }
     }
     init()
   }, [contestId])
@@ -382,6 +392,15 @@ export default function ContestRoom() {
         <div style={{ marginTop: 32, padding: '12px 20px', background: 'var(--primary-light)', borderRadius: 8, fontSize: 14, color: 'var(--primary)' }}>
           You are registered. Stay on this page.
         </div>
+      </div>
+    )
+  }
+
+  if (initError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12 }}>
+        <p style={{ color: 'var(--danger)', fontWeight: 600 }}>{initError}</p>
+        <button className="btn btn-ghost btn-sm" onClick={() => window.location.reload()}>Retry</button>
       </div>
     )
   }

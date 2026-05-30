@@ -253,104 +253,147 @@ export default function Contests() {
           </div>
         )}
 
-        <div className="card">
-          {loading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
-          {!loading && contests.length === 0 && <p className="empty">No contests yet. Create one above.</p>}
-          {contests.length > 0 && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Start Time</th>
-                  <th>Countdown</th>
-                  <th>Duration</th>
-                  <th>Neg. Marks</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contests.map(c => (
-                  <>
-                    <tr key={c.id}>
-                      <td>
-                        <button
-                          style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: 14 }}
-                          onClick={() => navigate(`/contests/${c.id}`)}
-                        >
-                          {c.title}
-                        </button>
-                      </td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: 13, whiteSpace: 'nowrap' }}>
-                        {new Date(c.startTime).toLocaleString('en-IN')}
-                      </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        <ContestCountdown contest={c} />
-                      </td>
-                      <td style={{ fontSize: 13 }}>{c.durationMinutes} min</td>
-                      <td style={{ fontSize: 13 }}>−{Number(c.negativeMarks)}</td>
-                      <td><span className={`badge badge-${c.status.toLowerCase()}`}>{STATUS_LABELS[c.status]}</span></td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          {c.status === 'SCHEDULED' && (
-                            <button className="btn btn-sm btn-ghost" onClick={() => setStatus(c.id, 'LIVE')}>Go Live</button>
-                          )}
-                          {c.status === 'LIVE' && (
-                            <button className="btn btn-sm btn-ghost" onClick={() => setStatus(c.id, 'ENDED')}>End</button>
-                          )}
-                          {c.status === 'ENDED' && (
-                            <button className="btn btn-sm btn-ghost" style={{ color: '#7c3aed', borderColor: '#c4b5fd' }} onClick={() => openRestart(c)}>
-                              ↺ Restart
-                            </button>
-                          )}
-                          <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/contests/${c.id}`)}>Manage</button>
-                          <button className="btn btn-sm btn-danger" onClick={() => deleteContest(c.id)}>Delete</button>
-                        </div>
-                      </td>
-                    </tr>
+        {loading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
+        {!loading && contests.length === 0 && (
+          <div className="card"><p className="empty">No contests yet. Create one above.</p></div>
+        )}
 
-                    {/* Inline restart form */}
-                    {restartId === c.id && (
-                      <tr key={`${c.id}-restart`}>
-                        <td colSpan={7} style={{ background: '#f5f3ff', padding: '16px 20px' }}>
-                          <form onSubmit={confirmRestart} style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--heading)' }}>
-                                New start time for <strong>{c.title}</strong>
-                              </label>
-                              <input
-                                className="input"
-                                type="datetime-local"
-                                value={restartTime}
-                                onChange={e => setRestartTime(e.target.value)}
-                                required
-                                style={{ width: 230 }}
-                              />
-                            </div>
-                            {restartError && (
-                              <span style={{ color: 'var(--danger)', fontSize: 13 }}>{restartError}</span>
-                            )}
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <button className="btn btn-primary btn-sm" type="submit" disabled={restartSaving}>
-                                {restartSaving ? 'Restarting...' : '↺ Confirm Restart'}
-                              </button>
-                              <button className="btn btn-ghost btn-sm" type="button" onClick={() => setRestartId(null)}>
-                                Cancel
-                              </button>
-                            </div>
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                              ⚠ All previous submissions and ratings for this contest will be cleared.
-                            </span>
-                          </form>
-                        </td>
+        {/* ── Ongoing & Upcoming ─────────────────────────────── */}
+        {!loading && (() => {
+          const list = contests.filter(c => effectivePhase(c) !== 'ended')
+          return (
+            <div className="card" style={{ padding: 0, marginBottom: 20 }}>
+              <div className="contests-section-header">
+                <span>Ongoing &amp; Upcoming</span>
+                <span className="contests-section-count">{list.length}</span>
+              </div>
+              {list.length === 0
+                ? <p className="empty" style={{ padding: '24px 20px' }}>No active or scheduled contests.</p>
+                : (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Title</th><th>Start Time</th><th>Countdown</th>
+                        <th>Duration</th><th>Neg. Marks</th><th>Status</th><th>Actions</th>
                       </tr>
-                    )}
-                  </>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                    </thead>
+                    <tbody>
+                      {list.map(c => (
+                        <>
+                          <tr key={c.id}>
+                            <td>
+                              <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: 14 }}
+                                onClick={() => navigate(`/contests/${c.id}`)}>
+                                {c.title}
+                              </button>
+                            </td>
+                            <td style={{ color: 'var(--text-muted)', fontSize: 13, whiteSpace: 'nowrap' }}>
+                              {new Date(c.startTime).toLocaleString('en-IN')}
+                            </td>
+                            <td style={{ whiteSpace: 'nowrap' }}><ContestCountdown contest={c} /></td>
+                            <td style={{ fontSize: 13 }}>{c.durationMinutes} min</td>
+                            <td style={{ fontSize: 13 }}>−{Number(c.negativeMarks)}</td>
+                            <td><span className={`badge badge-${c.status.toLowerCase()}`}>{STATUS_LABELS[c.status]}</span></td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                {c.status === 'SCHEDULED' && (
+                                  <button className="btn btn-sm btn-ghost" onClick={() => setStatus(c.id, 'LIVE')}>Go Live</button>
+                                )}
+                                {c.status === 'LIVE' && (
+                                  <button className="btn btn-sm btn-ghost" onClick={() => setStatus(c.id, 'ENDED')}>End</button>
+                                )}
+                                <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/contests/${c.id}`)}>Manage</button>
+                                <button className="btn btn-sm btn-danger" onClick={() => deleteContest(c.id)}>Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        </>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+            </div>
+          )
+        })()}
+
+        {/* ── Past Contests ──────────────────────────────────── */}
+        {!loading && (() => {
+          const list = contests.filter(c => effectivePhase(c) === 'ended')
+          return (
+            <div className="card" style={{ padding: 0 }}>
+              <div className="contests-section-header contests-section-header-muted">
+                <span>Past Contests</span>
+                <span className="contests-section-count">{list.length}</span>
+              </div>
+              {list.length === 0
+                ? <p className="empty" style={{ padding: '24px 20px' }}>No past contests yet.</p>
+                : (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Title</th><th>Start Time</th><th>Duration</th>
+                        <th>Neg. Marks</th><th>Status</th><th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {list.map(c => (
+                        <>
+                          <tr key={c.id}>
+                            <td>
+                              <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: 14 }}
+                                onClick={() => navigate(`/contests/${c.id}`)}>
+                                {c.title}
+                              </button>
+                            </td>
+                            <td style={{ color: 'var(--text-muted)', fontSize: 13, whiteSpace: 'nowrap' }}>
+                              {new Date(c.startTime).toLocaleString('en-IN')}
+                            </td>
+                            <td style={{ fontSize: 13 }}>{c.durationMinutes} min</td>
+                            <td style={{ fontSize: 13 }}>−{Number(c.negativeMarks)}</td>
+                            <td><span className={`badge badge-${c.status.toLowerCase()}`}>{STATUS_LABELS[c.status]}</span></td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                <button className="btn btn-sm btn-ghost" style={{ color: '#7c3aed', borderColor: '#c4b5fd' }} onClick={() => openRestart(c)}>
+                                  ↺ Restart
+                                </button>
+                                <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/contests/${c.id}`)}>Manage</button>
+                                <button className="btn btn-sm btn-danger" onClick={() => deleteContest(c.id)}>Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                          {restartId === c.id && (
+                            <tr key={`${c.id}-restart`}>
+                              <td colSpan={6} style={{ background: '#f5f3ff', padding: '16px 20px' }}>
+                                <form onSubmit={confirmRestart} style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--heading)' }}>
+                                      New start time for <strong>{c.title}</strong>
+                                    </label>
+                                    <input className="input" type="datetime-local" value={restartTime}
+                                      onChange={e => setRestartTime(e.target.value)} required style={{ width: 230 }} />
+                                  </div>
+                                  {restartError && <span style={{ color: 'var(--danger)', fontSize: 13 }}>{restartError}</span>}
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    <button className="btn btn-primary btn-sm" type="submit" disabled={restartSaving}>
+                                      {restartSaving ? 'Restarting...' : '↺ Confirm Restart'}
+                                    </button>
+                                    <button className="btn btn-ghost btn-sm" type="button" onClick={() => setRestartId(null)}>Cancel</button>
+                                  </div>
+                                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                                    ⚠ All previous submissions and ratings for this contest will be cleared.
+                                  </span>
+                                </form>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+            </div>
+          )
+        })()}
       </div>
     </>
   )

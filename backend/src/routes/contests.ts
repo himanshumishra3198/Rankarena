@@ -40,7 +40,24 @@ router.get("/", async (req, res: Response) => {
     }),
   ]);
 
-  const allContests = [...active, ...past];
+  // Re-split by wall-clock time: a SCHEDULED/LIVE contest whose end time has
+  // already passed should be treated as ended regardless of its DB status.
+  const nowMs = Date.now();
+  const effectivelyActive = active.filter(c => {
+    const endMs = new Date(c.startTime).getTime() + c.durationMinutes * 60_000;
+    return nowMs < endMs;
+  });
+  const effectivelyEnded = active.filter(c => {
+    const endMs = new Date(c.startTime).getTime() + c.durationMinutes * 60_000;
+    return nowMs >= endMs;
+  });
+
+  // Merge time-elapsed active contests into past, keep sorted by startTime desc
+  const allPast = [...effectivelyEnded, ...past]
+    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+    .slice(0, 20);
+
+  const allContests = [...effectivelyActive, ...allPast];
 
   // Fetch which contests the user has joined / submitted in one query
   let joinedIds = new Set<string>();
@@ -62,7 +79,7 @@ router.get("/", async (req, res: Response) => {
     hasSubmitted: submittedIds.has(c.id),
   });
 
-  res.json({ active: active.map(withJoined), past: past.map(withJoined) });
+  res.json({ active: effectivelyActive.map(withJoined), past: allPast.map(withJoined) });
 });
 
 // Contest detail
@@ -266,34 +283,63 @@ router.post("/:id/submit", authenticate, async (req: AuthRequest, res: Response)
   res.json({ score });
 });
 
-// Real-time leaderboard
+// Real-time leaderboard — ?filter=friends shows only followed users + self
 router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
   const limit = Math.min(Number(req.query.limit) || 10, 100);
+  const friendsFilter = req.query.filter === "friends";
+  const myId = req.user!.id;
 
-  const [entries, userRank] = await Promise.all([
-    redis.zrevrange(`contest:${contestId}:leaderboard`, 0, limit - 1, "WITHSCORES"),
-    redis.zrevrank(`contest:${contestId}:leaderboard`, req.user!.id),
+  // For friends filter we need all entries, otherwise just top-N
+  const fetchSize = friendsFilter ? 1000 : limit;
+
+  const [allEntries, userRank] = await Promise.all([
+    redis.zrevrange(`contest:${contestId}:leaderboard`, 0, fetchSize - 1, "WITHSCORES"),
+    redis.zrevrank(`contest:${contestId}:leaderboard`, myId),
   ]);
 
-  const ranked: { rank: number; userId: string; score: number }[] = [];
-  for (let i = 0; i < entries.length; i += 2) {
-    const userId = entries[i];
-    const redisScore = Number(entries[i + 1]);
-    const score = Math.floor(redisScore / 1e10);
-    ranked.push({ rank: ranked.length + 1, userId, score });
+  // Parse redis response into ordered list (already sorted highest-first)
+  const allParsed: { userId: string; score: number }[] = [];
+  for (let i = 0; i < allEntries.length; i += 2) {
+    allParsed.push({
+      userId: allEntries[i],
+      score: Math.floor(Number(allEntries[i + 1]) / 1e10),
+    });
   }
 
-  // If current user is not in top-N, fetch their entry too
-  const currentUserInTop = userRank !== null && userRank < limit;
-  if (!currentUserInTop && userRank !== null) {
-    const myScore = await redis.zscore(`contest:${contestId}:leaderboard`, req.user!.id);
-    if (myScore !== null) {
-      ranked.push({ rank: userRank + 1, userId: req.user!.id, score: Math.floor(Number(myScore) / 1e10) });
+  let ranked: { rank: number; userId: string; score: number }[];
+
+  if (friendsFilter) {
+    const follows = await prisma.follow.findMany({
+      where: { followerId: myId },
+      select: { followingId: true },
+    });
+    const friendSet = new Set([...follows.map((f) => f.followingId), myId]);
+
+    // Filter then re-rank; maintain Redis ordering so tiebreaker is preserved
+    const filtered = allParsed.filter((e) => friendSet.has(e.userId));
+    ranked = filtered.map((e, i) => ({ rank: i + 1, ...e }));
+
+    // Always include self even if not submitted
+    if (!ranked.some((e) => e.userId === myId) && userRank !== null) {
+      const myScore = await redis.zscore(`contest:${contestId}:leaderboard`, myId);
+      if (myScore !== null) {
+        ranked.push({ rank: ranked.length + 1, userId: myId, score: Math.floor(Number(myScore) / 1e10) });
+      }
+    }
+  } else {
+    ranked = allParsed.slice(0, limit).map((e, i) => ({ rank: i + 1, ...e }));
+
+    // Always include self if not in top-N
+    const inTop = userRank !== null && userRank < limit;
+    if (!inTop && userRank !== null) {
+      const myScore = await redis.zscore(`contest:${contestId}:leaderboard`, myId);
+      if (myScore !== null) {
+        ranked.push({ rank: userRank + 1, userId: myId, score: Math.floor(Number(myScore) / 1e10) });
+      }
     }
   }
 
-  // Fetch user names in one query
   const userIds = [...new Set(ranked.map((e) => e.userId))];
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
@@ -306,7 +352,7 @@ router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Respo
       ...e,
       name: userMap[e.userId]?.name ?? "Unknown",
       rating: userMap[e.userId]?.rating ?? 0,
-      isCurrentUser: e.userId === req.user!.id,
+      isCurrentUser: e.userId === myId,
     }))
   );
 });
@@ -321,11 +367,21 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     }),
     prisma.contest.findUnique({
       where: { id: contestId },
-      select: { title: true, durationMinutes: true, negativeMarks: true, sectionLimits: true },
+      select: { title: true, startTime: true, durationMinutes: true, negativeMarks: true, sectionLimits: true },
     }),
   ]);
   if (!participation?.submittedAt) {
     res.status(400).json({ error: "Not submitted yet" });
+    return;
+  }
+
+  // Don't expose correct answers while the contest is still running
+  const contestEndMs = contest
+    ? new Date(contest.startTime).getTime() + contest.durationMinutes * 60_000
+    : 0;
+  const contestLive = Date.now() < contestEndMs;
+  if (contestLive) {
+    res.status(400).json({ error: "Answer key is available after the contest ends." });
     return;
   }
 

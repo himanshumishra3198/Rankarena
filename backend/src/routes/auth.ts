@@ -20,7 +20,7 @@ const loginSchema = z.object({
 router.post("/register", async (req: Request, res: Response) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const { name, email, password } = parsed.data;
@@ -49,7 +49,7 @@ router.post("/register", async (req: Request, res: Response) => {
 router.post("/login", async (req: Request, res: Response) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const { email, password } = parsed.data;

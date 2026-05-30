@@ -1,8 +1,17 @@
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { toggleTheme, getTheme } from '../lib/theme'
 
 export default function Navbar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const [dark, setDark] = useState(getTheme() === 'dark')
+
+  function handleThemeToggle() {
+    const next = toggleTheme()
+    setDark(next === 'dark')
+  }
 
   function logout() {
     localStorage.removeItem('token')
@@ -10,12 +19,45 @@ export default function Navbar() {
     navigate('/login')
   }
 
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/')
+
   return (
     <nav className="navbar">
-      <span className="navbar-brand">Rank<span>Arena</span></span>
+      <div className="navbar-left">
+        <button className="navbar-brand" onClick={() => navigate('/')}>
+          Rank<span>Arena</span>
+        </button>
+        <div className="nav-links">
+          <button
+            className={`nav-link ${isActive('/') && !isActive('/profile') ? 'active' : ''}`}
+            onClick={() => navigate('/')}
+          >
+            Contests
+          </button>
+          <button
+            className={`nav-link ${isActive('/leaderboard') ? 'active' : ''}`}
+            onClick={() => navigate('/leaderboard')}
+          >
+            Leaderboard
+          </button>
+          <button
+            className={`nav-link ${isActive('/profile') ? 'active' : ''}`}
+            onClick={() => navigate('/profile')}
+          >
+            Profile
+          </button>
+        </div>
+      </div>
+
       <div className="navbar-right">
-        <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{user.name}</span>
-        <span className="rating-badge">⭐ {user.rating ?? 1500}</span>
+        <button className="theme-toggle" onClick={handleThemeToggle} title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {dark ? '☀️' : '🌙'}
+        </button>
+        <button className="navbar-user" onClick={() => navigate('/profile')}>
+          <span className="navbar-avatar">{(user.name || '?')[0].toUpperCase()}</span>
+          <span className="navbar-username">{user.name}</span>
+          <span className="rating-badge">⭐ {user.rating ?? 1500}</span>
+        </button>
         <button className="btn btn-ghost btn-sm" onClick={logout}>Logout</button>
       </div>
     </nav>

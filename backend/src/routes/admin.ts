@@ -16,8 +16,8 @@ const sectionLimitsSchema = z.record(
 
 const contestSchema = z.object({
   title: z.string().min(1),
-  startTime: z.string().datetime(),
-  durationMinutes: z.number().int().min(1),
+  startTime: z.iso.datetime(),
+  durationMinutes: z.number().int().min(1).max(1440),
   negativeMarks: z.number().min(0).default(0.5),
   sectionLimits: sectionLimitsSchema,
 });
@@ -33,7 +33,7 @@ router.get("/contests", async (_req, res: Response) => {
 router.post("/contests", async (req: AuthRequest, res: Response) => {
   const parsed = contestSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const contest = await prisma.contest.create({ data: parsed.data });
@@ -44,7 +44,7 @@ router.put("/contests/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const parsed = contestSchema.partial().safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const contest = await prisma.contest.update({ where: { id }, data: parsed.data });
@@ -53,8 +53,12 @@ router.put("/contests/:id", async (req: AuthRequest, res: Response) => {
 
 router.delete("/contests/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  await prisma.contest.delete({ where: { id } });
-  res.json({ ok: true });
+  try {
+    await prisma.contest.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch {
+    res.status(404).json({ error: "Contest not found" });
+  }
 });
 
 const statusSchema = z.object({
@@ -65,7 +69,7 @@ router.post("/contests/:id/status", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const parsed = statusSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const contest = await prisma.contest.update({
@@ -78,7 +82,7 @@ router.post("/contests/:id/status", async (req: AuthRequest, res: Response) => {
 // Restart an ended contest at a new start time (clears all participation data)
 router.post("/contests/:id/restart", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const parsed = z.object({ startTime: z.string().datetime() }).safeParse(req.body);
+  const parsed = z.object({ startTime: z.iso.datetime() }).safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "startTime is required (ISO 8601)" });
     return;
@@ -115,7 +119,7 @@ router.post("/contests/:id/restart", async (req: AuthRequest, res: Response) => 
 
 const questionSchema = z.object({
   text: z.string().min(1),
-  imageUrl: z.string().optional(),
+  imageUrl: z.url().max(500).optional(),
   optionA: z.string().min(1),
   optionB: z.string().min(1),
   optionC: z.string().min(1),
@@ -128,7 +132,7 @@ const questionSchema = z.object({
 router.post("/questions", async (req: AuthRequest, res: Response) => {
   const parsed = questionSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const question = await prisma.question.create({ data: parsed.data });
@@ -152,7 +156,7 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const parsed = questionSchema.partial().safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const question = await prisma.question.update({ where: { id }, data: parsed.data });
@@ -168,10 +172,10 @@ router.delete("/questions/:id", async (req: AuthRequest, res: Response) => {
 // ── Contest <-> Questions ─────────────────────────────────
 
 const addQuestionSchema = z.object({
-  questionId: z.string().uuid(),
+  questionId: z.uuid(),
   displayOrder: z.number().int().min(1),
-  marks: z.number().default(2),
-  negativeMarks: z.number().default(0.5),
+  marks: z.number().min(0.1).default(2),
+  negativeMarks: z.number().min(0).default(0.5),
 });
 
 // List questions in a contest (with full question data)
@@ -189,7 +193,7 @@ router.post("/contests/:id/questions", async (req: AuthRequest, res: Response) =
   const contestId = req.params.id as string;
   const parsed = addQuestionSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
   const cq = await prisma.contestQuestion.create({
@@ -209,8 +213,8 @@ router.delete("/contests/:id/questions/:qid", async (req: AuthRequest, res: Resp
 
 const bulkQuestionSchema = z.array(
   questionSchema.extend({
-    marks: z.number().default(2),
-    negativeMarks: z.number().default(0.5),
+    marks: z.number().min(0.1).default(2),
+    negativeMarks: z.number().min(0).default(0.5),
   })
 ).min(1);
 
@@ -218,7 +222,7 @@ router.post("/contests/:id/questions/bulk", async (req: AuthRequest, res: Respon
   const contestId = req.params.id as string;
   const parsed = bulkQuestionSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues });
     return;
   }
 

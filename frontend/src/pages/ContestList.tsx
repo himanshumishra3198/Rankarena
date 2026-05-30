@@ -195,14 +195,20 @@ export default function ContestList() {
 
         {!loading && active.length > 0 && (
           <div className="card" style={{ padding: 0, marginBottom: 24 }}>
-            <div className="contest-table-header">Current or upcoming contests</div>
+            <div className="contest-table-header">
+              <span>Ongoing &amp; Upcoming</span>
+              <span className="section-count-badge section-count-active">{active.length}</span>
+            </div>
             <ContestTable contests={active} joiningId={joiningId} onJoin={joinAndEnter} showPhaseColumn />
           </div>
         )}
 
         {!loading && past.length > 0 && (
           <div className="card" style={{ padding: 0 }}>
-            <div className="contest-table-header">Past contests</div>
+            <div className="contest-table-header">
+              <span>Past Contests</span>
+              <span className="section-count-badge">{past.length}</span>
+            </div>
             <ContestTable contests={past} joiningId={joiningId} onJoin={joinAndEnter} showPhaseColumn={false} />
           </div>
         )}

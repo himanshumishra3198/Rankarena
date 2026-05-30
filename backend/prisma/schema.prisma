@@ -18,8 +18,23 @@ model User {
 
   participations Participation[]
   ratingHistory  RatingHistory[]
+  following      Follow[]        @relation("UserFollowing")
+  followers      Follow[]        @relation("UserFollowers")
 
   @@map("users")
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id])
+  following User @relation("UserFollowers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("follows")
 }
 
 model Contest {

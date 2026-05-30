@@ -102,6 +102,8 @@ export default function Result() {
 
   const [result, setResult] = useState<ResultData | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [lbFilter, setLbFilter] = useState<'all' | 'friends'>('all')
+  const [lbLoading, setLbLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all')
@@ -126,6 +128,18 @@ export default function Result() {
       .catch(() => setError('Result not available yet.'))
       .finally(() => setLoading(false))
   }, [contestId])
+
+  useEffect(() => {
+    if (!result) return
+    setLbLoading(true)
+    const url = lbFilter === 'friends'
+      ? `/contests/${contestId}/leaderboard?filter=friends`
+      : `/contests/${contestId}/leaderboard`
+    api.get(url)
+      .then(r => setLeaderboard(r.data))
+      .catch(() => setLeaderboard([]))
+      .finally(() => setLbLoading(false))
+  }, [lbFilter, result])
 
   if (loading) return <><Navbar /><div className="page"><p style={{ color: 'var(--text-muted)' }}>Loading result...</p></div></>
   if (error)   return <><Navbar /><div className="page"><div className="alert alert-error">{error}</div></div></>
@@ -386,9 +400,24 @@ export default function Result() {
         )}
 
         {/* ── Leaderboard ──────────────────────────────────────────────── */}
-        {leaderboard.length > 0 && (
-          <div className="card" style={{ marginBottom: 20 }}>
-            <h2 style={{ marginBottom: 16 }}>Leaderboard — Top {Math.min(leaderboard.filter(e => !e.isCurrentUser || e.rank <= 10).length, 10)}</h2>
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+            <h2 style={{ margin: 0 }}>Leaderboard</h2>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {(['all', 'friends'] as const).map(f => (
+                <button key={f} className={`review-filter-btn${lbFilter === f ? ' active filter-all' : ''}`} onClick={() => setLbFilter(f)}>
+                  {f === 'all' ? 'All' : 'Friends'}
+                </button>
+              ))}
+            </div>
+          </div>
+          {lbLoading ? (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>
+          ) : leaderboard.length === 0 ? (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
+              {lbFilter === 'friends' ? 'None of your friends participated in this contest.' : 'No submissions yet.'}
+            </div>
+          ) : (
             <div className="leaderboard-list">
               {leaderboard.map((entry, idx) => {
                 const isMe = entry.isCurrentUser
@@ -397,7 +426,11 @@ export default function Result() {
                 return (
                   <div key={entry.userId}>
                     {showDivider && <div className="lb-divider">· · ·</div>}
-                    <div className={`lb-row ${isMe ? 'lb-me' : ''}`}>
+                    <div
+                      className={`lb-row ${isMe ? 'lb-me' : ''}`}
+                      style={{ cursor: isMe ? 'default' : 'pointer' }}
+                      onClick={() => !isMe && navigate(`/profile/${entry.userId}`)}
+                    >
                       <span className="lb-rank">{medal ?? `#${entry.rank}`}</span>
                       <span className="lb-name">{entry.name}{isMe && <span className="lb-you">You</span>}</span>
                       <span className="lb-rating" title="Rating">{entry.rating}</span>
@@ -407,8 +440,8 @@ export default function Result() {
                 )
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ── Question Review ──────────────────────────────────────────── */}
         <div className="card">
