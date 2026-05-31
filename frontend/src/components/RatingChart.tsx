@@ -9,10 +9,12 @@ export interface RatingPoint {
 const CW = 860, CH = 270
 const PL = 55, PR = 115, PT = 22, PB = 38
 
+interface TipPos { x: number; y: number; isRight: boolean }
+
 export function RatingChart({ history }: { history: RatingPoint[] }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [hovered, setHovered] = useState<number | null>(null)
-  const [tipPos, setTipPos]   = useState<{ x: number; y: number } | null>(null)
+  const [tipPos, setTipPos]   = useState<TipPos | null>(null)
 
   const pw = CW - PL - PR, ph = CH - PT - PB
 
@@ -32,7 +34,7 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
   xStart.setMonth(xStart.getMonth() - 1)
   const xMin   = xStart.getTime()
   const xMax   = now.getTime()
-  const xRange = xMax - xMin
+  const xRange = Math.max(xMax - xMin, 1)
 
   const tx = (ts: number) => PL + Math.max(0, Math.min(1, (ts - xMin) / xRange)) * pw
   const ty = (r: number)  => PT + (1 - (r - yMin) / (yMax - yMin)) * ph
@@ -68,13 +70,30 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
 
   const pts  = history.map(p => ({ x: tx(new Date(p.date).getTime()), y: ty(p.newRating) }))
   const lineD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
-  const areaD = `${lineD} L ${pts[pts.length - 1].x.toFixed(1)} ${(PT + ph).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(PT + ph).toFixed(1)} Z`
+  const areaD = pts.length > 1
+    ? `${lineD} L ${pts[pts.length - 1].x.toFixed(1)} ${(PT + ph).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(PT + ph).toFixed(1)} Z`
+    : ''
 
-  function onEnter(i: number) {
-    setHovered(i)
+  function onSvgMove(e: React.MouseEvent<SVGSVGElement>) {
     const rect = svgRef.current?.getBoundingClientRect()
-    if (!rect) return
-    setTipPos({ x: pts[i].x * (rect.width / CW), y: pts[i].y * (rect.height / CH) })
+    if (!rect || pts.length === 0) return
+    const scale = CW / rect.width
+    const svgX  = (e.clientX - rect.left) * scale
+
+    if (svgX < PL - 10 || svgX > PL + pw + 10) {
+      setHovered(null); setTipPos(null); return
+    }
+
+    let best = 0, bestDist = Infinity
+    pts.forEach((p, i) => {
+      const d = Math.abs(p.x - svgX)
+      if (d < bestDist) { bestDist = d; best = i }
+    })
+
+    setHovered(best)
+    const px = pts[best].x * (rect.width / CW)
+    const py = pts[best].y * (rect.height / CH)
+    setTipPos({ x: px, y: py, isRight: pts[best].x > PL + pw * 0.55 })
   }
 
   const hp    = hovered !== null ? history[hovered] : null
@@ -82,7 +101,13 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <svg ref={svgRef} viewBox={`0 0 ${CW} ${CH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${CW} ${CH}`}
+        style={{ width: '100%', height: 'auto', display: 'block', cursor: 'crosshair' }}
+        onMouseMove={onSvgMove}
+        onMouseLeave={() => { setHovered(null); setTipPos(null) }}
+      >
         <defs>
           <clipPath id="rclip">
             <rect x={PL} y={PT} width={pw} height={ph} />
@@ -92,12 +117,18 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
             <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
           </linearGradient>
         </defs>
+
+        {/* Tier bands */}
         <g clipPath="url(#rclip)">
           {bands.map(b => (
             <rect key={b.label} x={PL} y={b.y1} width={pw} height={Math.max(0, b.y2 - b.y1)} fill={b.bg} opacity={0.45} />
           ))}
         </g>
+
+        {/* Chart border */}
         <rect x={PL} y={PT} width={pw} height={ph} fill="none" stroke="#cbd5e1" strokeWidth={1} />
+
+        {/* Y-axis grid + labels */}
         {yLabels.map(r => {
           const y = ty(r)
           return (
@@ -107,19 +138,37 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
             </g>
           )
         })}
+
+        {/* X-axis ticks + labels */}
         {xLabels.map(({ x, label }) => (
           <g key={label + x.toFixed(0)}>
             <line x1={x} x2={x} y1={PT + ph} y2={PT + ph + 4} stroke="#cbd5e1" strokeWidth={1} />
             <text x={x} y={CH - 7} textAnchor="middle" fontSize={9} fill="#94a3b8">{label}</text>
           </g>
         ))}
+
+        {/* Today line */}
         <line x1={tx(now.getTime())} x2={tx(now.getTime())} y1={PT} y2={PT + ph}
           stroke="#94a3b8" strokeWidth={1} strokeDasharray="4,3" opacity={0.55} />
         <text x={tx(now.getTime())} y={PT - 7} textAnchor="middle" fontSize={9} fill="#94a3b8">Today</text>
+
+        {/* Area + line */}
         <g clipPath="url(#rclip)">
-          <path d={areaD} fill="url(#area-grad)" />
+          {areaD && <path d={areaD} fill="url(#area-grad)" />}
           <path d={lineD} fill="none" stroke="#f59e0b" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
         </g>
+
+        {/* Vertical crosshair on hover */}
+        {hovered !== null && (
+          <line
+            clipPath="url(#rclip)"
+            x1={pts[hovered].x} x2={pts[hovered].x}
+            y1={PT} y2={PT + ph}
+            stroke="#94a3b8" strokeWidth={1} strokeDasharray="3,2" opacity={0.7}
+          />
+        )}
+
+        {/* Data point circles */}
         <g clipPath="url(#rclip)">
           {pts.map((pt, i) => {
             const isLast = i === history.length - 1
@@ -130,13 +179,14 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
                 r={isHov ? 7 : isLast ? 5.5 : 4}
                 fill={isHov || isLast ? tier.fg : '#fff'}
                 stroke={tier.fg} strokeWidth={isHov ? 0 : 2}
-                style={{ cursor: 'pointer', transition: 'r .1s' }}
-                onMouseEnter={() => onEnter(i)}
-                onMouseLeave={() => { setHovered(null); setTipPos(null) }}
+                style={{ transition: 'r .1s' }}
+                pointerEvents="none"
               />
             )
           })}
         </g>
+
+        {/* Tier labels on right */}
         {bands.map(b => {
           const mid = (b.y1 + b.y2) / 2
           if (b.y2 - b.y1 < 14) return null
@@ -145,8 +195,14 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
           )
         })}
       </svg>
+
+      {/* Tooltip — flips left when near right edge */}
       {hp && tipPos && (
-        <div className="chart-tooltip" style={{ left: tipPos.x + 14, top: Math.max(8, tipPos.y - 68) }}>
+        <div className="chart-tooltip" style={{
+          left: tipPos.x,
+          transform: tipPos.isRight ? 'translate(calc(-100% - 14px), 0)' : 'translate(14px, 0)',
+          top: Math.max(8, tipPos.y - 68),
+        }}>
           <div className="chart-tooltip-title">{hp.contestTitle}</div>
           <div className="chart-tooltip-date">
             {new Date(hp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

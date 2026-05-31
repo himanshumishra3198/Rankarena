@@ -53,12 +53,20 @@ router.put("/contests/:id", async (req: AuthRequest, res: Response) => {
 
 router.delete("/contests/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  try {
-    await prisma.contest.delete({ where: { id } });
-    res.json({ ok: true });
-  } catch {
+  const contest = await prisma.contest.findUnique({ where: { id } });
+  if (!contest) {
     res.status(404).json({ error: "Contest not found" });
+    return;
   }
+  // Delete child records before the contest (no cascade in schema)
+  await prisma.$transaction([
+    prisma.ratingHistory.deleteMany({ where: { contestId: id } }),
+    prisma.participation.deleteMany({ where: { contestId: id } }),
+    prisma.contestQuestion.deleteMany({ where: { contestId: id } }),
+    prisma.contest.delete({ where: { id } }),
+  ]);
+  await redis.del(`contest:${id}:leaderboard`);
+  res.json({ ok: true });
 });
 
 const statusSchema = z.object({
@@ -76,8 +84,63 @@ router.post("/contests/:id/status", async (req: AuthRequest, res: Response) => {
     where: { id },
     data: { status: parsed.data.status },
   });
+
+  if (parsed.data.status === "ENDED") {
+    computeContestRatings(id).catch((err) =>
+      console.error(`Rating computation failed for contest ${id}:`, err)
+    );
+  }
+
   res.json(contest);
 });
+
+async function computeContestRatings(contestId: string) {
+  // Idempotency: skip if ratings already recorded
+  const existing = await prisma.ratingHistory.count({ where: { contestId } });
+  if (existing > 0) return;
+
+  const participations = await prisma.participation.findMany({
+    where: { contestId, submittedAt: { not: null } },
+    select: { userId: true, score: true, submittedAt: true },
+    orderBy: [{ score: "desc" }, { submittedAt: "asc" }],
+  });
+
+  const n = participations.length;
+  if (n === 0) return;
+
+  const userIds = participations.map((p) => p.userId);
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, rating: true },
+  });
+  const ratingMap = new Map(users.map((u) => [u.id, u.rating]));
+
+  const updates = participations.map((p, i) => {
+    const rank = i + 1;
+    const oldRating = ratingMap.get(p.userId) ?? 1500;
+    // Linear delta: +50 for first, 0 for median, -50 for last
+    const delta = n > 1 ? Math.round(((n - 2 * rank + 1) / (n - 1)) * 50) : 0;
+    const newRating = Math.max(100, oldRating + delta);
+    return { userId: p.userId, rank, oldRating, newRating };
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.ratingHistory.createMany({
+      data: updates.map((u) => ({
+        userId: u.userId,
+        contestId,
+        oldRating: u.oldRating,
+        newRating: u.newRating,
+        rank: u.rank,
+        totalParticipants: n,
+      })),
+      skipDuplicates: true,
+    });
+    for (const u of updates) {
+      await tx.user.update({ where: { id: u.userId }, data: { rating: u.newRating } });
+    }
+  });
+}
 
 // Restart an ended contest at a new start time (clears all participation data)
 router.post("/contests/:id/restart", async (req: AuthRequest, res: Response) => {

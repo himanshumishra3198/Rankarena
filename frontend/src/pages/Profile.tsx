@@ -9,11 +9,15 @@ import { ActivityHeatmap } from '../components/ActivityHeatmap'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+interface SubjectStat { correct: number; wrong: number; skipped: number }
+
 interface ProfileData {
   user: { id: string; name: string; email: string; role: string; rating: number; createdAt: string; followerCount: number; followingCount: number }
   ratingHistory: RatingPoint[]
   heatmap: Record<string, number>
   stats: { totalContests: number; bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number }
+  subjectStats: Record<string, SubjectStat>
+  verdictTotals: { correct: number; wrong: number; skipped: number; total: number }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -35,20 +39,89 @@ function countInPeriod(heatmap: Record<string, number>, days: number): number {
     .reduce((s, [, v]) => s + v, 0)
 }
 
-function maxStreakInPeriod(heatmap: Record<string, number>, days: number): number {
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
-  const dates = Object.keys(heatmap).filter(d => new Date(d) >= cutoff).sort()
-  let max = 0, streak = 0
-  for (let i = 0; i < dates.length; i++) {
-    if (i === 0) { streak = 1 }
-    else {
-      const diff = Math.round((new Date(dates[i]).getTime() - new Date(dates[i - 1]).getTime()) / 86_400_000)
-      streak = diff === 1 ? streak + 1 : 1
-    }
-    if (streak > max) max = streak
-  }
-  return max
+function pct(n: number, total: number): string {
+  if (total === 0) return '0%'
+  return `${((n / total) * 100).toFixed(1)}%`
+}
+
+// ── Achievements ──────────────────────────────────────────────────────────────
+
+const SUBJECT_LABELS: Record<string, string> = {
+  QUANT: 'Quantitative', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'General Knowledge',
+}
+const SUBJECT_COLORS: Record<string, string> = {
+  QUANT: '#3b82f6', REASONING: '#8b5cf6', ENGLISH: '#10b981', GK: '#f59e0b',
+}
+
+interface Achievement { icon: string; label: string; desc: string; earned: boolean }
+
+function computeAchievements(
+  stats: ProfileData['stats'],
+  ratingHistory: RatingPoint[],
+  v: ProfileData['verdictTotals'],
+): Achievement[] {
+  const answered = v.correct + v.wrong
+  const accuracy = answered > 0 ? v.correct / answered : 0
+  return [
+    { icon: '🎯', label: 'First Steps',     desc: 'Completed first contest',     earned: stats.totalContests >= 1 },
+    { icon: '🏅', label: 'Getting Started', desc: '5 contests completed',         earned: stats.totalContests >= 5 },
+    { icon: '🏆', label: 'Competitor',      desc: '10 contests completed',        earned: stats.totalContests >= 10 },
+    { icon: '🎖️', label: 'Veteran',         desc: '25 contests completed',        earned: stats.totalContests >= 25 },
+    { icon: '🔥', label: 'On Fire',         desc: '3-day streak achieved',        earned: stats.maxStreak >= 3 },
+    { icon: '⚡', label: 'Streak Master',   desc: '7-day streak achieved',        earned: stats.maxStreak >= 7 },
+    { icon: '🥇', label: 'Top Scorer',      desc: 'Ranked #1 in a contest',       earned: ratingHistory.some(r => r.rank === 1) },
+    { icon: '📈', label: 'Rising Star',     desc: 'Reached rating 1400',          earned: stats.maxRating >= 1400 },
+    { icon: '💎', label: 'Expert',          desc: 'Reached rating 1600',          earned: stats.maxRating >= 1600 },
+    { icon: '🎯', label: 'Sharpshooter',   desc: '75%+ accuracy (20+ answered)', earned: answered >= 20 && accuracy >= 0.75 },
+  ]
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function VerdictCard({ icon, label, count, total, color }: {
+  icon: string; label: string; count: number; total: number; color: string
+}) {
+  return (
+    <div className="verdict-card">
+      <div className="verdict-icon" style={{ color }}>{icon}</div>
+      <div className="verdict-count" style={{ color }}>{count.toLocaleString()}</div>
+      <div className="verdict-label">{label}</div>
+      <div className="verdict-pct">{pct(count, total)}</div>
+    </div>
+  )
+}
+
+function SubjectBar({ subject, stat }: { subject: string; stat: SubjectStat }) {
+  const answered = stat.correct + stat.wrong
+  const total = answered + stat.skipped
+  const accuracy = answered > 0 ? (stat.correct / answered) * 100 : 0
+  const fillPct = total > 0 ? (stat.correct / total) * 100 : 0
+  const color = SUBJECT_COLORS[subject] ?? '#64748b'
+
+  return (
+    <div className="subject-bar-row">
+      <div className="subject-bar-name">{SUBJECT_LABELS[subject] ?? subject}</div>
+      <div className="subject-bar-track">
+        <div className="subject-bar-fill" style={{ width: `${fillPct}%`, background: color }} />
+      </div>
+      <div className="subject-bar-pct" style={{ color }}>{accuracy.toFixed(0)}%</div>
+      <div className="subject-bar-counts">
+        <span style={{ color: '#16a34a' }}>{stat.correct}✓</span>
+        <span style={{ color: '#dc2626' }}>{stat.wrong}✗</span>
+        <span style={{ color: 'var(--text-muted)' }}>{stat.skipped}—</span>
+      </div>
+    </div>
+  )
+}
+
+function AchievementBadge({ a }: { a: Achievement }) {
+  return (
+    <div className={`achievement-badge ${a.earned ? 'achievement-earned' : 'achievement-locked'}`}
+      title={a.desc}>
+      <span className="achievement-icon">{a.earned ? a.icon : '🔒'}</span>
+      <span className="achievement-label">{a.label}</span>
+    </div>
+  )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -70,14 +143,17 @@ export default function Profile() {
   if (error)   return <><Navbar /><div className="page"><div className="alert alert-error">{error}</div></div></>
   if (!data)   return null
 
-  const { user, ratingHistory, heatmap, stats } = data
-  const tier = getTier(user.rating)
+  const { user, ratingHistory, heatmap, stats, subjectStats, verdictTotals } = data
+  const tier    = getTier(user.rating)
   const maxTier = getTier(stats.maxRating)
 
   const contestsLastYear  = countInPeriod(heatmap, 365)
   const contestsLastMonth = countInPeriod(heatmap, 30)
-  const streakLastYear    = maxStreakInPeriod(heatmap, 365)
-  const streakLastMonth   = maxStreakInPeriod(heatmap, 30)
+  const achievements      = computeAchievements(stats, ratingHistory, verdictTotals)
+  const earnedCount       = achievements.filter(a => a.earned).length
+
+  const subjectOrder = ['QUANT', 'REASONING', 'ENGLISH', 'GK']
+  const subjectsWithData = subjectOrder.filter(s => subjectStats[s])
 
   return (
     <>
@@ -101,19 +177,18 @@ export default function Profile() {
               </div>
               <div className="profile-meta-row" style={{ marginTop: 4 }}>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                  Registered: {sinceLabel(user.createdAt)}
+                  Registered {sinceLabel(user.createdAt)}
                   &nbsp;·&nbsp; {stats.totalContests} contest{stats.totalContests !== 1 ? 's' : ''}
-                  {stats.bestRank !== null && <>&nbsp;·&nbsp; Best rank: #{stats.bestRank}</>}
+                  {stats.bestRank !== null && <>&nbsp;·&nbsp; Best rank #{stats.bestRank}</>}
                 </span>
               </div>
             </div>
           </div>
-
-          {/* Tier legend chips */}
           <div className="tier-legend">
             {TIERS.map(t => (
               <span key={t.label} className="tier-chip"
-                style={{ background: t.bg, color: t.fg, fontWeight: user.rating >= t.min && user.rating < t.max ? 800 : 400,
+                style={{ background: t.bg, color: t.fg,
+                  fontWeight: user.rating >= t.min && user.rating < t.max ? 800 : 400,
                   border: user.rating >= t.min && user.rating < t.max ? `2px solid ${t.fg}` : '2px solid transparent' }}>
                 {t.label}
               </span>
@@ -130,61 +205,92 @@ export default function Profile() {
           <RatingChart history={ratingHistory} />
         </div>
 
-        {/* ── Activity heatmap + stats ──────────────────────────── */}
+        {/* ── Activity ──────────────────────────────────────────── */}
         <div className="card" style={{ marginTop: 16 }}>
-          <h2 style={{ marginBottom: 14 }}>Activity</h2>
-          <ActivityHeatmap heatmap={heatmap} />
+          <h2 style={{ marginBottom: 20 }}>Activity</h2>
 
-          {/* Heatmap legend */}
-          <div className="heatmap-legend">
+          {/* Verdict summary */}
+          {verdictTotals.total > 0 ? (
+            <div className="verdict-row">
+              <VerdictCard icon="✓" label="Correct"  count={verdictTotals.correct} total={verdictTotals.total} color="#16a34a" />
+              <VerdictCard icon="✗" label="Wrong"    count={verdictTotals.wrong}   total={verdictTotals.total} color="#dc2626" />
+              <VerdictCard icon="—" label="Skipped"  count={verdictTotals.skipped} total={verdictTotals.total} color="var(--text-muted)" />
+              <div className="verdict-total-card">
+                <div className="verdict-total-num">{verdictTotals.total.toLocaleString()}</div>
+                <div className="verdict-total-label">Total questions</div>
+                <div className="verdict-accuracy-bar">
+                  <div style={{ width: pct(verdictTotals.correct, verdictTotals.total), background: '#16a34a', height: '100%', borderRadius: '99px 0 0 99px' }} />
+                  <div style={{ width: pct(verdictTotals.wrong,   verdictTotals.total), background: '#dc2626', height: '100%' }} />
+                  <div style={{ flex: 1, background: 'var(--border)', height: '100%', borderRadius: '0 99px 99px 0' }} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>No contest submissions yet.</p>
+          )}
+
+          {/* Subject performance */}
+          {subjectsWithData.length > 0 && (
+            <div className="subject-perf-section">
+              <div className="activity-section-title">Subject Performance</div>
+              <div className="subject-bars">
+                {subjectsWithData.map(s => (
+                  <SubjectBar key={s} subject={s} stat={subjectStats[s]} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Heatmap */}
+          <div className="activity-section-title" style={{ marginTop: 24 }}>
+            Contest Activity
+            <span className="activity-section-sub">· last 52 weeks</span>
+          </div>
+          <ActivityHeatmap heatmap={heatmap} />
+          <div className="heatmap-legend" style={{ marginTop: 8 }}>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Less</span>
-            {['#ebedf0', '#c6e48b', '#7bc96f', '#239a3b', '#196127'].map(c => (
+            <span className="heatmap-legend-cell" style={{ background: 'var(--heatmap-empty)' }} />
+            {['#c6e48b', '#7bc96f', '#239a3b', '#196127'].map(c => (
               <span key={c} className="heatmap-legend-cell" style={{ background: c }} />
             ))}
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>More</span>
           </div>
 
-          {/* Stats grid */}
-          <div className="activity-stats-grid">
-            <div className="activity-stat-col">
-              <div className="activity-stat-header">Contests attempted</div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{stats.totalContests}</span>
-                <span className="activity-stat-label">all time</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{contestsLastYear}</span>
-                <span className="activity-stat-label">last year</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{contestsLastMonth}</span>
-                <span className="activity-stat-label">last month</span>
+          {/* Stats + streak */}
+          <div className="activity-summary-row">
+            <div className="activity-summary-group">
+              <div className="activity-summary-label">Contests</div>
+              <div className="activity-summary-stats">
+                <span><strong>{stats.totalContests}</strong> all time</span>
+                <span><strong>{contestsLastYear}</strong> this year</span>
+                <span><strong>{contestsLastMonth}</strong> this month</span>
               </div>
             </div>
-
-            <div className="activity-stat-col">
-              <div className="activity-stat-header">Days in a row</div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{stats.maxStreak}</span>
-                <span className="activity-stat-label">max streak</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{streakLastYear}</span>
-                <span className="activity-stat-label">last year</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{stats.currentStreak}</span>
-                <span className="activity-stat-label">current streak</span>
+            <div className="activity-summary-group">
+              <div className="activity-summary-label">Streaks</div>
+              <div className="activity-summary-stats">
+                <span><strong>{stats.maxStreak}</strong> day best</span>
+                <span><strong>{stats.currentStreak}</strong> current</span>
               </div>
             </div>
-
-            {stats.currentStreak > 0 && (
-              <div className="activity-stat-col streak-fire">
-                <div style={{ fontSize: 40 }}>🔥</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#ea580c' }}>{stats.currentStreak}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>day streak</div>
+            {stats.currentStreak >= 1 && (
+              <div className="streak-badge">
+                <span className="streak-fire">🔥</span>
+                <span className="streak-num">{stats.currentStreak}</span>
+                <span className="streak-sub">day streak</span>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ── Achievements ──────────────────────────────────────── */}
+        <div className="card" style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h2 style={{ margin: 0 }}>Achievements</h2>
+            <span className="achievements-count">{earnedCount} / {achievements.length} earned</span>
+          </div>
+          <div className="achievements-grid">
+            {achievements.map(a => <AchievementBadge key={a.label} a={a} />)}
           </div>
         </div>
 

@@ -75,17 +75,74 @@ function StatBubble({ color, icon, value, sub }: { color: string; icon: string; 
 }
 
 function DonutRing({ correct, wrong, skipped }: { correct: number; wrong: number; skipped: number }) {
+  const [hovered, setHovered] = useState<'correct' | 'wrong' | 'skipped' | null>(null)
   const total = correct + wrong + skipped || 1
-  const cp = (correct / total) * 100; const wp = (wrong / total) * 100
-  const gradient = `conic-gradient(#16a34a 0% ${cp}%, #dc2626 ${cp}% ${cp + wp}%, #94a3b8 ${cp + wp}% 100%)`
+
+  const segments = [
+    { key: 'correct' as const, count: correct, color: '#16a34a', label: 'Correct' },
+    { key: 'wrong'   as const, count: wrong,   color: '#dc2626', label: 'Wrong'   },
+    { key: 'skipped' as const, count: skipped, color: '#94a3b8', label: 'Skipped' },
+  ]
+
+  const cx = 80, cy = 80, OR = 70, IR = 44, GAP = 0.04
+
+  function polarXY(r: number, a: number): [number, number] {
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)]
+  }
+
+  function sectorPath(sa: number, ea: number): string {
+    if (ea - sa >= 2 * Math.PI - 0.01) {
+      return `M ${cx + OR} ${cy} A ${OR} ${OR} 0 1 1 ${cx - OR} ${cy} A ${OR} ${OR} 0 1 1 ${cx + OR} ${cy} ` +
+             `M ${cx + IR} ${cy} A ${IR} ${IR} 0 1 0 ${cx - IR} ${cy} A ${IR} ${IR} 0 1 0 ${cx + IR} ${cy} Z`
+    }
+    const large = ea - sa > Math.PI ? 1 : 0
+    const [ox1, oy1] = polarXY(OR, sa); const [ox2, oy2] = polarXY(OR, ea)
+    const [ix2, iy2] = polarXY(IR, ea); const [ix1, iy1] = polarXY(IR, sa)
+    return `M ${ox1} ${oy1} A ${OR} ${OR} 0 ${large} 1 ${ox2} ${oy2} L ${ix2} ${iy2} A ${IR} ${IR} 0 ${large} 0 ${ix1} ${iy1} Z`
+  }
+
+  const visible = segments.filter(s => s.count > 0)
+  const gapHalf = visible.length > 1 ? GAP / 2 : 0
+  let angle = -Math.PI / 2
+  const arcs = visible.map(s => {
+    const sweep = (s.count / total) * 2 * Math.PI
+    const sa = angle + gapHalf, ea = angle + sweep - gapHalf
+    angle += sweep
+    return { ...s, path: sectorPath(sa, ea), pct: Math.round((s.count / total) * 100) }
+  })
+
+  const hSeg = arcs.find(a => a.key === hovered)
+  const centerPct = hSeg ? hSeg.pct : Math.round((correct / total) * 100)
+  const centerLabel = hSeg ? hSeg.label : 'Accuracy'
+
   return (
     <div className="donut-wrap">
-      <div className="donut-ring" style={{ background: gradient }}>
-        <div className="donut-hole">
-          <div className="donut-pct">{Math.round((correct / total) * 100)}%</div>
-          <div className="donut-label">Accuracy</div>
-        </div>
-      </div>
+      <svg width={160} height={160} style={{ overflow: 'visible', display: 'block' }}>
+        {arcs.map(seg => (
+          <path
+            key={seg.key}
+            d={seg.path}
+            fill={seg.color}
+            opacity={hovered && hovered !== seg.key ? 0.35 : 1}
+            style={{
+              cursor: 'pointer',
+              transition: 'opacity 0.15s, transform 0.15s',
+              transformOrigin: `${cx}px ${cy}px`,
+              transform: hovered === seg.key ? 'scale(1.06)' : 'scale(1)',
+            }}
+            onMouseEnter={() => setHovered(seg.key)}
+            onMouseLeave={() => setHovered(null)}
+          />
+        ))}
+        <text x={cx} y={cy - 7} textAnchor="middle" fontSize={22} fontWeight={700}
+          style={{ fill: 'var(--heading)', pointerEvents: 'none' }}>
+          {centerPct}%
+        </text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fontSize={11}
+          style={{ fill: 'var(--text-muted)', pointerEvents: 'none' }}>
+          {centerLabel}
+        </text>
+      </svg>
       <div className="donut-legend">
         <div className="donut-legend-item"><span style={{ background: '#16a34a' }} /><b>{correct}</b> Correct</div>
         <div className="donut-legend-item"><span style={{ background: '#dc2626' }} /><b>{wrong}</b> Wrong</div>

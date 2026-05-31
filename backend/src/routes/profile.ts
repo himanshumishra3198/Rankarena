@@ -17,19 +17,67 @@ async function buildProfileData(userId: string) {
     }),
     prisma.participation.findMany({
       where: { userId, submittedAt: { not: null } },
-      select: { submittedAt: true },
+      select: { contestId: true, submittedAt: true, answers: true },
       orderBy: { submittedAt: "asc" },
     }),
   ]);
 
   if (!user) return null;
 
+  // Heatmap: date → contest count
   const heatmap: Record<string, number> = {};
   for (const p of participations) {
     const date = p.submittedAt!.toISOString().split("T")[0];
     heatmap[date] = (heatmap[date] ?? 0) + 1;
   }
 
+  // Subject-level accuracy stats
+  const contestIds = [...new Set(participations.map((p) => p.contestId))];
+  const subjectStats: Record<string, { correct: number; wrong: number; skipped: number }> = {};
+  let totalCorrect = 0, totalWrong = 0, totalSkipped = 0;
+
+  if (contestIds.length > 0) {
+    const contestQuestions = await prisma.contestQuestion.findMany({
+      where: { contestId: { in: contestIds } },
+      select: {
+        contestId: true,
+        questionId: true,
+        question: { select: { subject: true, correctOption: true } },
+      },
+    });
+
+    // contestId → Map<questionId, {subject, correctOption}>
+    const cqByContest = new Map<string, Map<string, { subject: string; correctOption: string }>>();
+    for (const cq of contestQuestions) {
+      if (!cqByContest.has(cq.contestId)) cqByContest.set(cq.contestId, new Map());
+      cqByContest.get(cq.contestId)!.set(cq.questionId, {
+        subject: cq.question.subject,
+        correctOption: cq.question.correctOption,
+      });
+    }
+
+    for (const p of participations) {
+      const qMap = cqByContest.get(p.contestId) ?? new Map();
+      const answers = (p.answers as Record<string, string>) ?? {};
+
+      for (const [qId, { subject, correctOption }] of qMap.entries()) {
+        if (!subjectStats[subject]) subjectStats[subject] = { correct: 0, wrong: 0, skipped: 0 };
+        const given = answers[qId];
+        if (!given) {
+          subjectStats[subject].skipped++;
+          totalSkipped++;
+        } else if (given === correctOption) {
+          subjectStats[subject].correct++;
+          totalCorrect++;
+        } else {
+          subjectStats[subject].wrong++;
+          totalWrong++;
+        }
+      }
+    }
+  }
+
+  // Streak computation
   const sortedDates = Object.keys(heatmap).sort();
   let maxStreak = 0, currentStreak = 0;
 
@@ -79,13 +127,9 @@ async function buildProfileData(userId: string) {
       totalParticipants: r.totalParticipants,
     })),
     heatmap,
-    stats: {
-      totalContests: participations.length,
-      bestRank,
-      maxRating,
-      maxStreak,
-      currentStreak,
-    },
+    stats: { totalContests: participations.length, bestRank, maxRating, maxStreak, currentStreak },
+    subjectStats,
+    verdictTotals: { correct: totalCorrect, wrong: totalWrong, skipped: totalSkipped, total: totalCorrect + totalWrong + totalSkipped },
   };
 }
 
@@ -94,7 +138,6 @@ router.get("/", authenticate, async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
   const data = await buildProfileData(userId);
   if (!data) { res.status(404).json({ error: "User not found" }); return; }
-  // Add email only for own profile
   const email = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
   res.json({ ...data, user: { ...data.user, email: email?.email } });
 });
@@ -103,14 +146,11 @@ router.get("/", authenticate, async (req: AuthRequest, res: Response) => {
 router.get("/:id", authenticate, async (req: AuthRequest, res: Response) => {
   const userId = req.params.id as string;
   const viewerId = req.user!.id;
-
   const data = await buildProfileData(userId);
   if (!data) { res.status(404).json({ error: "User not found" }); return; }
-
   const isFollowing = await prisma.follow.findUnique({
     where: { followerId_followingId: { followerId: viewerId, followingId: userId } },
   });
-
   res.json({ ...data, isFollowing: !!isFollowing, isOwnProfile: userId === viewerId });
 });
 

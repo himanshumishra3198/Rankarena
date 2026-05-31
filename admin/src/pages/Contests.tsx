@@ -5,12 +5,6 @@ import Navbar from '../components/Navbar'
 import type { Contest, Section } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
 
-const STATUS_LABELS: Record<Contest['status'], string> = {
-  SCHEDULED: 'Upcoming',
-  LIVE: '🔴 Live',
-  ENDED: 'Ended',
-}
-
 type EffectivePhase = 'scheduled' | 'live' | 'ended'
 
 function effectivePhase(c: Contest): EffectivePhase {
@@ -21,6 +15,12 @@ function effectivePhase(c: Contest): EffectivePhase {
   if (now >= endMs) return 'ended'
   if (now >= startMs) return 'live'
   return 'scheduled'
+}
+
+function phaseBadge(phase: EffectivePhase) {
+  if (phase === 'live')      return { cls: 'badge-live',      label: '🔴 Live'   }
+  if (phase === 'ended')     return { cls: 'badge-ended',     label: 'Ended'     }
+  return                            { cls: 'badge-scheduled', label: 'Upcoming'  }
 }
 
 function ContestCountdown({ contest }: { contest: Contest }) {
@@ -278,8 +278,10 @@ export default function Contests() {
                       </tr>
                     </thead>
                     <tbody>
-                      {list.map(c => (
-                        <>
+                      {list.map(c => {
+                        const phase = effectivePhase(c)
+                        const badge = phaseBadge(phase)
+                        return (
                           <tr key={c.id}>
                             <td>
                               <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: 14 }}
@@ -293,13 +295,13 @@ export default function Contests() {
                             <td style={{ whiteSpace: 'nowrap' }}><ContestCountdown contest={c} /></td>
                             <td style={{ fontSize: 13 }}>{c.durationMinutes} min</td>
                             <td style={{ fontSize: 13 }}>−{Number(c.negativeMarks)}</td>
-                            <td><span className={`badge badge-${c.status.toLowerCase()}`}>{STATUS_LABELS[c.status]}</span></td>
+                            <td><span className={`badge ${badge.cls}`}>{badge.label}</span></td>
                             <td>
                               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                                {c.status === 'SCHEDULED' && (
+                                {phase === 'scheduled' && (
                                   <button className="btn btn-sm btn-ghost" onClick={() => setStatus(c.id, 'LIVE')}>Go Live</button>
                                 )}
-                                {c.status === 'LIVE' && (
+                                {phase === 'live' && (
                                   <button className="btn btn-sm btn-ghost" onClick={() => setStatus(c.id, 'ENDED')}>End</button>
                                 )}
                                 <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/contests/${c.id}`)}>Manage</button>
@@ -307,8 +309,8 @@ export default function Contests() {
                               </div>
                             </td>
                           </tr>
-                        </>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 )}
@@ -336,7 +338,9 @@ export default function Contests() {
                       </tr>
                     </thead>
                     <tbody>
-                      {list.map(c => (
+                      {list.map(c => {
+                        const badge = phaseBadge('ended')
+                        return (
                         <>
                           <tr key={c.id}>
                             <td>
@@ -350,10 +354,10 @@ export default function Contests() {
                             </td>
                             <td style={{ fontSize: 13 }}>{c.durationMinutes} min</td>
                             <td style={{ fontSize: 13 }}>−{Number(c.negativeMarks)}</td>
-                            <td><span className={`badge badge-${c.status.toLowerCase()}`}>{STATUS_LABELS[c.status]}</span></td>
+                            <td><span className={`badge ${badge.cls}`}>{badge.label}</span></td>
                             <td>
                               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                                <button className="btn btn-sm btn-ghost" style={{ color: '#7c3aed', borderColor: '#c4b5fd' }} onClick={() => openRestart(c)}>
+                                <button className="btn btn-sm btn-ghost" style={{ color: 'var(--primary)', borderColor: 'var(--primary)' }} onClick={() => openRestart(c)}>
                                   ↺ Restart
                                 </button>
                                 <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/contests/${c.id}`)}>Manage</button>
@@ -363,7 +367,7 @@ export default function Contests() {
                           </tr>
                           {restartId === c.id && (
                             <tr key={`${c.id}-restart`}>
-                              <td colSpan={6} style={{ background: '#f5f3ff', padding: '16px 20px' }}>
+                              <td colSpan={6} style={{ background: 'var(--primary-light)', padding: '16px 20px' }}>
                                 <form onSubmit={confirmRestart} style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                     <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--heading)' }}>
@@ -387,7 +391,8 @@ export default function Contests() {
                             </tr>
                           )}
                         </>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 )}

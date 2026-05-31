@@ -312,35 +312,37 @@ export default function ContestRoom() {
     })
   }
 
+  // ── Section access control ────────────────────────────────────────────
+  // A section is accessible only if it is already submitted (read-only review)
+  // OR it is the first unsubmitted section in sequential order.
+  function canAccessSection(sec: string): boolean {
+    if (submittedSections.has(sec)) return true
+    const firstUnsubmitted = availableSections.find(s => !submittedSections.has(s))
+    return sec === firstUnsubmitted
+  }
+
   // ── Section submit (manual + auto) ───────────────────────────────────
-  function persistSectionSubmit(section: string): Set<string> {
+  function persistSectionSubmit(section: string) {
     const next = new Set([...submittedSectionsRef.current, section])
     setSubmittedSections(next)
     localStorage.setItem(`submitted-sections-${contestId}`, JSON.stringify([...next]))
-    return next
-  }
-
-  function moveToNextSection(submitted: Set<string>) {
-    const nextSec = availableSections.find(s => !submitted.has(s))
-    if (nextSec) {
-      const firstQ = sectionQuestions[nextSec]?.[0]
-      if (firstQ) goToQuestion(firstQ.id, nextSec)
-    }
   }
 
   function submitSection(section: string) {
     const qs = sectionQuestions[section] ?? []
     const unanswered = qs.filter(q => !answers[q.id]).length
     const msg = unanswered > 0
-      ? `${unanswered} question(s) in ${SECTION_LABELS[section]} are unanswered.\n\nOnce submitted you cannot revisit this section. Continue?`
-      : `Submit ${SECTION_LABELS[section]} section? You will not be able to revisit these questions.`
+      ? `${unanswered} question(s) in ${SECTION_LABELS[section]} are unanswered.\n\nOnce submitted you cannot change your answers. Continue?`
+      : `Submit ${SECTION_LABELS[section]} section? You will not be able to change your answers.`
     if (!window.confirm(msg)) return
-    moveToNextSection(persistSectionSubmit(section))
+    persistSectionSubmit(section)
+    // Stay on the current (now locked) section — user navigates manually
   }
 
   function autoSubmitSection(section: string) {
     if (submittedSectionsRef.current.has(section)) return
-    moveToNextSection(persistSectionSubmit(section))
+    persistSectionSubmit(section)
+    // Stay on the current section — user sees the locked banner and navigates manually
   }
 
   // ── Final submit ──────────────────────────────────────────────────────
@@ -513,20 +515,26 @@ export default function ContestRoom() {
         <div className="room-sidebar">
           {/* Section tabs */}
           <div className="sidebar-sections">
-            {availableSections.map(sec => (
-              <button
-                key={sec}
-                className={`sidebar-sec-btn ${currentSection === sec ? 'active' : ''} ${submittedSections.has(sec) ? 'submitted' : ''}`}
-                onClick={() => {
-                  setCurrentSection(sec)
-                  const firstQ = sectionQuestions[sec]?.[0]
-                  if (firstQ) goToQuestion(firstQ.id, sec)
-                }}
-              >
-                {SECTION_LABELS[sec]}
-                {submittedSections.has(sec) && <span className="sec-tick">✓</span>}
-              </button>
-            ))}
+            {availableSections.map(sec => {
+              const accessible = canAccessSection(sec)
+              const isSubmitted = submittedSections.has(sec)
+              return (
+                <button
+                  key={sec}
+                  className={`sidebar-sec-btn ${currentSection === sec ? 'active' : ''} ${isSubmitted ? 'submitted' : ''}`}
+                  disabled={!accessible}
+                  title={!accessible ? 'Submit the current section to unlock this one' : undefined}
+                  onClick={() => {
+                    const firstQ = sectionQuestions[sec]?.[0]
+                    if (firstQ) goToQuestion(firstQ.id, sec)
+                  }}
+                >
+                  {SECTION_LABELS[sec]}
+                  {isSubmitted && <span className="sec-tick">✓</span>}
+                  {!accessible && <span className="sec-lock">🔒</span>}
+                </button>
+              )
+            })}
           </div>
 
           {/* Section timer (feature 2) */}
@@ -579,11 +587,26 @@ export default function ContestRoom() {
 
         {/* ── Question content ─────────────────────────────────────── */}
         <div className="room-content">
-          {isSectionLocked && (
-            <div className="section-locked-banner">
-              ✓ {SECTION_LABELS[currentSection]} section submitted — answers are locked
-            </div>
-          )}
+          {isSectionLocked && (() => {
+            const nextSec = availableSections.find(s => !submittedSections.has(s))
+            return (
+              <div className="section-locked-banner">
+                <span>✓ {SECTION_LABELS[currentSection]} submitted — answers locked</span>
+                {nextSec && (
+                  <button
+                    className="btn btn-primary btn-sm"
+                    style={{ marginLeft: 'auto' }}
+                    onClick={() => {
+                      const firstQ = sectionQuestions[nextSec]?.[0]
+                      if (firstQ) goToQuestion(firstQ.id, nextSec)
+                    }}
+                  >
+                    Next: {SECTION_LABELS[nextSec]} →
+                  </button>
+                )}
+              </div>
+            )
+          })()}
 
           <p className="question-num">
             Question {idxInSection + 1} of {sectionQs.length}
