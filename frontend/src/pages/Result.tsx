@@ -418,40 +418,36 @@ export default function Result() {
         {/* ── Time Analysis ────────────────────────────────────────────── */}
         {hasTimeData && (
           <div className="card" style={{ marginBottom: 20 }}>
-            <h2 style={{ marginBottom: 16 }}>Time Analysis</h2>
+            <h2 style={{ marginBottom: 20 }}>Time Analysis</h2>
             <div className="time-analysis-grid">
-              <div>
-                <div className="time-analysis-sub">Most time spent (review these)</div>
-                {slowest.map(q => {
-                  const isCorr = answers[q.id] === q.correctOption
-                  const isWrng = answers[q.id] && answers[q.id] !== q.correctOption
-                  const qNum = questions.indexOf(q) + 1
-                  return (
-                    <div key={q.id} className={`time-q-row ${isCorr ? 'tcor' : isWrng ? 'twrg' : 'tskp'}`}>
-                      <span className="time-q-num">Q{qNum}</span>
-                      <span className="time-q-text">{q.text.slice(0, 60)}{q.text.length > 60 ? '…' : ''}</span>
-                      <span className="time-q-dur">{fmtSecs(timeSpent[q.id] ?? 0)}</span>
-                      <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
-                    </div>
-                  )
-                })}
-              </div>
-              <div>
-                <div className="time-analysis-sub">Least time spent</div>
-                {fastest.map(q => {
-                  const isCorr = answers[q.id] === q.correctOption
-                  const isWrng = answers[q.id] && answers[q.id] !== q.correctOption
-                  const qNum = questions.indexOf(q) + 1
-                  return (
-                    <div key={q.id} className={`time-q-row ${isCorr ? 'tcor' : isWrng ? 'twrg' : 'tskp'}`}>
-                      <span className="time-q-num">Q{qNum}</span>
-                      <span className="time-q-text">{q.text.slice(0, 60)}{q.text.length > 60 ? '…' : ''}</span>
-                      <span className="time-q-dur">{fmtSecs(timeSpent[q.id] ?? 0)}</span>
-                      <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
-                    </div>
-                  )
-                })}
-              </div>
+              {[
+                { label: 'Most time spent — review these', items: slowest },
+                { label: 'Least time spent', items: fastest },
+              ].map(({ label, items }) => (
+                <div key={label}>
+                  <div className="time-analysis-sub">{label}</div>
+                  <div className="time-q-list">
+                    {items.map(q => {
+                      const isCorr = answers[q.id] === q.correctOption
+                      const isWrng = answers[q.id] && answers[q.id] !== q.correctOption
+                      const qNum = questions.indexOf(q) + 1
+                      const verdict = isCorr ? 'cor' : isWrng ? 'wrg' : 'skp'
+                      const verdictIcon = isCorr ? '✓' : isWrng ? '✗' : '—'
+                      return (
+                        <div key={q.id} className={`time-q-card tq-${verdict}`}>
+                          <div className="time-q-meta">
+                            <span className="time-q-num">Q{qNum}</span>
+                            <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
+                            <span className={`time-q-verdict tqv-${verdict}`}>{verdictIcon}</span>
+                            <span className="time-q-dur">{fmtSecs(timeSpent[q.id] ?? 0)}</span>
+                          </div>
+                          <div className="time-q-text">{q.text}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
