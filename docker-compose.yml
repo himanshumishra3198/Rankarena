@@ -1,5 +1,6 @@
-# docker-compose.yml
-# Copy .env.example to .env and fill in values before running in production.
+# docker-compose.yml  ← LOCAL DEVELOPMENT ONLY
+# Spins up postgres + redis so you don't need them installed globally.
+# For production use docker-compose.prod.yml
 services:
   postgres:
     image: postgres:16
