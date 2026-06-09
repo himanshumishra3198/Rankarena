@@ -134,7 +134,7 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
           return (
             <g key={r}>
               <line x1={PL} x2={PL + pw} y1={y} y2={y} stroke="#e2e8f0" strokeWidth={0.8} />
-              <text x={PL - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#94a3b8" fontVariantNumeric="tabular-nums">{r}</text>
+              <text x={PL - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#94a3b8" style={{ fontVariantNumeric: 'tabular-nums' }}>{r}</text>
             </g>
           )
         })}
