@@ -163,36 +163,51 @@ export default function Profile() {
         {/* ── Profile header ────────────────────────────────────── */}
         <div className="card profile-header-card">
           <div className="profile-header-left">
-            <div className="profile-avatar">{user.name.charAt(0).toUpperCase()}</div>
+            <div className="profile-avatar"
+              style={{ boxShadow: `0 0 0 3px var(--surface), 0 0 0 6px ${tier.fg}, 0 4px 20px rgba(0,0,0,.18)` }}>
+              {user.name.charAt(0).toUpperCase()}
+            </div>
             <div>
-              <div className="profile-tier-label" style={{ color: tier.fg }}>{tier.label}</div>
+              <div className="profile-tier-label"
+                style={{ color: tier.fg, background: tier.bg }}>
+                {tier.label}
+              </div>
               <h1 className="profile-username" style={{ color: tier.fg }}>{user.name}</h1>
               <div className="profile-meta-row">
-                <span>Contest rating: <strong style={{ color: tier.fg }}>{user.rating}</strong></span>
+                <span style={{ fontSize: 15 }}>
+                  Contest rating:&nbsp;<strong style={{ color: tier.fg, fontSize: 18 }}>{user.rating}</strong>
+                </span>
                 {stats.maxRating > user.rating && (
                   <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                    &nbsp;(max. <span style={{ color: maxTier.fg }}>{maxTier.label}</span>, {stats.maxRating})
+                    &nbsp;·&nbsp;peak&nbsp;<span style={{ color: maxTier.fg, fontWeight: 700 }}>{stats.maxRating}</span>&nbsp;({maxTier.label})
                   </span>
                 )}
               </div>
-              <div className="profile-meta-row" style={{ marginTop: 4 }}>
+              <div className="profile-meta-row" style={{ marginTop: 6 }}>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                   Registered {sinceLabel(user.createdAt)}
-                  &nbsp;·&nbsp; {stats.totalContests} contest{stats.totalContests !== 1 ? 's' : ''}
-                  {stats.bestRank !== null && <>&nbsp;·&nbsp; Best rank #{stats.bestRank}</>}
+                  &nbsp;·&nbsp;{stats.totalContests} contest{stats.totalContests !== 1 ? 's' : ''}
+                  {stats.bestRank !== null && <>&nbsp;·&nbsp;Best rank <strong style={{ color: 'var(--text)' }}>#{stats.bestRank}</strong></>}
                 </span>
               </div>
             </div>
           </div>
           <div className="tier-legend">
-            {TIERS.map(t => (
-              <span key={t.label} className="tier-chip"
-                style={{ background: t.bg, color: t.fg,
-                  fontWeight: user.rating >= t.min && user.rating < t.max ? 800 : 400,
-                  border: user.rating >= t.min && user.rating < t.max ? `2px solid ${t.fg}` : '2px solid transparent' }}>
-                {t.label}
-              </span>
-            ))}
+            {TIERS.map(t => {
+              const isActive = user.rating >= t.min && user.rating < t.max
+              return (
+                <span key={t.label}
+                  className={`tier-chip${isActive ? ' tier-chip-active' : ''}`}
+                  style={{
+                    background: t.bg,
+                    color: t.fg,
+                    border: isActive ? `2px solid ${t.fg}` : '2px solid transparent',
+                    opacity: isActive ? 1 : 0.7,
+                  }}>
+                  {t.label}
+                </span>
+              )
+            })}
           </div>
         </div>
 

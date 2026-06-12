@@ -432,15 +432,39 @@ select.input { cursor: pointer; }
 .result-section-table tr:last-child td { border-bottom: none; }
 
 /* ── Profile page ────────────────────────────────────────────── */
-.profile-header-card { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.profile-header-left { display: flex; align-items: flex-start; gap: 20px; }
-.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 28px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.profile-tier-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
-.profile-username { font-size: 28px; font-weight: 800; margin: 0 0 4px; line-height: 1; }
-.profile-meta-row { font-size: 14px; color: var(--text); }
+.profile-header-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.profile-header-left { display: flex; align-items: center; gap: 24px; }
+.profile-avatar {
+  width: 84px; height: 84px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  color: #fff; font-size: 36px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--primary), 0 4px 20px rgba(0,0,0,.18);
+}
+.profile-tier-label {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 6px;
+  opacity: 0.92;
+}
+.profile-username { font-size: 30px; font-weight: 800; margin: 0 0 6px; line-height: 1.1; }
+.profile-meta-row { font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 
-.tier-legend { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.tier-chip { font-size: 11px; padding: 2px 9px; border-radius: 20px; cursor: default; }
+.tier-legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+.tier-chip {
+  font-size: 12px; font-weight: 600;
+  padding: 5px 14px; border-radius: 20px;
+  cursor: default; letter-spacing: 0.2px;
+  transition: transform .15s, box-shadow .15s;
+}
+.tier-chip-active {
+  transform: scale(1.12);
+  box-shadow: 0 3px 12px rgba(0,0,0,.25);
+  font-weight: 800;
+}
 
 /* Rating chart */
 .chart-empty { display: flex; align-items: center; justify-content: center; height: 160px; color: var(--text-muted); font-size: 14px; background: var(--bg); border-radius: var(--radius); }
