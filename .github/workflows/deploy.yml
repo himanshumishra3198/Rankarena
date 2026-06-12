@@ -97,6 +97,10 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Get ECR password
+        id: ecr-password
+        run: echo "password=$(aws ecr get-login-password --region ${{ env.AWS_REGION }})" >> $GITHUB_OUTPUT
+
       - name: Copy compose file to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -112,29 +116,23 @@ jobs:
           host:     ${{ secrets.EC2_HOST }}
           username: ubuntu
           key:      ${{ secrets.EC2_SSH_KEY }}
+          envs:     ECR_PASSWORD
           script: |
             set -e
 
             cd /home/ubuntu/rankarena
 
-            # ── Auth ECR ──────────────────────────────────────────────────────
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} \
-              | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+            # ── Auth ECR (password fetched on runner, no aws CLI needed on EC2) ─
+            echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
 
             # ── Write IMAGE_TAG into .env ─────────────────────────────────────
-            # (other vars like JWT_SECRET, DATABASE_URL etc are already in .env
-            #  set up during initial EC2 provisioning)
             sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${{ github.sha }}|" .env
             sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}|" .env
 
             # ── Pull new images ───────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml pull backend frontend admin
 
-            # ── Run DB migrations (before restarting backend) ─────────────────
-            docker compose -f docker-compose.prod.yml run --rm --no-deps backend \
-              node -e "require('child_process').execSync('npx prisma migrate deploy', {stdio:'inherit'})"
-
-            # ── Rolling restart (zero-downtime for stateless services) ────────
+            # ── Rolling restart ───────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml up -d \
               --no-deps \
               --remove-orphans \
@@ -144,3 +142,5 @@ jobs:
             docker image prune -f
 
             echo "Deploy complete: ${{ github.sha }}"
+        env:
+          ECR_PASSWORD: ${{ steps.ecr-password.outputs.password }}
