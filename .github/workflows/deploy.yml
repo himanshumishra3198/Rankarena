@@ -125,9 +125,14 @@ jobs:
             # ── Auth ECR (password fetched on runner, no aws CLI needed on EC2) ─
             echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
 
-            # ── Write IMAGE_TAG into .env ─────────────────────────────────────
-            sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${{ github.sha }}|" .env
-            sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}|" .env
+            # ── Write IMAGE_TAG and ECR_REGISTRY into .env (add if missing) ────
+            grep -q "^IMAGE_TAG=" .env \
+              && sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${{ github.sha }}|" .env \
+              || echo "IMAGE_TAG=${{ github.sha }}" >> .env
+
+            grep -q "^ECR_REGISTRY=" .env \
+              && sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}|" .env \
+              || echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> .env
 
             # ── Pull new images ───────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml pull backend frontend admin
