@@ -1,15 +1,15 @@
 services:
 
   # ── Reverse Proxy (public-facing) ─────────────────────────────────────────
+  # Using HTTP-only config until SSL certs are provisioned via certbot.
+  # To enable HTTPS: run certbot, then switch to nginx.conf and re-deploy.
   proxy:
     image: nginx:alpine
     ports:
       - "80:80"
-      - "443:443"
+      - "8080:8080"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro       # SSL certs from host
-      - /var/www/certbot:/var/www/certbot:ro        # ACME challenge files
+      - ./nginx/nginx.http.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend
       - frontend
@@ -29,6 +29,8 @@ services:
   # ── Backend API ────────────────────────────────────────────────────────────
   backend:
     image: ${ECR_REGISTRY}/rankarena-backend:${IMAGE_TAG}
+    ports:
+      - "4000:4000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
