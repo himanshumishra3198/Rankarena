@@ -104,7 +104,7 @@ export default function MockTests() {
                 </div>
                 <div className="form-group">
                   <label>Negative Marks</label>
-                  <input className="input" type="number" min={0} step={0.25} value={form.negativeMarks}
+                  <input className="input" type="number" min={0} step="any" value={form.negativeMarks}
                     onChange={e => setForm(f => ({ ...f, negativeMarks: Number(e.target.value) }))} />
                 </div>
               </div>

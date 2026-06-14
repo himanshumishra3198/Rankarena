@@ -117,12 +117,12 @@ export default function MockTestDetail() {
               </div>
               <div className="form-group" style={{ marginBottom: 0, width: 90 }}>
                 <label>Marks</label>
-                <input className="input" type="number" min={0.1} step={0.5} value={marks}
+                <input className="input" type="number" min={0.1} step="any" value={marks}
                   onChange={e => setMarks(Number(e.target.value))} />
               </div>
               <div className="form-group" style={{ marginBottom: 0, width: 90 }}>
                 <label>Negative</label>
-                <input className="input" type="number" min={0} step={0.25} value={negMarks}
+                <input className="input" type="number" min={0} step="any" value={negMarks}
                   onChange={e => setNegMarks(Number(e.target.value))} />
               </div>
               <button className="btn btn-primary" type="submit" disabled={adding || !selectedQId} style={{ flexShrink: 0 }}>
