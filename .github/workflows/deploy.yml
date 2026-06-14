@@ -137,6 +137,12 @@ jobs:
             # ── Pull new images ───────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml pull backend frontend admin
 
+            # ── Run DB migrations (one-off, before restarting backend) ────────
+            # Uses `run` so it gets the backend service env (DATABASE_URL etc.)
+            # and exits; runs once per deploy rather than on every container start.
+            docker compose -f docker-compose.prod.yml run --rm --no-deps backend \
+              npx prisma migrate deploy
+
             # ── Rolling restart ───────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml up -d \
               --no-deps \
