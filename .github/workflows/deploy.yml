@@ -101,13 +101,13 @@ jobs:
         id: ecr-password
         run: echo "password=$(aws ecr get-login-password --region ${{ env.AWS_REGION }})" >> $GITHUB_OUTPUT
 
-      - name: Copy compose file to EC2
+      - name: Copy compose file + nginx configs to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host:     ${{ secrets.EC2_HOST }}
           username: ubuntu
           key:      ${{ secrets.EC2_SSH_KEY }}
-          source:   docker-compose.prod.yml
+          source:   "docker-compose.prod.yml,nginx/nginx.http.conf,nginx/nginx.conf"
           target:   /home/ubuntu/rankarena/
 
       - name: Deploy on EC2

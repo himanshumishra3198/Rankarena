@@ -1,8 +1,9 @@
 services:
 
   # ── Reverse Proxy (public-facing) ─────────────────────────────────────────
-  # Using HTTP-only config until SSL certs are provisioned via certbot.
-  # To enable HTTPS: run certbot, then switch to nginx.conf and re-deploy.
+  # Phase 1 (HTTP): mounts nginx.http.conf, serves the ACME challenge.
+  # Phase 2 (HTTPS): switch the mounted config to ./nginx/nginx.conf once
+  # certbot has issued certs, then redeploy.
   proxy:
     image: nginx:alpine
     ports:
@@ -10,10 +11,24 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.http.conf:/etc/nginx/nginx.conf:ro
+      - certbot_etc:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
     depends_on:
       - backend
       - frontend
       - admin
+    restart: unless-stopped
+
+  # ── Certbot (Let's Encrypt) ────────────────────────────────────────────────
+  # Renews certs every 12h. Initial issuance is a one-off `run` command
+  # (see the SSL runbook). nginx must be reloaded after a renewal to pick
+  # up the new cert.
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot_etc:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done'"
     restart: unless-stopped
 
   # ── Student Frontend ───────────────────────────────────────────────────────
@@ -72,3 +87,5 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  certbot_etc:
+  certbot_www:
