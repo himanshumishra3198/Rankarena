@@ -159,6 +159,14 @@ export default function Questions() {
   const [filterSubject, setFilterSubject] = useState('')
   const [filterType, setFilterType] = useState('')
 
+  // Backend may return `error` as a string OR a Zod issues array — normalise to a string.
+  function errMsg(err: any, fallback: string): string {
+    const e = err?.response?.data?.error
+    if (typeof e === 'string') return e
+    if (Array.isArray(e)) return e.map((i: any) => i?.message).filter(Boolean).join(', ') || fallback
+    return fallback
+  }
+
   function set<K extends keyof typeof emptyForm>(field: K, value: typeof emptyForm[K]) {
     setForm(f => ({ ...f, [field]: value }))
   }
@@ -215,7 +223,7 @@ export default function Questions() {
       await api.post('/admin/questions', payload)
       setForm(emptyForm); setShowForm(false); load()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save question')
+      setError(errMsg(err, 'Failed to save question'))
     } finally { setSaving(false) }
   }
 
@@ -234,7 +242,7 @@ export default function Questions() {
       await api.post('/admin/passages', payload)
       setPassageForm(emptyPassageForm); setShowPassageForm(false); load()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save passage')
+      setError(errMsg(err, 'Failed to save passage'))
     } finally { setSaving(false) }
   }
 

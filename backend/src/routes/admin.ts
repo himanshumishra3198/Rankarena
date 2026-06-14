@@ -199,13 +199,25 @@ router.post("/contests/:id/restart", async (req: AuthRequest, res: Response) => 
 
 const passageSchema = z.object({
   title: z.string().default(""),
-  content: z.string().min(1),
+  content: z.string().default(""),
   type: z.enum(["TEXT", "TABLE"]).default("TEXT"),
   tableData: z.object({
     headers: z.array(z.string()),
     rows: z.array(z.array(z.string())),
-  }).optional(),
+  }).optional().nullable(),
 });
+
+// Build Prisma-safe passage data (handles JSON-null for tableData)
+function toPassageData(d: Record<string, any>) {
+  const out: Record<string, any> = {};
+  for (const k of ["title", "content", "type"] as const) {
+    if (d[k] !== undefined) out[k] = d[k];
+  }
+  if (d.tableData !== undefined) {
+    out.tableData = d.tableData ?? Prisma.JsonNull;
+  }
+  return out;
+}
 
 router.get("/passages", async (_req, res: Response) => {
   const passages = await prisma.passage.findMany({ orderBy: { createdAt: "desc" } });
@@ -215,7 +227,17 @@ router.get("/passages", async (_req, res: Response) => {
 router.post("/passages", async (req: AuthRequest, res: Response) => {
   const parsed = passageSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
-  const passage = await prisma.passage.create({ data: parsed.data });
+  if (parsed.data.type === "TEXT" && !parsed.data.content.trim()) {
+    res.status(400).json({ error: "Passage text is required for reading passages." });
+    return;
+  }
+  if (parsed.data.type === "TABLE" && !parsed.data.tableData) {
+    res.status(400).json({ error: "Table data is required for table passages." });
+    return;
+  }
+  const passage = await prisma.passage.create({
+    data: toPassageData(parsed.data) as Prisma.PassageUncheckedCreateInput,
+  });
   res.status(201).json(passage);
 });
 
@@ -223,7 +245,10 @@ router.put("/passages/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const parsed = passageSchema.partial().safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
-  const passage = await prisma.passage.update({ where: { id }, data: parsed.data });
+  const passage = await prisma.passage.update({
+    where: { id },
+    data: toPassageData(parsed.data) as Prisma.PassageUncheckedUpdateInput,
+  });
   res.json(passage);
 });
 
