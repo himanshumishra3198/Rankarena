@@ -26,6 +26,7 @@ const TYPE_DESCRIPTIONS: Record<QuestionType, string> = {
 const emptyForm = {
   questionType: 'STANDARD' as QuestionType,
   text: '',
+  imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
   correctOption: 'A' as Question['correctOption'],
   subject: 'REASONING' as Question['subject'],
@@ -156,8 +157,23 @@ export default function Questions() {
   const [passageForm, setPassageForm] = useState(emptyPassageForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
   const [filterSubject, setFilterSubject] = useState('')
   const [filterType, setFilterType] = useState('')
+
+  async function handleImageUpload(file: File) {
+    setUploading(true); setError('')
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await api.post('/admin/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setForm(f => ({ ...f, imageUrl: res.data.url }))
+    } catch (err: any) {
+      setError(errMsg(err, 'Image upload failed'))
+    } finally { setUploading(false) }
+  }
 
   // Backend may return `error` as a string OR a Zod issues array — normalise to a string.
   function errMsg(err: any, fallback: string): string {
@@ -209,6 +225,7 @@ export default function Questions() {
       const payload: any = {
         questionType: form.questionType,
         text: form.text,
+        imageUrl: form.imageUrl || null,
         optionA: form.optionA, optionB: form.optionB,
         optionC: form.optionC, optionD: form.optionD,
         correctOption: form.correctOption,
@@ -431,6 +448,27 @@ export default function Questions() {
                   required={form.questionType !== 'SYLLOGISM'}
                   placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : ''}
                   style={{ resize: 'vertical' }} />
+              </div>
+
+              {/* Question image (optional) */}
+              <div className="form-group">
+                <label>Question Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — diagrams, figures)</span></label>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <label className="btn btn-ghost btn-sm" style={{ cursor: uploading ? 'wait' : 'pointer', margin: 0 }}>
+                    {uploading ? 'Uploading…' : form.imageUrl ? '🖼 Replace Image' : '📷 Upload Image'}
+                    <input type="file" accept="image/png,image/jpeg,image/gif,image/webp"
+                      style={{ display: 'none' }} disabled={uploading}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = '' }} />
+                  </label>
+                  {form.imageUrl && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <img src={form.imageUrl} alt="Question"
+                        style={{ height: 56, borderRadius: 6, border: '1px solid var(--border)' }} />
+                      <button type="button" className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }}
+                        onClick={() => set('imageUrl', '')}>Remove</button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Options */}
