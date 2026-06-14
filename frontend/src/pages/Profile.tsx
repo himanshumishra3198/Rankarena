@@ -124,6 +124,55 @@ function AchievementBadge({ a }: { a: Achievement }) {
   )
 }
 
+interface FollowUser { id: string; name: string; rating: number }
+
+function FollowListModal({ userId, kind, onClose }: {
+  userId: string; kind: 'followers' | 'following'; onClose: () => void
+}) {
+  const navigate = useNavigate()
+  const [users, setUsers] = useState<FollowUser[] | null>(null)
+
+  useEffect(() => {
+    api.get(`/follows/${userId}/${kind}/list`)
+      .then(r => setUsers(r.data))
+      .catch(() => setUsers([]))
+  }, [userId, kind])
+
+  return (
+    <div className="follow-modal-overlay" onClick={onClose}>
+      <div className="follow-modal" onClick={e => e.stopPropagation()}>
+        <div className="follow-modal-header">
+          <h3 style={{ margin: 0, textTransform: 'capitalize' }}>{kind}</h3>
+          <button className="follow-modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="follow-modal-body">
+          {users === null && <p style={{ color: 'var(--text-muted)', padding: 16 }}>Loading...</p>}
+          {users && users.length === 0 && (
+            <p style={{ color: 'var(--text-muted)', padding: 16 }}>
+              {kind === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+            </p>
+          )}
+          {users && users.map(u => {
+            const t = getTier(u.rating)
+            return (
+              <button key={u.id} className="follow-user-row"
+                onClick={() => { onClose(); navigate(`/profile/${u.id}`) }}>
+                <div className="follow-user-avatar" style={{ background: t.fg }}>
+                  {u.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="follow-user-info">
+                  <div className="follow-user-name" style={{ color: t.fg }}>{u.name}</div>
+                  <div className="follow-user-rating">{u.rating} · {t.label}</div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Profile() {
@@ -131,6 +180,7 @@ export default function Profile() {
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null)
 
   useEffect(() => {
     api.get('/profile')
@@ -189,6 +239,16 @@ export default function Profile() {
                   &nbsp;·&nbsp;{stats.totalContests} contest{stats.totalContests !== 1 ? 's' : ''}
                   {stats.bestRank !== null && <>&nbsp;·&nbsp;Best rank <strong style={{ color: 'var(--text)' }}>#{stats.bestRank}</strong></>}
                 </span>
+              </div>
+              <div className="follow-stats">
+                <button className="follow-stat" onClick={() => setFollowModal('followers')}>
+                  <strong>{user.followerCount}</strong>
+                  <span>Followers</span>
+                </button>
+                <button className="follow-stat" onClick={() => setFollowModal('following')}>
+                  <strong>{user.followingCount}</strong>
+                  <span>Following</span>
+                </button>
               </div>
             </div>
           </div>
@@ -357,6 +417,10 @@ export default function Profile() {
         )}
 
       </div>
+
+      {followModal && (
+        <FollowListModal userId={user.id} kind={followModal} onClose={() => setFollowModal(null)} />
+      )}
     </>
   )
 }

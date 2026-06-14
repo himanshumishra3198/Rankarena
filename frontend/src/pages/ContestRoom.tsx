@@ -5,6 +5,7 @@ import type { Contest, Question } from '../lib/types'
 import InstructionsModal from '../components/InstructionsModal'
 import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
+import { QuestionContent } from '../components/QuestionContent'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
@@ -613,12 +614,7 @@ export default function ContestRoom() {
             &nbsp;·&nbsp; {currentSection}
             &nbsp;·&nbsp; +{currentQ.marks} / −{currentQ.negativeMarks}
           </p>
-          {currentQ.imageUrl && (
-            <div className="question-image">
-              <img src={currentQ.imageUrl} alt="Question diagram" />
-            </div>
-          )}
-          <p className="question-text">{currentQ.text}</p>
+          <QuestionContent q={currentQ} />
 
           <div className="options">
             {OPTIONS.map(opt => (

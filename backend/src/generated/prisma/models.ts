@@ -11,6 +11,7 @@
 export type * from './models/User'
 export type * from './models/Follow'
 export type * from './models/Contest'
+export type * from './models/Passage'
 export type * from './models/Question'
 export type * from './models/ContestQuestion'
 export type * from './models/Participation'

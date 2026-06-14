@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   Follow: 'Follow',
   Contest: 'Contest',
+  Passage: 'Passage',
   Question: 'Question',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "contest" | "question" | "contestQuestion" | "participation" | "ratingHistory"
+    modelProps: "user" | "follow" | "contest" | "passage" | "question" | "contestQuestion" | "participation" | "ratingHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -629,6 +630,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ContestCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ContestCountAggregateOutputType> | number
+        }
+      }
+    }
+    Passage: {
+      payload: Prisma.$PassagePayload<ExtArgs>
+      fields: Prisma.PassageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PassageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PassageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>
+        }
+        findFirst: {
+          args: Prisma.PassageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PassageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>
+        }
+        findMany: {
+          args: Prisma.PassageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>[]
+        }
+        create: {
+          args: Prisma.PassageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>
+        }
+        createMany: {
+          args: Prisma.PassageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PassageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>[]
+        }
+        delete: {
+          args: Prisma.PassageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>
+        }
+        update: {
+          args: Prisma.PassageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>
+        }
+        deleteMany: {
+          args: Prisma.PassageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PassageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PassageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>[]
+        }
+        upsert: {
+          args: Prisma.PassageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassagePayload>
+        }
+        aggregate: {
+          args: Prisma.PassageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePassage>
+        }
+        groupBy: {
+          args: Prisma.PassageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PassageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PassageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PassageCountAggregateOutputType> | number
         }
       }
     }
@@ -1004,8 +1079,21 @@ export const ContestScalarFieldEnum = {
 export type ContestScalarFieldEnum = (typeof ContestScalarFieldEnum)[keyof typeof ContestScalarFieldEnum]
 
 
+export const PassageScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  type: 'type',
+  tableData: 'tableData',
+  createdAt: 'createdAt'
+} as const
+
+export type PassageScalarFieldEnum = (typeof PassageScalarFieldEnum)[keyof typeof PassageScalarFieldEnum]
+
+
 export const QuestionScalarFieldEnum = {
   id: 'id',
+  questionType: 'questionType',
   text: 'text',
   imageUrl: 'imageUrl',
   optionA: 'optionA',
@@ -1014,7 +1102,9 @@ export const QuestionScalarFieldEnum = {
   optionD: 'optionD',
   correctOption: 'correctOption',
   subject: 'subject',
-  difficulty: 'difficulty'
+  difficulty: 'difficulty',
+  passageId: 'passageId',
+  structuredData: 'structuredData'
 } as const
 
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
@@ -1206,6 +1296,34 @@ export type ListEnumContestStatusFieldRefInput<$PrismaModel> = FieldRefInputType
 
 
 /**
+ * Reference to a field of type 'PassageType'
+ */
+export type EnumPassageTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PassageType'>
+    
+
+
+/**
+ * Reference to a field of type 'PassageType[]'
+ */
+export type ListEnumPassageTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PassageType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'QuestionType'
+ */
+export type EnumQuestionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QuestionType'>
+    
+
+
+/**
+ * Reference to a field of type 'QuestionType[]'
+ */
+export type ListEnumQuestionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QuestionType[]'>
+    
+
+
+/**
  * Reference to a field of type 'Subject'
  */
 export type EnumSubjectFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Subject'>
@@ -1359,6 +1477,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   follow?: Prisma.FollowOmit
   contest?: Prisma.ContestOmit
+  passage?: Prisma.PassageOmit
   question?: Prisma.QuestionOmit
   contestQuestion?: Prisma.ContestQuestionOmit
   participation?: Prisma.ParticipationOmit

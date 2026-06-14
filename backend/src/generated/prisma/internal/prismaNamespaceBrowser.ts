@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Follow: 'Follow',
   Contest: 'Contest',
+  Passage: 'Passage',
   Question: 'Question',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
@@ -113,8 +114,21 @@ export const ContestScalarFieldEnum = {
 export type ContestScalarFieldEnum = (typeof ContestScalarFieldEnum)[keyof typeof ContestScalarFieldEnum]
 
 
+export const PassageScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  type: 'type',
+  tableData: 'tableData',
+  createdAt: 'createdAt'
+} as const
+
+export type PassageScalarFieldEnum = (typeof PassageScalarFieldEnum)[keyof typeof PassageScalarFieldEnum]
+
+
 export const QuestionScalarFieldEnum = {
   id: 'id',
+  questionType: 'questionType',
   text: 'text',
   imageUrl: 'imageUrl',
   optionA: 'optionA',
@@ -123,7 +137,9 @@ export const QuestionScalarFieldEnum = {
   optionD: 'optionD',
   correctOption: 'correctOption',
   subject: 'subject',
-  difficulty: 'difficulty'
+  difficulty: 'difficulty',
+  passageId: 'passageId',
+  structuredData: 'structuredData'
 } as const
 
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]

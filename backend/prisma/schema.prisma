@@ -54,18 +54,36 @@ model Contest {
   @@map("contests")
 }
 
-model Question {
-  id            String     @id @default(uuid())
-  text          String
-  imageUrl      String?    @map("image_url")
-  optionA       String     @map("option_a")
-  optionB       String     @map("option_b")
-  optionC       String     @map("option_c")
-  optionD       String     @map("option_d")
-  correctOption String     @map("correct_option")
-  subject       Subject
-  difficulty    Difficulty @default(MEDIUM)
+// Passage groups related questions (reading comprehension or data table)
+model Passage {
+  id        String      @id @default(uuid())
+  title     String      @default("")
+  content   String      // passage text, or description for table type
+  type      PassageType @default(TEXT)
+  tableData Json?       @map("table_data") // { headers: string[], rows: string[][] }
+  createdAt DateTime    @default(now()) @map("created_at")
 
+  questions Question[]
+
+  @@map("passages")
+}
+
+model Question {
+  id             String       @id @default(uuid())
+  questionType   QuestionType @default(STANDARD) @map("question_type")
+  text           String
+  imageUrl       String?      @map("image_url")
+  optionA        String       @map("option_a")
+  optionB        String       @map("option_b")
+  optionC        String       @map("option_c")
+  optionD        String       @map("option_d")
+  correctOption  String       @map("correct_option")
+  subject        Subject
+  difficulty     Difficulty   @default(MEDIUM)
+  passageId      String?      @map("passage_id")
+  structuredData Json?        @map("structured_data") // for SYLLOGISM: { statements: string[], conclusions: string[] }
+
+  passage          Passage?          @relation(fields: [passageId], references: [id])
   contestQuestions ContestQuestion[]
 
   @@map("questions")
@@ -142,4 +160,16 @@ enum Difficulty {
   EASY
   MEDIUM
   HARD
+}
+
+enum QuestionType {
+  STANDARD
+  SYLLOGISM
+  PASSAGE
+  TABLE
+}
+
+enum PassageType {
+  TEXT
+  TABLE
 }

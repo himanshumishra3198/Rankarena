@@ -216,6 +216,30 @@ export type EnumContestStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumContestStatusFilter<$PrismaModel>
 }
 
+export type EnumPassageTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.PassageType | Prisma.EnumPassageTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPassageTypeFilter<$PrismaModel> | $Enums.PassageType
+}
+
+export type EnumPassageTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PassageType | Prisma.EnumPassageTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPassageTypeWithAggregatesFilter<$PrismaModel> | $Enums.PassageType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPassageTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPassageTypeFilter<$PrismaModel>
+}
+
+export type EnumQuestionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestionType | Prisma.EnumQuestionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestionTypeFilter<$PrismaModel> | $Enums.QuestionType
+}
+
 export type StringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -243,6 +267,16 @@ export type EnumDifficultyFilter<$PrismaModel = never> = {
   in?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
   notIn?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumDifficultyFilter<$PrismaModel> | $Enums.Difficulty
+}
+
+export type EnumQuestionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestionType | Prisma.EnumQuestionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestionTypeWithAggregatesFilter<$PrismaModel> | $Enums.QuestionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQuestionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQuestionTypeFilter<$PrismaModel>
 }
 
 export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -498,6 +532,30 @@ export type NestedEnumContestStatusWithAggregatesFilter<$PrismaModel = never> = 
   _max?: Prisma.NestedEnumContestStatusFilter<$PrismaModel>
 }
 
+export type NestedEnumPassageTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.PassageType | Prisma.EnumPassageTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPassageTypeFilter<$PrismaModel> | $Enums.PassageType
+}
+
+export type NestedEnumPassageTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PassageType | Prisma.EnumPassageTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PassageType[] | Prisma.ListEnumPassageTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPassageTypeWithAggregatesFilter<$PrismaModel> | $Enums.PassageType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPassageTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPassageTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumQuestionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestionType | Prisma.EnumQuestionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestionTypeFilter<$PrismaModel> | $Enums.QuestionType
+}
+
 export type NestedStringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -524,6 +582,16 @@ export type NestedEnumDifficultyFilter<$PrismaModel = never> = {
   in?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
   notIn?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumDifficultyFilter<$PrismaModel> | $Enums.Difficulty
+}
+
+export type NestedEnumQuestionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestionType | Prisma.EnumQuestionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestionType[] | Prisma.ListEnumQuestionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestionTypeWithAggregatesFilter<$PrismaModel> | $Enums.QuestionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQuestionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQuestionTypeFilter<$PrismaModel>
 }
 
 export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {

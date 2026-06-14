@@ -136,9 +136,13 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
     include: {
       question: {
         select: {
-          id: true, text: true,
+          id: true, text: true, questionType: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
-          subject: true, difficulty: true,
+          subject: true, difficulty: true, imageUrl: true,
+          structuredData: true,
+          passage: {
+            select: { id: true, title: true, content: true, type: true, tableData: true },
+          },
         },
       },
     },
@@ -390,9 +394,13 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     include: {
       question: {
         select: {
-          id: true, text: true, imageUrl: true,
+          id: true, text: true, imageUrl: true, questionType: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
           correctOption: true, subject: true, difficulty: true,
+          structuredData: true,
+          passage: {
+            select: { id: true, title: true, content: true, type: true, tableData: true },
+          },
         },
       },
     },

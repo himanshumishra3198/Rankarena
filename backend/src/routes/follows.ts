@@ -48,4 +48,26 @@ router.get("/following", authenticate, async (req: AuthRequest, res: Response) =
   res.json(follows.map((f) => f.followingId));
 });
 
+// Full list (with user details) of who a user follows
+router.get("/:userId/following/list", authenticate, async (req: AuthRequest, res: Response) => {
+  const userId = req.params.userId as string;
+  const follows = await prisma.follow.findMany({
+    where: { followerId: userId },
+    include: { following: { select: { id: true, name: true, rating: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json(follows.map((f) => f.following));
+});
+
+// Full list (with user details) of a user's followers
+router.get("/:userId/followers/list", authenticate, async (req: AuthRequest, res: Response) => {
+  const userId = req.params.userId as string;
+  const follows = await prisma.follow.findMany({
+    where: { followingId: userId },
+    include: { follower: { select: { id: true, name: true, rating: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json(follows.map((f) => f.follower));
+});
+
 export default router;

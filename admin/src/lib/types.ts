@@ -19,10 +19,22 @@ export interface Contest {
   status: 'SCHEDULED' | 'LIVE' | 'ENDED'
 }
 
+export type QuestionType = 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+export type PassageType = 'TEXT' | 'TABLE'
+
+export interface Passage {
+  id: string
+  title: string
+  content: string
+  type: PassageType
+  tableData?: { headers: string[]; rows: string[][] } | null
+}
+
 export interface Question {
   id: string
+  questionType: QuestionType
   text: string
-  imageUrl?: string
+  imageUrl?: string | null
   optionA: string
   optionB: string
   optionC: string
@@ -30,6 +42,9 @@ export interface Question {
   correctOption: string
   subject: 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
+  passageId?: string | null
+  passage?: Passage | null
+  structuredData?: { statements: string[]; conclusions: string[] } | null
 }
 
 export interface ContestQuestion {

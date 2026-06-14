@@ -33,6 +33,11 @@ export type Follow = Prisma.FollowModel
  */
 export type Contest = Prisma.ContestModel
 /**
+ * Model Passage
+ * 
+ */
+export type Passage = Prisma.PassageModel
+/**
  * Model Question
  * 
  */

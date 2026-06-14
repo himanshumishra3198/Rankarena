@@ -189,6 +189,39 @@ select.input { cursor: pointer; }
 .question-image img { max-width: 100%; max-height: 280px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); }
 .question-text { font-size: 17px; font-weight: 500; color: var(--heading); line-height: 1.7; margin-bottom: 24px; }
 
+/* ── Rich question context (passage / table / syllogism) ───────────────────── */
+.qc-context {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.qc-context-title { font-weight: 600; font-size: 15px; color: var(--heading); margin-bottom: 10px; line-height: 1.5; }
+.qc-context-text { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
+.qc-passage-text { font-size: 15px; line-height: 1.8; white-space: pre-wrap; margin-bottom: 0; }
+
+.qc-table-wrap { overflow-x: auto; }
+.qc-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.qc-table th, .qc-table td { border: 1px solid var(--border); padding: 7px 12px; text-align: center; }
+.qc-table th { background: var(--bg); font-weight: 600; color: var(--heading); }
+.qc-table td { color: var(--text); }
+.qc-table tbody tr:nth-child(even) { background: var(--bg); }
+
+.qc-syllogism {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.qc-syl-block { margin-bottom: 14px; }
+.qc-syl-block:last-child { margin-bottom: 0; }
+.qc-syl-heading { font-weight: 700; font-size: 14px; color: var(--heading); margin-bottom: 8px; }
+.qc-syl-item { font-size: 15px; font-weight: 600; color: var(--heading); line-height: 1.7; padding-left: 8px; }
+.qc-syl-num { display: inline-block; min-width: 26px; font-weight: 700; color: var(--primary); }
+
 .options { display: flex; flex-direction: column; gap: 10px; }
 .option { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border: 1.5px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: border-color .15s, background .15s; user-select: none; }
 .option:not(.locked):hover { border-color: var(--primary); background: var(--primary-light); }
@@ -465,6 +498,55 @@ select.input { cursor: pointer; }
   box-shadow: 0 3px 12px rgba(0,0,0,.25);
   font-weight: 800;
 }
+
+/* ── Follow stats ──────────────────────────────────────────── */
+.follow-stats { display: flex; gap: 20px; margin-top: 12px; }
+.follow-stat {
+  display: flex; align-items: baseline; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: 0;
+  color: var(--text-muted); font-size: 14px;
+  transition: color .15s;
+}
+.follow-stat:hover { color: var(--primary); }
+.follow-stat strong { font-size: 17px; color: var(--heading); font-weight: 700; }
+.follow-stat:hover strong { color: var(--primary); }
+
+/* ── Follow list modal ─────────────────────────────────────── */
+.follow-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 16px;
+}
+.follow-modal {
+  background: var(--surface); border-radius: 12px;
+  width: 100%; max-width: 400px; max-height: 70vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+.follow-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.follow-modal-close {
+  background: none; border: none; font-size: 26px; line-height: 1;
+  color: var(--text-muted); cursor: pointer; padding: 0 4px;
+}
+.follow-modal-close:hover { color: var(--heading); }
+.follow-modal-body { overflow-y: auto; padding: 8px; }
+.follow-user-row {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 10px 12px; border: none; background: none;
+  cursor: pointer; border-radius: 8px; text-align: left;
+  transition: background .15s;
+}
+.follow-user-row:hover { background: var(--bg); }
+.follow-user-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 17px;
+}
+.follow-user-name { font-weight: 600; font-size: 15px; }
+.follow-user-rating { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 
 /* Rating chart */
 .chart-empty { display: flex; align-items: center; justify-content: center; height: 160px; color: var(--text-muted); font-size: 14px; background: var(--bg); border-radius: var(--radius); }

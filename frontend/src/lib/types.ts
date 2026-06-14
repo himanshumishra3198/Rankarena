@@ -19,8 +19,17 @@ export interface Contest {
   _count?: { participations: number }
 }
 
+export interface Passage {
+  id: string
+  title: string
+  content: string
+  type: 'TEXT' | 'TABLE'
+  tableData?: { headers: string[]; rows: string[][] } | null
+}
+
 export interface Question {
   id: string
+  questionType: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   text: string
   imageUrl?: string
   optionA: string
@@ -32,4 +41,6 @@ export interface Question {
   marks: number
   negativeMarks: number
   correctOption?: string
+  structuredData?: { statements: string[]; conclusions: string[] } | null
+  passage?: Passage | null
 }

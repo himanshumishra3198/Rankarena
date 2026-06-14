@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
+import { QuestionContext } from '../components/QuestionContent'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RichQuestion {
@@ -9,6 +10,9 @@ interface RichQuestion {
   optionA: string; optionB: string; optionC: string; optionD: string
   correctOption: string; subject: string; difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   marks: number; negativeMarks: number
+  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+  structuredData?: { statements: string[]; conclusions: string[] } | null
+  passage?: { id: string; title: string; content: string; type: 'TEXT' | 'TABLE'; tableData?: { headers: string[]; rows: string[][] } | null } | null
 }
 
 interface ResultData {
@@ -555,6 +559,7 @@ export default function Result() {
 
                   {isOpen && (
                     <div className="review-item-body">
+                      <QuestionContext q={q} />
                       {q.imageUrl && (
                         <div style={{ marginBottom: 12 }}>
                           <img src={q.imageUrl} alt="Question diagram" style={{ maxHeight: 200, maxWidth: '100%', borderRadius: 6, border: '1px solid var(--border)' }} />

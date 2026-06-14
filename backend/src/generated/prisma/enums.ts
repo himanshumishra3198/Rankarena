@@ -43,3 +43,21 @@ export const Difficulty = {
 } as const
 
 export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty]
+
+
+export const QuestionType = {
+  STANDARD: 'STANDARD',
+  SYLLOGISM: 'SYLLOGISM',
+  PASSAGE: 'PASSAGE',
+  TABLE: 'TABLE'
+} as const
+
+export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
+
+
+export const PassageType = {
+  TEXT: 'TEXT',
+  TABLE: 'TABLE'
+} as const
+
+export type PassageType = (typeof PassageType)[keyof typeof PassageType]

@@ -1,10 +1,27 @@
 import { Router, Response } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
+import { Prisma } from "../generated/prisma/client";
 import redis from "../lib/redis";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
+
+// Convert a parsed question payload into Prisma-safe create/update data.
+// Handles JSON-null (structuredData) and nullable passageId correctly.
+function toQuestionData(d: Record<string, any>) {
+  const out: Record<string, any> = {};
+  for (const k of ["questionType", "text", "optionA", "optionB", "optionC",
+    "optionD", "correctOption", "subject", "difficulty"] as const) {
+    if (d[k] !== undefined) out[k] = d[k];
+  }
+  if (d.imageUrl !== undefined) out.imageUrl = d.imageUrl ?? null;
+  if (d.passageId !== undefined) out.passageId = d.passageId ?? null;
+  if (d.structuredData !== undefined) {
+    out.structuredData = d.structuredData ?? Prisma.JsonNull;
+  }
+  return out;
+}
 router.use(authenticate, requireAdmin);
 
 // ── Contests ─────────────────────────────────────────────
@@ -178,11 +195,50 @@ router.post("/contests/:id/restart", async (req: AuthRequest, res: Response) => 
   res.json(updated);
 });
 
+// ── Passages ──────────────────────────────────────────────
+
+const passageSchema = z.object({
+  title: z.string().default(""),
+  content: z.string().min(1),
+  type: z.enum(["TEXT", "TABLE"]).default("TEXT"),
+  tableData: z.object({
+    headers: z.array(z.string()),
+    rows: z.array(z.array(z.string())),
+  }).optional(),
+});
+
+router.get("/passages", async (_req, res: Response) => {
+  const passages = await prisma.passage.findMany({ orderBy: { createdAt: "desc" } });
+  res.json(passages);
+});
+
+router.post("/passages", async (req: AuthRequest, res: Response) => {
+  const parsed = passageSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  const passage = await prisma.passage.create({ data: parsed.data });
+  res.status(201).json(passage);
+});
+
+router.put("/passages/:id", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const parsed = passageSchema.partial().safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  const passage = await prisma.passage.update({ where: { id }, data: parsed.data });
+  res.json(passage);
+});
+
+router.delete("/passages/:id", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  await prisma.passage.delete({ where: { id } });
+  res.json({ ok: true });
+});
+
 // ── Questions ─────────────────────────────────────────────
 
 const questionSchema = z.object({
+  questionType: z.enum(["STANDARD", "SYLLOGISM", "PASSAGE", "TABLE"]).default("STANDARD"),
   text: z.string().min(1),
-  imageUrl: z.url().max(500).optional(),
+  imageUrl: z.url().max(500).optional().nullable(),
   optionA: z.string().min(1),
   optionB: z.string().min(1),
   optionC: z.string().min(1),
@@ -190,6 +246,8 @@ const questionSchema = z.object({
   correctOption: z.enum(["A", "B", "C", "D"]),
   subject: z.enum(["QUANT", "REASONING", "ENGLISH", "GK"]),
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
+  passageId: z.string().uuid().optional().nullable(),
+  structuredData: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 router.post("/questions", async (req: AuthRequest, res: Response) => {
@@ -198,7 +256,9 @@ router.post("/questions", async (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
-  const question = await prisma.question.create({ data: parsed.data });
+  const question = await prisma.question.create({
+    data: toQuestionData(parsed.data) as Prisma.QuestionUncheckedCreateInput,
+  });
   res.status(201).json(question);
 });
 
@@ -210,6 +270,7 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
       ...(subject ? { subject: subject as any } : {}),
       ...(difficulty ? { difficulty: difficulty as any } : {}),
     },
+    include: { passage: true },
     orderBy: { subject: "asc" },
   });
   res.json(questions);
@@ -222,7 +283,10 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
-  const question = await prisma.question.update({ where: { id }, data: parsed.data });
+  const question = await prisma.question.update({
+    where: { id },
+    data: toQuestionData(parsed.data) as Prisma.QuestionUncheckedUpdateInput,
+  });
   res.json(question);
 });
 
@@ -301,7 +365,7 @@ router.post("/contests/:id/questions/bulk", async (req: AuthRequest, res: Respon
     parsed.data.map(({ marks, negativeMarks, ...qData }) =>
       prisma.question.create({
         data: {
-          ...qData,
+          ...toQuestionData(qData),
           contestQuestions: {
             create: {
               contestId,
@@ -310,7 +374,7 @@ router.post("/contests/:id/questions/bulk", async (req: AuthRequest, res: Respon
               negativeMarks,
             },
           },
-        },
+        } as Prisma.QuestionCreateInput,
       })
     )
   );
