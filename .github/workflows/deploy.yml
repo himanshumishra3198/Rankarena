@@ -143,6 +143,12 @@ jobs:
               --remove-orphans \
               backend frontend admin proxy
 
+            # ── Restart proxy so nginx re-resolves upstream IPs ───────────────
+            # frontend/admin/backend get new container IPs when recreated above;
+            # nginx caches upstream IPs at startup, so without this the proxy
+            # keeps pointing at the old (dead) IPs and returns 502.
+            docker compose -f docker-compose.prod.yml restart proxy
+
             # ── Clean up dangling images ──────────────────────────────────────
             docker image prune -f
 
