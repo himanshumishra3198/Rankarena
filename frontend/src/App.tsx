@@ -5,6 +5,9 @@ import LandingPage from './pages/LandingPage'
 import Dashboard from './pages/Dashboard'
 import ContestRoom from './pages/ContestRoom'
 import Result from './pages/Result'
+import MockTests from './pages/MockTests'
+import MockRoom from './pages/MockRoom'
+import MockResult from './pages/MockResult'
 import Profile from './pages/Profile'
 import PublicProfile from './pages/PublicProfile'
 import Leaderboard from './pages/Leaderboard'
@@ -26,6 +29,9 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/contests/:id" element={<PrivateRoute><ContestRoom /></PrivateRoute>} />
         <Route path="/contests/:id/result" element={<PrivateRoute><Result /></PrivateRoute>} />
+        <Route path="/mocks" element={<PrivateRoute><MockTests /></PrivateRoute>} />
+        <Route path="/mocks/:id" element={<PrivateRoute><MockRoom /></PrivateRoute>} />
+        <Route path="/mocks/:id/result" element={<PrivateRoute><MockResult /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/profile/:id" element={<PrivateRoute><PublicProfile /></PrivateRoute>} />
         <Route path="/leaderboard" element={<PrivateRoute><Leaderboard /></PrivateRoute>} />

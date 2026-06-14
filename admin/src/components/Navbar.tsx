@@ -37,6 +37,12 @@ export default function Navbar() {
           >
             Questions
           </button>
+          <button
+            className={`nav-link ${pathname.startsWith('/mocks') ? 'active' : ''}`}
+            onClick={() => navigate('/mocks')}
+          >
+            Mock Tests
+          </button>
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

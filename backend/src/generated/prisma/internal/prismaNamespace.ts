@@ -389,6 +389,9 @@ export const ModelName = {
   Contest: 'Contest',
   Passage: 'Passage',
   Question: 'Question',
+  MockTest: 'MockTest',
+  MockTestQuestion: 'MockTestQuestion',
+  MockAttempt: 'MockAttempt',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
   RatingHistory: 'RatingHistory'
@@ -407,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "contest" | "passage" | "question" | "contestQuestion" | "participation" | "ratingHistory"
+    modelProps: "user" | "follow" | "contest" | "passage" | "question" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -781,6 +784,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MockTest: {
+      payload: Prisma.$MockTestPayload<ExtArgs>
+      fields: Prisma.MockTestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MockTestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MockTestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>
+        }
+        findFirst: {
+          args: Prisma.MockTestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MockTestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>
+        }
+        findMany: {
+          args: Prisma.MockTestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>[]
+        }
+        create: {
+          args: Prisma.MockTestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>
+        }
+        createMany: {
+          args: Prisma.MockTestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MockTestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>[]
+        }
+        delete: {
+          args: Prisma.MockTestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>
+        }
+        update: {
+          args: Prisma.MockTestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>
+        }
+        deleteMany: {
+          args: Prisma.MockTestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MockTestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MockTestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>[]
+        }
+        upsert: {
+          args: Prisma.MockTestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestPayload>
+        }
+        aggregate: {
+          args: Prisma.MockTestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMockTest>
+        }
+        groupBy: {
+          args: Prisma.MockTestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MockTestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MockTestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MockTestCountAggregateOutputType> | number
+        }
+      }
+    }
+    MockTestQuestion: {
+      payload: Prisma.$MockTestQuestionPayload<ExtArgs>
+      fields: Prisma.MockTestQuestionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MockTestQuestionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MockTestQuestionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>
+        }
+        findFirst: {
+          args: Prisma.MockTestQuestionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MockTestQuestionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>
+        }
+        findMany: {
+          args: Prisma.MockTestQuestionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>[]
+        }
+        create: {
+          args: Prisma.MockTestQuestionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>
+        }
+        createMany: {
+          args: Prisma.MockTestQuestionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MockTestQuestionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>[]
+        }
+        delete: {
+          args: Prisma.MockTestQuestionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>
+        }
+        update: {
+          args: Prisma.MockTestQuestionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>
+        }
+        deleteMany: {
+          args: Prisma.MockTestQuestionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MockTestQuestionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MockTestQuestionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>[]
+        }
+        upsert: {
+          args: Prisma.MockTestQuestionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockTestQuestionPayload>
+        }
+        aggregate: {
+          args: Prisma.MockTestQuestionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMockTestQuestion>
+        }
+        groupBy: {
+          args: Prisma.MockTestQuestionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MockTestQuestionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MockTestQuestionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MockTestQuestionCountAggregateOutputType> | number
+        }
+      }
+    }
+    MockAttempt: {
+      payload: Prisma.$MockAttemptPayload<ExtArgs>
+      fields: Prisma.MockAttemptFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MockAttemptFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MockAttemptFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>
+        }
+        findFirst: {
+          args: Prisma.MockAttemptFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MockAttemptFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>
+        }
+        findMany: {
+          args: Prisma.MockAttemptFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>[]
+        }
+        create: {
+          args: Prisma.MockAttemptCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>
+        }
+        createMany: {
+          args: Prisma.MockAttemptCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MockAttemptCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>[]
+        }
+        delete: {
+          args: Prisma.MockAttemptDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>
+        }
+        update: {
+          args: Prisma.MockAttemptUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>
+        }
+        deleteMany: {
+          args: Prisma.MockAttemptDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MockAttemptUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MockAttemptUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>[]
+        }
+        upsert: {
+          args: Prisma.MockAttemptUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MockAttemptPayload>
+        }
+        aggregate: {
+          args: Prisma.MockAttemptAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMockAttempt>
+        }
+        groupBy: {
+          args: Prisma.MockAttemptGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MockAttemptGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MockAttemptCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MockAttemptCountAggregateOutputType> | number
+        }
+      }
+    }
     ContestQuestion: {
       payload: Prisma.$ContestQuestionPayload<ExtArgs>
       fields: Prisma.ContestQuestionFieldRefs
@@ -1110,6 +1335,48 @@ export const QuestionScalarFieldEnum = {
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
 
 
+export const MockTestScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  subject: 'subject',
+  durationMinutes: 'durationMinutes',
+  negativeMarks: 'negativeMarks',
+  isPublished: 'isPublished',
+  createdAt: 'createdAt'
+} as const
+
+export type MockTestScalarFieldEnum = (typeof MockTestScalarFieldEnum)[keyof typeof MockTestScalarFieldEnum]
+
+
+export const MockTestQuestionScalarFieldEnum = {
+  mockTestId: 'mockTestId',
+  questionId: 'questionId',
+  displayOrder: 'displayOrder',
+  marks: 'marks',
+  negativeMarks: 'negativeMarks'
+} as const
+
+export type MockTestQuestionScalarFieldEnum = (typeof MockTestQuestionScalarFieldEnum)[keyof typeof MockTestQuestionScalarFieldEnum]
+
+
+export const MockAttemptScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  mockTestId: 'mockTestId',
+  score: 'score',
+  totalMarks: 'totalMarks',
+  correctCount: 'correctCount',
+  wrongCount: 'wrongCount',
+  skippedCount: 'skippedCount',
+  answers: 'answers',
+  timeSpent: 'timeSpent',
+  startedAt: 'startedAt',
+  submittedAt: 'submittedAt'
+} as const
+
+export type MockAttemptScalarFieldEnum = (typeof MockAttemptScalarFieldEnum)[keyof typeof MockAttemptScalarFieldEnum]
+
+
 export const ContestQuestionScalarFieldEnum = {
   contestId: 'contestId',
   questionId: 'questionId',
@@ -1352,6 +1619,13 @@ export type ListEnumDifficultyFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1479,6 +1753,9 @@ export type GlobalOmitConfig = {
   contest?: Prisma.ContestOmit
   passage?: Prisma.PassageOmit
   question?: Prisma.QuestionOmit
+  mockTest?: Prisma.MockTestOmit
+  mockTestQuestion?: Prisma.MockTestQuestionOmit
+  mockAttempt?: Prisma.MockAttemptOmit
   contestQuestion?: Prisma.ContestQuestionOmit
   participation?: Prisma.ParticipationOmit
   ratingHistory?: Prisma.RatingHistoryOmit

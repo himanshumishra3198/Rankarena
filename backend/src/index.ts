@@ -11,6 +11,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "change-this-secret-in
 
 import authRoutes from "./routes/auth";
 import contestRoutes from "./routes/contests";
+import mockRoutes from "./routes/mocks";
 import adminRoutes from "./routes/admin";
 import ratingRoutes from "./routes/rating";
 import profileRoutes from "./routes/profile";
@@ -44,6 +45,7 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 app.use("/auth", authLimiter, authRoutes);
 app.use("/contests/:id/submit", submitLimiter);
 app.use("/contests", contestRoutes);
+app.use("/mocks", mockRoutes);
 app.use("/admin", adminRoutes);
 app.use("/ratings", ratingRoutes);
 app.use("/profile", profileRoutes);

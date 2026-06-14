@@ -29,10 +29,16 @@ export default function Navbar() {
         </button>
         <div className="nav-links">
           <button
-            className={`nav-link ${isActive('/') && !isActive('/profile') ? 'active' : ''}`}
+            className={`nav-link ${isActive('/') && !isActive('/profile') && !isActive('/mocks') ? 'active' : ''}`}
             onClick={() => navigate('/')}
           >
             Contests
+          </button>
+          <button
+            className={`nav-link ${isActive('/mocks') ? 'active' : ''}`}
+            onClick={() => navigate('/mocks')}
+          >
+            Mock Tests
           </button>
           <button
             className={`nav-link ${isActive('/leaderboard') ? 'active' : ''}`}

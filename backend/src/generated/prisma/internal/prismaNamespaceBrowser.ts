@@ -56,6 +56,9 @@ export const ModelName = {
   Contest: 'Contest',
   Passage: 'Passage',
   Question: 'Question',
+  MockTest: 'MockTest',
+  MockTestQuestion: 'MockTestQuestion',
+  MockAttempt: 'MockAttempt',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
   RatingHistory: 'RatingHistory'
@@ -143,6 +146,48 @@ export const QuestionScalarFieldEnum = {
 } as const
 
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
+
+
+export const MockTestScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  subject: 'subject',
+  durationMinutes: 'durationMinutes',
+  negativeMarks: 'negativeMarks',
+  isPublished: 'isPublished',
+  createdAt: 'createdAt'
+} as const
+
+export type MockTestScalarFieldEnum = (typeof MockTestScalarFieldEnum)[keyof typeof MockTestScalarFieldEnum]
+
+
+export const MockTestQuestionScalarFieldEnum = {
+  mockTestId: 'mockTestId',
+  questionId: 'questionId',
+  displayOrder: 'displayOrder',
+  marks: 'marks',
+  negativeMarks: 'negativeMarks'
+} as const
+
+export type MockTestQuestionScalarFieldEnum = (typeof MockTestQuestionScalarFieldEnum)[keyof typeof MockTestQuestionScalarFieldEnum]
+
+
+export const MockAttemptScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  mockTestId: 'mockTestId',
+  score: 'score',
+  totalMarks: 'totalMarks',
+  correctCount: 'correctCount',
+  wrongCount: 'wrongCount',
+  skippedCount: 'skippedCount',
+  answers: 'answers',
+  timeSpent: 'timeSpent',
+  startedAt: 'startedAt',
+  submittedAt: 'submittedAt'
+} as const
+
+export type MockAttemptScalarFieldEnum = (typeof MockAttemptScalarFieldEnum)[keyof typeof MockAttemptScalarFieldEnum]
 
 
 export const ContestQuestionScalarFieldEnum = {

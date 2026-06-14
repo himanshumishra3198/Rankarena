@@ -19,6 +19,27 @@ export interface Contest {
   _count?: { participations: number }
 }
 
+export interface MockTestListItem {
+  id: string
+  title: string
+  subject: 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+  durationMinutes: number
+  negativeMarks: number
+  questionCount: number
+  attempted: boolean
+  lastScore: number | null
+  lastTotal: number | null
+}
+
+export interface MockTestData {
+  id: string
+  title: string
+  subject: string
+  durationMinutes: number
+  negativeMarks: number
+  questions: Question[]
+}
+
 export interface Passage {
   id: string
   title: string

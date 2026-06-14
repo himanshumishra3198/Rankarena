@@ -9,6 +9,26 @@ export const SECTION_LABELS: Record<Section, string> = {
   GK: 'General Knowledge',
 }
 
+export interface MockTest {
+  id: string
+  title: string
+  subject: Section
+  durationMinutes: number
+  negativeMarks: number
+  isPublished: boolean
+  createdAt: string
+  _count?: { mockTestQuestions: number; attempts: number }
+}
+
+export interface MockTestQuestion {
+  mockTestId: string
+  questionId: string
+  displayOrder: number
+  marks: number
+  negativeMarks: number
+  question: Question
+}
+
 export interface Contest {
   id: string
   title: string

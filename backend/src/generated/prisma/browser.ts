@@ -43,6 +43,21 @@ export type Passage = Prisma.PassageModel
  */
 export type Question = Prisma.QuestionModel
 /**
+ * Model MockTest
+ * 
+ */
+export type MockTest = Prisma.MockTestModel
+/**
+ * Model MockTestQuestion
+ * 
+ */
+export type MockTestQuestion = Prisma.MockTestQuestionModel
+/**
+ * Model MockAttempt
+ * 
+ */
+export type MockAttempt = Prisma.MockAttemptModel
+/**
  * Model ContestQuestion
  * 
  */

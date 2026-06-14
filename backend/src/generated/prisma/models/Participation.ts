@@ -523,10 +523,6 @@ export type ParticipationUncheckedUpdateManyWithoutContestNestedInput = {
   deleteMany?: Prisma.ParticipationScalarWhereInput | Prisma.ParticipationScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type ParticipationCreateWithoutUserInput = {
   id?: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string

@@ -18,6 +18,7 @@ model User {
 
   participations Participation[]
   ratingHistory  RatingHistory[]
+  mockAttempts   MockAttempt[]
   following      Follow[]        @relation("UserFollowing")
   followers      Follow[]        @relation("UserFollowers")
 
@@ -83,10 +84,62 @@ model Question {
   passageId      String?      @map("passage_id")
   structuredData Json?        @map("structured_data") // for SYLLOGISM: { statements: string[], conclusions: string[] }
 
-  passage          Passage?          @relation(fields: [passageId], references: [id])
-  contestQuestions ContestQuestion[]
+  passage           Passage?            @relation(fields: [passageId], references: [id])
+  contestQuestions  ContestQuestion[]
+  mockTestQuestions MockTestQuestion[]
 
   @@map("questions")
+}
+
+// Sectional (subject-wise) practice mock test — always available, no rating.
+model MockTest {
+  id              String   @id @default(uuid())
+  title           String
+  subject         Subject
+  durationMinutes Int      @map("duration_minutes")
+  negativeMarks   Decimal  @default(0.5) @map("negative_marks")
+  isPublished     Boolean  @default(false) @map("is_published")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  mockTestQuestions MockTestQuestion[]
+  attempts          MockAttempt[]
+
+  @@map("mock_tests")
+}
+
+model MockTestQuestion {
+  mockTestId    String  @map("mock_test_id")
+  questionId    String  @map("question_id")
+  displayOrder  Int     @map("display_order")
+  marks         Decimal @default(2)
+  negativeMarks Decimal @default(0.5) @map("negative_marks")
+
+  mockTest MockTest @relation(fields: [mockTestId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@id([mockTestId, questionId])
+  @@map("mock_test_questions")
+}
+
+model MockAttempt {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  mockTestId   String    @map("mock_test_id")
+  score        Decimal   @default(0)
+  totalMarks   Decimal   @default(0) @map("total_marks")
+  correctCount Int       @default(0) @map("correct_count")
+  wrongCount   Int       @default(0) @map("wrong_count")
+  skippedCount Int       @default(0) @map("skipped_count")
+  answers      Json?
+  timeSpent    Json?     @map("time_spent")
+  startedAt    DateTime  @default(now()) @map("started_at")
+  submittedAt  DateTime? @map("submitted_at")
+
+  user     User     @relation(fields: [userId], references: [id])
+  mockTest MockTest @relation(fields: [mockTestId], references: [id])
+
+  @@unique([userId, mockTestId])
+  @@map("mock_attempts")
 }
 
 model ContestQuestion {

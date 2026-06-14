@@ -407,4 +407,93 @@ router.post("/contests/:id/questions/bulk", async (req: AuthRequest, res: Respon
   res.status(201).json({ created: results.length });
 });
 
+// ── Mock Tests (sectional practice) ───────────────────────
+
+const mockTestSchema = z.object({
+  title: z.string().min(1),
+  subject: z.enum(["QUANT", "REASONING", "ENGLISH", "GK"]),
+  durationMinutes: z.number().int().min(1).max(600),
+  negativeMarks: z.number().min(0).default(0.5),
+  isPublished: z.boolean().default(false),
+});
+
+// List all mock tests with question + attempt counts
+router.get("/mocks", async (_req, res: Response) => {
+  const mocks = await prisma.mockTest.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { mockTestQuestions: true, attempts: true } } },
+  });
+  res.json(mocks);
+});
+
+router.post("/mocks", async (req: AuthRequest, res: Response) => {
+  const parsed = mockTestSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  const mock = await prisma.mockTest.create({ data: parsed.data });
+  res.status(201).json(mock);
+});
+
+router.put("/mocks/:id", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const parsed = mockTestSchema.partial().safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  const mock = await prisma.mockTest.update({ where: { id }, data: parsed.data });
+  res.json(mock);
+});
+
+router.delete("/mocks/:id", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  // Cascade handles mock_test_questions and mock_attempts
+  await prisma.mockTest.delete({ where: { id } });
+  res.json({ ok: true });
+});
+
+// Questions in a mock (with full question data)
+router.get("/mocks/:id/questions", async (req: AuthRequest, res: Response) => {
+  const mockTestId = req.params.id as string;
+  const mtqs = await prisma.mockTestQuestion.findMany({
+    where: { mockTestId },
+    include: { question: { include: { passage: true } } },
+    orderBy: { displayOrder: "asc" },
+  });
+  res.json(mtqs);
+});
+
+const addMockQuestionSchema = z.object({
+  questionId: z.uuid(),
+  marks: z.number().min(0.1).default(2),
+  negativeMarks: z.number().min(0).default(0.5),
+});
+
+router.post("/mocks/:id/questions", async (req: AuthRequest, res: Response) => {
+  const mockTestId = req.params.id as string;
+  const parsed = addMockQuestionSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+
+  const last = await prisma.mockTestQuestion.findFirst({
+    where: { mockTestId },
+    orderBy: { displayOrder: "desc" },
+    select: { displayOrder: true },
+  });
+  const displayOrder = (last?.displayOrder ?? 0) + 1;
+
+  try {
+    const mtq = await prisma.mockTestQuestion.create({
+      data: { mockTestId, displayOrder, ...parsed.data },
+    });
+    res.status(201).json(mtq);
+  } catch {
+    res.status(400).json({ error: "Question already added to this mock test." });
+  }
+});
+
+router.delete("/mocks/:id/questions/:qid", async (req: AuthRequest, res: Response) => {
+  const mockTestId = req.params.id as string;
+  const questionId = req.params.qid as string;
+  await prisma.mockTestQuestion.delete({
+    where: { mockTestId_questionId: { mockTestId, questionId } },
+  });
+  res.json({ ok: true });
+});
+
 export default router;
