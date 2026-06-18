@@ -9,6 +9,21 @@ import { SECTION_LABELS } from '../lib/types'
 const TYPE_LABELS: Record<string, string> = {
   STANDARD: 'Standard', SYLLOGISM: 'Syllogism', PASSAGE: 'Passage', TABLE: 'Table',
 }
+const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
+
+const emptyCreate = {
+  text: '', imageUrl: '',
+  optionA: '', optionB: '', optionC: '', optionD: '',
+  correctOption: 'A',
+  difficulty: 'MEDIUM',
+}
+
+function errStr(err: any, fallback: string): string {
+  const e = err?.response?.data?.error
+  if (typeof e === 'string') return e
+  if (Array.isArray(e)) return e.map((i: any) => i?.message).filter(Boolean).join(', ') || fallback
+  return fallback
+}
 
 export default function MockTestDetail() {
   const { id } = useParams<{ id: string }>()
@@ -22,6 +37,10 @@ export default function MockTestDetail() {
   const [negMarks, setNegMarks] = useState(0.5)
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
+  const [tab, setTab] = useState<'bank' | 'create'>('bank')
+  const [cForm, setCForm] = useState(emptyCreate)
+  const [creating, setCreating] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   async function load() {
     const [mockRes, mtqRes, bankRes] = await Promise.all([
@@ -53,6 +72,44 @@ export default function MockTestDetail() {
       const e = err?.response?.data?.error
       setError(typeof e === 'string' ? e : 'Failed to add question')
     } finally { setAdding(false) }
+  }
+
+  // Create a brand-new STANDARD question (in the mock's section) and link it.
+  async function createAndAdd(e: FormEvent) {
+    e.preventDefault()
+    if (!mock) return
+    setCreating(true); setError('')
+    try {
+      const qRes = await api.post('/admin/questions', {
+        questionType: 'STANDARD',
+        text: cForm.text,
+        imageUrl: cForm.imageUrl || null,
+        optionA: cForm.optionA, optionB: cForm.optionB, optionC: cForm.optionC, optionD: cForm.optionD,
+        correctOption: cForm.correctOption,
+        subject: mock.subject,
+        difficulty: cForm.difficulty,
+      })
+      await api.post(`/admin/mocks/${id}/questions`, {
+        questionId: qRes.data.id,
+        marks: Number(marks),
+        negativeMarks: Number(negMarks),
+      })
+      setCForm(emptyCreate); load()
+    } catch (err: any) {
+      setError(errStr(err, 'Failed to create question'))
+    } finally { setCreating(false) }
+  }
+
+  async function uploadImage(file: File) {
+    setUploading(true); setError('')
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await api.post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      setCForm(f => ({ ...f, imageUrl: res.data.url }))
+    } catch (err: any) {
+      setError(errStr(err, 'Image upload failed'))
+    } finally { setUploading(false) }
   }
 
   async function removeQuestion(qid: string) {
@@ -91,42 +148,126 @@ export default function MockTestDetail() {
           </div>
         </div>
 
-        {/* Add question from bank */}
+        {/* Add question — pick from bank OR create new */}
         <div className="card" style={{ marginBottom: 16 }}>
-          <h2 style={{ marginBottom: 12 }}>Add Question from Bank</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-            Showing only <strong>{SECTION_LABELS[mock.subject]}</strong> questions. Create new questions in the Questions tab.
-          </p>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            <button className={`btn btn-sm ${tab === 'bank' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => { setTab('bank'); setError('') }}>
+              Pick from bank{availableBank.length > 0 ? ` (${availableBank.length})` : ''}
+            </button>
+            <button className={`btn btn-sm ${tab === 'create' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => { setTab('create'); setError('') }}>
+              + Create new question
+            </button>
+          </div>
+
           {error && <div className="alert alert-error">{error}</div>}
-          {availableBank.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-              No more {SECTION_LABELS[mock.subject]} questions available. Add some in the Questions tab.
-            </p>
-          ) : (
-            <form onSubmit={addFromBank} style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <div className="form-group" style={{ flex: 1, marginBottom: 0, minWidth: 300 }}>
-                <label>Question</label>
-                <select className="input" value={selectedQId} onChange={e => setSelectedQId(e.target.value)} required>
-                  <option value="">Select a question...</option>
-                  {availableBank.map(q => (
-                    <option key={q.id} value={q.id}>
-                      [{TYPE_LABELS[q.questionType] ?? 'Q'}] {(q.text || q.passage?.title || 'question').slice(0, 80)}
-                    </option>
-                  ))}
-                </select>
+
+          {/* Marks/negative apply to whichever method you use */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div className="form-group" style={{ marginBottom: 0, width: 110 }}>
+              <label>Marks</label>
+              <input className="input" type="number" min={0.1} step="any" value={marks}
+                onChange={e => setMarks(Number(e.target.value))} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0, width: 110 }}>
+              <label>Negative</label>
+              <input className="input" type="number" min={0} step="any" value={negMarks}
+                onChange={e => setNegMarks(Number(e.target.value))} />
+            </div>
+          </div>
+
+          {tab === 'bank' && (
+            <>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                Showing only <strong>{SECTION_LABELS[mock.subject]}</strong> questions from the bank.
+              </p>
+              {availableBank.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+                  No more {SECTION_LABELS[mock.subject]} questions in the bank. Use <strong>Create new question</strong> to add one directly.
+                </p>
+              ) : (
+                <form onSubmit={addFromBank} style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                  <div className="form-group" style={{ flex: 1, marginBottom: 0, minWidth: 300 }}>
+                    <label>Question</label>
+                    <select className="input" value={selectedQId} onChange={e => setSelectedQId(e.target.value)} required>
+                      <option value="">Select a question...</option>
+                      {availableBank.map(q => (
+                        <option key={q.id} value={q.id}>
+                          [{TYPE_LABELS[q.questionType] ?? 'Q'}] {(q.text || q.passage?.title || 'question').slice(0, 80)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button className="btn btn-primary" type="submit" disabled={adding || !selectedQId} style={{ flexShrink: 0 }}>
+                    {adding ? 'Adding...' : 'Add'}
+                  </button>
+                </form>
+              )}
+            </>
+          )}
+
+          {tab === 'create' && (
+            <form onSubmit={createAndAdd}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                Creates a <strong>{SECTION_LABELS[mock.subject]}</strong> question in the bank and adds it to this mock.
+              </p>
+              <div className="form-group">
+                <label>Question Text</label>
+                <textarea className="input" rows={3} value={cForm.text} required
+                  onChange={e => setCForm(f => ({ ...f, text: e.target.value }))} style={{ resize: 'vertical' }} />
               </div>
-              <div className="form-group" style={{ marginBottom: 0, width: 90 }}>
-                <label>Marks</label>
-                <input className="input" type="number" min={0.1} step="any" value={marks}
-                  onChange={e => setMarks(Number(e.target.value))} />
+
+              {/* Optional image */}
+              <div className="form-group">
+                <label>Question Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label className="btn btn-ghost btn-sm" style={{ cursor: uploading ? 'wait' : 'pointer', margin: 0 }}>
+                    {uploading ? 'Uploading…' : cForm.imageUrl ? '🖼 Replace Image' : '📷 Upload Image'}
+                    <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style={{ display: 'none' }}
+                      disabled={uploading}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = '' }} />
+                  </label>
+                  {cForm.imageUrl && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <img src={cForm.imageUrl} alt="Question" style={{ height: 48, borderRadius: 6, border: '1px solid var(--border)' }} />
+                      <button type="button" className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }}
+                        onClick={() => setCForm(f => ({ ...f, imageUrl: '' }))}>Remove</button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="form-group" style={{ marginBottom: 0, width: 90 }}>
-                <label>Negative</label>
-                <input className="input" type="number" min={0} step="any" value={negMarks}
-                  onChange={e => setNegMarks(Number(e.target.value))} />
+
+              <div className="form-row">
+                {(['A', 'B', 'C', 'D'] as const).map(opt => (
+                  <div className="form-group" key={opt}>
+                    <label>Option {opt}</label>
+                    <input className="input" required
+                      value={cForm[`option${opt}` as keyof typeof emptyCreate] as string}
+                      onChange={e => setCForm(f => ({ ...f, [`option${opt}`]: e.target.value }))} />
+                  </div>
+                ))}
               </div>
-              <button className="btn btn-primary" type="submit" disabled={adding || !selectedQId} style={{ flexShrink: 0 }}>
-                {adding ? 'Adding...' : 'Add'}
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Correct Option</label>
+                  <select className="input" value={cForm.correctOption}
+                    onChange={e => setCForm(f => ({ ...f, correctOption: e.target.value }))}>
+                    {['A', 'B', 'C', 'D'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Difficulty</label>
+                  <select className="input" value={cForm.difficulty}
+                    onChange={e => setCForm(f => ({ ...f, difficulty: e.target.value }))}>
+                    {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <button className="btn btn-primary" type="submit" disabled={creating}>
+                {creating ? 'Creating…' : 'Create & Add to Mock'}
               </button>
             </form>
           )}
