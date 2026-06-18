@@ -154,3 +154,12 @@ tr:hover td { background: var(--surface-raised); }
 .re-content:empty:before { content: attr(data-placeholder); color: var(--text-muted); }
 .re-content sub { vertical-align: sub; font-size: 0.75em; }
 .re-content sup { vertical-align: super; font-size: 0.75em; }
+
+/* Symbol picker */
+.re-btn.active { background: var(--surface); border-color: var(--primary); color: var(--primary); }
+.re-symbols { padding: 8px 10px; background: var(--bg); border-bottom: 1px solid var(--border); max-height: 200px; overflow-y: auto; }
+.re-sym-group { margin-bottom: 8px; }
+.re-sym-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin-bottom: 4px; }
+.re-sym-grid { display: flex; flex-wrap: wrap; gap: 3px; }
+.re-sym { min-width: 30px; height: 30px; border: 1px solid var(--border); background: var(--surface); border-radius: 5px; cursor: pointer; font-size: 16px; color: var(--heading); display: inline-flex; align-items: center; justify-content: center; }
+.re-sym:hover { background: var(--primary-light); border-color: var(--primary); }
