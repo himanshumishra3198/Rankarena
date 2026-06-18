@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import { QuestionContext } from '../components/QuestionContent'
+import { RichText } from '../components/RichText'
 
 interface ResultQuestion {
   id: string; text: string; imageUrl?: string
@@ -133,7 +134,7 @@ export default function MockResult() {
                         <img src={q.imageUrl} alt="Question" style={{ maxHeight: 200, maxWidth: '100%', borderRadius: 6, border: '1px solid var(--border)' }} />
                       </div>
                     )}
-                    {q.text && <p className="review-qtext">{q.text}</p>}
+                    {q.text && <RichText as="p" className="review-qtext" html={q.text} />}
                     <div className="options" style={{ marginTop: 8 }}>
                       {(['A', 'B', 'C', 'D'] as const).map(opt => {
                         const isCorrect = opt === q.correctOption
@@ -145,7 +146,7 @@ export default function MockResult() {
                             background: isCorrect ? 'rgba(22,163,74,.08)' : isGiven ? 'rgba(220,38,38,.06)' : 'transparent',
                           }}>
                             <span className="option-label">{opt}</span>
-                            <span className="option-text">{optText(q, opt)}</span>
+                            <span className="option-text"><RichText html={optText(q, opt)} /></span>
                             {isCorrect && <span style={{ marginLeft: 'auto', color: '#16a34a', fontWeight: 700 }}>✓ Correct</span>}
                             {isGiven && !isCorrect && <span style={{ marginLeft: 'auto', color: '#dc2626', fontWeight: 700 }}>Your answer</span>}
                           </div>

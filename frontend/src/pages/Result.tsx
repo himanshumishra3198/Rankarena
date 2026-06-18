@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import { QuestionContext } from '../components/QuestionContent'
+import { RichText } from '../components/RichText'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RichQuestion {
@@ -445,7 +446,7 @@ export default function Result() {
                             <span className={`time-q-verdict tqv-${verdict}`}>{verdictIcon}</span>
                             <span className="time-q-dur">{fmtSecs(timeSpent[q.id] ?? 0)}</span>
                           </div>
-                          <div className="time-q-text">{q.text}</div>
+                          <RichText as="div" className="time-q-text" html={q.text} />
                         </div>
                       )
                     })}
@@ -565,7 +566,7 @@ export default function Result() {
                           <img src={q.imageUrl} alt="Question diagram" style={{ maxHeight: 200, maxWidth: '100%', borderRadius: 6, border: '1px solid var(--border)' }} />
                         </div>
                       )}
-                      <p className="review-qtext">{q.text}</p>
+                      <RichText as="p" className="review-qtext" html={q.text} />
                       {tSpent !== undefined && (
                         <div className="review-time-row">
                           <span className="review-time-stat">
@@ -590,7 +591,7 @@ export default function Result() {
                           return (
                             <div key={opt} className={`review-option ${isCorrectOpt ? 'correct-opt' : isGivenOpt ? 'wrong-opt' : ''}`}>
                               <span className="option-label">{opt}</span>
-                              <span>{optText(q, opt)}</span>
+                              <span><RichText html={optText(q, opt)} /></span>
                               {isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
                               {isGivenOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your answer</span>}
                             </div>

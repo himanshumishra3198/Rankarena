@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
+import { RichEditor } from '../components/RichEditor'
+import { RichText, stripHtml } from '../components/RichText'
 import type { Question, Passage, QuestionType } from '../lib/types'
 
 const SUBJECTS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
@@ -284,6 +286,13 @@ export default function Questions() {
 
   async function saveQuestion(e: FormEvent) {
     e.preventDefault()
+    // contentEditable has no native `required` — validate visible text.
+    if (form.questionType !== 'SYLLOGISM' && !stripHtml(form.text)) {
+      setError('Question text is required.'); return
+    }
+    if ((['A', 'B', 'C', 'D'] as const).some(o => !stripHtml(form[`option${o}` as keyof typeof emptyForm] as string))) {
+      setError('All four options are required.'); return
+    }
     setSaving(true); setError('')
     try {
       const payload: any = {
@@ -508,12 +517,12 @@ export default function Questions() {
                   {form.questionType === 'SYLLOGISM'
                     ? 'Question / Direction Text (appears after statements & conclusions)'
                     : 'Question Text'}
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
+                    — use the toolbar for bold, italic, color, x² superscript, x₂ subscript
+                  </span>
                 </label>
-                <textarea className="input" rows={form.questionType === 'SYLLOGISM' ? 2 : 3}
-                  value={form.text} onChange={e => set('text', e.target.value)}
-                  required={form.questionType !== 'SYLLOGISM'}
-                  placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : ''}
-                  style={{ resize: 'vertical' }} />
+                <RichEditor value={form.text} onChange={v => set('text', v)} minHeight={70}
+                  placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
               </div>
 
               {/* Near-duplicate warning */}
@@ -564,9 +573,9 @@ export default function Questions() {
                 {(['A', 'B', 'C', 'D'] as const).map(opt => (
                   <div className="form-group" key={opt}>
                     <label>Option {opt}</label>
-                    <input className="input"
+                    <RichEditor minHeight={40}
                       value={form[`option${opt}` as keyof typeof emptyForm] as string}
-                      onChange={e => set(`option${opt}` as any, e.target.value)} required />
+                      onChange={v => set(`option${opt}` as any, v)} placeholder={`Option ${opt}…`} />
                   </div>
                 ))}
               </div>
@@ -654,10 +663,12 @@ export default function Questions() {
                           </div>
                         )}
                         <div style={{ fontWeight: 500, marginBottom: 4 }}>
-                          {q.text || <em style={{ color: 'var(--text-muted)' }}>(syllogism question)</em>}
+                          {stripHtml(q.text)
+                            ? <RichText as="span" html={q.text} />
+                            : <em style={{ color: 'var(--text-muted)' }}>(syllogism question)</em>}
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                          A: {q.optionA} · B: {q.optionB} · C: {q.optionC} · D: {q.optionD}
+                          A: <RichText html={q.optionA} /> · B: <RichText html={q.optionB} /> · C: <RichText html={q.optionC} /> · D: <RichText html={q.optionD} />
                         </div>
                       </td>
                       <td>

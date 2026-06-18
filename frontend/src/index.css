@@ -830,3 +830,7 @@ select.input { cursor: pointer; }
   .mock-room-palette { width: 100%; position: static; order: -1; }
   .q-grid { grid-template-columns: repeat(8, 1fr); }
 }
+
+/* Rich-text rendering: consistent sub/superscript in questions & options */
+.question-text sub, .option-text sub, .review-qtext sub, .time-q-text sub { vertical-align: sub; font-size: 0.75em; }
+.question-text sup, .option-text sup, .review-qtext sup, .time-q-text sup { vertical-align: super; font-size: 0.75em; }

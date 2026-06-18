@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import type { MockTestData, Question } from '../lib/types'
 import { QuestionContent } from '../components/QuestionContent'
+import { RichText } from '../components/RichText'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
@@ -160,7 +161,7 @@ export default function MockRoom() {
                 className={`option ${answers[currentQ.id] === opt ? 'selected' : ''}`}
                 onClick={() => selectAnswer(opt)}>
                 <span className="option-label">{opt}</span>
-                <span className="option-text">{optionText(currentQ, opt)}</span>
+                <span className="option-text"><RichText html={optionText(currentQ, opt)} /></span>
               </div>
             ))}
           </div>

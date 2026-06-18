@@ -3,6 +3,8 @@ import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
+import { RichEditor } from '../components/RichEditor'
+import { RichText, stripHtml } from '../components/RichText'
 import type { MockTest, MockTestQuestion, Question } from '../lib/types'
 import { SECTION_LABELS } from '../lib/types'
 
@@ -78,6 +80,10 @@ export default function MockTestDetail() {
   async function createAndAdd(e: FormEvent) {
     e.preventDefault()
     if (!mock) return
+    if (!stripHtml(cForm.text)) { setError('Question text is required.'); return }
+    if ((['A', 'B', 'C', 'D'] as const).some(o => !stripHtml(cForm[`option${o}` as keyof typeof emptyCreate] as string))) {
+      setError('All four options are required.'); return
+    }
     setCreating(true); setError('')
     try {
       const qRes = await api.post('/admin/questions', {
@@ -194,7 +200,7 @@ export default function MockTestDetail() {
                       <option value="">Select a question...</option>
                       {availableBank.map(q => (
                         <option key={q.id} value={q.id}>
-                          [{TYPE_LABELS[q.questionType] ?? 'Q'}] {(q.text || q.passage?.title || 'question').slice(0, 80)}
+                          [{TYPE_LABELS[q.questionType] ?? 'Q'}] {(stripHtml(q.text) || q.passage?.title || 'question').slice(0, 80)}
                         </option>
                       ))}
                     </select>
@@ -213,9 +219,13 @@ export default function MockTestDetail() {
                 Creates a <strong>{SECTION_LABELS[mock.subject]}</strong> question in the bank and adds it to this mock.
               </p>
               <div className="form-group">
-                <label>Question Text</label>
-                <textarea className="input" rows={3} value={cForm.text} required
-                  onChange={e => setCForm(f => ({ ...f, text: e.target.value }))} style={{ resize: 'vertical' }} />
+                <label>Question Text
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
+                    — toolbar for bold, italic, color, x² superscript, x₂ subscript
+                  </span>
+                </label>
+                <RichEditor value={cForm.text} onChange={v => setCForm(f => ({ ...f, text: v }))}
+                  minHeight={64} placeholder="Type the question…" />
               </div>
 
               {/* Optional image */}
@@ -242,9 +252,9 @@ export default function MockTestDetail() {
                 {(['A', 'B', 'C', 'D'] as const).map(opt => (
                   <div className="form-group" key={opt}>
                     <label>Option {opt}</label>
-                    <input className="input" required
+                    <RichEditor minHeight={40}
                       value={cForm[`option${opt}` as keyof typeof emptyCreate] as string}
-                      onChange={e => setCForm(f => ({ ...f, [`option${opt}`]: e.target.value }))} />
+                      onChange={v => setCForm(f => ({ ...f, [`option${opt}`]: v }))} placeholder={`Option ${opt}…`} />
                   </div>
                 ))}
               </div>
@@ -292,7 +302,7 @@ export default function MockTestDetail() {
                           {mtq.question.passage.type === 'TABLE' ? '📊' : '📄'} {mtq.question.passage.title || 'Passage'}
                         </div>
                       )}
-                      <div style={{ fontWeight: 500 }}>{mtq.question.text || <em style={{ color: 'var(--text-muted)' }}>(syllogism)</em>}</div>
+                      <div style={{ fontWeight: 500 }}>{stripHtml(mtq.question.text) ? <RichText html={mtq.question.text} /> : <em style={{ color: 'var(--text-muted)' }}>(syllogism)</em>}</div>
                     </td>
                     <td style={{ fontSize: 12 }}>{TYPE_LABELS[mtq.question.questionType] ?? 'Standard'}</td>
                     <td style={{ fontSize: 13 }}>+{mtq.marks} / −{mtq.negativeMarks}</td>

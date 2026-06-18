@@ -1,6 +1,7 @@
 // Renders the rich context for a question — reading passage, data table,
 // or syllogism statements/conclusions — above the question text itself.
 // Shared between ContestRoom (live exam) and Result (review) pages.
+import { RichText } from './RichText'
 
 interface PassageLike {
   id: string
@@ -100,7 +101,7 @@ export function QuestionContent({ q }: { q: QuestionLike }) {
       )}
 
       {/* Question text (may be empty for pure syllogism) */}
-      {q.text && <p className="question-text">{q.text}</p>}
+      {q.text && <RichText as="p" className="question-text" html={q.text} />}
     </>
   )
 }

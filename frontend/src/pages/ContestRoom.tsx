@@ -6,6 +6,7 @@ import InstructionsModal from '../components/InstructionsModal'
 import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import { QuestionContent } from '../components/QuestionContent'
+import { RichText } from '../components/RichText'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
@@ -624,7 +625,7 @@ export default function ContestRoom() {
                 onClick={() => !isSectionLocked && phase === 'active' && selectAnswer(currentQ.id, opt)}
               >
                 <span className="option-label">{opt}</span>
-                <span className="option-text">{optionText(currentQ, opt)}</span>
+                <span className="option-text"><RichText html={optionText(currentQ, opt)} /></span>
               </div>
             ))}
           </div>
