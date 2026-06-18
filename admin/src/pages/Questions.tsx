@@ -161,6 +161,8 @@ export default function Questions() {
   const [filterSubject, setFilterSubject] = useState('')
   const [filterType, setFilterType] = useState('')
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingPassageId, setEditingPassageId] = useState<string | null>(null)
 
   // Debounced near-duplicate check as the admin types the question text.
   useEffect(() => {
@@ -170,11 +172,12 @@ export default function Questions() {
     const handle = setTimeout(async () => {
       try {
         const res = await api.get('/admin/questions/similar', { params: { text: t, subject: form.subject } })
-        setSimilar(res.data)
+        // Don't flag the question currently being edited as its own duplicate.
+        setSimilar((res.data as any[]).filter(s => s.id !== editingId))
       } catch { setSimilar([]) }
     }, 500)
     return () => clearTimeout(handle)
-  }, [form.text, form.subject, showForm])
+  }, [form.text, form.subject, showForm, editingId])
 
   async function handleImageUpload(file: File) {
     setUploading(true); setError('')
@@ -233,6 +236,52 @@ export default function Questions() {
 
   useEffect(() => { load() }, [filterSubject, filterType])
 
+  // ── Open / close / edit helpers ───────────────────────────────────────────
+  function openCreateQuestion() {
+    setForm(emptyForm); setEditingId(null); setSimilar([]); setError('')
+    setShowForm(true); setShowPassageForm(false)
+  }
+  function closeQuestionForm() {
+    setForm(emptyForm); setEditingId(null); setSimilar([]); setShowForm(false)
+  }
+  function editQuestion(q: Question) {
+    setForm({
+      questionType: q.questionType,
+      text: q.text,
+      imageUrl: q.imageUrl ?? '',
+      optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
+      correctOption: q.correctOption as any,
+      subject: q.subject,
+      difficulty: q.difficulty,
+      passageId: q.passageId ?? '',
+      statements: q.structuredData?.statements?.length ? q.structuredData.statements : ['', '', ''],
+      conclusions: q.structuredData?.conclusions?.length ? q.structuredData.conclusions : ['', '', ''],
+    })
+    setEditingId(q.id); setError(''); setSimilar([])
+    setShowForm(true); setShowPassageForm(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function openCreatePassage() {
+    setPassageForm(emptyPassageForm); setEditingPassageId(null); setError('')
+    setShowPassageForm(true); setShowForm(false)
+  }
+  function closePassageForm() {
+    setPassageForm(emptyPassageForm); setEditingPassageId(null); setShowPassageForm(false)
+  }
+  function editPassage(p: Passage) {
+    setPassageForm({
+      title: p.title,
+      content: p.content,
+      type: p.type,
+      headers: p.tableData?.headers ?? [''],
+      rows: p.tableData?.rows ?? [['']],
+    })
+    setEditingPassageId(p.id); setError('')
+    setShowPassageForm(true); setShowForm(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function saveQuestion(e: FormEvent) {
     e.preventDefault()
     setSaving(true); setError('')
@@ -252,8 +301,9 @@ export default function Questions() {
           ? { statements: form.statements.filter(Boolean), conclusions: form.conclusions.filter(Boolean) }
           : null,
       }
-      await api.post('/admin/questions', payload)
-      setForm(emptyForm); setShowForm(false); load()
+      if (editingId) await api.put(`/admin/questions/${editingId}`, payload)
+      else await api.post('/admin/questions', payload)
+      closeQuestionForm(); load()
     } catch (err: any) {
       setError(errMsg(err, 'Failed to save question'))
     } finally { setSaving(false) }
@@ -271,8 +321,9 @@ export default function Questions() {
           ? { headers: passageForm.headers, rows: passageForm.rows }
           : null,
       }
-      await api.post('/admin/passages', payload)
-      setPassageForm(emptyPassageForm); setShowPassageForm(false); load()
+      if (editingPassageId) await api.put(`/admin/passages/${editingPassageId}`, payload)
+      else await api.post('/admin/passages', payload)
+      closePassageForm(); load()
     } catch (err: any) {
       setError(errMsg(err, 'Failed to save passage'))
     } finally { setSaving(false) }
@@ -296,10 +347,10 @@ export default function Questions() {
         <div className="page-header">
           <h1>Question Bank</h1>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-ghost" onClick={() => { setShowPassageForm(v => !v); setShowForm(false) }}>
+            <button className="btn btn-ghost" onClick={() => showPassageForm ? closePassageForm() : openCreatePassage()}>
               {showPassageForm ? 'Cancel' : '+ Passage / Table'}
             </button>
-            <button className="btn btn-primary" onClick={() => { setShowForm(v => !v); setShowPassageForm(false) }}>
+            <button className="btn btn-primary" onClick={() => showForm ? closeQuestionForm() : openCreateQuestion()}>
               {showForm ? 'Cancel' : '+ Add Question'}
             </button>
           </div>
@@ -308,7 +359,7 @@ export default function Questions() {
         {/* ── Passage form ───────────────────────────────────────────────── */}
         {showPassageForm && (
           <div className="card" style={{ marginBottom: 20 }}>
-            <h2 style={{ marginBottom: 16 }}>Add Passage / Table</h2>
+            <h2 style={{ marginBottom: 16 }}>{editingPassageId ? 'Edit Passage / Table' : 'Add Passage / Table'}</h2>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={savePassage}>
               <div className="form-row">
@@ -350,7 +401,7 @@ export default function Questions() {
                 </div>
               )}
               <button className="btn btn-primary" type="submit" disabled={saving}>
-                {saving ? 'Saving...' : 'Save Passage'}
+                {saving ? 'Saving...' : editingPassageId ? 'Update Passage' : 'Save Passage'}
               </button>
             </form>
           </div>
@@ -359,7 +410,7 @@ export default function Questions() {
         {/* ── Question form ──────────────────────────────────────────────── */}
         {showForm && (
           <div className="card" style={{ marginBottom: 20 }}>
-            <h2 style={{ marginBottom: 16 }}>Add Question</h2>
+            <h2 style={{ marginBottom: 16 }}>{editingId ? 'Edit Question' : 'Add Question'}</h2>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={saveQuestion}>
 
@@ -545,7 +596,7 @@ export default function Questions() {
               </div>
 
               <button className="btn btn-primary" type="submit" disabled={saving}>
-                {saving ? 'Saving...' : 'Save Question'}
+                {saving ? 'Saving...' : editingId ? 'Update Question' : 'Save Question'}
               </button>
             </form>
           </div>
@@ -624,7 +675,10 @@ export default function Questions() {
                       <td><span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span></td>
                       <td style={{ fontWeight: 700, color: 'var(--success)' }}>{q.correctOption}</td>
                       <td>
-                        <button className="btn btn-sm btn-danger" onClick={() => deleteQuestion(q.id)}>Delete</button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-sm btn-ghost" onClick={() => editQuestion(q)}>Edit</button>
+                          <button className="btn btn-sm btn-danger" onClick={() => deleteQuestion(q.id)}>Delete</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -655,7 +709,10 @@ export default function Questions() {
                       {questions.filter(q => q.passageId === p.id).length} questions linked
                     </span>
                   </div>
-                  <button className="btn btn-sm btn-danger" onClick={() => deletePassage(p.id)}>Delete</button>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <button className="btn btn-sm btn-ghost" onClick={() => editPassage(p)}>Edit</button>
+                    <button className="btn btn-sm btn-danger" onClick={() => deletePassage(p.id)}>Delete</button>
+                  </div>
                 </div>
                 <PassagePreview passage={p} />
               </div>
