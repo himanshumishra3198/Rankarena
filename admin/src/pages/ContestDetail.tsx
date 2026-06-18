@@ -246,7 +246,11 @@ export default function ContestDetail() {
     setImporting(true)
     try {
       const res = await api.post(`/admin/contests/${id}/questions/bulk`, parsed)
-      setBulkSuccess(`Imported ${res.data.created} question${res.data.created !== 1 ? 's' : ''} successfully!`)
+      const skipped = res.data.skipped ?? 0
+      setBulkSuccess(
+        `Imported ${res.data.created} question${res.data.created !== 1 ? 's' : ''} successfully!` +
+        (skipped > 0 ? ` (${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped)` : '')
+      )
       setBulkJson('')
       load()
     } catch (err: any) {

@@ -160,6 +160,21 @@ export default function Questions() {
   const [uploading, setUploading] = useState(false)
   const [filterSubject, setFilterSubject] = useState('')
   const [filterType, setFilterType] = useState('')
+  const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
+
+  // Debounced near-duplicate check as the admin types the question text.
+  useEffect(() => {
+    if (!showForm) { setSimilar([]); return }
+    const t = form.text.trim()
+    if (t.length < 8) { setSimilar([]); return }
+    const handle = setTimeout(async () => {
+      try {
+        const res = await api.get('/admin/questions/similar', { params: { text: t, subject: form.subject } })
+        setSimilar(res.data)
+      } catch { setSimilar([]) }
+    }, 500)
+    return () => clearTimeout(handle)
+  }, [form.text, form.subject, showForm])
 
   async function handleImageUpload(file: File) {
     setUploading(true); setError('')
@@ -449,6 +464,28 @@ export default function Questions() {
                   placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : ''}
                   style={{ resize: 'vertical' }} />
               </div>
+
+              {/* Near-duplicate warning */}
+              {similar.length > 0 && (
+                <div style={{
+                  background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8,
+                  padding: '12px 14px', marginBottom: 16,
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
+                    ⚠ {similar.length} similar question{similar.length !== 1 ? 's' : ''} already in the bank — make sure this isn't a duplicate
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {similar.map(s => (
+                      <div key={s.id} style={{ fontSize: 13, color: '#78350f', display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                        <span style={{ fontWeight: 700, fontSize: 11, background: '#fde68a', color: '#92400e', padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>
+                          {s.score}% match
+                        </span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Question image (optional) */}
               <div className="form-group">

@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
 import redis from "../lib/redis";
+import { computeFingerprint } from "../lib/fingerprint";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -21,6 +22,11 @@ function toQuestionData(d: Record<string, any>) {
     out.structuredData = d.structuredData ?? Prisma.JsonNull;
   }
   return out;
+}
+
+// Compute a question's exact-duplicate fingerprint from a payload.
+function fingerprintOf(d: Record<string, any>): string {
+  return computeFingerprint(d.text ?? "", [d.optionA ?? "", d.optionB ?? "", d.optionC ?? "", d.optionD ?? ""]);
 }
 router.use(authenticate, requireAdmin);
 
@@ -281,10 +287,46 @@ router.post("/questions", async (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
+  // Block exact duplicates
+  const fingerprint = fingerprintOf(parsed.data);
+  const existing = await prisma.question.findFirst({
+    where: { fingerprint },
+    select: { id: true, text: true },
+  });
+  if (existing) {
+    res.status(409).json({
+      error: "This question already exists in the bank (exact duplicate).",
+      duplicate: existing,
+    });
+    return;
+  }
+
   const question = await prisma.question.create({
-    data: toQuestionData(parsed.data) as Prisma.QuestionUncheckedCreateInput,
+    data: { ...toQuestionData(parsed.data), fingerprint } as Prisma.QuestionUncheckedCreateInput,
   });
   res.status(201).json(question);
+});
+
+// Similar (near-duplicate) questions via trigram similarity.
+router.get("/questions/similar", async (req: AuthRequest, res: Response) => {
+  const text = (req.query.text as string | undefined)?.trim();
+  const subject = req.query.subject as string | undefined;
+  if (!text || text.length < 8) { res.json([]); return; }
+
+  // similarity() from pg_trgm; 0.3 is a sensible "worth a look" threshold.
+  const rows = subject
+    ? await prisma.$queryRaw<Array<{ id: string; text: string; subject: string; score: number }>>`
+        SELECT id, text, subject::text AS subject, similarity(text, ${text}) AS score
+        FROM questions
+        WHERE subject = ${subject}::"Subject" AND similarity(text, ${text}) > 0.3
+        ORDER BY score DESC LIMIT 5`
+    : await prisma.$queryRaw<Array<{ id: string; text: string; subject: string; score: number }>>`
+        SELECT id, text, subject::text AS subject, similarity(text, ${text}) AS score
+        FROM questions
+        WHERE similarity(text, ${text}) > 0.3
+        ORDER BY score DESC LIMIT 5`;
+
+  res.json(rows.map((r) => ({ ...r, score: Math.round(Number(r.score) * 100) })));
 });
 
 router.get("/questions", async (req: AuthRequest, res: Response) => {
@@ -308,10 +350,33 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
-  const question = await prisma.question.update({
-    where: { id },
-    data: toQuestionData(parsed.data) as Prisma.QuestionUncheckedUpdateInput,
-  });
+
+  const data = toQuestionData(parsed.data) as Prisma.QuestionUncheckedUpdateInput;
+  // Recompute fingerprint if text/options changed; block if it collides
+  // with a *different* existing question.
+  const p = parsed.data as Record<string, any>;
+  if (p.text !== undefined || p.optionA !== undefined || p.optionB !== undefined ||
+      p.optionC !== undefined || p.optionD !== undefined) {
+    const current = await prisma.question.findUnique({ where: { id } });
+    if (current) {
+      const fingerprint = computeFingerprint(
+        p.text ?? current.text,
+        [p.optionA ?? current.optionA, p.optionB ?? current.optionB,
+         p.optionC ?? current.optionC, p.optionD ?? current.optionD]
+      );
+      const clash = await prisma.question.findFirst({
+        where: { fingerprint, id: { not: id } },
+        select: { id: true, text: true },
+      });
+      if (clash) {
+        res.status(409).json({ error: "Another question with the same content already exists.", duplicate: clash });
+        return;
+      }
+      (data as any).fingerprint = fingerprint;
+    }
+  }
+
+  const question = await prisma.question.update({ where: { id }, data });
   res.json(question);
 });
 
@@ -386,11 +451,29 @@ router.post("/contests/:id/questions/bulk", async (req: AuthRequest, res: Respon
   });
   let nextOrder = (lastCq?.displayOrder ?? 0) + 1;
 
+  // Skip exact duplicates: against the DB and within the batch itself.
+  const fingerprints = parsed.data.map((q) => fingerprintOf(q));
+  const existing = await prisma.question.findMany({
+    where: { fingerprint: { in: fingerprints } },
+    select: { fingerprint: true },
+  });
+  const seen = new Set(existing.map((e) => e.fingerprint));
+
+  const toCreate: typeof parsed.data = [];
+  let skipped = 0;
+  parsed.data.forEach((q, i) => {
+    const fp = fingerprints[i];
+    if (seen.has(fp)) { skipped++; return; }
+    seen.add(fp);
+    toCreate.push(q);
+  });
+
   const results = await prisma.$transaction(
-    parsed.data.map(({ marks, negativeMarks, ...qData }) =>
+    toCreate.map(({ marks, negativeMarks, ...qData }) =>
       prisma.question.create({
         data: {
           ...toQuestionData(qData),
+          fingerprint: fingerprintOf(qData),
           contestQuestions: {
             create: {
               contestId,
@@ -404,7 +487,7 @@ router.post("/contests/:id/questions/bulk", async (req: AuthRequest, res: Respon
     )
   );
 
-  res.status(201).json({ created: results.length });
+  res.status(201).json({ created: results.length, skipped });
 });
 
 // ── Mock Tests (sectional practice) ───────────────────────

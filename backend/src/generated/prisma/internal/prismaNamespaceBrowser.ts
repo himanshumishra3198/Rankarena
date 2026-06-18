@@ -142,7 +142,8 @@ export const QuestionScalarFieldEnum = {
   subject: 'subject',
   difficulty: 'difficulty',
   passageId: 'passageId',
-  structuredData: 'structuredData'
+  structuredData: 'structuredData',
+  fingerprint: 'fingerprint'
 } as const
 
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]

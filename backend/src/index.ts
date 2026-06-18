@@ -17,6 +17,22 @@ import uploadRoutes from "./routes/upload";
 import ratingRoutes from "./routes/rating";
 import profileRoutes from "./routes/profile";
 import followRoutes from "./routes/follows";
+import prisma from "./lib/prisma";
+import { computeFingerprint } from "./lib/fingerprint";
+
+// Backfill fingerprints for any questions missing one (pre-dedup rows).
+async function backfillFingerprints() {
+  const rows = await prisma.question.findMany({
+    where: { fingerprint: null },
+    select: { id: true, text: true, optionA: true, optionB: true, optionC: true, optionD: true },
+  });
+  if (rows.length === 0) return;
+  for (const q of rows) {
+    const fingerprint = computeFingerprint(q.text, [q.optionA, q.optionB, q.optionC, q.optionD]);
+    await prisma.question.update({ where: { id: q.id }, data: { fingerprint } });
+  }
+  console.log(`Backfilled fingerprints for ${rows.length} question(s).`);
+}
 
 const app = express();
 
@@ -64,3 +80,7 @@ process.on("uncaughtException", (err) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// One-time backfill: compute fingerprints for questions added before the
+// dedup feature existed. Idempotent — only touches rows with NULL fingerprint.
+backfillFingerprints().catch((e) => console.error("Fingerprint backfill failed:", e));
