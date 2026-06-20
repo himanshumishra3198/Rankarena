@@ -2,6 +2,20 @@ import { useRef, useEffect, useState } from 'react'
 
 const COLORS = ['#dc2626', '#2563eb', '#16a34a', '#d97706', '#7c3aed', '#0f172a']
 
+// Keep only `color` in inline styles — strip background-color (and anything
+// else) so pasted/legacy content doesn't show a white box in dark mode.
+function cleanStyles(html: string): string {
+  const tmp = document.createElement('div')
+  tmp.innerHTML = html || ''
+  tmp.querySelectorAll('[style]').forEach((node) => {
+    const el = node as HTMLElement
+    const color = el.style.color
+    el.removeAttribute('style')
+    if (color) el.style.color = color
+  })
+  return tmp.innerHTML
+}
+
 // Math / common symbols, grouped. These are plain Unicode characters that
 // render natively for students once inserted into the question text.
 const SYMBOL_GROUPS: { label: string; items: string[] }[] = [
@@ -25,15 +39,18 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
   const ref = useRef<HTMLDivElement>(null)
   const [showSymbols, setShowSymbols] = useState(false)
 
-  // Sync external value -> DOM only when not actively editing (avoids cursor jumps).
+  // Sync external value -> DOM only when not actively editing (avoids cursor
+  // jumps). Strip stray backgrounds from loaded/legacy content so it renders
+  // cleanly in the editor and gets saved clean.
   useEffect(() => {
     const el = ref.current
-    if (el && document.activeElement !== el && el.innerHTML !== (value || '')) {
-      el.innerHTML = value || ''
-    }
+    if (!el || document.activeElement === el) return
+    const cleaned = cleanStyles(value || '')
+    if (el.innerHTML !== cleaned) el.innerHTML = cleaned
+    if (cleaned !== (value || '')) onChange(cleaned)
   }, [value])
 
-  function emit() { onChange(ref.current?.innerHTML ?? '') }
+  function emit() { onChange(cleanStyles(ref.current?.innerHTML ?? '')) }
 
   function exec(cmd: string, arg?: string) {
     ref.current?.focus()
