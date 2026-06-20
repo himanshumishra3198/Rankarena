@@ -48,6 +48,16 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
     emit()
   }
 
+  // Paste as plain text — strips backgrounds/fonts/sizes from external sources
+  // (you can re-apply formatting with the toolbar). Prevents invisible white
+  // backgrounds that only show up in dark mode.
+  function onPaste(e: React.ClipboardEvent) {
+    e.preventDefault()
+    const text = e.clipboardData.getData('text/plain')
+    document.execCommand('insertText', false, text)
+    emit()
+  }
+
   const btn = (label: React.ReactNode, cmd: string, arg?: string, title?: string, extra?: React.CSSProperties) => (
     <button type="button" title={title} className="re-btn" style={extra}
       // preventDefault keeps the text selection inside the editor when clicking
@@ -105,6 +115,7 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
         style={{ minHeight: singleLine ? undefined : minHeight }}
         onInput={emit}
         onBlur={emit}
+        onPaste={onPaste}
       />
     </div>
   )

@@ -6,6 +6,17 @@ const CONFIG = {
   ALLOWED_ATTR: ['style'],
 }
 
+// Keep only `color` in inline styles — drop background-color (pasted content
+// can carry a near-white background that shows as a box in dark mode).
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  const el = node as HTMLElement
+  if (el.nodeType === 1 && el.hasAttribute?.('style')) {
+    const color = el.style.color
+    el.removeAttribute('style')
+    if (color) el.style.color = color
+  }
+})
+
 // Render admin/user-authored rich text safely (sanitized HTML).
 export function RichText({ html, as = 'span', className, style }: {
   html: string
