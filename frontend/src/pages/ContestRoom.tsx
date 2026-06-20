@@ -7,6 +7,7 @@ import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
+import { unlockAudio, playLowTimeAlert, playTick } from '../lib/sound'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
@@ -56,6 +57,7 @@ export default function ContestRoom() {
   const [currentQId, setCurrentQId] = useState<string>('')
   const [phase, setPhase] = useState<Phase>('loading')
   const [timeLeft, setTimeLeft] = useState(0)
+  const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
   const [submitting, setSubmitting] = useState(false)
   const [initError, setInitError] = useState<string | null>(null)
 
@@ -190,6 +192,20 @@ export default function ContestRoom() {
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [contest])
+
+  // Unlock audio on first interaction; low-time cues (chess.com style).
+  useEffect(() => {
+    const unlock = () => unlockAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    return () => { window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock) }
+  }, [])
+
+  useEffect(() => {
+    if (phase !== 'active' || muted) return
+    if (timeLeft === 60) playLowTimeAlert()
+    else if (timeLeft <= 10 && timeLeft > 0) playTick()
+  }, [timeLeft, phase, muted])
 
   // ── Show instructions when exam goes active for the first time ────────
   useEffect(() => {
@@ -502,6 +518,11 @@ export default function ContestRoom() {
             {isFullscreen ? '⊡' : '⛶'}
           </button>
         </div>
+
+        <button className="mock-mute-btn" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
+          onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>
+          {muted ? '🔇' : '🔊'}
+        </button>
 
         <span className={`timer ${isWarn ? 'timer-warn' : 'timer-ok'}`}>
           {phase === 'ended' ? 'Time Up' : formatTime(timeLeft)}

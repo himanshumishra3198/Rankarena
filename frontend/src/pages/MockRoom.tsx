@@ -4,6 +4,7 @@ import api from '../lib/api'
 import type { MockTestData, Question } from '../lib/types'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
+import { unlockAudio, playLowTimeAlert, playTick, playTimeUp } from '../lib/sound'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
@@ -46,6 +47,7 @@ export default function MockRoom() {
   const [visited, setVisited] = useState<Set<string>>(new Set())
   const [timeLeft, setTimeLeft] = useState(0)
   const [showSubmit, setShowSubmit] = useState(false)
+  const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
 
   const timeSpent = useRef<Record<string, number>>({})
   const lastTickQ = useRef<string>('')
@@ -113,6 +115,22 @@ export default function MockRoom() {
     return () => clearInterval(iv)
   }, [phase, submit])
 
+  // Unlock audio on the first user interaction in the room.
+  useEffect(() => {
+    const unlock = () => unlockAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    return () => { window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock) }
+  }, [])
+
+  // ── Low-time audio cues (chess.com style) ──────────────────────────
+  useEffect(() => {
+    if (phase !== 'active' || muted) return
+    if (timeLeft === 60) playLowTimeAlert()       // alert at the 1-minute mark
+    else if (timeLeft <= 10 && timeLeft > 0) playTick() // tick the final 10s
+    else if (timeLeft === 0) playTimeUp()
+  }, [timeLeft, phase, muted])
+
   if (phase === 'loading') return <div className="mock-room-loading">Loading mock test...</div>
   if (!mock || !currentQ) return null
 
@@ -141,6 +159,10 @@ export default function MockRoom() {
       {/* Header */}
       <div className="mock-room-header">
         <div className="mock-room-title">{mock.title}</div>
+        <button className="mock-mute-btn" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
+          onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>
+          {muted ? '🔇' : '🔊'}
+        </button>
         <div className={`mock-room-timer ${lowTime ? 'low' : ''}`}>⏱ {formatTime(timeLeft)}</div>
         <button className="btn btn-primary btn-sm" onClick={() => setShowSubmit(true)}>Submit Test</button>
       </div>

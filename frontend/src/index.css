@@ -878,3 +878,6 @@ select.input { cursor: pointer; }
 @media (max-width: 760px) {
   .perf-row { grid-template-columns: repeat(2, 1fr); }
 }
+
+.mock-mute-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 16px; padding: 4px 9px; line-height: 1; }
+.mock-mute-btn:hover { background: var(--surface); }
