@@ -771,12 +771,20 @@ select.input { cursor: pointer; }
 .mock-card-stats { display: flex; gap: 18px; flex-wrap: wrap; }
 .mock-stat { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
 .mock-stat-score { color: var(--success); font-weight: 600; }
+.mock-card-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .mock-start-btn {
   flex-shrink: 0; border: none; color: #fff; font-size: 15px; font-weight: 600;
   padding: 11px 28px; border-radius: 8px; cursor: pointer; transition: opacity .15s, transform .1s;
 }
 .mock-start-btn:hover { opacity: .9; }
 .mock-start-btn:active { transform: scale(.97); }
+.mock-result-btn {
+  flex-shrink: 0; background: transparent; color: var(--primary);
+  border: 1.5px solid var(--primary); font-size: 15px; font-weight: 600;
+  padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: background .15s, transform .1s;
+}
+.mock-result-btn:hover { background: var(--primary-light); }
+.mock-result-btn:active { transform: scale(.97); }
 
 /* ── Taking room ────────────────────────────────────────────── */
 .mock-room-loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--text-muted); }

@@ -18,7 +18,7 @@ const SECTION_ICONS: Record<string, string> = {
   QUANT: '🔢', REASONING: '🧩', ENGLISH: '📖', GK: '🌍',
 }
 
-function MockCard({ m, onStart }: { m: MockTestListItem; onStart: () => void }) {
+function MockCard({ m, onStart, onViewResult }: { m: MockTestListItem; onStart: () => void; onViewResult: () => void }) {
   const totalMarks = m.questionCount * 2
   return (
     <div className="mock-card">
@@ -35,9 +35,14 @@ function MockCard({ m, onStart }: { m: MockTestListItem; onStart: () => void }) 
           )}
         </div>
       </div>
-      <button className="mock-start-btn" onClick={onStart} style={{ background: SECTION_COLORS[m.subject] }}>
-        {m.attempted ? 'Retake' : 'Start Now'}
-      </button>
+      <div className="mock-card-actions">
+        {m.attempted && (
+          <button className="mock-result-btn" onClick={onViewResult}>View Result</button>
+        )}
+        <button className="mock-start-btn" onClick={onStart} style={{ background: SECTION_COLORS[m.subject] }}>
+          {m.attempted ? 'Retake' : 'Start Now'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -96,7 +101,9 @@ export default function MockTests() {
             </div>
             <div className="mock-card-list">
               {items.map(m => (
-                <MockCard key={m.id} m={m} onStart={() => navigate(`/mocks/${m.id}`)} />
+                <MockCard key={m.id} m={m}
+                  onStart={() => navigate(`/mocks/${m.id}`)}
+                  onViewResult={() => navigate(`/mocks/${m.id}/result`)} />
               ))}
             </div>
           </div>
