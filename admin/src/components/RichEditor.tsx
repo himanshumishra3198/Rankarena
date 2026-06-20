@@ -10,6 +10,7 @@ const SYMBOL_GROUPS: { label: string; items: string[] }[] = [
   { label: 'Geometry', items: ['△', '▭', '∠', '⊥', '∥', '∴', '∵', '→', '←', '↑', '↓', '↔', '⇒', '⇔', '∼', '≅'] },
   { label: 'Sets / Logic', items: ['∈', '∉', '⊂', '⊆', '⊃', '∪', '∩', '∅', '∀', '∃', '¬', '∧', '∨'] },
   { label: 'Fractions', items: ['½', '⅓', '⅔', '¼', '¾', '⅕', '⅛', '⅜'] },
+  { label: 'Currency & misc', items: ['₹', '$', '€', '£', '¥', '%', '‰', '#', '∘', '·', '…'] },
 ]
 
 // Lightweight WordPad-style editor: contentEditable + execCommand.

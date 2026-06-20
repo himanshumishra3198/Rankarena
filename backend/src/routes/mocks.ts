@@ -166,6 +166,48 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
     negativeMarks: Number(mtq.negativeMarks),
   }));
 
+  // ── Rank / percentile + per-question aggregates across all submitted attempts ──
+  const allAttempts = await prisma.mockAttempt.findMany({
+    where: { mockTestId, submittedAt: { not: null } },
+    select: { userId: true, score: true, answers: true, timeSpent: true },
+  });
+
+  const totalTakers = allAttempts.length;
+  const myScore = Number(attempt.score);
+  // Rank = 1 + number of attempts with a strictly higher score.
+  const higher = allAttempts.filter((a) => Number(a.score) > myScore).length;
+  const rank = higher + 1;
+  // Percentile = % of takers you scored at least as well as (excluding yourself).
+  const percentile = totalTakers > 1
+    ? Math.round((allAttempts.filter((a) => Number(a.score) < myScore).length / (totalTakers - 1)) * 1000) / 10
+    : 100;
+
+  // Per-question: how many answered, how many correct, total time (for averages).
+  const correctMap = new Map(mtqs.map((m) => [m.questionId, m.question.correctOption]));
+  const qStats: Record<string, { answered: number; correct: number; timeSum: number; timeCount: number }> = {};
+  for (const m of mtqs) qStats[m.questionId] = { answered: 0, correct: 0, timeSum: 0, timeCount: 0 };
+  for (const a of allAttempts) {
+    const ans = (a.answers ?? {}) as Record<string, string>;
+    const ts = (a.timeSpent ?? {}) as Record<string, number>;
+    for (const qid of Object.keys(qStats)) {
+      const given = ans[qid];
+      if (given) {
+        qStats[qid].answered++;
+        if (given === correctMap.get(qid)) qStats[qid].correct++;
+      }
+      const t = ts[qid];
+      if (typeof t === "number" && t > 0) { qStats[qid].timeSum += t; qStats[qid].timeCount++; }
+    }
+  }
+  const questionStats: Record<string, { correctPct: number; avgTime: number }> = {};
+  for (const qid of Object.keys(qStats)) {
+    const s = qStats[qid];
+    questionStats[qid] = {
+      correctPct: s.answered > 0 ? Math.round((s.correct / s.answered) * 100) : 0,
+      avgTime: s.timeCount > 0 ? Math.round(s.timeSum / s.timeCount) : 0,
+    };
+  }
+
   res.json({
     mockTitle: mock?.title ?? "",
     subject: mock?.subject ?? "",
@@ -178,6 +220,10 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
     answers: attempt.answers ?? {},
     timeSpent: attempt.timeSpent ?? {},
     submittedAt: attempt.submittedAt,
+    rank,
+    totalTakers,
+    percentile,
+    questionStats,
     questions,
   });
 });

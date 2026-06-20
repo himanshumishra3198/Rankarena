@@ -834,3 +834,39 @@ select.input { cursor: pointer; }
 /* Rich-text rendering: consistent sub/superscript in questions & options */
 .question-text sub, .option-text sub, .review-qtext sub, .time-q-text sub { vertical-align: sub; font-size: 0.75em; }
 .question-text sup, .option-text sup, .review-qtext sup, .time-q-text sup { vertical-align: super; font-size: 0.75em; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Mock result — Testbook-style performance review
+   ════════════════════════════════════════════════════════════════════════════ */
+.section-head { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--heading); margin-bottom: 10px; }
+
+.perf-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.perf-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
+.perf-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.perf-value { font-size: 20px; font-weight: 800; color: var(--heading); line-height: 1.1; }
+.perf-sub { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.perf-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.result-breakdown { display: flex; gap: 8px; flex-wrap: wrap; }
+.bd-pill { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
+
+.palette-legend { display: flex; gap: 18px; margin-bottom: 14px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; }
+.palette-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.pl-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.result-palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; }
+.rp-cell { height: 40px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform .1s; }
+.rp-cell:hover { transform: translateY(-2px); }
+
+.sol-item { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+.sol-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; flex-wrap: wrap; }
+.sol-head:hover { background: var(--bg); }
+.sol-qno { font-weight: 800; font-size: 14px; color: var(--heading); }
+.sol-badge { font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; }
+.sol-meta { font-size: 12px; color: var(--text-muted); }
+.sol-meta-pct { background: var(--bg); padding: 2px 8px; border-radius: 10px; }
+.sol-marks { font-size: 14px; font-weight: 800; }
+.sol-body { padding: 4px 16px 18px; border-top: 1px solid var(--border); }
+
+@media (max-width: 760px) {
+  .perf-row { grid-template-columns: repeat(2, 1fr); }
+}
