@@ -14,6 +14,7 @@ interface RichQuestion {
   questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: { id: string; title: string; content: string; type: 'TEXT' | 'TABLE'; tableData?: { headers: string[]; rows: string[][] } | null } | null
+  solution?: string | null
 }
 
 interface ResultData {
@@ -170,6 +171,7 @@ export default function Result() {
   const [error, setError] = useState('')
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all')
   const [expandedQ, setExpandedQ] = useState<string | null>(null)
+  const [solOpenQ, setSolOpenQ] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<string>('all')
   const [copied, setCopied] = useState(false)
 
@@ -598,6 +600,21 @@ export default function Result() {
                           )
                         })}
                       </div>
+
+                      {/* Detailed solution */}
+                      {q.solution && (
+                        <div className="sol-explain">
+                          <button className="sol-explain-toggle" onClick={() => setSolOpenQ(solOpenQ === q.id ? null : q.id)}>
+                            <span style={{ fontSize: 16 }}>👁</span> {solOpenQ === q.id ? 'Hide Solution' : 'View Solution'}
+                          </button>
+                          {solOpenQ === q.id && (
+                            <div className="sol-explain-body">
+                              <div className="sol-explain-title">Solution</div>
+                              <RichText as="div" className="sol-explain-text" html={q.solution} />
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

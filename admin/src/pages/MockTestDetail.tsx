@@ -18,6 +18,7 @@ const emptyCreate = {
   optionA: '', optionB: '', optionC: '', optionD: '',
   correctOption: 'A',
   difficulty: 'MEDIUM',
+  solution: '',
 }
 
 function errStr(err: any, fallback: string): string {
@@ -94,6 +95,7 @@ export default function MockTestDetail() {
         correctOption: cForm.correctOption,
         subject: mock.subject,
         difficulty: cForm.difficulty,
+        solution: stripHtml(cForm.solution) ? cForm.solution : null,
       })
       await api.post(`/admin/mocks/${id}/questions`, {
         questionId: qRes.data.id,
@@ -274,6 +276,12 @@ export default function MockTestDetail() {
                     {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                <RichEditor value={cForm.solution} onChange={v => setCForm(f => ({ ...f, solution: v }))}
+                  minHeight={80} placeholder="Explain the approach and steps…" />
               </div>
 
               <button className="btn btn-primary" type="submit" disabled={creating}>

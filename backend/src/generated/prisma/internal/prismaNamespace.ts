@@ -1330,6 +1330,7 @@ export const QuestionScalarFieldEnum = {
   difficulty: 'difficulty',
   passageId: 'passageId',
   structuredData: 'structuredData',
+  solution: 'solution',
   fingerprint: 'fingerprint'
 } as const
 

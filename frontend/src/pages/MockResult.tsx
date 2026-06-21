@@ -13,6 +13,7 @@ interface ResultQuestion {
   questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: { id: string; title: string; content: string; type: 'TEXT' | 'TABLE'; tableData?: { headers: string[]; rows: string[][] } | null } | null
+  solution?: string | null
 }
 
 interface MockResultData {
@@ -66,6 +67,7 @@ export default function MockResult() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('all')
   const [open, setOpen] = useState<Set<string>>(new Set())
+  const [solOpen, setSolOpen] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     api.get(`/mocks/${id}/result`)
@@ -218,6 +220,22 @@ export default function MockResult() {
                         )
                       })}
                     </div>
+
+                    {/* Detailed solution */}
+                    {q.solution && (
+                      <div className="sol-explain">
+                        <button className="sol-explain-toggle"
+                          onClick={() => setSolOpen(s => { const n = new Set(s); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n })}>
+                          <span style={{ fontSize: 16 }}>👁</span> {solOpen.has(q.id) ? 'Hide Solution' : 'View Solution'}
+                        </button>
+                        {solOpen.has(q.id) && (
+                          <div className="sol-explain-body">
+                            <div className="sol-explain-title">Solution</div>
+                            <RichText as="div" className="sol-explain-text" html={q.solution} />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

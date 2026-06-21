@@ -65,6 +65,7 @@ export interface Question {
   passageId?: string | null
   passage?: Passage | null
   structuredData?: { statements: string[]; conclusions: string[] } | null
+  solution?: string | null
 }
 
 export interface ContestQuestion {

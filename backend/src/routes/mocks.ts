@@ -153,6 +153,7 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
           id: true, text: true, questionType: true, imageUrl: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
           correctOption: true, subject: true, difficulty: true, structuredData: true,
+          solution: true,
           passage: { select: { id: true, title: true, content: true, type: true, tableData: true } },
         },
       },

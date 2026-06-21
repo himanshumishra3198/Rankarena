@@ -881,3 +881,22 @@ select.input { cursor: pointer; }
 
 .mock-mute-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 16px; padding: 4px 9px; line-height: 1; }
 .mock-mute-btn:hover { background: var(--surface); }
+
+/* ── Detailed solution (View Solution) ─────────────────────── */
+.sol-explain { margin-top: 14px; }
+.sol-explain-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: transparent; border: 1.5px solid var(--primary); color: var(--primary);
+  font-size: 14px; font-weight: 600; padding: 7px 16px; border-radius: 8px; cursor: pointer;
+  transition: background .15s;
+}
+.sol-explain-toggle:hover { background: var(--primary-light); }
+.sol-explain-body {
+  margin-top: 12px; background: var(--surface-raised);
+  border: 1px solid var(--border); border-left: 4px solid var(--success);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.sol-explain-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--success); margin-bottom: 8px; }
+.sol-explain-text { font-size: 15px; line-height: 1.8; color: var(--text); }
+.sol-explain-text sub { vertical-align: sub; font-size: 0.75em; }
+.sol-explain-text sup { vertical-align: super; font-size: 0.75em; }

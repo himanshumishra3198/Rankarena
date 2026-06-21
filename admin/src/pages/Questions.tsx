@@ -34,6 +34,7 @@ const emptyForm = {
   subject: 'REASONING' as Question['subject'],
   difficulty: 'MEDIUM' as Question['difficulty'],
   passageId: '',
+  solution: '',
   // Syllogism fields
   statements: ['', '', ''],
   conclusions: ['', '', ''],
@@ -256,6 +257,7 @@ export default function Questions() {
       subject: q.subject,
       difficulty: q.difficulty,
       passageId: q.passageId ?? '',
+      solution: q.solution ?? '',
       statements: q.structuredData?.statements?.length ? q.structuredData.statements : ['', '', ''],
       conclusions: q.structuredData?.conclusions?.length ? q.structuredData.conclusions : ['', '', ''],
     })
@@ -309,6 +311,7 @@ export default function Questions() {
         structuredData: form.questionType === 'SYLLOGISM'
           ? { statements: form.statements.filter(Boolean), conclusions: form.conclusions.filter(Boolean) }
           : null,
+        solution: stripHtml(form.solution) ? form.solution : null,
       }
       if (editingId) await api.put(`/admin/questions/${editingId}`, payload)
       else await api.post('/admin/questions', payload)
@@ -602,6 +605,13 @@ export default function Questions() {
                     {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
+              </div>
+
+              {/* Detailed solution */}
+              <div className="form-group">
+                <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — approach &amp; steps shown to students after the test)</span></label>
+                <RichEditor value={form.solution} onChange={v => set('solution', v)} minHeight={90}
+                  placeholder="Explain the approach and steps to solve this question…" />
               </div>
 
               <button className="btn btn-primary" type="submit" disabled={saving}>

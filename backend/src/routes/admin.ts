@@ -18,6 +18,7 @@ function toQuestionData(d: Record<string, any>) {
   }
   if (d.imageUrl !== undefined) out.imageUrl = d.imageUrl ?? null;
   if (d.passageId !== undefined) out.passageId = d.passageId ?? null;
+  if (d.solution !== undefined) out.solution = d.solution ?? null;
   if (d.structuredData !== undefined) {
     out.structuredData = d.structuredData ?? Prisma.JsonNull;
   }
@@ -279,6 +280,7 @@ const questionSchema = z.object({
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
   passageId: z.string().uuid().optional().nullable(),
   structuredData: z.record(z.string(), z.any()).optional().nullable(),
+  solution: z.string().max(20000).optional().nullable(),
 });
 
 router.post("/questions", async (req: AuthRequest, res: Response) => {

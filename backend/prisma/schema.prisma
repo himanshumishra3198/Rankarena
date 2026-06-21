@@ -83,6 +83,7 @@ model Question {
   difficulty     Difficulty   @default(MEDIUM)
   passageId      String?      @map("passage_id")
   structuredData Json?        @map("structured_data") // for SYLLOGISM: { statements: string[], conclusions: string[] }
+  solution       String?      // rich-text detailed solution / explanation (HTML)
   fingerprint    String?      // normalized hash of text + options, for exact-duplicate detection
 
   passage           Passage?            @relation(fields: [passageId], references: [id])
