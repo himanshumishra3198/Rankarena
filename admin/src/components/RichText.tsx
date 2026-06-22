@@ -1,9 +1,9 @@
 import DOMPurify from 'dompurify'
 
-// Allowlist: only the inline formatting our editor can produce.
+// Allowlist: inline formatting + inline images our editor can produce.
 const CONFIG = {
-  ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 'sub', 'sup', 'span', 'br'],
-  ALLOWED_ATTR: ['style'],
+  ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 'sub', 'sup', 'span', 'br', 'img'],
+  ALLOWED_ATTR: ['style', 'src', 'alt'],
 }
 
 // Keep only `color` in inline styles — drop background-color (pasted content

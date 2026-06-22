@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import api from '../lib/api'
 
 const COLORS = ['#dc2626', '#2563eb', '#16a34a', '#d97706', '#7c3aed', '#0f172a']
 
@@ -37,7 +38,9 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
   singleLine?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [showSymbols, setShowSymbols] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   // Sync external value -> DOM only when not actively editing (avoids cursor
   // jumps). Strip stray backgrounds from loaded/legacy content so it renders
@@ -65,10 +68,45 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
     emit()
   }
 
-  // Paste as plain text — strips backgrounds/fonts/sizes from external sources
-  // (you can re-apply formatting with the toolbar). Prevents invisible white
-  // backgrounds that only show up in dark mode.
+  // ── Image support ───────────────────────────────────────────────────
+  async function uploadAndInsert(file: File) {
+    if (!file.type.startsWith('image/')) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await api.post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      ref.current?.focus()
+      document.execCommand('insertHTML', false, `<img src="${res.data.url}" alt="" />&nbsp;`)
+      emit()
+    } catch {
+      alert('Image upload failed.')
+    } finally { setUploading(false) }
+  }
+
+  function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (f) uploadAndInsert(f)
+    e.target.value = ''
+  }
+
+  // Drag-and-drop an image onto the editor.
+  function onDrop(e: React.DragEvent) {
+    const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'))
+    if (file) { e.preventDefault(); uploadAndInsert(file) }
+  }
+  function onDragOver(e: React.DragEvent) {
+    if (Array.from(e.dataTransfer.items).some(i => i.kind === 'file')) e.preventDefault()
+  }
+
+  // Paste: upload pasted images; otherwise insert plain text (strips stray
+  // backgrounds/fonts so dark mode stays clean).
   function onPaste(e: React.ClipboardEvent) {
+    const imgItem = Array.from(e.clipboardData.items).find(i => i.type.startsWith('image/'))
+    if (imgItem) {
+      const file = imgItem.getAsFile()
+      if (file) { e.preventDefault(); uploadAndInsert(file); return }
+    }
     e.preventDefault()
     const text = e.clipboardData.getData('text/plain')
     document.execCommand('insertText', false, text)
@@ -104,6 +142,13 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
           onClick={() => setShowSymbols(s => !s)}>
           √x ▾
         </button>
+        <button type="button" title="Insert image (or drag & drop / paste)"
+          className="re-btn"
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? '…' : '🖼'}
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onPickImage} />
       </div>
 
       {showSymbols && (
@@ -133,6 +178,8 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
         onInput={emit}
         onBlur={emit}
         onPaste={onPaste}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
       />
     </div>
   )

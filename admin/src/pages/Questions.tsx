@@ -288,12 +288,14 @@ export default function Questions() {
 
   async function saveQuestion(e: FormEvent) {
     e.preventDefault()
-    // contentEditable has no native `required` — validate visible text.
-    if (form.questionType !== 'SYLLOGISM' && !stripHtml(form.text)) {
+    // contentEditable has no native `required` — a field counts as filled if it
+    // has visible text OR an image.
+    const filled = (html: string) => stripHtml(html).length > 0 || /<img/i.test(html || '')
+    if (form.questionType !== 'SYLLOGISM' && !filled(form.text)) {
       setError('Question text is required.'); return
     }
-    if ((['A', 'B', 'C', 'D'] as const).some(o => !stripHtml(form[`option${o}` as keyof typeof emptyForm] as string))) {
-      setError('All four options are required.'); return
+    if ((['A', 'B', 'C', 'D'] as const).some(o => !filled(form[`option${o}` as keyof typeof emptyForm] as string))) {
+      setError('All four options are required (text or image).'); return
     }
     setSaving(true); setError('')
     try {
