@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import type { Contest } from "../lib/types";
 import { getTier } from "../lib/tiers";
+import { usePageMeta } from "../lib/seo";
 
 interface LeaderboardEntry {
   rank: number;
@@ -33,6 +34,10 @@ function formatCountdown(ms: number): string {
 }
 
 export default function LandingPage() {
+  usePageMeta(
+    "RankArena — Live SSC Mock Tests & Rated Contests (CGL, CHSL, MTS, CPO, GD)",
+    "Compete in timed, ranked SSC mock contests and sectional mock tests for CGL, CHSL, MTS, CPO and GD. Live leaderboards, ratings, detailed solutions and performance analysis.",
+  );
   const navigate = useNavigate();
   const [active, setActive] = useState<Contest[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);

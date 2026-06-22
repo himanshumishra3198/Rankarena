@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import { getTier } from '../lib/tiers'
+import { usePageMeta } from '../lib/seo'
 
 interface Entry {
   rank: number
@@ -15,6 +16,7 @@ interface Entry {
 const RANK_MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
 export default function Leaderboard() {
+  usePageMeta('Leaderboard — RankArena', 'Top-rated SSC aspirants on RankArena. See the live rankings across mock contests.')
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()

@@ -2,8 +2,10 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import { usePageMeta } from '../lib/seo'
 
 export default function Login() {
+  usePageMeta('Log in — RankArena', 'Log in to RankArena to take SSC mock contests and sectional tests.')
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

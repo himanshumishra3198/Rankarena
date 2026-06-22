@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Auth-gated / per-user pages — no SEO value, avoid crawl budget waste
+Disallow: /contests/
+Disallow: /mocks/
+Disallow: /profile
+Disallow: /profile/
+
+Sitemap: https://rankarena.hm0.org/sitemap.xml

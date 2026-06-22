@@ -1,0 +1,12 @@
+{
+  "name": "RankArena — SSC Mock Tests & Contests",
+  "short_name": "RankArena",
+  "description": "Live SSC mock contests and sectional tests with ratings and leaderboards.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
