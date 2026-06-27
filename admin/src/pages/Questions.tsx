@@ -313,7 +313,7 @@ export default function Questions() {
         structuredData: form.questionType === 'SYLLOGISM'
           ? { statements: form.statements.filter(Boolean), conclusions: form.conclusions.filter(Boolean) }
           : null,
-        solution: stripHtml(form.solution) ? form.solution : null,
+        solution: filled(form.solution) ? form.solution : null,
       }
       if (editingId) await api.put(`/admin/questions/${editingId}`, payload)
       else await api.post('/admin/questions', payload)

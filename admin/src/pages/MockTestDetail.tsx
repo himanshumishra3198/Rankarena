@@ -146,7 +146,7 @@ export default function MockTestDetail() {
       correctOption: cForm.correctOption,
       subject: mock.subject,
       difficulty: cForm.difficulty,
-      solution: stripHtml(cForm.solution) ? cForm.solution : null,
+      solution: hasContent(cForm.solution) ? cForm.solution : null,
       passageId: needsPassage ? cForm.passageId : null,
       structuredData: isSyll
         ? { statements: cForm.statements.filter(s => stripHtml(s)), conclusions: cForm.conclusions.filter(c => stripHtml(c)) }
