@@ -473,7 +473,7 @@ export default function MockTestDetail() {
                           {mtq.question.passage.type === 'TABLE' ? '📊' : '📄'} {mtq.question.passage.title || 'Passage'}
                         </div>
                       )}
-                      <div style={{ fontWeight: 500 }}>{stripHtml(mtq.question.text) ? <RichText html={mtq.question.text} /> : <em style={{ color: 'var(--text-muted)' }}>(syllogism)</em>}</div>
+                      <div style={{ fontWeight: 500 }}>{(stripHtml(mtq.question.text) || /<img/i.test(mtq.question.text)) ? <RichText html={mtq.question.text} /> : <em style={{ color: 'var(--text-muted)' }}>(syllogism)</em>}</div>
                     </td>
                     <td style={{ fontSize: 12 }}>{TYPE_LABELS[mtq.question.questionType] ?? 'Standard'}</td>
                     <td style={{ fontSize: 13 }}>+{mtq.marks} / −{mtq.negativeMarks}</td>

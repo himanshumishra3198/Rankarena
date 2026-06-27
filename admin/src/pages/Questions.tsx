@@ -675,7 +675,7 @@ export default function Questions() {
                           </div>
                         )}
                         <div style={{ fontWeight: 500, marginBottom: 4 }}>
-                          {stripHtml(q.text)
+                          {(stripHtml(q.text) || /<img/i.test(q.text))
                             ? <RichText as="span" html={q.text} />
                             : <em style={{ color: 'var(--text-muted)' }}>(syllogism question)</em>}
                         </div>
