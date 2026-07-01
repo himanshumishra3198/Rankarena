@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar'
 import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
 import type { MockTest, MockTestQuestion, Question, Passage, QuestionType } from '../lib/types'
-import { SECTION_LABELS } from '../lib/types'
+import { SECTION_LABELS, SECTIONS } from '../lib/types'
 
 const TYPE_LABELS: Record<string, string> = {
   STANDARD: 'Standard', SYLLOGISM: 'Syllogism', PASSAGE: 'Passage', TABLE: 'Table',
@@ -56,6 +56,9 @@ export default function MockTestDetail() {
   const [uploading, setUploading] = useState(false)
   const [editingQid, setEditingQid] = useState<string | null>(null)
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
+  const [editDetails, setEditDetails] = useState(false)
+  const [mForm, setMForm] = useState({ title: '', subject: 'GK' as MockTest['subject'], durationMinutes: 15, negativeMarks: 0.5 })
+  const [savingDetails, setSavingDetails] = useState(false)
 
   async function load() {
     const [mockRes, mtqRes, bankRes, pRes] = await Promise.all([
@@ -191,6 +194,31 @@ export default function MockTestDetail() {
     load()
   }
 
+  function openEditDetails() {
+    if (!mock) return
+    setMForm({
+      title: mock.title, subject: mock.subject,
+      durationMinutes: mock.durationMinutes, negativeMarks: mock.negativeMarks,
+    })
+    setEditDetails(true)
+  }
+  async function saveDetails(e: FormEvent) {
+    e.preventDefault()
+    if (!mForm.title.trim()) { setError('Title is required.'); return }
+    setSavingDetails(true); setError('')
+    try {
+      await api.put(`/admin/mocks/${id}`, {
+        title: mForm.title.trim(),
+        subject: mForm.subject,
+        durationMinutes: Number(mForm.durationMinutes),
+        negativeMarks: Number(mForm.negativeMarks),
+      })
+      setEditDetails(false); load()
+    } catch (err: any) {
+      setError(errStr(err, 'Failed to update mock test'))
+    } finally { setSavingDetails(false) }
+  }
+
   if (loading) return <><Navbar /><div className="page"><p style={{ color: 'var(--text-muted)' }}>Loading...</p></div></>
   if (!mock) return <><Navbar /><div className="page"><p className="empty">Mock test not found.</p></div></>
 
@@ -205,20 +233,65 @@ export default function MockTestDetail() {
         <button className="btn btn-ghost btn-sm" style={{ marginBottom: 14 }} onClick={() => navigate('/mocks')}>← Mock Tests</button>
 
         <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <h1 style={{ marginBottom: 6 }}>{mock.title}</h1>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                {SECTION_LABELS[mock.subject]} &nbsp;·&nbsp; {mock.durationMinutes} min &nbsp;·&nbsp;
-                &minus;{mock.negativeMarks} per wrong &nbsp;·&nbsp; {mtqs.length} questions
+          {!editDetails ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h1 style={{ marginBottom: 6 }}>{mock.title}</h1>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                  {SECTION_LABELS[mock.subject]} &nbsp;·&nbsp; {mock.durationMinutes} min &nbsp;·&nbsp;
+                  &minus;{mock.negativeMarks} per wrong &nbsp;·&nbsp; {mtqs.length} questions
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
+                  background: mock.isPublished ? '#dcfce7' : 'var(--bg)',
+                  color: mock.isPublished ? '#16a34a' : 'var(--text-muted)',
+                }}>{mock.isPublished ? 'Published' : 'Draft'}</span>
+                <button className="btn btn-sm btn-ghost" onClick={openEditDetails}>✎ Edit details</button>
               </div>
             </div>
-            <span style={{
-              fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
-              background: mock.isPublished ? '#dcfce7' : 'var(--bg)',
-              color: mock.isPublished ? '#16a34a' : 'var(--text-muted)',
-            }}>{mock.isPublished ? 'Published' : 'Draft'}</span>
-          </div>
+          ) : (
+            <form onSubmit={saveDetails}>
+              <h2 style={{ marginBottom: 14 }}>Edit Mock Test</h2>
+              {error && <div className="alert alert-error">{error}</div>}
+              <div className="form-group">
+                <label>Title</label>
+                <input className="input" value={mForm.title} required
+                  onChange={e => setMForm(f => ({ ...f, title: e.target.value }))} />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Section</label>
+                  <select className="input" value={mForm.subject}
+                    onChange={e => setMForm(f => ({ ...f, subject: e.target.value as any }))}>
+                    {SECTIONS.map(s => <option key={s} value={s}>{SECTION_LABELS[s]}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Duration (minutes)</label>
+                  <input className="input" type="number" min={1} value={mForm.durationMinutes}
+                    onChange={e => setMForm(f => ({ ...f, durationMinutes: Number(e.target.value) }))} />
+                </div>
+                <div className="form-group">
+                  <label>Negative Marks</label>
+                  <input className="input" type="number" min={0} step="any" value={mForm.negativeMarks}
+                    onChange={e => setMForm(f => ({ ...f, negativeMarks: Number(e.target.value) }))} />
+                </div>
+              </div>
+              {mForm.subject !== mock.subject && (
+                <p style={{ fontSize: 12, color: 'var(--warning)', marginBottom: 12 }}>
+                  ⚠ Changing the section — existing questions stay, but new bank picks will filter to the new section.
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn btn-primary" type="submit" disabled={savingDetails}>
+                  {savingDetails ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button type="button" className="btn btn-ghost" onClick={() => { setEditDetails(false); setError('') }}>Cancel</button>
+              </div>
+            </form>
+          )}
         </div>
 
         {/* Add question — pick from bank OR create new */}
