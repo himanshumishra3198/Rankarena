@@ -956,7 +956,7 @@ select.input { cursor: pointer; }
 [data-theme="dark"] .practice-banner { background: #422006; border-color: #713f12; color: #fcd34d; }
 
 /* ── Mock result: hero + tabs ──────────────────────────────── */
-.result-hero { display: flex; align-items: center; gap: 24px; background: linear-gradient(135deg, var(--primary), #7c3aed); border-radius: 16px; padding: 24px 28px; color: #fff; margin-bottom: 18px; flex-wrap: wrap; box-shadow: var(--shadow-md); }
+.result-hero { display: flex; align-items: center; gap: 24px; background: linear-gradient(135deg, #1e293b, #334155); border-radius: 16px; padding: 24px 28px; color: #fff; margin-bottom: 18px; flex-wrap: wrap; box-shadow: var(--shadow-md); }
 .result-hero-ring { width: 110px; height: 110px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .result-hero-ring-inner { width: 86px; height: 86px; border-radius: 50%; background: rgba(0,0,0,.18); display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
 .result-hero-score { font-size: 30px; font-weight: 800; line-height: 1; }
@@ -967,7 +967,7 @@ select.input { cursor: pointer; }
 .result-hero-chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .hero-chip { background: rgba(255,255,255,.18); border-radius: 20px; padding: 5px 12px; font-size: 13px; }
 .hero-chip b { font-weight: 800; }
-.result-hero .btn-primary { background: #fff; color: var(--primary); border-color: #fff; }
+.result-hero .btn-primary { background: #fff; color: #1e293b; border-color: #fff; }
 .result-hero .btn-primary:hover { background: #f1f5f9; }
 
 .result-tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
