@@ -940,3 +940,17 @@ select.input { cursor: pointer; }
 .palette-legend-room .ld { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid var(--border); flex-shrink: 0; }
 
 .q-timer { font-size: 12px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; background: var(--bg); padding: 2px 8px; border-radius: 6px; }
+
+/* ── Top scorers (mock result) ─────────────────────────────── */
+.topscore-list { display: flex; flex-direction: column; gap: 2px; }
+.topscore-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 8px; }
+.topscore-row.me { background: var(--primary-light); }
+.topscore-rank { font-size: 15px; font-weight: 700; min-width: 34px; }
+.topscore-name { flex: 1; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.topscore-you { font-size: 10px; font-weight: 700; background: var(--primary); color: #fff; padding: 1px 7px; border-radius: 10px; }
+.topscore-score { font-weight: 800; color: var(--heading); }
+
+/* ── Bookmark button + practice banner ─────────────────────── */
+.bookmark-btn { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px; }
+.practice-banner { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-top: 10px; }
+[data-theme="dark"] .practice-banner { background: #422006; border-color: #713f12; color: #fcd34d; }

@@ -26,6 +26,7 @@ interface MockResultData {
   markedForReview: string[]
   submittedAt: string
   rank: number; totalTakers: number; percentile: number
+  topScorers: { rank: number; name: string; score: number; isCurrentUser: boolean }[]
   questionStats: Record<string, { correctPct: number; avgTime: number }>
   questions: ResultQuestion[]
 }
@@ -38,7 +39,6 @@ const SECTION_LABELS: Record<string, string> = {
 type Verdict = 'correct' | 'wrong' | 'skipped'
 type Filter = 'all' | Verdict | 'marked'
 
-const DIFF_COLORS: Record<string, string> = { EASY: '#16a34a', MEDIUM: '#d97706', HARD: '#dc2626' }
 
 function optText(q: ResultQuestion, opt: string) {
   return ({ A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD } as any)[opt] ?? ''
@@ -73,13 +73,24 @@ export default function MockResult() {
   const [open, setOpen] = useState<Set<string>>(new Set())
   const [solOpen, setSolOpen] = useState<Set<string>>(new Set())
   const [reportQId, setReportQId] = useState<string | null>(null)
+  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
+  const [practiceOn, setPracticeOn] = useState<Set<string>>(new Set())
+  const [practiceAns, setPracticeAns] = useState<Record<string, string>>({})
 
   useEffect(() => {
     api.get(`/mocks/${id}/result`)
       .then(r => setData(r.data))
       .catch(() => navigate('/mocks'))
       .finally(() => setLoading(false))
+    api.get('/bookmarks/ids').then(r => setBookmarks(new Set(r.data))).catch(() => {})
   }, [id, navigate])
+
+  async function toggleBookmark(qid: string) {
+    // optimistic
+    setBookmarks(b => { const n = new Set(b); n.has(qid) ? n.delete(qid) : n.add(qid); return n })
+    try { await api.post(`/bookmarks/${qid}`) }
+    catch { setBookmarks(b => { const n = new Set(b); n.has(qid) ? n.delete(qid) : n.add(qid); return n }) }
+  }
 
   if (loading) return <><Navbar /><div className="page"><p style={{ color: 'var(--text-muted)' }}>Loading result...</p></div></>
   if (!data) return null
@@ -97,15 +108,6 @@ export default function MockResult() {
   const marked = new Set(data.markedForReview ?? [])
   const filtered = data.questions.filter(q =>
     filter === 'all' ? true : filter === 'marked' ? marked.has(q.id) : verdicts.get(q.id) === filter)
-
-  // ── Difficulty breakdown (weak-area view) ──────────────────────────────
-  const diffStats = (['EASY', 'MEDIUM', 'HARD'] as const).map(d => {
-    const qs = data.questions.filter(q => q.difficulty === d)
-    const cor = qs.filter(q => verdicts.get(q.id) === 'correct').length
-    const wrg = qs.filter(q => verdicts.get(q.id) === 'wrong').length
-    const skp = qs.filter(q => verdicts.get(q.id) === 'skipped').length
-    return { d, total: qs.length, cor, wrg, skp }
-  }).filter(s => s.total > 0)
 
   function jumpTo(idx: number) {
     const q = data!.questions[idx]
@@ -148,36 +150,25 @@ export default function MockResult() {
           <button className="btn btn-primary" onClick={() => navigate(`/mocks/${id}`)}>↻ Retake Test</button>
         </div>
 
-        {/* ── Performance breakdown by difficulty (weak areas) ──────── */}
-        {diffStats.length > 0 && (
+        {/* ── Top scorers (leaderboard) ────────────────────────────── */}
+        {data.topScorers && data.topScorers.length > 0 && (
           <>
-            <div className="section-head" style={{ marginTop: 28 }}>Performance Breakdown</div>
+            <div className="section-head" style={{ marginTop: 28 }}>Top Scorers</div>
             <div className="card">
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 0, marginBottom: 16 }}>
-                Accuracy by difficulty — spot the areas to focus your revision on.
-              </p>
-              <div className="diff-grid">
-                {diffStats.map(({ d, total, cor, wrg, skp }) => {
-                  const acc = cor + wrg > 0 ? Math.round((cor / (cor + wrg)) * 100) : null
-                  return (
-                    <div key={d} className="diff-card" style={{ borderTop: `3px solid ${DIFF_COLORS[d]}` }}>
-                      <div className="diff-label" style={{ color: DIFF_COLORS[d] }}>{d}</div>
-                      <div className="diff-total">{total} Qs</div>
-                      <div className="diff-bar-stack">
-                        <div title={`Correct: ${cor}`} style={{ flex: cor, background: '#16a34a' }} />
-                        <div title={`Wrong: ${wrg}`} style={{ flex: wrg, background: '#dc2626' }} />
-                        <div title={`Skipped: ${skp}`} style={{ flex: skp, background: '#e2e8f0' }} />
-                      </div>
-                      <div className="diff-stats">
-                        <span style={{ color: '#16a34a' }}>{cor}✓</span>
-                        <span style={{ color: '#dc2626' }}>{wrg}✗</span>
-                        <span style={{ color: '#94a3b8' }}>{skp}—</span>
-                      </div>
-                      {acc !== null && <div className="diff-acc">{acc}% accuracy</div>}
-                    </div>
-                  )
-                })}
+              <div className="topscore-list">
+                {data.topScorers.map(t => (
+                  <div key={t.rank} className={`topscore-row ${t.isCurrentUser ? 'me' : ''}`}>
+                    <span className="topscore-rank">{t.rank <= 3 ? ['🥇', '🥈', '🥉'][t.rank - 1] : `#${t.rank}`}</span>
+                    <span className="topscore-name">{t.name}{t.isCurrentUser && <span className="topscore-you">You</span>}</span>
+                    <span className="topscore-score">{t.score}</span>
+                  </div>
+                ))}
               </div>
+              {data.totalTakers > data.topScorers.length && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
+                  You ranked <strong>#{data.rank}</strong> of {data.totalTakers} test-takers
+                </div>
+              )}
             </div>
           </>
         )}
@@ -244,7 +235,13 @@ export default function MockResult() {
                   <span className="sol-marks" style={{ color: v === 'correct' ? '#16a34a' : v === 'wrong' ? '#dc2626' : 'var(--text-muted)' }}>
                     {v === 'correct' ? `+${q.marks}` : v === 'wrong' ? `−${q.negativeMarks}` : '0'}
                   </span>
-                  <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>{isOpen ? '▲' : '▼'}</span>
+                  <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button className="bookmark-btn" title={bookmarks.has(q.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                      onClick={e => { e.stopPropagation(); toggleBookmark(q.id) }}>
+                      {bookmarks.has(q.id) ? '⭐' : '☆'}
+                    </button>
+                    <span style={{ color: 'var(--text-muted)' }}>{isOpen ? '▲' : '▼'}</span>
+                  </span>
                 </div>
 
                 {isOpen && (
@@ -256,24 +253,77 @@ export default function MockResult() {
                       </div>
                     )}
                     {q.text && <RichText as="p" className="review-qtext" html={q.text} />}
-                    <div className="options" style={{ marginTop: 10 }}>
-                      {(['A', 'B', 'C', 'D'] as const).map(opt => {
-                        const isCorrect = opt === q.correctOption
-                        const isGiven = opt === given
+
+                    {practiceOn.has(q.id) ? (
+                      // ── Re-attempt / practice mode ──────────────────────
+                      (() => {
+                        const picked = practiceAns[q.id]
+                        const answered = !!picked
                         return (
-                          <div key={opt} className="option" style={{
-                            cursor: 'default',
-                            borderColor: isCorrect ? '#16a34a' : isGiven ? '#dc2626' : 'var(--border)',
-                            background: isCorrect ? 'rgba(22,163,74,.08)' : isGiven ? 'rgba(220,38,38,.06)' : 'transparent',
-                          }}>
-                            <span className="option-label">{opt}</span>
-                            <span className="option-text"><RichText html={optText(q, opt)} /></span>
-                            {isCorrect && <span style={{ marginLeft: 'auto', color: '#16a34a', fontWeight: 700, fontSize: 13 }}>✓ Correct answer</span>}
-                            {isGiven && !isCorrect && <span style={{ marginLeft: 'auto', color: '#dc2626', fontWeight: 700, fontSize: 13 }}>Your answer</span>}
-                          </div>
+                          <>
+                            <div className="practice-banner">🔄 Re-attempt mode — pick an answer (won't change your score)</div>
+                            <div className="options" style={{ marginTop: 10 }}>
+                              {(['A', 'B', 'C', 'D'] as const).map(opt => {
+                                const isCorrect = opt === q.correctOption
+                                const isPicked = opt === picked
+                                let bc = 'var(--border)', bg = 'transparent'
+                                if (answered && isCorrect) { bc = '#16a34a'; bg = 'rgba(22,163,74,.08)' }
+                                else if (answered && isPicked) { bc = '#dc2626'; bg = 'rgba(220,38,38,.06)' }
+                                return (
+                                  <div key={opt} className="option" style={{ cursor: answered ? 'default' : 'pointer', borderColor: bc, background: bg }}
+                                    onClick={() => { if (!answered) setPracticeAns(a => ({ ...a, [q.id]: opt })) }}>
+                                    <span className="option-label">{opt}</span>
+                                    <span className="option-text"><RichText html={optText(q, opt)} /></span>
+                                    {answered && isCorrect && <span style={{ marginLeft: 'auto', color: '#16a34a', fontWeight: 700, fontSize: 13 }}>✓ Correct</span>}
+                                    {answered && isPicked && !isCorrect && <span style={{ marginLeft: 'auto', color: '#dc2626', fontWeight: 700, fontSize: 13 }}>Your pick</span>}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            {answered && (
+                              <div style={{ marginTop: 10, fontWeight: 700, color: picked === q.correctOption ? '#16a34a' : '#dc2626' }}>
+                                {picked === q.correctOption ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
+                              </div>
+                            )}
+                            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                              {answered && (
+                                <button className="btn btn-ghost btn-sm" onClick={() => setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })}>Try again</button>
+                              )}
+                              <button className="btn btn-ghost btn-sm" onClick={() => {
+                                setPracticeOn(s => { const n = new Set(s); n.delete(q.id); return n })
+                                setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })
+                              }}>Exit practice</button>
+                            </div>
+                          </>
                         )
-                      })}
-                    </div>
+                      })()
+                    ) : (
+                      // ── Normal review (your answer vs correct) ──────────
+                      <>
+                        <div className="options" style={{ marginTop: 10 }}>
+                          {(['A', 'B', 'C', 'D'] as const).map(opt => {
+                            const isCorrect = opt === q.correctOption
+                            const isGiven = opt === given
+                            return (
+                              <div key={opt} className="option" style={{
+                                cursor: 'default',
+                                borderColor: isCorrect ? '#16a34a' : isGiven ? '#dc2626' : 'var(--border)',
+                                background: isCorrect ? 'rgba(22,163,74,.08)' : isGiven ? 'rgba(220,38,38,.06)' : 'transparent',
+                              }}>
+                                <span className="option-label">{opt}</span>
+                                <span className="option-text"><RichText html={optText(q, opt)} /></span>
+                                {isCorrect && <span style={{ marginLeft: 'auto', color: '#16a34a', fontWeight: 700, fontSize: 13 }}>✓ Correct answer</span>}
+                                {isGiven && !isCorrect && <span style={{ marginLeft: 'auto', color: '#dc2626', fontWeight: 700, fontSize: 13 }}>Your answer</span>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div style={{ marginTop: 10 }}>
+                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }}
+                            onClick={() => setPracticeOn(s => new Set(s).add(q.id))}>🔄 Re-attempt this question</button>
+                        </div>
+                      </>
+                    )}
 
                     {/* Detailed solution */}
                     {q.solution && (

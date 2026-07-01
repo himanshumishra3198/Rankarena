@@ -20,10 +20,26 @@ model User {
   ratingHistory   RatingHistory[]
   mockAttempts    MockAttempt[]
   questionReports QuestionReport[]
+  bookmarks       Bookmark[]
   following       Follow[]         @relation("UserFollowing")
   followers       Follow[]         @relation("UserFollowers")
 
   @@map("users")
+}
+
+// A student's saved question for later revision.
+model Bookmark {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  questionId String   @map("question_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@map("bookmarks")
 }
 
 model Follow {
@@ -91,6 +107,7 @@ model Question {
   contestQuestions  ContestQuestion[]
   mockTestQuestions MockTestQuestion[]
   reports           QuestionReport[]
+  bookmarks         Bookmark[]
 
   @@index([fingerprint])
   @@map("questions")

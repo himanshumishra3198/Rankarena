@@ -47,6 +47,12 @@ export default function Navbar() {
             Leaderboard
           </button>
           <button
+            className={`nav-link ${isActive('/bookmarks') ? 'active' : ''}`}
+            onClick={() => navigate('/bookmarks')}
+          >
+            Bookmarks
+          </button>
+          <button
             className={`nav-link ${isActive('/profile') ? 'active' : ''}`}
             onClick={() => navigate('/profile')}
           >

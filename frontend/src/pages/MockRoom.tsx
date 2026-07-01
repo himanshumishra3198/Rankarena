@@ -6,6 +6,7 @@ import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
 import { unlockAudio, playLowTimeAlert, playTick, playTimeUp } from '../lib/sound'
+import { getTheme, toggleTheme } from '../lib/theme'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
@@ -57,6 +58,7 @@ export default function MockRoom() {
   const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
   const [isFull, setIsFull] = useState(false)
   const [qSeconds, setQSeconds] = useState(0) // live seconds on the current question
+  const [dark, setDark] = useState(() => getTheme() === 'dark')
 
   const draftKey = `mockDraft:${id}`
   const timeSpent = useRef<Record<string, number>>({})
@@ -343,6 +345,10 @@ export default function MockRoom() {
       {/* Header */}
       <div className="mock-room-header">
         <div className="mock-room-title">{mock.title}</div>
+        <button className="mock-mute-btn" title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={() => setDark(toggleTheme() === 'dark')}>
+          {dark ? '☀️' : '🌙'}
+        </button>
         <button className="mock-mute-btn" title={isFull ? 'Exit fullscreen' : 'Enter fullscreen'} onClick={toggleFullscreen}>
           {isFull ? '🡼' : '⛶'}
         </button>

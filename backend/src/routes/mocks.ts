@@ -212,6 +212,20 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
     };
   }
 
+  // Top scorers (leaderboard for this mock) — highest score, earliest submit wins ties.
+  const topRows = await prisma.mockAttempt.findMany({
+    where: { mockTestId, submittedAt: { not: null } },
+    orderBy: [{ score: "desc" }, { submittedAt: "asc" }],
+    take: 10,
+    select: { userId: true, score: true, user: { select: { name: true } } },
+  });
+  const topScorers = topRows.map((t, i) => ({
+    rank: i + 1,
+    name: t.user.name,
+    score: Number(t.score),
+    isCurrentUser: t.userId === req.user!.id,
+  }));
+
   res.json({
     mockTitle: mock?.title ?? "",
     subject: mock?.subject ?? "",
@@ -228,6 +242,7 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
     rank,
     totalTakers,
     percentile,
+    topScorers,
     questionStats,
     questions,
   });
