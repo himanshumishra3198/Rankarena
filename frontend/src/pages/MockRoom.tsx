@@ -84,7 +84,9 @@ export default function MockRoom() {
               setVisited(new Set(d.visited ?? [data.questions[idx]?.id].filter(Boolean)))
               timeSpent.current = d.timeSpent ?? {}
               setCurrentIdx(idx)
-              setTimeLeft(Math.max(0, d.timeLeft ?? data.durationMinutes * 60))
+              // Strict timer: subtract real time elapsed while the tab was closed.
+              const elapsedAway = d.savedAt ? Math.floor((Date.now() - d.savedAt) / 1000) : 0
+              setTimeLeft(Math.max(0, (d.timeLeft ?? data.durationMinutes * 60) - elapsedAway))
               lastTickQ.current = data.questions[idx]?.id ?? ''
               lastTickTime.current = Date.now()
               setPhase('active')
@@ -188,9 +190,7 @@ export default function MockRoom() {
         const nq = questions[ni]
         if (nq) { setCurrentIdx(ni); setVisited(v => new Set(v).add(nq.id)) }
       }
-      if (['a', 'b', 'c', 'd'].includes(k)) { setAnswers(a => ({ ...a, [q.id]: k.toUpperCase() as Option })); e.preventDefault() }
-      else if (['1', '2', '3', '4'].includes(k)) { setAnswers(a => ({ ...a, [q.id]: OPTIONS[Number(k) - 1] })); e.preventDefault() }
-      else if (k === 'arrowright' || k === 'n') { move(1); e.preventDefault() }
+      if (k === 'arrowright' || k === 'n') { move(1); e.preventDefault() }
       else if (k === 'arrowleft' || k === 'p') { move(-1); e.preventDefault() }
       else if (k === 'm') { setMarked(m => { const n = new Set(m); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n }) }
       else if (k === 'c') { setAnswers(a => { const n = { ...a }; delete n[q.id]; return n }) }
@@ -368,9 +368,6 @@ export default function MockRoom() {
               <span className="q-timer" title="Time spent on this question">
                 ⏱ {formatTime((timeSpent.current[currentQ.id] ?? 0) + qSeconds)}
               </span>
-              {currentQ.difficulty && (
-                <span className={`diff-chip diff-${String(currentQ.difficulty).toLowerCase()}`}>{currentQ.difficulty}</span>
-              )}
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>+{currentQ.marks} / −{currentQ.negativeMarks}</span>
             </div>
           </div>
@@ -411,10 +408,9 @@ export default function MockRoom() {
           </div>
 
           <div className="kbd-hint">
-            <span><kbd>A</kbd>–<kbd>D</kbd> answer</span>
             <span><kbd>←</kbd><kbd>→</kbd> navigate</span>
-            <span><kbd>M</kbd> mark</span>
-            <span><kbd>C</kbd> clear</span>
+            <span><kbd>M</kbd> mark for review</span>
+            <span><kbd>C</kbd> clear answer</span>
           </div>
         </div>
 
