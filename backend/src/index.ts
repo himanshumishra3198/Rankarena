@@ -17,6 +17,7 @@ import uploadRoutes from "./routes/upload";
 import ratingRoutes from "./routes/rating";
 import profileRoutes from "./routes/profile";
 import followRoutes from "./routes/follows";
+import reportRoutes from "./routes/reports";
 import prisma from "./lib/prisma";
 import { computeFingerprint } from "./lib/fingerprint";
 
@@ -68,6 +69,7 @@ app.use("/admin", adminRoutes);
 app.use("/ratings", ratingRoutes);
 app.use("/profile", profileRoutes);
 app.use("/follows", followRoutes);
+app.use("/reports", reportRoutes);
 
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled promise rejection:", reason);

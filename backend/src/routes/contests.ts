@@ -228,6 +228,8 @@ router.post("/:id/submit", authenticate, async (req: AuthRequest, res: Response)
   }
   const timeSpentParsed = z.record(z.string(), z.number()).safeParse(req.body.timeSpent);
   const timeSpent = timeSpentParsed.success ? timeSpentParsed.data : null;
+  const markedParsed = z.array(z.string()).safeParse(req.body.markedForReview);
+  const markedForReview = markedParsed.success ? markedParsed.data : null;
 
   const contest = await prisma.contest.findUnique({ where: { id: contestId } });
   if (!contest) {
@@ -275,6 +277,7 @@ router.post("/:id/submit", authenticate, async (req: AuthRequest, res: Response)
       answers: submittedAnswers,
       draftAnswers: Prisma.JsonNull,
       timeSpent: timeSpent ?? Prisma.JsonNull,
+      markedForReview: markedForReview ?? Prisma.JsonNull,
       score,
       submittedAt,
     },
@@ -367,7 +370,7 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
   const [participation, contest] = await Promise.all([
     prisma.participation.findUnique({
       where: { userId_contestId: { userId: req.user!.id, contestId } },
-      select: { answers: true, score: true, submittedAt: true },
+      select: { answers: true, score: true, submittedAt: true, markedForReview: true },
     }),
     prisma.contest.findUnique({
       where: { id: contestId },
@@ -450,6 +453,7 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     totalParticipants: total,
     submittedAt: participation.submittedAt,
     answers: participation.answers,
+    markedForReview: participation.markedForReview ?? [],
     questions,
     totalMaxMarks,
     contestTitle: contest?.title ?? '',

@@ -5,6 +5,7 @@ import ContestDetail from './pages/ContestDetail'
 import Questions from './pages/Questions'
 import MockTests from './pages/MockTests'
 import MockTestDetail from './pages/MockTestDetail'
+import Reports from './pages/Reports'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/questions" element={<PrivateRoute><Questions /></PrivateRoute>} />
         <Route path="/mocks" element={<PrivateRoute><MockTests /></PrivateRoute>} />
         <Route path="/mocks/:id" element={<PrivateRoute><MockTestDetail /></PrivateRoute>} />
+        <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -43,6 +43,11 @@ export type Passage = Prisma.PassageModel
  */
 export type Question = Prisma.QuestionModel
 /**
+ * Model QuestionReport
+ * 
+ */
+export type QuestionReport = Prisma.QuestionReportModel
+/**
  * Model MockTest
  * 
  */

@@ -56,6 +56,7 @@ export const ModelName = {
   Contest: 'Contest',
   Passage: 'Passage',
   Question: 'Question',
+  QuestionReport: 'QuestionReport',
   MockTest: 'MockTest',
   MockTestQuestion: 'MockTestQuestion',
   MockAttempt: 'MockAttempt',
@@ -150,6 +151,21 @@ export const QuestionScalarFieldEnum = {
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
 
 
+export const QuestionReportScalarFieldEnum = {
+  id: 'id',
+  questionId: 'questionId',
+  userId: 'userId',
+  reason: 'reason',
+  details: 'details',
+  source: 'source',
+  status: 'status',
+  createdAt: 'createdAt',
+  resolvedAt: 'resolvedAt'
+} as const
+
+export type QuestionReportScalarFieldEnum = (typeof QuestionReportScalarFieldEnum)[keyof typeof QuestionReportScalarFieldEnum]
+
+
 export const MockTestScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -185,6 +201,7 @@ export const MockAttemptScalarFieldEnum = {
   skippedCount: 'skippedCount',
   answers: 'answers',
   timeSpent: 'timeSpent',
+  markedForReview: 'markedForReview',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const
@@ -211,6 +228,7 @@ export const ParticipationScalarFieldEnum = {
   draftAnswers: 'draftAnswers',
   answers: 'answers',
   timeSpent: 'timeSpent',
+  markedForReview: 'markedForReview',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const

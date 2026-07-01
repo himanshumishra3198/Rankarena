@@ -69,6 +69,24 @@ select.input { cursor: pointer; }
 .nav-links { display: flex; gap: 4px; }
 .nav-link { padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; border: none; background: transparent; }
 .nav-link:hover, .nav-link.active { background: var(--primary-light); color: var(--primary); }
+.nav-link { position: relative; }
+.nav-report-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 700; }
+
+/* ── Question Reports queue ─────────────────────────────────────────── */
+.report-count-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 12px; background: #fee2e2; color: #b91c1c; font-size: 13px; font-weight: 700; }
+.report-card { display: flex; flex-direction: column; gap: 12px; }
+.report-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.report-reason-tag { color: #fff; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
+.report-meta { font-size: 12px; color: var(--text-muted); }
+.report-details { font-size: 14px; font-style: italic; color: var(--text); background: var(--primary-light); padding: 10px 12px; border-radius: 8px; }
+.report-question { border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.report-qtext { font-size: 15px; margin-bottom: 10px; }
+.report-options { display: flex; flex-direction: column; gap: 6px; }
+.report-option { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+.report-option.correct { border-color: #16a34a; background: rgba(22,163,74,.08); }
+.report-opt-label { font-weight: 700; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; background: var(--primary-light); color: var(--primary); flex-shrink: 0; }
+.report-opt-tag { margin-left: auto; color: #16a34a; font-weight: 700; font-size: 12px; }
+.report-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 .auth-card { width: 100%; max-width: 360px; }

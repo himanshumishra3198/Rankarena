@@ -261,6 +261,7 @@ export type QuestionWhereInput = {
   passage?: Prisma.XOR<Prisma.PassageNullableScalarRelationFilter, Prisma.PassageWhereInput> | null
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
   mockTestQuestions?: Prisma.MockTestQuestionListRelationFilter
+  reports?: Prisma.QuestionReportListRelationFilter
 }
 
 export type QuestionOrderByWithRelationInput = {
@@ -282,6 +283,7 @@ export type QuestionOrderByWithRelationInput = {
   passage?: Prisma.PassageOrderByWithRelationInput
   contestQuestions?: Prisma.ContestQuestionOrderByRelationAggregateInput
   mockTestQuestions?: Prisma.MockTestQuestionOrderByRelationAggregateInput
+  reports?: Prisma.QuestionReportOrderByRelationAggregateInput
 }
 
 export type QuestionWhereUniqueInput = Prisma.AtLeast<{
@@ -306,6 +308,7 @@ export type QuestionWhereUniqueInput = Prisma.AtLeast<{
   passage?: Prisma.XOR<Prisma.PassageNullableScalarRelationFilter, Prisma.PassageWhereInput> | null
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
   mockTestQuestions?: Prisma.MockTestQuestionListRelationFilter
+  reports?: Prisma.QuestionReportListRelationFilter
 }, "id">
 
 export type QuestionOrderByWithAggregationInput = {
@@ -368,6 +371,7 @@ export type QuestionCreateInput = {
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUncheckedCreateInput = {
@@ -388,6 +392,7 @@ export type QuestionUncheckedCreateInput = {
   fingerprint?: string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUpdateInput = {
@@ -408,6 +413,7 @@ export type QuestionUpdateInput = {
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateInput = {
@@ -428,6 +434,7 @@ export type QuestionUncheckedUpdateInput = {
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionCreateManyInput = {
@@ -608,6 +615,20 @@ export type EnumDifficultyFieldUpdateOperationsInput = {
   set?: $Enums.Difficulty
 }
 
+export type QuestionCreateNestedOneWithoutReportsInput = {
+  create?: Prisma.XOR<Prisma.QuestionCreateWithoutReportsInput, Prisma.QuestionUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutReportsInput
+  connect?: Prisma.QuestionWhereUniqueInput
+}
+
+export type QuestionUpdateOneRequiredWithoutReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.QuestionCreateWithoutReportsInput, Prisma.QuestionUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutReportsInput
+  upsert?: Prisma.QuestionUpsertWithoutReportsInput
+  connect?: Prisma.QuestionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.QuestionUpdateToOneWithWhereWithoutReportsInput, Prisma.QuestionUpdateWithoutReportsInput>, Prisma.QuestionUncheckedUpdateWithoutReportsInput>
+}
+
 export type QuestionCreateNestedOneWithoutMockTestQuestionsInput = {
   create?: Prisma.XOR<Prisma.QuestionCreateWithoutMockTestQuestionsInput, Prisma.QuestionUncheckedCreateWithoutMockTestQuestionsInput>
   connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutMockTestQuestionsInput
@@ -653,6 +674,7 @@ export type QuestionCreateWithoutPassageInput = {
   fingerprint?: string | null
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUncheckedCreateWithoutPassageInput = {
@@ -672,6 +694,7 @@ export type QuestionUncheckedCreateWithoutPassageInput = {
   fingerprint?: string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionCreateOrConnectWithoutPassageInput = {
@@ -721,6 +744,102 @@ export type QuestionScalarWhereInput = {
   fingerprint?: Prisma.StringNullableFilter<"Question"> | string | null
 }
 
+export type QuestionCreateWithoutReportsInput = {
+  id?: string
+  questionType?: $Enums.QuestionType
+  text: string
+  imageUrl?: string | null
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctOption: string
+  subject: $Enums.Subject
+  difficulty?: $Enums.Difficulty
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: string | null
+  fingerprint?: string | null
+  passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
+  contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
+  mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
+}
+
+export type QuestionUncheckedCreateWithoutReportsInput = {
+  id?: string
+  questionType?: $Enums.QuestionType
+  text: string
+  imageUrl?: string | null
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctOption: string
+  subject: $Enums.Subject
+  difficulty?: $Enums.Difficulty
+  passageId?: string | null
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: string | null
+  fingerprint?: string | null
+  contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+  mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+}
+
+export type QuestionCreateOrConnectWithoutReportsInput = {
+  where: Prisma.QuestionWhereUniqueInput
+  create: Prisma.XOR<Prisma.QuestionCreateWithoutReportsInput, Prisma.QuestionUncheckedCreateWithoutReportsInput>
+}
+
+export type QuestionUpsertWithoutReportsInput = {
+  update: Prisma.XOR<Prisma.QuestionUpdateWithoutReportsInput, Prisma.QuestionUncheckedUpdateWithoutReportsInput>
+  create: Prisma.XOR<Prisma.QuestionCreateWithoutReportsInput, Prisma.QuestionUncheckedCreateWithoutReportsInput>
+  where?: Prisma.QuestionWhereInput
+}
+
+export type QuestionUpdateToOneWithWhereWithoutReportsInput = {
+  where?: Prisma.QuestionWhereInput
+  data: Prisma.XOR<Prisma.QuestionUpdateWithoutReportsInput, Prisma.QuestionUncheckedUpdateWithoutReportsInput>
+}
+
+export type QuestionUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questionType?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionA?: Prisma.StringFieldUpdateOperationsInput | string
+  optionB?: Prisma.StringFieldUpdateOperationsInput | string
+  optionC?: Prisma.StringFieldUpdateOperationsInput | string
+  optionD?: Prisma.StringFieldUpdateOperationsInput | string
+  correctOption?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
+  difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
+  contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
+  mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
+}
+
+export type QuestionUncheckedUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questionType?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionA?: Prisma.StringFieldUpdateOperationsInput | string
+  optionB?: Prisma.StringFieldUpdateOperationsInput | string
+  optionC?: Prisma.StringFieldUpdateOperationsInput | string
+  optionD?: Prisma.StringFieldUpdateOperationsInput | string
+  correctOption?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
+  difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
+  passageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+  mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+}
+
 export type QuestionCreateWithoutMockTestQuestionsInput = {
   id?: string
   questionType?: $Enums.QuestionType
@@ -738,6 +857,7 @@ export type QuestionCreateWithoutMockTestQuestionsInput = {
   fingerprint?: string | null
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUncheckedCreateWithoutMockTestQuestionsInput = {
@@ -757,6 +877,7 @@ export type QuestionUncheckedCreateWithoutMockTestQuestionsInput = {
   solution?: string | null
   fingerprint?: string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionCreateOrConnectWithoutMockTestQuestionsInput = {
@@ -792,6 +913,7 @@ export type QuestionUpdateWithoutMockTestQuestionsInput = {
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateWithoutMockTestQuestionsInput = {
@@ -811,6 +933,7 @@ export type QuestionUncheckedUpdateWithoutMockTestQuestionsInput = {
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionCreateWithoutContestQuestionsInput = {
@@ -830,6 +953,7 @@ export type QuestionCreateWithoutContestQuestionsInput = {
   fingerprint?: string | null
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUncheckedCreateWithoutContestQuestionsInput = {
@@ -849,6 +973,7 @@ export type QuestionUncheckedCreateWithoutContestQuestionsInput = {
   solution?: string | null
   fingerprint?: string | null
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionCreateOrConnectWithoutContestQuestionsInput = {
@@ -884,6 +1009,7 @@ export type QuestionUpdateWithoutContestQuestionsInput = {
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateWithoutContestQuestionsInput = {
@@ -903,6 +1029,7 @@ export type QuestionUncheckedUpdateWithoutContestQuestionsInput = {
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionCreateManyPassageInput = {
@@ -939,6 +1066,7 @@ export type QuestionUpdateWithoutPassageInput = {
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateWithoutPassageInput = {
@@ -958,6 +1086,7 @@ export type QuestionUncheckedUpdateWithoutPassageInput = {
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateManyWithoutPassageInput = {
@@ -985,11 +1114,13 @@ export type QuestionUncheckedUpdateManyWithoutPassageInput = {
 export type QuestionCountOutputType = {
   contestQuestions: number
   mockTestQuestions: number
+  reports: number
 }
 
 export type QuestionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   contestQuestions?: boolean | QuestionCountOutputTypeCountContestQuestionsArgs
   mockTestQuestions?: boolean | QuestionCountOutputTypeCountMockTestQuestionsArgs
+  reports?: boolean | QuestionCountOutputTypeCountReportsArgs
 }
 
 /**
@@ -1016,6 +1147,13 @@ export type QuestionCountOutputTypeCountMockTestQuestionsArgs<ExtArgs extends ru
   where?: Prisma.MockTestQuestionWhereInput
 }
 
+/**
+ * QuestionCountOutputType without action
+ */
+export type QuestionCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.QuestionReportWhereInput
+}
+
 
 export type QuestionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1036,6 +1174,7 @@ export type QuestionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
   contestQuestions?: boolean | Prisma.Question$contestQuestionsArgs<ExtArgs>
   mockTestQuestions?: boolean | Prisma.Question$mockTestQuestionsArgs<ExtArgs>
+  reports?: boolean | Prisma.Question$reportsArgs<ExtArgs>
   _count?: boolean | Prisma.QuestionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["question"]>
 
@@ -1100,6 +1239,7 @@ export type QuestionInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
   contestQuestions?: boolean | Prisma.Question$contestQuestionsArgs<ExtArgs>
   mockTestQuestions?: boolean | Prisma.Question$mockTestQuestionsArgs<ExtArgs>
+  reports?: boolean | Prisma.Question$reportsArgs<ExtArgs>
   _count?: boolean | Prisma.QuestionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type QuestionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1115,6 +1255,7 @@ export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     passage: Prisma.$PassagePayload<ExtArgs> | null
     contestQuestions: Prisma.$ContestQuestionPayload<ExtArgs>[]
     mockTestQuestions: Prisma.$MockTestQuestionPayload<ExtArgs>[]
+    reports: Prisma.$QuestionReportPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1529,6 +1670,7 @@ export interface Prisma__QuestionClient<T, Null = never, ExtArgs extends runtime
   passage<T extends Prisma.Question$passageArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$passageArgs<ExtArgs>>): Prisma.Prisma__PassageClient<runtime.Types.Result.GetResult<Prisma.$PassagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   contestQuestions<T extends Prisma.Question$contestQuestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$contestQuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContestQuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   mockTestQuestions<T extends Prisma.Question$mockTestQuestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$mockTestQuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MockTestQuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reports<T extends Prisma.Question$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuestionReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2038,6 +2180,30 @@ export type Question$mockTestQuestionsArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.MockTestQuestionScalarFieldEnum | Prisma.MockTestQuestionScalarFieldEnum[]
+}
+
+/**
+ * Question.reports
+ */
+export type Question$reportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the QuestionReport
+   */
+  select?: Prisma.QuestionReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the QuestionReport
+   */
+  omit?: Prisma.QuestionReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.QuestionReportInclude<ExtArgs> | null
+  where?: Prisma.QuestionReportWhereInput
+  orderBy?: Prisma.QuestionReportOrderByWithRelationInput | Prisma.QuestionReportOrderByWithRelationInput[]
+  cursor?: Prisma.QuestionReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.QuestionReportScalarFieldEnum | Prisma.QuestionReportScalarFieldEnum[]
 }
 
 /**

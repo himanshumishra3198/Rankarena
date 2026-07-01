@@ -1,11 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getTheme, toggleTheme } from '../lib/theme'
+import api from '../lib/api'
 
 export default function Navbar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [dark, setDark] = useState(getTheme() === 'dark')
+  const [openReports, setOpenReports] = useState(0)
+
+  useEffect(() => {
+    api.get('/admin/reports', { params: { status: 'OPEN' } })
+      .then(r => setOpenReports(r.data.openCount ?? 0))
+      .catch(() => {})
+  }, [pathname])
 
   function handleThemeToggle() {
     const next = toggleTheme()
@@ -42,6 +50,13 @@ export default function Navbar() {
             onClick={() => navigate('/mocks')}
           >
             Mock Tests
+          </button>
+          <button
+            className={`nav-link ${pathname.startsWith('/reports') ? 'active' : ''}`}
+            onClick={() => navigate('/reports')}
+          >
+            Reports
+            {openReports > 0 && <span className="nav-report-badge">{openReports}</span>}
           </button>
         </div>
       </div>

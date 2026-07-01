@@ -79,6 +79,7 @@ export type MockAttemptCountAggregateOutputType = {
   skippedCount: number
   answers: number
   timeSpent: number
+  markedForReview: number
   startedAt: number
   submittedAt: number
   _all: number
@@ -138,6 +139,7 @@ export type MockAttemptCountAggregateInputType = {
   skippedCount?: true
   answers?: true
   timeSpent?: true
+  markedForReview?: true
   startedAt?: true
   submittedAt?: true
   _all?: true
@@ -240,6 +242,7 @@ export type MockAttemptGroupByOutputType = {
   skippedCount: number
   answers: runtime.JsonValue | null
   timeSpent: runtime.JsonValue | null
+  markedForReview: runtime.JsonValue | null
   startedAt: Date
   submittedAt: Date | null
   _count: MockAttemptCountAggregateOutputType | null
@@ -278,6 +281,7 @@ export type MockAttemptWhereInput = {
   skippedCount?: Prisma.IntFilter<"MockAttempt"> | number
   answers?: Prisma.JsonNullableFilter<"MockAttempt">
   timeSpent?: Prisma.JsonNullableFilter<"MockAttempt">
+  markedForReview?: Prisma.JsonNullableFilter<"MockAttempt">
   startedAt?: Prisma.DateTimeFilter<"MockAttempt"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"MockAttempt"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -295,6 +299,7 @@ export type MockAttemptOrderByWithRelationInput = {
   skippedCount?: Prisma.SortOrder
   answers?: Prisma.SortOrderInput | Prisma.SortOrder
   timeSpent?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedForReview?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -316,6 +321,7 @@ export type MockAttemptWhereUniqueInput = Prisma.AtLeast<{
   skippedCount?: Prisma.IntFilter<"MockAttempt"> | number
   answers?: Prisma.JsonNullableFilter<"MockAttempt">
   timeSpent?: Prisma.JsonNullableFilter<"MockAttempt">
+  markedForReview?: Prisma.JsonNullableFilter<"MockAttempt">
   startedAt?: Prisma.DateTimeFilter<"MockAttempt"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"MockAttempt"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -333,6 +339,7 @@ export type MockAttemptOrderByWithAggregationInput = {
   skippedCount?: Prisma.SortOrder
   answers?: Prisma.SortOrderInput | Prisma.SortOrder
   timeSpent?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedForReview?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.MockAttemptCountOrderByAggregateInput
@@ -356,6 +363,7 @@ export type MockAttemptScalarWhereWithAggregatesInput = {
   skippedCount?: Prisma.IntWithAggregatesFilter<"MockAttempt"> | number
   answers?: Prisma.JsonNullableWithAggregatesFilter<"MockAttempt">
   timeSpent?: Prisma.JsonNullableWithAggregatesFilter<"MockAttempt">
+  markedForReview?: Prisma.JsonNullableWithAggregatesFilter<"MockAttempt">
   startedAt?: Prisma.DateTimeWithAggregatesFilter<"MockAttempt"> | Date | string
   submittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MockAttempt"> | Date | string | null
 }
@@ -369,6 +377,7 @@ export type MockAttemptCreateInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutMockAttemptsInput
@@ -386,6 +395,7 @@ export type MockAttemptUncheckedCreateInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -399,6 +409,7 @@ export type MockAttemptUpdateInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutMockAttemptsNestedInput
@@ -416,6 +427,7 @@ export type MockAttemptUncheckedUpdateInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -431,6 +443,7 @@ export type MockAttemptCreateManyInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -444,6 +457,7 @@ export type MockAttemptUpdateManyMutationInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -459,6 +473,7 @@ export type MockAttemptUncheckedUpdateManyInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -489,6 +504,7 @@ export type MockAttemptCountOrderByAggregateInput = {
   skippedCount?: Prisma.SortOrder
   answers?: Prisma.SortOrder
   timeSpent?: Prisma.SortOrder
+  markedForReview?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
 }
@@ -619,10 +635,6 @@ export type MockAttemptUncheckedUpdateManyWithoutMockTestNestedInput = {
   deleteMany?: Prisma.MockAttemptScalarWhereInput | Prisma.MockAttemptScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type MockAttemptCreateWithoutUserInput = {
   id?: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -632,6 +644,7 @@ export type MockAttemptCreateWithoutUserInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
   mockTest: Prisma.MockTestCreateNestedOneWithoutAttemptsInput
@@ -647,6 +660,7 @@ export type MockAttemptUncheckedCreateWithoutUserInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -691,6 +705,7 @@ export type MockAttemptScalarWhereInput = {
   skippedCount?: Prisma.IntFilter<"MockAttempt"> | number
   answers?: Prisma.JsonNullableFilter<"MockAttempt">
   timeSpent?: Prisma.JsonNullableFilter<"MockAttempt">
+  markedForReview?: Prisma.JsonNullableFilter<"MockAttempt">
   startedAt?: Prisma.DateTimeFilter<"MockAttempt"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"MockAttempt"> | Date | string | null
 }
@@ -704,6 +719,7 @@ export type MockAttemptCreateWithoutMockTestInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutMockAttemptsInput
@@ -719,6 +735,7 @@ export type MockAttemptUncheckedCreateWithoutMockTestInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -759,6 +776,7 @@ export type MockAttemptCreateManyUserInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -772,6 +790,7 @@ export type MockAttemptUpdateWithoutUserInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   mockTest?: Prisma.MockTestUpdateOneRequiredWithoutAttemptsNestedInput
@@ -787,6 +806,7 @@ export type MockAttemptUncheckedUpdateWithoutUserInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -801,6 +821,7 @@ export type MockAttemptUncheckedUpdateManyWithoutUserInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -815,6 +836,7 @@ export type MockAttemptCreateManyMockTestInput = {
   skippedCount?: number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -828,6 +850,7 @@ export type MockAttemptUpdateWithoutMockTestInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutMockAttemptsNestedInput
@@ -843,6 +866,7 @@ export type MockAttemptUncheckedUpdateWithoutMockTestInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -857,6 +881,7 @@ export type MockAttemptUncheckedUpdateManyWithoutMockTestInput = {
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -874,6 +899,7 @@ export type MockAttemptSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   skippedCount?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -891,6 +917,7 @@ export type MockAttemptSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   skippedCount?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -908,6 +935,7 @@ export type MockAttemptSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   skippedCount?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -925,11 +953,12 @@ export type MockAttemptSelectScalar = {
   skippedCount?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
 }
 
-export type MockAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "mockTestId" | "score" | "totalMarks" | "correctCount" | "wrongCount" | "skippedCount" | "answers" | "timeSpent" | "startedAt" | "submittedAt", ExtArgs["result"]["mockAttempt"]>
+export type MockAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "mockTestId" | "score" | "totalMarks" | "correctCount" | "wrongCount" | "skippedCount" | "answers" | "timeSpent" | "markedForReview" | "startedAt" | "submittedAt", ExtArgs["result"]["mockAttempt"]>
 export type MockAttemptInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   mockTest?: boolean | Prisma.MockTestDefaultArgs<ExtArgs>
@@ -960,6 +989,7 @@ export type $MockAttemptPayload<ExtArgs extends runtime.Types.Extensions.Interna
     skippedCount: number
     answers: runtime.JsonValue | null
     timeSpent: runtime.JsonValue | null
+    markedForReview: runtime.JsonValue | null
     startedAt: Date
     submittedAt: Date | null
   }, ExtArgs["result"]["mockAttempt"]>
@@ -1397,6 +1427,7 @@ export interface MockAttemptFieldRefs {
   readonly skippedCount: Prisma.FieldRef<"MockAttempt", 'Int'>
   readonly answers: Prisma.FieldRef<"MockAttempt", 'Json'>
   readonly timeSpent: Prisma.FieldRef<"MockAttempt", 'Json'>
+  readonly markedForReview: Prisma.FieldRef<"MockAttempt", 'Json'>
   readonly startedAt: Prisma.FieldRef<"MockAttempt", 'DateTime'>
   readonly submittedAt: Prisma.FieldRef<"MockAttempt", 'DateTime'>
 }

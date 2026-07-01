@@ -60,6 +60,7 @@ export type ParticipationCountAggregateOutputType = {
   draftAnswers: number
   answers: number
   timeSpent: number
+  markedForReview: number
   startedAt: number
   submittedAt: number
   _all: number
@@ -100,6 +101,7 @@ export type ParticipationCountAggregateInputType = {
   draftAnswers?: true
   answers?: true
   timeSpent?: true
+  markedForReview?: true
   startedAt?: true
   submittedAt?: true
   _all?: true
@@ -199,6 +201,7 @@ export type ParticipationGroupByOutputType = {
   draftAnswers: runtime.JsonValue | null
   answers: runtime.JsonValue | null
   timeSpent: runtime.JsonValue | null
+  markedForReview: runtime.JsonValue | null
   startedAt: Date
   submittedAt: Date | null
   _count: ParticipationCountAggregateOutputType | null
@@ -234,6 +237,7 @@ export type ParticipationWhereInput = {
   draftAnswers?: Prisma.JsonNullableFilter<"Participation">
   answers?: Prisma.JsonNullableFilter<"Participation">
   timeSpent?: Prisma.JsonNullableFilter<"Participation">
+  markedForReview?: Prisma.JsonNullableFilter<"Participation">
   startedAt?: Prisma.DateTimeFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"Participation"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -248,6 +252,7 @@ export type ParticipationOrderByWithRelationInput = {
   draftAnswers?: Prisma.SortOrderInput | Prisma.SortOrder
   answers?: Prisma.SortOrderInput | Prisma.SortOrder
   timeSpent?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedForReview?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -266,6 +271,7 @@ export type ParticipationWhereUniqueInput = Prisma.AtLeast<{
   draftAnswers?: Prisma.JsonNullableFilter<"Participation">
   answers?: Prisma.JsonNullableFilter<"Participation">
   timeSpent?: Prisma.JsonNullableFilter<"Participation">
+  markedForReview?: Prisma.JsonNullableFilter<"Participation">
   startedAt?: Prisma.DateTimeFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"Participation"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -280,6 +286,7 @@ export type ParticipationOrderByWithAggregationInput = {
   draftAnswers?: Prisma.SortOrderInput | Prisma.SortOrder
   answers?: Prisma.SortOrderInput | Prisma.SortOrder
   timeSpent?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedForReview?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ParticipationCountOrderByAggregateInput
@@ -300,6 +307,7 @@ export type ParticipationScalarWhereWithAggregatesInput = {
   draftAnswers?: Prisma.JsonNullableWithAggregatesFilter<"Participation">
   answers?: Prisma.JsonNullableWithAggregatesFilter<"Participation">
   timeSpent?: Prisma.JsonNullableWithAggregatesFilter<"Participation">
+  markedForReview?: Prisma.JsonNullableWithAggregatesFilter<"Participation">
   startedAt?: Prisma.DateTimeWithAggregatesFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Participation"> | Date | string | null
 }
@@ -310,6 +318,7 @@ export type ParticipationCreateInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutParticipationsInput
@@ -324,6 +333,7 @@ export type ParticipationUncheckedCreateInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -334,6 +344,7 @@ export type ParticipationUpdateInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutParticipationsNestedInput
@@ -348,6 +359,7 @@ export type ParticipationUncheckedUpdateInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -360,6 +372,7 @@ export type ParticipationCreateManyInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -370,6 +383,7 @@ export type ParticipationUpdateManyMutationInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -382,6 +396,7 @@ export type ParticipationUncheckedUpdateManyInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -409,6 +424,7 @@ export type ParticipationCountOrderByAggregateInput = {
   draftAnswers?: Prisma.SortOrder
   answers?: Prisma.SortOrder
   timeSpent?: Prisma.SortOrder
+  markedForReview?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
 }
@@ -529,6 +545,7 @@ export type ParticipationCreateWithoutUserInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
   contest: Prisma.ContestCreateNestedOneWithoutParticipationsInput
@@ -541,6 +558,7 @@ export type ParticipationUncheckedCreateWithoutUserInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -582,6 +600,7 @@ export type ParticipationScalarWhereInput = {
   draftAnswers?: Prisma.JsonNullableFilter<"Participation">
   answers?: Prisma.JsonNullableFilter<"Participation">
   timeSpent?: Prisma.JsonNullableFilter<"Participation">
+  markedForReview?: Prisma.JsonNullableFilter<"Participation">
   startedAt?: Prisma.DateTimeFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"Participation"> | Date | string | null
 }
@@ -592,6 +611,7 @@ export type ParticipationCreateWithoutContestInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutParticipationsInput
@@ -604,6 +624,7 @@ export type ParticipationUncheckedCreateWithoutContestInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -641,6 +662,7 @@ export type ParticipationCreateManyUserInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -651,6 +673,7 @@ export type ParticipationUpdateWithoutUserInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   contest?: Prisma.ContestUpdateOneRequiredWithoutParticipationsNestedInput
@@ -663,6 +686,7 @@ export type ParticipationUncheckedUpdateWithoutUserInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -674,6 +698,7 @@ export type ParticipationUncheckedUpdateManyWithoutUserInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -685,6 +710,7 @@ export type ParticipationCreateManyContestInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -695,6 +721,7 @@ export type ParticipationUpdateWithoutContestInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutParticipationsNestedInput
@@ -707,6 +734,7 @@ export type ParticipationUncheckedUpdateWithoutContestInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -718,6 +746,7 @@ export type ParticipationUncheckedUpdateManyWithoutContestInput = {
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -732,6 +761,7 @@ export type ParticipationSelect<ExtArgs extends runtime.Types.Extensions.Interna
   draftAnswers?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -746,6 +776,7 @@ export type ParticipationSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   draftAnswers?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -760,6 +791,7 @@ export type ParticipationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   draftAnswers?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -774,11 +806,12 @@ export type ParticipationSelectScalar = {
   draftAnswers?: boolean
   answers?: boolean
   timeSpent?: boolean
+  markedForReview?: boolean
   startedAt?: boolean
   submittedAt?: boolean
 }
 
-export type ParticipationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "contestId" | "score" | "draftAnswers" | "answers" | "timeSpent" | "startedAt" | "submittedAt", ExtArgs["result"]["participation"]>
+export type ParticipationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "contestId" | "score" | "draftAnswers" | "answers" | "timeSpent" | "markedForReview" | "startedAt" | "submittedAt", ExtArgs["result"]["participation"]>
 export type ParticipationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   contest?: boolean | Prisma.ContestDefaultArgs<ExtArgs>
@@ -806,6 +839,7 @@ export type $ParticipationPayload<ExtArgs extends runtime.Types.Extensions.Inter
     draftAnswers: runtime.JsonValue | null
     answers: runtime.JsonValue | null
     timeSpent: runtime.JsonValue | null
+    markedForReview: runtime.JsonValue | null
     startedAt: Date
     submittedAt: Date | null
   }, ExtArgs["result"]["participation"]>
@@ -1240,6 +1274,7 @@ export interface ParticipationFieldRefs {
   readonly draftAnswers: Prisma.FieldRef<"Participation", 'Json'>
   readonly answers: Prisma.FieldRef<"Participation", 'Json'>
   readonly timeSpent: Prisma.FieldRef<"Participation", 'Json'>
+  readonly markedForReview: Prisma.FieldRef<"Participation", 'Json'>
   readonly startedAt: Prisma.FieldRef<"Participation", 'DateTime'>
   readonly submittedAt: Prisma.FieldRef<"Participation", 'DateTime'>
 }

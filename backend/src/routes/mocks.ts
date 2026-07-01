@@ -90,6 +90,8 @@ router.post("/:id/submit", async (req: AuthRequest, res: Response) => {
   }
   const timeSpentParsed = z.record(z.string(), z.number()).safeParse(req.body.timeSpent);
   const timeSpent = timeSpentParsed.success ? timeSpentParsed.data : null;
+  const markedParsed = z.array(z.string()).safeParse(req.body.markedForReview);
+  const markedForReview = markedParsed.success ? markedParsed.data : null;
 
   const mock = await prisma.mockTest.findUnique({ where: { id: mockTestId } });
   if (!mock || !mock.isPublished) {
@@ -121,7 +123,8 @@ router.post("/:id/submit", async (req: AuthRequest, res: Response) => {
   const submittedAt = new Date();
   const data = {
     score, totalMarks, correctCount: correct, wrongCount: wrong, skippedCount: skipped,
-    answers, timeSpent: timeSpent ?? Prisma.JsonNull, submittedAt,
+    answers, timeSpent: timeSpent ?? Prisma.JsonNull,
+    markedForReview: markedForReview ?? Prisma.JsonNull, submittedAt,
   };
 
   await prisma.mockAttempt.upsert({
@@ -220,6 +223,7 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
     skipped: attempt.skippedCount,
     answers: attempt.answers ?? {},
     timeSpent: attempt.timeSpent ?? {},
+    markedForReview: attempt.markedForReview ?? [],
     submittedAt: attempt.submittedAt,
     rank,
     totalTakers,

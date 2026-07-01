@@ -4,6 +4,7 @@ import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import { QuestionContext } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
+import ReportModal from '../components/ReportModal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RichQuestion {
@@ -20,6 +21,7 @@ interface RichQuestion {
 interface ResultData {
   score: number; rank: number | null; totalParticipants: number
   submittedAt: string; answers: Record<string, string>
+  markedForReview: string[]
   questions: RichQuestion[]; totalMaxMarks: number
   contestTitle: string; durationMinutes: number
   sectionLimits: Record<string, number> | null
@@ -46,7 +48,7 @@ const SECTION_COLORS: Record<string, string> = {
 }
 const DIFF_COLORS = { EASY: '#16a34a', MEDIUM: '#d97706', HARD: '#dc2626' }
 
-type ReviewFilter = 'all' | 'correct' | 'wrong' | 'skipped'
+type ReviewFilter = 'all' | 'correct' | 'wrong' | 'skipped' | 'marked'
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 function optText(q: RichQuestion, opt: string) {
@@ -174,6 +176,7 @@ export default function Result() {
   const [solOpenQ, setSolOpenQ] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<string>('all')
   const [copied, setCopied] = useState(false)
+  const [reportQId, setReportQId] = useState<string | null>(null)
 
   // timeSpent per questionId saved by ContestRoom on submit
   const [timeSpent, setTimeSpent] = useState<Record<string, number>>({})
@@ -254,12 +257,16 @@ export default function Result() {
   const slowest = sortedByTime.slice(0, 3)
   const fastest = [...sortedByTime].reverse().slice(0, 3)
 
+  // ── Marked-for-review (flagged in the exam room) ─────────────────────────
+  const markedSet = new Set(result.markedForReview ?? [])
+
   // ── Question review filtering ────────────────────────────────────────────
   const reviewQs = questions.filter(q => {
     if (activeSection !== 'all' && q.subject !== activeSection) return false
     if (reviewFilter === 'correct') return answers[q.id] === q.correctOption
     if (reviewFilter === 'wrong')   return answers[q.id] && answers[q.id] !== q.correctOption
     if (reviewFilter === 'skipped') return !answers[q.id]
+    if (reviewFilter === 'marked')  return markedSet.has(q.id)
     return true
   })
 
@@ -512,9 +519,9 @@ export default function Result() {
                 <option value="all">All Sections</option>
                 {SECTIONS.map(s => <option key={s} value={s}>{SECTION_SHORT[s]}</option>)}
               </select>
-              {(['all','correct','wrong','skipped'] as ReviewFilter[]).map(f => (
+              {(['all','correct','wrong','skipped', ...(markedSet.size > 0 ? ['marked' as ReviewFilter] : [])] as ReviewFilter[]).map(f => (
                 <button key={f} className={`review-filter-btn ${reviewFilter === f ? 'active' : ''} filter-${f}`} onClick={() => setReviewFilter(f)}>
-                  {f === 'all' ? `All (${questions.length})` : f === 'correct' ? `✓ Correct (${correct})` : f === 'wrong' ? `✗ Wrong (${wrong})` : `— Skipped (${skipped})`}
+                  {f === 'all' ? `All (${questions.length})` : f === 'correct' ? `✓ Correct (${correct})` : f === 'wrong' ? `✗ Wrong (${wrong})` : f === 'skipped' ? `— Skipped (${skipped})` : `🔖 Marked (${markedSet.size})`}
                 </button>
               ))}
             </div>
@@ -541,6 +548,7 @@ export default function Result() {
                       <span className="review-qnum">Q{qNum}</span>
                       <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
                       <span style={{ fontSize: 12, color: SECTION_COLORS[q.subject], fontWeight: 600 }}>{SECTION_SHORT[q.subject]}</span>
+                      {markedSet.has(q.id) && <span className="badge" style={{ background: '#fef3c7', color: '#b45309' }}>🔖 Marked</span>}
                       {tSpent !== undefined && (
                         <span className="review-time-chip" title={emojiInfo?.label}>
                           {emojiInfo && <span style={{ marginRight: 2 }}>{emojiInfo.emoji}</span>}
@@ -615,6 +623,13 @@ export default function Result() {
                           )}
                         </div>
                       )}
+
+                      <div style={{ marginTop: 12, textAlign: 'right' }}>
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }}
+                          onClick={() => setReportQId(q.id)} title="Report a problem with this question">
+                          ⚑ Report a problem
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -627,6 +642,15 @@ export default function Result() {
           <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back to Contests</button>
         </div>
       </div>
+
+      {reportQId && (
+        <ReportModal
+          questionId={reportQId}
+          source={`contest:${contestId}`}
+          questionLabel={`Question ${questions.findIndex(q => q.id === reportQId) + 1}`}
+          onClose={() => setReportQId(null)}
+        />
+      )}
     </>
   )
 }

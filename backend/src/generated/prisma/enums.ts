@@ -55,6 +55,26 @@ export const QuestionType = {
 export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
 
 
+export const ReportReason = {
+  WRONG_ANSWER: 'WRONG_ANSWER',
+  TYPO: 'TYPO',
+  UNCLEAR: 'UNCLEAR',
+  MULTIPLE_CORRECT: 'MULTIPLE_CORRECT',
+  OTHER: 'OTHER'
+} as const
+
+export type ReportReason = (typeof ReportReason)[keyof typeof ReportReason]
+
+
+export const ReportStatus = {
+  OPEN: 'OPEN',
+  RESOLVED: 'RESOLVED',
+  DISMISSED: 'DISMISSED'
+} as const
+
+export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
+
+
 export const PassageType = {
   TEXT: 'TEXT',
   TABLE: 'TABLE'

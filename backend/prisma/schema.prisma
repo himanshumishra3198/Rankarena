@@ -16,11 +16,12 @@ model User {
   rating       Int      @default(1500)
   createdAt    DateTime @default(now()) @map("created_at")
 
-  participations Participation[]
-  ratingHistory  RatingHistory[]
-  mockAttempts   MockAttempt[]
-  following      Follow[]        @relation("UserFollowing")
-  followers      Follow[]        @relation("UserFollowers")
+  participations  Participation[]
+  ratingHistory   RatingHistory[]
+  mockAttempts    MockAttempt[]
+  questionReports QuestionReport[]
+  following       Follow[]         @relation("UserFollowing")
+  followers       Follow[]         @relation("UserFollowers")
 
   @@map("users")
 }
@@ -89,9 +90,30 @@ model Question {
   passage           Passage?            @relation(fields: [passageId], references: [id])
   contestQuestions  ContestQuestion[]
   mockTestQuestions MockTestQuestion[]
+  reports           QuestionReport[]
 
   @@index([fingerprint])
   @@map("questions")
+}
+
+// Student-submitted flag on a question (wrong answer, typo, etc.). Admins
+// triage these to keep the question bank clean.
+model QuestionReport {
+  id         String       @id @default(uuid())
+  questionId String       @map("question_id")
+  userId     String       @map("user_id")
+  reason     ReportReason
+  details    String?
+  source     String? // where it was reported from, e.g. "mock:<id>" or "contest:<id>"
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  resolvedAt DateTime?    @map("resolved_at")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@map("question_reports")
 }
 
 // Sectional (subject-wise) practice mock test — always available, no rating.
@@ -135,6 +157,7 @@ model MockAttempt {
   skippedCount Int       @default(0) @map("skipped_count")
   answers      Json?
   timeSpent    Json?     @map("time_spent")
+  markedForReview Json?  @map("marked_for_review") // array of question IDs flagged in the room
   startedAt    DateTime  @default(now()) @map("started_at")
   submittedAt  DateTime? @map("submitted_at")
 
@@ -167,6 +190,7 @@ model Participation {
   draftAnswers Json?     @default("{}") @map("draft_answers")
   answers      Json?
   timeSpent    Json?     @map("time_spent")
+  markedForReview Json?  @map("marked_for_review") // array of question IDs flagged in the room
   startedAt    DateTime  @default(now()) @map("started_at")
   submittedAt  DateTime? @map("submitted_at")
 
@@ -223,6 +247,20 @@ enum QuestionType {
   SYLLOGISM
   PASSAGE
   TABLE
+}
+
+enum ReportReason {
+  WRONG_ANSWER
+  TYPO
+  UNCLEAR
+  MULTIPLE_CORRECT
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
 }
 
 enum PassageType {

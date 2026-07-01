@@ -4,11 +4,17 @@ import api from '../lib/api'
 import type { MockTestData, Question } from '../lib/types'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
+import ReportModal from '../components/ReportModal'
 import { unlockAudio, playLowTimeAlert, playTick, playTimeUp } from '../lib/sound'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
-type Phase = 'loading' | 'active' | 'submitting'
+type Phase = 'loading' | 'instructions' | 'active' | 'submitting'
+
+const SUBJECT_LABELS: Record<string, string> = {
+  QUANT: 'Quantitative Aptitude', REASONING: 'General Intelligence & Reasoning',
+  ENGLISH: 'English Language', GK: 'General Awareness',
+}
 
 type QState = 'not-visited' | 'not-answered' | 'answered' | 'marked' | 'answered-marked'
 
@@ -47,6 +53,7 @@ export default function MockRoom() {
   const [visited, setVisited] = useState<Set<string>>(new Set())
   const [timeLeft, setTimeLeft] = useState(0)
   const [showSubmit, setShowSubmit] = useState(false)
+  const [reportQId, setReportQId] = useState<string | null>(null)
   const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
 
   const timeSpent = useRef<Record<string, number>>({})
@@ -63,7 +70,7 @@ export default function MockRoom() {
         setQuestions(data.questions)
         setTimeLeft(data.durationMinutes * 60)
         setVisited(new Set(data.questions[0] ? [data.questions[0].id] : []))
-        setPhase('active')
+        setPhase('instructions')
       })
       .catch(() => navigate('/mocks'))
   }, [id, navigate])
@@ -81,11 +88,19 @@ export default function MockRoom() {
 
   const currentQ = questions[currentIdx]
   useEffect(() => {
-    if (!currentQ) return
+    if (!currentQ || phase !== 'active') return
     flushTime()
     lastTickQ.current = currentQ.id
     lastTickTime.current = Date.now()
-  }, [currentQ, flushTime])
+  }, [currentQ, phase, flushTime])
+
+  // ── Start the test once instructions are acknowledged ───────────────
+  function startTest() {
+    lastTickQ.current = currentQ?.id ?? ''
+    lastTickTime.current = Date.now()
+    unlockAudio()
+    setPhase('active')
+  }
 
   // ── Submit ──────────────────────────────────────────────────────────
   const submit = useCallback(async () => {
@@ -94,14 +109,14 @@ export default function MockRoom() {
     flushTime()
     setPhase('submitting')
     try {
-      await api.post(`/mocks/${id}/submit`, { answers, timeSpent: timeSpent.current })
+      await api.post(`/mocks/${id}/submit`, { answers, timeSpent: timeSpent.current, markedForReview: Array.from(marked) })
       navigate(`/mocks/${id}/result`)
     } catch {
       submittedRef.current = false
       setPhase('active')
       alert('Submission failed. Please try again.')
     }
-  }, [answers, id, navigate, flushTime])
+  }, [answers, marked, id, navigate, flushTime])
 
   // ── Countdown ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -133,6 +148,79 @@ export default function MockRoom() {
 
   if (phase === 'loading') return <div className="mock-room-loading">Loading mock test...</div>
   if (!mock || !currentQ) return null
+
+  // ── Instructions gate (shown before the timer starts) ────────────────
+  if (phase === 'instructions') {
+    const totalMarks = questions.reduce((s, q) => s + q.marks, 0)
+    return (
+      <div className="modal-overlay">
+        <div className="modal-box instructions-modal">
+          <div className="instructions-header">
+            <h2>{mock.title}</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>
+              {SUBJECT_LABELS[mock.subject] ?? mock.subject} · Read the instructions before you begin
+            </p>
+          </div>
+
+          <div className="instructions-meta-grid">
+            <div className="instructions-meta-item">
+              <span className="meta-label">Duration</span>
+              <span className="meta-value">{mock.durationMinutes} minutes</span>
+            </div>
+            <div className="instructions-meta-item">
+              <span className="meta-label">Questions</span>
+              <span className="meta-value">{questions.length}</span>
+            </div>
+            <div className="instructions-meta-item">
+              <span className="meta-label">Total Marks</span>
+              <span className="meta-value">{totalMarks}</span>
+            </div>
+            <div className="instructions-meta-item">
+              <span className="meta-label">Negative Marking</span>
+              <span className="meta-value" style={{ color: 'var(--danger)' }}>−{mock.negativeMarks} per wrong</span>
+            </div>
+          </div>
+
+          <div className="instructions-rules">
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>Rules &amp; Marking Scheme</h3>
+            <ol className="rules-list">
+              <li>You have <strong>{mock.durationMinutes} minutes</strong> to attempt <strong>{questions.length} questions</strong>. The test <strong>auto-submits</strong> when the timer hits zero.</li>
+              <li>Each correct answer earns its marks; every wrong answer deducts <strong>−{mock.negativeMarks}</strong>. Unanswered questions score <strong>0</strong>.</li>
+              <li>Use <strong>🔖 Mark for Review</strong> to flag tricky questions — they'll be highlighted in your result so you can revisit them.</li>
+              <li>You can navigate freely between questions and change answers any time before submitting.</li>
+              <li>Spotted a mistake in a question? Use <strong>⚑ Report</strong> to flag it for our team.</li>
+              <li>This is a practice mock — your score is <strong>not rated</strong> and you can retake it anytime.</li>
+            </ol>
+          </div>
+
+          <div className="instructions-legend">
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Question Status Colors</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 13 }}>
+              {[
+                { cls: 'qs-not-visited',     label: 'Not Visited' },
+                { cls: 'qs-not-answered',    label: 'Not Answered' },
+                { cls: 'qs-answered',        label: 'Answered' },
+                { cls: 'qs-marked',          label: 'Marked for Review' },
+                { cls: 'qs-answered-marked', label: 'Answered + Marked' },
+              ].map(({ cls, label }) => (
+                <div key={cls} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className={`legend-dot ${cls}`} />
+                  {label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button className="btn btn-ghost" onClick={() => navigate('/mocks')}>Cancel</button>
+            <button className="btn btn-primary btn-full" onClick={startTest}>
+              I'm Ready — Start Test →
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   function goTo(idx: number) {
     const q = questions[idx]
@@ -197,6 +285,10 @@ export default function MockRoom() {
                 Clear answer
               </button>
             )}
+            <button className="btn btn-ghost" style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 'auto' }}
+              onClick={() => setReportQId(currentQ.id)} title="Report a problem with this question">
+              ⚑ Report
+            </button>
           </div>
 
           <div className="room-nav">
@@ -231,6 +323,16 @@ export default function MockRoom() {
           </button>
         </div>
       </div>
+
+      {/* Report question modal */}
+      {reportQId && (
+        <ReportModal
+          questionId={reportQId}
+          source={`mock:${id}`}
+          questionLabel={`Question ${questions.findIndex(q => q.id === reportQId) + 1}`}
+          onClose={() => setReportQId(null)}
+        />
+      )}
 
       {/* Submit confirmation */}
       {showSubmit && (

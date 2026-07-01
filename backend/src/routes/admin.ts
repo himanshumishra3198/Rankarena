@@ -581,4 +581,51 @@ router.delete("/mocks/:id/questions/:qid", async (req: AuthRequest, res: Respons
   res.json({ ok: true });
 });
 
+// ── Question Reports (student flags) ──────────────────────
+
+// Triage queue — defaults to OPEN reports, grouped with the reported question.
+router.get("/reports", async (req: AuthRequest, res: Response) => {
+  const status = (req.query.status as string | undefined) ?? "OPEN";
+  const where = status === "ALL" ? {} : { status: status as any };
+  const [reports, openCount] = await Promise.all([
+    prisma.questionReport.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        user: { select: { id: true, name: true } },
+        question: {
+          select: {
+            id: true, text: true, imageUrl: true, subject: true, difficulty: true,
+            optionA: true, optionB: true, optionC: true, optionD: true,
+            correctOption: true, solution: true, questionType: true, structuredData: true,
+            passage: { select: { id: true, title: true, content: true, type: true, tableData: true } },
+          },
+        },
+      },
+    }),
+    prisma.questionReport.count({ where: { status: "OPEN" } }),
+  ]);
+  res.json({ reports, openCount });
+});
+
+const reportStatusSchema = z.object({
+  status: z.enum(["OPEN", "RESOLVED", "DISMISSED"]),
+});
+
+// Update a report's status (resolve after fixing the question, or dismiss).
+router.patch("/reports/:id", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const parsed = reportStatusSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  const report = await prisma.questionReport.update({
+    where: { id },
+    data: {
+      status: parsed.data.status,
+      resolvedAt: parsed.data.status === "OPEN" ? null : new Date(),
+    },
+  });
+  res.json(report);
+});
+
 export default router;

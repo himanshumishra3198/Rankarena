@@ -389,6 +389,7 @@ export const ModelName = {
   Contest: 'Contest',
   Passage: 'Passage',
   Question: 'Question',
+  QuestionReport: 'QuestionReport',
   MockTest: 'MockTest',
   MockTestQuestion: 'MockTestQuestion',
   MockAttempt: 'MockAttempt',
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "contest" | "passage" | "question" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory"
+    modelProps: "user" | "follow" | "contest" | "passage" | "question" | "questionReport" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -781,6 +782,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.QuestionCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.QuestionCountAggregateOutputType> | number
+        }
+      }
+    }
+    QuestionReport: {
+      payload: Prisma.$QuestionReportPayload<ExtArgs>
+      fields: Prisma.QuestionReportFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.QuestionReportFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.QuestionReportFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>
+        }
+        findFirst: {
+          args: Prisma.QuestionReportFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.QuestionReportFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>
+        }
+        findMany: {
+          args: Prisma.QuestionReportFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>[]
+        }
+        create: {
+          args: Prisma.QuestionReportCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>
+        }
+        createMany: {
+          args: Prisma.QuestionReportCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.QuestionReportCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>[]
+        }
+        delete: {
+          args: Prisma.QuestionReportDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>
+        }
+        update: {
+          args: Prisma.QuestionReportUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>
+        }
+        deleteMany: {
+          args: Prisma.QuestionReportDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.QuestionReportUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.QuestionReportUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>[]
+        }
+        upsert: {
+          args: Prisma.QuestionReportUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionReportPayload>
+        }
+        aggregate: {
+          args: Prisma.QuestionReportAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateQuestionReport>
+        }
+        groupBy: {
+          args: Prisma.QuestionReportGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionReportGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.QuestionReportCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionReportCountAggregateOutputType> | number
         }
       }
     }
@@ -1337,6 +1412,21 @@ export const QuestionScalarFieldEnum = {
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
 
 
+export const QuestionReportScalarFieldEnum = {
+  id: 'id',
+  questionId: 'questionId',
+  userId: 'userId',
+  reason: 'reason',
+  details: 'details',
+  source: 'source',
+  status: 'status',
+  createdAt: 'createdAt',
+  resolvedAt: 'resolvedAt'
+} as const
+
+export type QuestionReportScalarFieldEnum = (typeof QuestionReportScalarFieldEnum)[keyof typeof QuestionReportScalarFieldEnum]
+
+
 export const MockTestScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -1372,6 +1462,7 @@ export const MockAttemptScalarFieldEnum = {
   skippedCount: 'skippedCount',
   answers: 'answers',
   timeSpent: 'timeSpent',
+  markedForReview: 'markedForReview',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const
@@ -1398,6 +1489,7 @@ export const ParticipationScalarFieldEnum = {
   draftAnswers: 'draftAnswers',
   answers: 'answers',
   timeSpent: 'timeSpent',
+  markedForReview: 'markedForReview',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const
@@ -1621,6 +1713,34 @@ export type ListEnumDifficultyFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 
 
 /**
+ * Reference to a field of type 'ReportReason'
+ */
+export type EnumReportReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportReason'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportReason[]'
+ */
+export type ListEnumReportReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportReason[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportStatus'
+ */
+export type EnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportStatus[]'
+ */
+export type ListEnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -1755,6 +1875,7 @@ export type GlobalOmitConfig = {
   contest?: Prisma.ContestOmit
   passage?: Prisma.PassageOmit
   question?: Prisma.QuestionOmit
+  questionReport?: Prisma.QuestionReportOmit
   mockTest?: Prisma.MockTestOmit
   mockTestQuestion?: Prisma.MockTestQuestionOmit
   mockAttempt?: Prisma.MockAttemptOmit

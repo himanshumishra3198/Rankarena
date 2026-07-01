@@ -100,6 +100,8 @@ export default function ContestRoom() {
   phaseRef.current = phase
   const timeSpentRef = useRef(timeSpent)
   timeSpentRef.current = timeSpent
+  const markedForReviewRef = useRef(markedForReview)
+  markedForReviewRef.current = markedForReview
 
   // ── Derived: group questions by section ───────────────────────────────
   const sectionQuestions: Record<string, Question[]> = {}
@@ -370,7 +372,7 @@ export default function ContestRoom() {
     submittingRef.current = true
     setShowSubmitModal(false)
     try {
-      await api.post(`/contests/${contestId}/submit`, { answers: answersRef.current, timeSpent: timeSpentRef.current })
+      await api.post(`/contests/${contestId}/submit`, { answers: answersRef.current, timeSpent: timeSpentRef.current, markedForReview: Array.from(markedForReviewRef.current) })
       localStorage.setItem(`time-spent-${contestId}`, JSON.stringify(timeSpentRef.current))
       localStorage.removeItem(`draft-${contestId}`)
       localStorage.removeItem(`submitted-sections-${contestId}`)
