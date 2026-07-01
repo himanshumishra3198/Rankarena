@@ -142,7 +142,7 @@ export default function MockRoom() {
     try {
       await api.post(`/mocks/${id}/submit`, { answers, timeSpent: timeSpent.current, markedForReview: Array.from(marked) })
       try { localStorage.removeItem(draftKey) } catch { /* noop */ }
-      navigate(`/mocks/${id}/result`)
+      navigate(`/mocks/${id}/result`, { replace: true })
     } catch {
       submittedRef.current = false
       setPhase('active')
@@ -212,12 +212,25 @@ export default function MockRoom() {
     } catch { /* storage full / disabled — ignore */ }
   }, [answers, marked, visited, currentIdx, timeLeft, phase, draftKey])
 
-  // ── Warn before leaving (refresh / close / back) mid-test ───────────
+  // ── Warn before leaving (refresh / close) mid-test ──────────────────
   useEffect(() => {
     if (phase !== 'active') return
     const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
+  }, [phase])
+
+  // ── Block browser Back/Forward while the test is active ─────────────
+  // The only way out of the room is submitting. Pressing Back re-traps the
+  // history entry so the student can't navigate away mid-test.
+  useEffect(() => {
+    if (phase !== 'active') return
+    window.history.pushState(null, '', window.location.href)
+    const onPop = () => {
+      window.history.pushState(null, '', window.location.href)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
   }, [phase])
 
   // ── Per-question live timer ─────────────────────────────────────────
