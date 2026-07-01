@@ -55,22 +55,49 @@ export default function MockRoom() {
   const [showSubmit, setShowSubmit] = useState(false)
   const [reportQId, setReportQId] = useState<string | null>(null)
   const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
+  const [isFull, setIsFull] = useState(false)
+  const [qSeconds, setQSeconds] = useState(0) // live seconds on the current question
 
+  const draftKey = `mockDraft:${id}`
   const timeSpent = useRef<Record<string, number>>({})
   const lastTickQ = useRef<string>('')
   const lastTickTime = useRef<number>(Date.now())
   const submittedRef = useRef(false)
 
-  // ── Load ────────────────────────────────────────────────────────────
+  // ── Load (restore an in-progress draft if one exists) ───────────────
   useEffect(() => {
     api.get(`/mocks/${id}`)
       .then(r => {
         const data: MockTestData = r.data
         setMock(data)
         setQuestions(data.questions)
-        setTimeLeft(data.durationMinutes * 60)
-        setVisited(new Set(data.questions[0] ? [data.questions[0].id] : []))
-        setPhase('instructions')
+
+        let restored = false
+        try {
+          const raw = localStorage.getItem(draftKey)
+          if (raw) {
+            const d = JSON.parse(raw)
+            if (d && d.answers && Array.isArray(data.questions) && data.questions.length) {
+              const idx = Math.min(d.currentIdx ?? 0, data.questions.length - 1)
+              setAnswers(d.answers)
+              setMarked(new Set(d.marked ?? []))
+              setVisited(new Set(d.visited ?? [data.questions[idx]?.id].filter(Boolean)))
+              timeSpent.current = d.timeSpent ?? {}
+              setCurrentIdx(idx)
+              setTimeLeft(Math.max(0, d.timeLeft ?? data.durationMinutes * 60))
+              lastTickQ.current = data.questions[idx]?.id ?? ''
+              lastTickTime.current = Date.now()
+              setPhase('active')
+              restored = true
+            }
+          }
+        } catch { /* ignore corrupt draft */ }
+
+        if (!restored) {
+          setTimeLeft(data.durationMinutes * 60)
+          setVisited(new Set(data.questions[0] ? [data.questions[0].id] : []))
+          setPhase('instructions')
+        }
       })
       .catch(() => navigate('/mocks'))
   }, [id, navigate])
@@ -110,6 +137,7 @@ export default function MockRoom() {
     setPhase('submitting')
     try {
       await api.post(`/mocks/${id}/submit`, { answers, timeSpent: timeSpent.current, markedForReview: Array.from(marked) })
+      try { localStorage.removeItem(draftKey) } catch { /* noop */ }
       navigate(`/mocks/${id}/result`)
     } catch {
       submittedRef.current = false
@@ -170,6 +198,40 @@ export default function MockRoom() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [phase, currentIdx, questions, showSubmit, reportQId])
+
+  // ── Auto-save draft to localStorage (survives refresh / disconnect) ──
+  useEffect(() => {
+    if (phase !== 'active') return
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        answers, marked: Array.from(marked), visited: Array.from(visited),
+        timeSpent: timeSpent.current, currentIdx, timeLeft, savedAt: Date.now(),
+      }))
+    } catch { /* storage full / disabled — ignore */ }
+  }, [answers, marked, visited, currentIdx, timeLeft, phase, draftKey])
+
+  // ── Warn before leaving (refresh / close / back) mid-test ───────────
+  useEffect(() => {
+    if (phase !== 'active') return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [phase])
+
+  // ── Per-question live timer ─────────────────────────────────────────
+  useEffect(() => { setQSeconds(0) }, [currentIdx])
+  useEffect(() => {
+    if (phase !== 'active') return
+    const iv = setInterval(() => setQSeconds(s => s + 1), 1000)
+    return () => clearInterval(iv)
+  }, [phase, currentIdx])
+
+  // ── Sync fullscreen state ───────────────────────────────────────────
+  useEffect(() => {
+    const onFs = () => setIsFull(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onFs)
+    return () => document.removeEventListener('fullscreenchange', onFs)
+  }, [])
 
   if (phase === 'loading') return <div className="mock-room-loading">Loading mock test...</div>
   if (!mock || !currentQ) return null
@@ -262,6 +324,15 @@ export default function MockRoom() {
   function toggleMark() {
     setMarked(m => { const n = new Set(m); n.has(currentQ.id) ? n.delete(currentQ.id) : n.add(currentQ.id); return n })
   }
+  function clearAll() {
+    if (Object.keys(answers).length === 0) return
+    if (!window.confirm('Clear ALL your answers? This cannot be undone.')) return
+    setAnswers({})
+  }
+  function toggleFullscreen() {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+    else document.documentElement.requestFullscreen().catch(() => {})
+  }
 
   const answeredCount = Object.keys(answers).length
   const markedCount = marked.size
@@ -272,6 +343,9 @@ export default function MockRoom() {
       {/* Header */}
       <div className="mock-room-header">
         <div className="mock-room-title">{mock.title}</div>
+        <button className="mock-mute-btn" title={isFull ? 'Exit fullscreen' : 'Enter fullscreen'} onClick={toggleFullscreen}>
+          {isFull ? '🡼' : '⛶'}
+        </button>
         <button className="mock-mute-btn" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
           onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>
           {muted ? '🔇' : '🔊'}
@@ -291,6 +365,9 @@ export default function MockRoom() {
           <div className="mock-q-header">
             <span className="question-num">Question {currentIdx + 1} of {questions.length}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="q-timer" title="Time spent on this question">
+                ⏱ {formatTime((timeSpent.current[currentQ.id] ?? 0) + qSeconds)}
+              </span>
               {currentQ.difficulty && (
                 <span className={`diff-chip diff-${String(currentQ.difficulty).toLowerCase()}`}>{currentQ.difficulty}</span>
               )}
@@ -366,9 +443,15 @@ export default function MockRoom() {
               )
             })}
           </div>
-          <button className="btn btn-primary btn-full" style={{ marginTop: 16 }} onClick={() => setShowSubmit(true)}>
-            Submit Test
-          </button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button className="btn btn-ghost btn-sm" style={{ flex: 1, color: 'var(--danger)' }}
+              disabled={answeredCount === 0} onClick={clearAll}>
+              Clear all
+            </button>
+            <button className="btn btn-primary btn-sm" style={{ flex: 2 }} onClick={() => setShowSubmit(true)}>
+              Submit Test
+            </button>
+          </div>
         </div>
       </div>
 

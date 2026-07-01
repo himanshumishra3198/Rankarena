@@ -938,3 +938,5 @@ select.input { cursor: pointer; }
 .palette-legend-room { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-bottom: 14px; font-size: 12px; color: var(--text-muted); }
 .palette-legend-room span { display: inline-flex; align-items: center; gap: 6px; }
 .palette-legend-room .ld { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid var(--border); flex-shrink: 0; }
+
+.q-timer { font-size: 12px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; background: var(--bg); padding: 2px 8px; border-radius: 6px; }
