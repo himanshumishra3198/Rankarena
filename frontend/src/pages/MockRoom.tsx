@@ -146,6 +146,31 @@ export default function MockRoom() {
     else if (timeLeft === 0) playTimeUp()
   }, [timeLeft, phase, muted])
 
+  // ── Keyboard shortcuts: A–D / 1–4 answer, ←/→ navigate, M mark, C clear ──
+  useEffect(() => {
+    if (phase !== 'active') return
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || showSubmit || reportQId) return
+      const q = questions[currentIdx]
+      if (!q) return
+      const k = e.key.toLowerCase()
+      const move = (delta: number) => {
+        const ni = currentIdx + delta
+        const nq = questions[ni]
+        if (nq) { setCurrentIdx(ni); setVisited(v => new Set(v).add(nq.id)) }
+      }
+      if (['a', 'b', 'c', 'd'].includes(k)) { setAnswers(a => ({ ...a, [q.id]: k.toUpperCase() as Option })); e.preventDefault() }
+      else if (['1', '2', '3', '4'].includes(k)) { setAnswers(a => ({ ...a, [q.id]: OPTIONS[Number(k) - 1] })); e.preventDefault() }
+      else if (k === 'arrowright' || k === 'n') { move(1); e.preventDefault() }
+      else if (k === 'arrowleft' || k === 'p') { move(-1); e.preventDefault() }
+      else if (k === 'm') { setMarked(m => { const n = new Set(m); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n }) }
+      else if (k === 'c') { setAnswers(a => { const n = { ...a }; delete n[q.id]; return n }) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [phase, currentIdx, questions, showSubmit, reportQId])
+
   if (phase === 'loading') return <div className="mock-room-loading">Loading mock test...</div>
   if (!mock || !currentQ) return null
 
@@ -255,12 +280,22 @@ export default function MockRoom() {
         <button className="btn btn-primary btn-sm" onClick={() => setShowSubmit(true)}>Submit Test</button>
       </div>
 
+      {/* Progress bar */}
+      <div className="mock-progress">
+        <div className="mock-progress-fill" style={{ width: `${(answeredCount / questions.length) * 100}%` }} />
+      </div>
+
       <div className="mock-room-body">
         {/* Question area */}
         <div className="mock-room-main">
           <div className="mock-q-header">
             <span className="question-num">Question {currentIdx + 1} of {questions.length}</span>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>+{currentQ.marks} / −{currentQ.negativeMarks}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {currentQ.difficulty && (
+                <span className={`diff-chip diff-${String(currentQ.difficulty).toLowerCase()}`}>{currentQ.difficulty}</span>
+              )}
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>+{currentQ.marks} / −{currentQ.negativeMarks}</span>
+            </div>
           </div>
 
           <QuestionContent q={currentQ} />
@@ -297,14 +332,27 @@ export default function MockRoom() {
               ? <button className="btn btn-primary" onClick={() => goTo(currentIdx + 1)}>Next →</button>
               : <button className="btn btn-primary" onClick={() => setShowSubmit(true)}>Finish</button>}
           </div>
+
+          <div className="kbd-hint">
+            <span><kbd>A</kbd>–<kbd>D</kbd> answer</span>
+            <span><kbd>←</kbd><kbd>→</kbd> navigate</span>
+            <span><kbd>M</kbd> mark</span>
+            <span><kbd>C</kbd> clear</span>
+          </div>
         </div>
 
         {/* Palette */}
         <div className="mock-room-palette">
-          <div className="palette-summary">
-            <span><strong style={{ color: 'var(--success)' }}>{answeredCount}</strong> answered</span>
-            <span><strong style={{ color: '#d97706' }}>{markedCount}</strong> marked</span>
-            <span><strong>{questions.length - answeredCount}</strong> left</span>
+          <div className="palette-stats">
+            <div className="pstat"><strong style={{ color: 'var(--success)' }}>{answeredCount}</strong><span>Answered</span></div>
+            <div className="pstat"><strong style={{ color: '#d97706' }}>{markedCount}</strong><span>Marked</span></div>
+            <div className="pstat"><strong>{questions.length - answeredCount}</strong><span>Left</span></div>
+          </div>
+          <div className="palette-legend-room">
+            <span><i className="ld qs-answered" /> Answered</span>
+            <span><i className="ld qs-not-answered" /> Not answered</span>
+            <span><i className="ld qs-marked" /> Marked</span>
+            <span><i className="ld qs-not-visited" /> Not visited</span>
           </div>
           <div className="q-grid">
             {questions.map((q, i) => {

@@ -913,3 +913,28 @@ select.input { cursor: pointer; }
 .question-text img, .option-text img, .review-qtext img, .sol-explain-text img, .qc-context img, .time-q-text img {
   max-width: 100%; max-height: 260px; border-radius: 6px; border: 1px solid var(--border); vertical-align: middle; margin: 2px 0;
 }
+
+/* ── Mock room UI polish ───────────────────────────────────── */
+.mock-progress { height: 4px; background: var(--border); position: sticky; top: 56px; z-index: 9; }
+.mock-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #7c3aed); transition: width .3s ease; }
+
+.diff-chip { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 2px 8px; border-radius: 20px; }
+.diff-easy   { background: #dcfce7; color: #16a34a; }
+.diff-medium { background: #fef3c7; color: #d97706; }
+.diff-hard   { background: #fee2e2; color: #dc2626; }
+
+.option:hover { border-color: var(--primary); background: var(--surface-raised); }
+.option.selected { box-shadow: 0 0 0 1px var(--primary); }
+.option.selected::after { content: '✓'; margin-left: auto; color: var(--primary); font-weight: 800; font-size: 15px; }
+
+.kbd-hint { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; font-size: 12px; color: var(--text-muted); }
+.kbd-hint kbd { display: inline-block; min-width: 18px; text-align: center; padding: 1px 5px; margin: 0 1px; font-size: 11px; font-family: inherit; background: var(--bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; color: var(--text); }
+
+.palette-stats { display: flex; gap: 8px; margin-bottom: 14px; }
+.pstat { flex: 1; text-align: center; background: var(--bg); border-radius: 8px; padding: 8px 4px; }
+.pstat strong { display: block; font-size: 20px; line-height: 1.1; }
+.pstat span { font-size: 11px; color: var(--text-muted); }
+
+.palette-legend-room { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-bottom: 14px; font-size: 12px; color: var(--text-muted); }
+.palette-legend-room span { display: inline-flex; align-items: center; gap: 6px; }
+.palette-legend-room .ld { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid var(--border); flex-shrink: 0; }
