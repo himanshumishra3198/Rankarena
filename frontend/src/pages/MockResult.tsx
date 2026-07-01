@@ -76,6 +76,7 @@ export default function MockResult() {
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
   const [practiceOn, setPracticeOn] = useState<Set<string>>(new Set())
   const [practiceAns, setPracticeAns] = useState<Record<string, string>>({})
+  const [tab, setTab] = useState<'overview' | 'solutions' | 'leaderboard'>('overview')
 
   useEffect(() => {
     api.get(`/mocks/${id}/result`)
@@ -126,55 +127,93 @@ export default function MockResult() {
       <div className="page" style={{ maxWidth: 1000 }}>
         <button className="btn btn-ghost btn-sm" style={{ marginBottom: 14 }} onClick={() => navigate('/mocks')}>← Mock Tests</button>
 
-        <div style={{ marginBottom: 6, fontSize: 13, color: 'var(--text-muted)' }}>{SECTION_LABELS[data.subject] ?? data.subject}</div>
-        <h1 style={{ marginBottom: 20 }}>{data.mockTitle}</h1>
-
-        {/* ── Overall Performance Summary ──────────────────────────── */}
-        <div className="section-head">Overall Performance Summary</div>
-        <div className="perf-row">
-          <StatCard icon="🏅" color="#ef4444" value={`#${data.rank}`} sub={`/ ${data.totalTakers}`} label="Rank" />
-          <StatCard icon="🏆" color="#7c3aed" value={`${data.score}`} sub={`/ ${data.totalMarks}`} label="Score" />
-          <StatCard icon="📝" color="#0ea5e9" value={`${answered}`} sub={`/ ${data.questions.length}`} label="Attempted" />
-          <StatCard icon="🎯" color="#16a34a" value={`${accuracy.toFixed(1)}%`} label="Accuracy" />
-          <StatCard icon="📊" color="#6366f1" value={`${data.percentile}%`} label="Percentile" />
-        </div>
-
-        {/* Score breakdown */}
-        <div className="card" style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <div className="result-breakdown">
-            <span className="bd-pill" style={{ background: '#dcfce7', color: '#16a34a' }}>● {data.correct} Correct</span>
-            <span className="bd-pill" style={{ background: '#fee2e2', color: '#dc2626' }}>● {data.wrong} Wrong</span>
-            <span className="bd-pill" style={{ background: '#f1f5f9', color: '#64748b' }}>● {data.skipped} Skipped</span>
-            <span className="bd-pill" style={{ background: '#eff6ff', color: '#2563eb' }}>⏱ {data.durationMinutes} min</span>
+        {/* ── Hero: score ring + headline stats ────────────────────── */}
+        <div className="result-hero">
+          <div className="result-hero-ring" style={{
+            background: `conic-gradient(${accuracy >= 60 ? '#16a34a' : accuracy >= 35 ? '#f59e0b' : '#ef4444'} ${accuracy * 3.6}deg, rgba(255,255,255,.25) 0deg)`,
+          }}>
+            <div className="result-hero-ring-inner">
+              <div className="result-hero-score">{data.score}</div>
+              <div className="result-hero-total">/ {data.totalMarks}</div>
+            </div>
           </div>
-          <button className="btn btn-primary" onClick={() => navigate(`/mocks/${id}`)}>↻ Retake Test</button>
+          <div className="result-hero-info">
+            <div className="result-hero-sub">{SECTION_LABELS[data.subject] ?? data.subject}</div>
+            <h1 className="result-hero-title">{data.mockTitle}</h1>
+            <div className="result-hero-chips">
+              <span className="hero-chip">🏅 Rank <b>#{data.rank}</b>/{data.totalTakers}</span>
+              <span className="hero-chip">📊 <b>{data.percentile}%</b> percentile</span>
+              <span className="hero-chip">🎯 <b>{accuracy.toFixed(1)}%</b> accuracy</span>
+            </div>
+            <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => navigate(`/mocks/${id}`)}>↻ Retake Test</button>
+          </div>
         </div>
 
-        {/* ── Top scorers (leaderboard) ────────────────────────────── */}
-        {data.topScorers && data.topScorers.length > 0 && (
+        {/* ── Tabs ─────────────────────────────────────────────────── */}
+        <div className="result-tabs">
+          {([['overview', '📈 Overview'], ['solutions', '📝 Solutions'], ['leaderboard', '🏆 Leaderboard']] as const).map(([t, label]) => (
+            <button key={t} className={`result-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{label}</button>
+          ))}
+        </div>
+
+        {/* ── OVERVIEW TAB ─────────────────────────────────────────── */}
+        {tab === 'overview' && (
           <>
-            <div className="section-head" style={{ marginTop: 28 }}>Top Scorers</div>
-            <div className="card">
-              <div className="topscore-list">
-                {data.topScorers.map(t => (
-                  <div key={t.rank} className={`topscore-row ${t.isCurrentUser ? 'me' : ''}`}>
-                    <span className="topscore-rank">{t.rank <= 3 ? ['🥇', '🥈', '🥉'][t.rank - 1] : `#${t.rank}`}</span>
-                    <span className="topscore-name">{t.name}{t.isCurrentUser && <span className="topscore-you">You</span>}</span>
-                    <span className="topscore-score">{t.score}</span>
-                  </div>
-                ))}
+            <div className="perf-row">
+              <StatCard icon="🏅" color="#ef4444" value={`#${data.rank}`} sub={`/ ${data.totalTakers}`} label="Rank" />
+              <StatCard icon="🏆" color="#7c3aed" value={`${data.score}`} sub={`/ ${data.totalMarks}`} label="Score" />
+              <StatCard icon="📝" color="#0ea5e9" value={`${answered}`} sub={`/ ${data.questions.length}`} label="Attempted" />
+              <StatCard icon="🎯" color="#16a34a" value={`${accuracy.toFixed(1)}%`} label="Accuracy" />
+              <StatCard icon="📊" color="#6366f1" value={`${data.percentile}%`} label="Percentile" />
+            </div>
+
+            {/* Answer distribution bar */}
+            <div className="card" style={{ marginTop: 16 }}>
+              <div className="section-head" style={{ marginBottom: 12 }}>Answer Breakdown</div>
+              <div className="answer-bar">
+                {data.correct > 0 && <div style={{ flex: data.correct, background: '#16a34a' }} title={`${data.correct} correct`} />}
+                {data.wrong > 0 && <div style={{ flex: data.wrong, background: '#dc2626' }} title={`${data.wrong} wrong`} />}
+                {data.skipped > 0 && <div style={{ flex: data.skipped, background: '#cbd5e1' }} title={`${data.skipped} skipped`} />}
               </div>
-              {data.totalTakers > data.topScorers.length && (
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
-                  You ranked <strong>#{data.rank}</strong> of {data.totalTakers} test-takers
-                </div>
-              )}
+              <div className="result-breakdown" style={{ marginTop: 14 }}>
+                <span className="bd-pill" style={{ background: '#dcfce7', color: '#16a34a' }}>● {data.correct} Correct</span>
+                <span className="bd-pill" style={{ background: '#fee2e2', color: '#dc2626' }}>● {data.wrong} Wrong</span>
+                <span className="bd-pill" style={{ background: '#f1f5f9', color: '#64748b' }}>● {data.skipped} Skipped</span>
+                <span className="bd-pill" style={{ background: '#eff6ff', color: '#2563eb' }}>⏱ {data.durationMinutes} min</span>
+              </div>
             </div>
           </>
         )}
 
+        {/* ── LEADERBOARD TAB ──────────────────────────────────────── */}
+        {tab === 'leaderboard' && (
+          <div className="card">
+            <div className="section-head" style={{ marginBottom: 12 }}>Top Scorers</div>
+            {data.topScorers && data.topScorers.length > 0 ? (
+              <>
+                <div className="topscore-list">
+                  {data.topScorers.map(t => (
+                    <div key={t.rank} className={`topscore-row ${t.isCurrentUser ? 'me' : ''}`}>
+                      <span className="topscore-rank">{t.rank <= 3 ? ['🥇', '🥈', '🥉'][t.rank - 1] : `#${t.rank}`}</span>
+                      <span className="topscore-name">{t.name}{t.isCurrentUser && <span className="topscore-you">You</span>}</span>
+                      <span className="topscore-score">{t.score}</span>
+                    </div>
+                  ))}
+                </div>
+                {data.totalTakers > data.topScorers.length && (
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
+                    You ranked <strong>#{data.rank}</strong> of {data.totalTakers} test-takers
+                  </div>
+                )}
+              </>
+            ) : <p className="empty">No scores yet.</p>}
+          </div>
+        )}
+
+        {/* ── SOLUTIONS TAB ────────────────────────────────────────── */}
+        {tab === 'solutions' && (<>
         {/* ── Question palette ─────────────────────────────────────── */}
-        <div className="section-head" style={{ marginTop: 28 }}>Question Map</div>
+        <div className="section-head">Question Map</div>
         <div className="card">
           <div className="palette-legend">
             <span><span className="pl-dot" style={{ background: VC.correct }} /> Correct</span>
@@ -353,6 +392,7 @@ export default function MockResult() {
             )
           })}
         </div>
+        </>)}
       </div>
 
       {reportQId && (
