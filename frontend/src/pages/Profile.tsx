@@ -15,7 +15,7 @@ interface ProfileData {
   user: { id: string; name: string; email: string; role: string; rating: number; createdAt: string; followerCount: number; followingCount: number }
   ratingHistory: RatingPoint[]
   heatmap: Record<string, number>
-  stats: { totalContests: number; bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number }
+  stats: { totalContests: number; totalMocks?: number; totalSolved?: number; activeDays?: number; bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number }
   subjectStats: Record<string, SubjectStat>
   verdictTotals: { correct: number; wrong: number; skipped: number; total: number }
 }
@@ -197,8 +197,8 @@ export default function Profile() {
   const tier    = getTier(user.rating)
   const maxTier = getTier(stats.maxRating)
 
-  const contestsLastYear  = countInPeriod(heatmap, 365)
-  const contestsLastMonth = countInPeriod(heatmap, 30)
+  const solvedThisYear  = countInPeriod(heatmap, 365)
+  const solvedThisMonth = countInPeriod(heatmap, 30)
   const achievements      = computeAchievements(stats, ratingHistory, verdictTotals)
   const earnedCount       = achievements.filter(a => a.earned).length
 
@@ -317,9 +317,15 @@ export default function Profile() {
           )}
 
           {/* Heatmap */}
-          <div className="activity-section-title" style={{ marginTop: 24 }}>
-            Contest Activity
-            <span className="activity-section-sub">· last 52 weeks</span>
+          <div className="activity-section-title" style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span>
+              Problem-Solving Activity
+              <span className="activity-section-sub">· last 52 weeks</span>
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 0 }}>
+              <strong style={{ color: 'var(--heading)' }}>{stats.totalSolved ?? 0}</strong> problems solved across{' '}
+              <strong style={{ color: 'var(--heading)' }}>{stats.activeDays ?? 0}</strong> active day{stats.activeDays === 1 ? '' : 's'}
+            </span>
           </div>
           <ActivityHeatmap heatmap={heatmap} />
           <div className="heatmap-legend" style={{ marginTop: 8 }}>
@@ -334,11 +340,18 @@ export default function Profile() {
           {/* Stats + streak */}
           <div className="activity-summary-row">
             <div className="activity-summary-group">
-              <div className="activity-summary-label">Contests</div>
+              <div className="activity-summary-label">Tests taken</div>
               <div className="activity-summary-stats">
-                <span><strong>{stats.totalContests}</strong> all time</span>
-                <span><strong>{contestsLastYear}</strong> this year</span>
-                <span><strong>{contestsLastMonth}</strong> this month</span>
+                <span><strong>{stats.totalContests}</strong> contests</span>
+                <span><strong>{stats.totalMocks ?? 0}</strong> mocks</span>
+              </div>
+            </div>
+            <div className="activity-summary-group">
+              <div className="activity-summary-label">Problems solved</div>
+              <div className="activity-summary-stats">
+                <span><strong>{stats.totalSolved ?? 0}</strong> all time</span>
+                <span><strong>{solvedThisYear}</strong> this year</span>
+                <span><strong>{solvedThisMonth}</strong> this month</span>
               </div>
             </div>
             <div className="activity-summary-group">

@@ -5,7 +5,7 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 const router = Router();
 
 async function buildProfileData(userId: string) {
-  const [user, ratingHistory, participations] = await Promise.all([
+  const [user, ratingHistory, participations, mockAttempts] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, role: true, rating: true, createdAt: true },
@@ -20,15 +20,32 @@ async function buildProfileData(userId: string) {
       select: { contestId: true, submittedAt: true, answers: true },
       orderBy: { submittedAt: "asc" },
     }),
+    prisma.mockAttempt.findMany({
+      where: { userId, submittedAt: { not: null } },
+      select: { submittedAt: true, correctCount: true, wrongCount: true },
+    }),
   ]);
 
   if (!user) return null;
 
-  // Heatmap: date → contest count
+  // Heatmap: date → number of problems solved that day (contests + mocks).
+  // A day only appears if at least one problem was actually attempted, so it
+  // reflects a problem-solving streak, not just tests taken.
   const heatmap: Record<string, number> = {};
+  let totalSolved = 0;
   for (const p of participations) {
+    const answered = Object.keys((p.answers as Record<string, string>) ?? {}).length;
+    if (answered <= 0) continue;
     const date = p.submittedAt!.toISOString().split("T")[0];
-    heatmap[date] = (heatmap[date] ?? 0) + 1;
+    heatmap[date] = (heatmap[date] ?? 0) + answered;
+    totalSolved += answered;
+  }
+  for (const a of mockAttempts) {
+    const solved = a.correctCount + a.wrongCount;
+    if (solved <= 0) continue;
+    const date = a.submittedAt!.toISOString().split("T")[0];
+    heatmap[date] = (heatmap[date] ?? 0) + solved;
+    totalSolved += solved;
   }
 
   // Subject-level accuracy stats
@@ -127,7 +144,13 @@ async function buildProfileData(userId: string) {
       totalParticipants: r.totalParticipants,
     })),
     heatmap,
-    stats: { totalContests: participations.length, bestRank, maxRating, maxStreak, currentStreak },
+    stats: {
+      totalContests: participations.length,
+      totalMocks: mockAttempts.length,
+      totalSolved,
+      activeDays: Object.keys(heatmap).length,
+      bestRank, maxRating, maxStreak, currentStreak,
+    },
     subjectStats,
     verdictTotals: { correct: totalCorrect, wrong: totalWrong, skipped: totalSkipped, total: totalCorrect + totalWrong + totalSkipped },
   };

@@ -58,10 +58,10 @@ export function ActivityHeatmap({ heatmap }: { heatmap: Record<string, number> }
             if (date > today) return null
             const dateStr = date.toISOString().split('T')[0]
             const count = heatmap[dateStr] ?? 0
+            // Bucket by problems solved that day (not just # of tests).
+            const level = count === 0 ? -1 : count <= 4 ? 0 : count <= 9 ? 1 : count <= 19 ? 2 : 3
             // Use inline style so CSS variables resolve correctly in both themes
-            const fill = count === 0
-              ? 'var(--heatmap-empty)'
-              : GREEN[Math.min(count - 1, GREEN.length - 1)]
+            const fill = level < 0 ? 'var(--heatmap-empty)' : GREEN[level]
             return (
               <rect
                 key={`${col}-${row}`}
@@ -87,7 +87,7 @@ export function ActivityHeatmap({ heatmap }: { heatmap: Record<string, number> }
       {tooltip && (
         <div className="heatmap-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>
           <div className="heatmap-tooltip-count">
-            {tooltip.count === 0 ? 'No contests' : `${tooltip.count} contest${tooltip.count > 1 ? 's' : ''}`}
+            {tooltip.count === 0 ? 'No activity' : `${tooltip.count} problem${tooltip.count > 1 ? 's' : ''} solved`}
           </div>
           <div className="heatmap-tooltip-date">{tooltip.date}</div>
         </div>
