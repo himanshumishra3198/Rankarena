@@ -129,14 +129,22 @@ export default function MockResult() {
 
         {/* ── Hero: score ring + headline stats ────────────────────── */}
         <div className="result-hero">
-          <div className="result-hero-ring" style={{
-            background: `conic-gradient(${accuracy >= 60 ? '#16a34a' : accuracy >= 35 ? '#f59e0b' : '#ef4444'} ${accuracy * 3.6}deg, rgba(255,255,255,.25) 0deg)`,
-          }}>
-            <div className="result-hero-ring-inner">
-              <div className="result-hero-score">{data.score}</div>
-              <div className="result-hero-total">/ {data.totalMarks}</div>
-            </div>
-          </div>
+          {(() => {
+            const scorePct = data.totalMarks > 0 ? Math.round((data.score / data.totalMarks) * 100) : 0
+            const ringColor = scorePct >= 60 ? '#4ade80' : scorePct >= 35 ? '#fbbf24' : '#f87171'
+            const deg = Math.max(scorePct, scorePct > 0 ? 4 : 0) * 3.6 // tiny min arc so low scores still read as a ring
+            return (
+              <div className="result-hero-ring"
+                title={`Score ${data.score}/${data.totalMarks} (${scorePct}%) · ${data.correct} correct · ${data.wrong} wrong · ${data.skipped} skipped`}
+                style={{ background: `conic-gradient(${ringColor} 0deg ${deg}deg, rgba(255,255,255,.18) ${deg}deg 360deg)` }}>
+                <div className="result-hero-ring-inner">
+                  <div className="result-hero-score">{data.score}</div>
+                  <div className="result-hero-total">/ {data.totalMarks}</div>
+                  <div className="result-hero-pct" style={{ color: ringColor }}>{scorePct}%</div>
+                </div>
+              </div>
+            )
+          })()}
           <div className="result-hero-info">
             <div className="result-hero-sub">{SECTION_LABELS[data.subject] ?? data.subject}</div>
             <h1 className="result-hero-title">{data.mockTitle}</h1>
