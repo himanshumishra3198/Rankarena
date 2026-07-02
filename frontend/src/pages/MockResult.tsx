@@ -64,6 +64,64 @@ function StatCard({ icon, color, value, sub, label }: {
   )
 }
 
+// ── Segmented score donut (correct / wrong / skipped) with hoverable arcs ──────
+function ScoreDonut({ score, total, correct, wrong, skipped }: {
+  score: number; total: number; correct: number; wrong: number; skipped: number
+}) {
+  const [hover, setHover] = useState<'correct' | 'wrong' | 'skipped' | null>(null)
+  const R = 50, SW = 14, C = 2 * Math.PI * R
+  const totalQ = correct + wrong + skipped || 1
+  const scorePct = total > 0 ? Math.round((score / total) * 100) : 0
+  const segs = [
+    { key: 'correct' as const, label: 'Correct', value: correct, color: '#ffffff' },
+    { key: 'wrong' as const, label: 'Wrong', value: wrong, color: '#94a3b8' },
+    { key: 'skipped' as const, label: 'Skipped', value: skipped, color: 'rgba(2,6,23,.55)' },
+  ]
+  const hs = segs.find(s => s.key === hover)
+  let acc = 0
+  return (
+    <div className="score-donut">
+      <svg viewBox="0 0 120 120" width="118" height="118">
+        {/* dark center disc for the white/black look */}
+        <circle cx="60" cy="60" r={R - SW / 2 - 1} fill="rgba(2,6,23,.5)" />
+        <g transform="rotate(-90 60 60)">
+          <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,.14)" strokeWidth={SW} />
+          {segs.map(s => {
+            if (s.value <= 0) return null
+            const dash = (s.value / totalQ) * C
+            const node = (
+              <circle key={s.key} cx="60" cy="60" r={R} fill="none" stroke={s.color}
+                strokeWidth={hover === s.key ? SW + 4 : SW}
+                strokeDasharray={`${dash} ${C - dash}`} strokeDashoffset={-acc}
+                style={{ transition: 'stroke-width .15s', cursor: 'pointer' }}
+                onMouseEnter={() => setHover(s.key)} onMouseLeave={() => setHover(null)}>
+                <title>{s.label}: {s.value} ({Math.round((s.value / totalQ) * 100)}%)</title>
+              </circle>
+            )
+            acc += dash
+            return node
+          })}
+        </g>
+      </svg>
+      <div className="score-donut-center">
+        {hs ? (
+          <>
+            <div className="sd-score">{hs.value}</div>
+            <div className="sd-total">{hs.label}</div>
+            <div className="sd-pct">{Math.round((hs.value / totalQ) * 100)}%</div>
+          </>
+        ) : (
+          <>
+            <div className="sd-score">{score}</div>
+            <div className="sd-total">/ {total}</div>
+            <div className="sd-pct">{scorePct}%</div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function MockResult() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -127,24 +185,10 @@ export default function MockResult() {
       <div className="page" style={{ maxWidth: 1000 }}>
         <button className="btn btn-ghost btn-sm" style={{ marginBottom: 14 }} onClick={() => navigate('/mocks')}>← Mock Tests</button>
 
-        {/* ── Hero: score ring + headline stats ────────────────────── */}
+        {/* ── Hero: score donut + headline stats ───────────────────── */}
         <div className="result-hero">
-          {(() => {
-            const scorePct = data.totalMarks > 0 ? Math.round((data.score / data.totalMarks) * 100) : 0
-            const ringColor = scorePct >= 60 ? '#4ade80' : scorePct >= 35 ? '#fbbf24' : '#f87171'
-            const deg = Math.max(scorePct, scorePct > 0 ? 4 : 0) * 3.6 // tiny min arc so low scores still read as a ring
-            return (
-              <div className="result-hero-ring"
-                title={`Score ${data.score}/${data.totalMarks} (${scorePct}%) · ${data.correct} correct · ${data.wrong} wrong · ${data.skipped} skipped`}
-                style={{ background: `conic-gradient(${ringColor} 0deg ${deg}deg, rgba(255,255,255,.18) ${deg}deg 360deg)` }}>
-                <div className="result-hero-ring-inner">
-                  <div className="result-hero-score">{data.score}</div>
-                  <div className="result-hero-total">/ {data.totalMarks}</div>
-                  <div className="result-hero-pct" style={{ color: ringColor }}>{scorePct}%</div>
-                </div>
-              </div>
-            )
-          })()}
+          <ScoreDonut score={data.score} total={data.totalMarks}
+            correct={data.correct} wrong={data.wrong} skipped={data.skipped} />
           <div className="result-hero-info">
             <div className="result-hero-sub">{SECTION_LABELS[data.subject] ?? data.subject}</div>
             <h1 className="result-hero-title">{data.mockTitle}</h1>
