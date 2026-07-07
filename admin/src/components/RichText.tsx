@@ -17,6 +17,22 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   }
 })
 
+// contentEditable creates a <div>/<p> per line (Enter). Those tags aren't in
+// the allowlist, so DOMPurify would drop them and collapse everything onto one
+// line. Convert each block boundary into a <br> (which is allowed) so line
+// breaks survive rendering.
+function blocksToBr(html: string): string {
+  if (!html || (!/<div/i.test(html) && !/<p[\s>]/i.test(html))) return html
+  const tmp = document.createElement('div')
+  tmp.innerHTML = html
+  tmp.querySelectorAll('div, p').forEach((el) => {
+    el.parentNode?.insertBefore(document.createElement('br'), el.nextSibling)
+    while (el.firstChild) el.parentNode!.insertBefore(el.firstChild, el)
+    el.remove()
+  })
+  return tmp.innerHTML.replace(/(<br\s*\/?>)+$/i, '')
+}
+
 // Render admin/user-authored rich text safely (sanitized HTML).
 export function RichText({ html, as = 'span', className, style }: {
   html: string
@@ -24,7 +40,7 @@ export function RichText({ html, as = 'span', className, style }: {
   className?: string
   style?: React.CSSProperties
 }) {
-  const clean = DOMPurify.sanitize(html ?? '', CONFIG)
+  const clean = DOMPurify.sanitize(blocksToBr(html ?? ''), CONFIG)
   const Tag = as as any
   return <Tag className={className} style={style} dangerouslySetInnerHTML={{ __html: clean }} />
 }
