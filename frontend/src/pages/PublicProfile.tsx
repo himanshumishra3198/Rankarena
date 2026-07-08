@@ -14,7 +14,10 @@ interface PublicProfileData {
   }
   ratingHistory: RatingPoint[]
   heatmap: Record<string, number>
-  stats: { totalContests: number; bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number }
+  stats: {
+    totalContests: number; totalMocks: number; totalSolved: number; activeDays: number
+    bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number
+  }
   isFollowing: boolean
   isOwnProfile: boolean
 }
@@ -34,22 +37,6 @@ function countInPeriod(heatmap: Record<string, number>, days: number): number {
   return Object.entries(heatmap)
     .filter(([d]) => new Date(d) >= cutoff)
     .reduce((s, [, v]) => s + v, 0)
-}
-
-function maxStreakInPeriod(heatmap: Record<string, number>, days: number): number {
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
-  const dates = Object.keys(heatmap).filter(d => new Date(d) >= cutoff).sort()
-  let max = 0, streak = 0
-  for (let i = 0; i < dates.length; i++) {
-    if (i === 0) { streak = 1 }
-    else {
-      const diff = Math.round((new Date(dates[i]).getTime() - new Date(dates[i - 1]).getTime()) / 86_400_000)
-      streak = diff === 1 ? streak + 1 : 1
-    }
-    if (streak > max) max = streak
-  }
-  return max
 }
 
 export default function PublicProfile() {
@@ -106,9 +93,8 @@ export default function PublicProfile() {
   const tier    = getTier(user.rating)
   const maxTier = getTier(stats.maxRating)
 
-  const contestsLastYear  = countInPeriod(heatmap, 365)
-  const contestsLastMonth = countInPeriod(heatmap, 30)
-  const streakLastYear    = maxStreakInPeriod(heatmap, 365)
+  const solvedThisYear  = countInPeriod(heatmap, 365)
+  const solvedThisMonth = countInPeriod(heatmap, 30)
 
   return (
     <>
@@ -177,55 +163,55 @@ export default function PublicProfile() {
 
         {/* ── Activity heatmap + stats ──────────────────────────── */}
         <div className="card" style={{ marginTop: 16 }}>
-          <h2 style={{ marginBottom: 14 }}>Activity</h2>
+          <div className="activity-section-title" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span>
+              Problem-Solving Activity
+              <span className="activity-section-sub">· last 52 weeks</span>
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 0 }}>
+              <strong style={{ color: 'var(--heading)' }}>{stats.totalSolved ?? 0}</strong> problems solved across{' '}
+              <strong style={{ color: 'var(--heading)' }}>{stats.activeDays ?? 0}</strong> active day{stats.activeDays === 1 ? '' : 's'}
+            </span>
+          </div>
           <ActivityHeatmap heatmap={heatmap} />
 
-          <div className="heatmap-legend">
+          <div className="heatmap-legend" style={{ marginTop: 8 }}>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Less</span>
-            {['#ebedf0', '#c6e48b', '#7bc96f', '#239a3b', '#196127'].map(c => (
+            <span className="heatmap-legend-cell" style={{ background: 'var(--heatmap-empty)' }} />
+            {['#c6e48b', '#7bc96f', '#239a3b', '#196127'].map(c => (
               <span key={c} className="heatmap-legend-cell" style={{ background: c }} />
             ))}
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>More</span>
           </div>
 
-          <div className="activity-stats-grid">
-            <div className="activity-stat-col">
-              <div className="activity-stat-header">Contests attempted</div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{stats.totalContests}</span>
-                <span className="activity-stat-label">all time</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{contestsLastYear}</span>
-                <span className="activity-stat-label">last year</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{contestsLastMonth}</span>
-                <span className="activity-stat-label">last month</span>
+          <div className="activity-summary-row">
+            <div className="activity-summary-group">
+              <div className="activity-summary-label">Tests taken</div>
+              <div className="activity-summary-stats">
+                <span><strong>{stats.totalContests}</strong> contests</span>
+                <span><strong>{stats.totalMocks ?? 0}</strong> mocks</span>
               </div>
             </div>
-
-            <div className="activity-stat-col">
-              <div className="activity-stat-header">Days in a row</div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{stats.maxStreak}</span>
-                <span className="activity-stat-label">max streak</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{streakLastYear}</span>
-                <span className="activity-stat-label">last year</span>
-              </div>
-              <div className="activity-stat-row">
-                <span className="activity-stat-val">{stats.currentStreak}</span>
-                <span className="activity-stat-label">current streak</span>
+            <div className="activity-summary-group">
+              <div className="activity-summary-label">Problems solved</div>
+              <div className="activity-summary-stats">
+                <span><strong>{stats.totalSolved ?? 0}</strong> all time</span>
+                <span><strong>{solvedThisYear}</strong> this year</span>
+                <span><strong>{solvedThisMonth}</strong> this month</span>
               </div>
             </div>
-
-            {stats.currentStreak > 0 && (
-              <div className="activity-stat-col streak-fire">
-                <div style={{ fontSize: 40 }}>🔥</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#ea580c' }}>{stats.currentStreak}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>day streak</div>
+            <div className="activity-summary-group">
+              <div className="activity-summary-label">Streaks</div>
+              <div className="activity-summary-stats">
+                <span><strong>{stats.maxStreak}</strong> day best</span>
+                <span><strong>{stats.currentStreak}</strong> current</span>
+              </div>
+            </div>
+            {stats.currentStreak >= 1 && (
+              <div className="streak-badge">
+                <span className="streak-fire">🔥</span>
+                <span className="streak-num">{stats.currentStreak}</span>
+                <span className="streak-sub">day streak</span>
               </div>
             )}
           </div>
