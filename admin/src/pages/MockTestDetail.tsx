@@ -25,24 +25,6 @@ const emptyCreate = {
   conclusions: ['', '', ''] as string[],
 }
 
-// `subject` is optional here — the server fills it with the mock's section.
-// Omit `imageUrl` unless the question has a hosted image URL.
-const BULK_TEMPLATE = JSON.stringify([
-  {
-    questionType: 'STANDARD',
-    text: 'Question text here',
-    optionA: 'Option A',
-    optionB: 'Option B',
-    optionC: 'Option C',
-    optionD: 'Option D',
-    correctOption: 'A',
-    difficulty: 'MEDIUM',
-    solution: '',
-    marks: 2,
-    negativeMarks: 0.5,
-  },
-], null, 2)
-
 // An option/text counts as filled if it has visible text OR an image.
 function hasContent(html: string): boolean {
   return stripHtml(html).length > 0 || /<img/i.test(html || '')
@@ -68,11 +50,7 @@ export default function MockTestDetail() {
   const [negMarks, setNegMarks] = useState(0.5)
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<'bank' | 'create' | 'bulk'>('bank')
-  const [bulkJson, setBulkJson] = useState('')
-  const [bulkError, setBulkError] = useState('')
-  const [bulkSuccess, setBulkSuccess] = useState('')
-  const [importing, setImporting] = useState(false)
+  const [tab, setTab] = useState<'bank' | 'create'>('bank')
   const [cForm, setCForm] = useState(emptyCreate)
   const [creating, setCreating] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -216,55 +194,6 @@ export default function MockTestDetail() {
     load()
   }
 
-  // ── Bulk import (paste / load a JSON array of questions) ────────────
-  async function bulkImport() {
-    setBulkError(''); setBulkSuccess('')
-    let parsed: any[]
-    try {
-      parsed = JSON.parse(bulkJson)
-      if (!Array.isArray(parsed)) throw new Error()
-    } catch {
-      setBulkError('Invalid JSON — paste a valid JSON array of questions.')
-      return
-    }
-    // Drop empty imageUrl (the server expects a real URL or none at all).
-    const clean = parsed.map(q => {
-      const c = { ...q }
-      if (!c.imageUrl) delete c.imageUrl
-      if (!c.solution) delete c.solution
-      return c
-    })
-    setImporting(true)
-    try {
-      const res = await api.post(`/admin/mocks/${id}/questions/bulk`, clean)
-      const skipped = res.data.skipped ?? 0
-      setBulkSuccess(
-        `Imported ${res.data.created} question${res.data.created !== 1 ? 's' : ''} successfully!` +
-        (skipped > 0 ? ` (${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped)` : '')
-      )
-      setBulkJson('')
-      load()
-    } catch (err: any) {
-      setBulkError(errStr(err, 'Import failed — check your JSON matches the template.'))
-    } finally {
-      setImporting(false)
-    }
-  }
-
-  function downloadTemplate() {
-    const blob = new Blob([BULK_TEMPLATE], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'mock-questions-template.json'; a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  function handleBulkFile(file: File) {
-    const reader = new FileReader()
-    reader.onload = () => setBulkJson(reader.result as string)
-    reader.readAsText(file)
-  }
-
   function openEditDetails() {
     if (!mock) return
     setMForm({
@@ -376,16 +305,12 @@ export default function MockTestDetail() {
               onClick={() => { setTab('create'); resetForm() }}>
               {editingQid ? '✎ Editing question' : '+ Create new question'}
             </button>
-            <button className={`btn btn-sm ${tab === 'bulk' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => { setTab('bulk'); resetForm(); setBulkError(''); setBulkSuccess('') }}>
-              Bulk Import JSON
-            </button>
           </div>
 
           {error && <div className="alert alert-error">{error}</div>}
 
-          {/* Marks/negative apply when adding a single question (bulk carries its own) */}
-          {!editingQid && tab !== 'bulk' && (
+          {/* Marks/negative apply when adding a question (not when editing) */}
+          {!editingQid && (
             <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
               <div className="form-group" style={{ marginBottom: 0, width: 110 }}>
                 <label>Marks</label>
@@ -599,46 +524,6 @@ export default function MockTestDetail() {
                 )}
               </div>
             </form>
-          )}
-
-          {tab === 'bulk' && (
-            <>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-                Paste a JSON array of questions — they're created in the bank and added to this mock.
-                Leave <code>subject</code> out and each question is filed under <strong>{SECTION_LABELS[mock.subject]}</strong>.
-                Exact duplicates are skipped automatically.
-              </p>
-              {bulkError && <div className="alert alert-error">{bulkError}</div>}
-              {bulkSuccess && <div className="alert alert-success">{bulkSuccess}</div>}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={downloadTemplate}>
-                  ⬇ Download JSON template
-                </button>
-                <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
-                  📂 Load JSON file
-                  <input type="file" accept=".json,application/json" style={{ display: 'none' }}
-                    onChange={e => { const f = e.target.files?.[0]; if (f) handleBulkFile(f) }} />
-                </label>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>or paste JSON below</span>
-              </div>
-              <div className="form-group">
-                <label>JSON array of questions</label>
-                <textarea className="input" rows={14}
-                  style={{ resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }}
-                  placeholder={BULK_TEMPLATE}
-                  value={bulkJson}
-                  onChange={e => setBulkJson(e.target.value)} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button className="btn btn-primary" type="button" disabled={importing || !bulkJson.trim()} onClick={bulkImport}>
-                  {importing ? 'Importing...' : 'Import Questions'}
-                </button>
-                {bulkJson.trim() && (() => {
-                  try { const a = JSON.parse(bulkJson); return Array.isArray(a) ? <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{a.length} question{a.length !== 1 ? 's' : ''} detected</span> : null }
-                  catch { return <span style={{ fontSize: 13, color: 'var(--danger)' }}>Invalid JSON</span> }
-                })()}
-              </div>
-            </>
           )}
         </div>
 
