@@ -336,8 +336,14 @@ export default function MockRoom() {
   function clearAnswer() {
     setAnswers(a => { const n = { ...a }; delete n[currentQ.id]; return n })
   }
-  function toggleMark() {
-    setMarked(m => { const n = new Set(m); n.has(currentQ.id) ? n.delete(currentQ.id) : n.add(currentQ.id); return n })
+  // Exam-style: advance to the next question (the answer is already saved on selection).
+  function saveAndNext() {
+    if (currentIdx < questions.length - 1) goTo(currentIdx + 1)
+  }
+  // Exam-style: flag the current question for review and move on.
+  function markReviewNext() {
+    setMarked(m => new Set(m).add(currentQ.id))
+    if (currentIdx < questions.length - 1) goTo(currentIdx + 1)
   }
   function clearAll() {
     if (Object.keys(answers).length === 0) return
@@ -404,32 +410,33 @@ export default function MockRoom() {
             ))}
           </div>
 
-          <div className="room-actions">
-            <button className={`btn btn-ghost mark-btn ${marked.has(currentQ.id) ? 'mark-active' : ''}`} onClick={toggleMark}>
-              🔖 {marked.has(currentQ.id) ? 'Marked' : 'Mark for Review'}
-            </button>
-            {answers[currentQ.id] && (
-              <button className="btn btn-ghost" style={{ color: 'var(--danger)', fontSize: 13 }} onClick={clearAnswer}>
-                Clear answer
+          {/* Exam-style action bar: review / clear on the left, navigation + Save & Next on the right */}
+          <div className="room-exam-bar">
+            <div className="room-exam-left">
+              <button className={`btn btn-ghost mark-btn ${marked.has(currentQ.id) ? 'mark-active' : ''}`} onClick={markReviewNext}>
+                🔖 Mark for Review &amp; Next
               </button>
-            )}
-            <button className="btn btn-ghost" style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 'auto' }}
-              onClick={() => setReportQId(currentQ.id)} title="Report a problem with this question">
-              ⚑ Report
-            </button>
-          </div>
-
-          <div className="room-nav">
-            <button className="btn btn-ghost" disabled={currentIdx === 0} onClick={() => goTo(currentIdx - 1)}>← Prev</button>
-            {currentIdx < questions.length - 1
-              ? <button className="btn btn-primary" onClick={() => goTo(currentIdx + 1)}>Next →</button>
-              : <button className="btn btn-primary" onClick={() => setShowSubmit(true)}>Finish</button>}
+              <button className="btn btn-ghost" style={{ color: 'var(--danger)' }}
+                disabled={!answers[currentQ.id]} onClick={clearAnswer}>
+                Clear Response
+              </button>
+              <button className="btn btn-ghost" style={{ fontSize: 13, color: 'var(--text-muted)' }}
+                onClick={() => setReportQId(currentQ.id)} title="Report a problem with this question">
+                ⚑ Report
+              </button>
+            </div>
+            <div className="room-exam-right">
+              <button className="btn btn-ghost" disabled={currentIdx === 0} onClick={() => goTo(currentIdx - 1)}>← Previous</button>
+              {currentIdx < questions.length - 1
+                ? <button className="btn btn-primary" onClick={saveAndNext}>Save &amp; Next →</button>
+                : <button className="btn btn-primary" onClick={() => setShowSubmit(true)}>Submit Test</button>}
+            </div>
           </div>
 
           <div className="kbd-hint">
             <span><kbd>←</kbd><kbd>→</kbd> navigate</span>
             <span><kbd>M</kbd> mark for review</span>
-            <span><kbd>C</kbd> clear answer</span>
+            <span><kbd>C</kbd> clear response</span>
           </div>
         </div>
 
