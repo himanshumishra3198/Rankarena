@@ -1,0 +1,28 @@
+[
+  {
+    "questionType": "STANDARD",
+    "text": "In a certain language, CHHAPAK is coded as DJKEUGR. How will MALANGA be coded in that language?",
+    "optionA": "NCEOSMC",
+    "optionB": "NCOCSMC",
+    "optionC": "NCOESMH",
+    "optionD": "NCOCMSC",
+    "correctOption": "C",
+    "difficulty": "MEDIUM",
+    "solution": "Each letter shifts by +1, +2, +3, +4, +5, +6, +7 respectively.",
+    "marks": 2,
+    "negativeMarks": 0.5
+  },
+  {
+    "questionType": "STANDARD",
+    "text": "Study the given pattern carefully and select the number that can replace the question mark (?).",
+    "imageFile": "q13.png",
+    "optionA": "21",
+    "optionB": "18",
+    "optionC": "19",
+    "optionD": "17",
+    "correctOption": "A",
+    "difficulty": "MEDIUM",
+    "marks": 2,
+    "negativeMarks": 0.5
+  }
+]
