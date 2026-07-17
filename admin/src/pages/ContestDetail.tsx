@@ -3,14 +3,36 @@ import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import type { Contest, Question, ContestQuestion, Section } from '../lib/types'
+import { RichEditor } from '../components/RichEditor'
+import { RichText, stripHtml } from '../components/RichText'
+import type { Contest, Question, ContestQuestion, Section, Passage, QuestionType } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
+const TYPE_LABELS: Record<string, string> = {
+  STANDARD: 'Standard', SYLLOGISM: 'Syllogism', PASSAGE: 'Passage', TABLE: 'Table',
+}
 
 const emptyQ = {
-  text: '', imageUrl: '', optionA: '', optionB: '', optionC: '', optionD: '',
+  questionType: 'STANDARD' as QuestionType,
+  text: '', imageUrl: '',
+  optionA: '', optionB: '', optionC: '', optionD: '',
   correctOption: 'A', subject: 'QUANT', difficulty: 'MEDIUM',
+  solution: '', passageId: '',
+  statements: ['', '', ''] as string[],
+  conclusions: ['', '', ''] as string[],
+}
+
+// An option/text counts as filled if it has visible text OR an image.
+function hasContent(html: string): boolean {
+  return stripHtml(html).length > 0 || /<img/i.test(html || '')
+}
+
+function errStr(err: any, fallback: string): string {
+  const e = err?.response?.data?.error
+  if (typeof e === 'string') return e
+  if (Array.isArray(e)) return e.map((i: any) => i?.message).filter(Boolean).join(', ') || fallback
+  return fallback
 }
 
 const BULK_TEMPLATE = JSON.stringify([
@@ -121,6 +143,7 @@ export default function ContestDetail() {
   const [contest, setContest] = useState<Contest | null>(null)
   const [cqs, setCqs] = useState<ContestQuestion[]>([])
   const [bank, setBank] = useState<Question[]>([])
+  const [passages, setPassages] = useState<Passage[]>([])
   const [loading, setLoading] = useState(true)
 
   // Section config editing
@@ -141,6 +164,9 @@ export default function ContestDetail() {
   const [newQ, setNewQ] = useState(emptyQ)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [editingQid, setEditingQid] = useState<string | null>(null)
+  const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
 
   // Bulk import state
   const [bulkJson, setBulkJson] = useState('')
@@ -149,15 +175,17 @@ export default function ContestDetail() {
   const [importing, setImporting] = useState(false)
 
   async function load() {
-    const [contestRes, cqsRes, bankRes] = await Promise.all([
+    const [contestRes, cqsRes, bankRes, pRes] = await Promise.all([
       api.get(`/contests/${id}`),
       api.get(`/admin/contests/${id}/questions`).catch(() => ({ data: [] })),
       api.get('/admin/questions'),
+      api.get('/admin/passages'),
     ])
     const c: Contest = contestRes.data
     setContest(c)
     setCqs(cqsRes.data)
     setBank(bankRes.data)
+    setPassages(pRes.data)
     // seed draft config from current values
     const limits = c.sectionLimits ?? Object.fromEntries(
       SECTIONS.map(s => [s, Math.floor(c.durationMinutes / SECTIONS.length)])
@@ -168,6 +196,20 @@ export default function ContestDetail() {
   }
 
   useEffect(() => { load() }, [id])
+
+  // Debounced near-duplicate check while creating (not editing).
+  useEffect(() => {
+    if (tab !== 'create') { setSimilar([]); return }
+    const t = stripHtml(newQ.text).trim()
+    if (t.length < 8) { setSimilar([]); return }
+    const h = setTimeout(async () => {
+      try {
+        const res = await api.get('/admin/questions/similar', { params: { text: t, subject: newQ.subject } })
+        setSimilar((res.data as any[]).filter(s => s.id !== editingQid))
+      } catch { setSimilar([]) }
+    }, 500)
+    return () => clearTimeout(h)
+  }, [newQ.text, newQ.subject, tab, editingQid])
 
   // ── Section config save ───────────────────────────────────────────────
   async function saveConfig() {
@@ -212,25 +254,88 @@ export default function ContestDetail() {
     }
   }
 
-  // ── Create & add ──────────────────────────────────────────────────────
+  function resetForm() { setNewQ(emptyQ); setEditingQid(null); setSimilar([]); setCreateError('') }
+
+  // Load an existing (linked) question into the form for editing.
+  function editQuestion(q: Question) {
+    setNewQ({
+      questionType: q.questionType,
+      text: q.text, imageUrl: q.imageUrl ?? '',
+      optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
+      correctOption: q.correctOption,
+      subject: q.subject,
+      difficulty: q.difficulty,
+      solution: q.solution ?? '',
+      passageId: q.passageId ?? '',
+      statements: q.structuredData?.statements?.length ? q.structuredData.statements : ['', '', ''],
+      conclusions: q.structuredData?.conclusions?.length ? q.structuredData.conclusions : ['', '', ''],
+    })
+    setEditingQid(q.id); setCreateError(''); setSimilar([])
+    setTab('create')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // ── Create-or-update a question (all types). On create, also link it to the contest.
   async function createAndAdd(e: FormEvent) {
     e.preventDefault()
+    const isSyll = newQ.questionType === 'SYLLOGISM'
+    const needsPassage = newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE'
+    if (!isSyll && !hasContent(newQ.text)) { setCreateError('Question text is required.'); return }
+    if ((['A', 'B', 'C', 'D'] as const).some(o => !hasContent(newQ[`option${o}` as keyof typeof emptyQ] as string))) {
+      setCreateError('All four options are required (text or image).'); return
+    }
+    if (needsPassage && !newQ.passageId) { setCreateError('Select a passage/table for this question (create it in the Questions tab first).'); return }
+
     setCreating(true); setCreateError('')
+    const payload: any = {
+      questionType: newQ.questionType,
+      text: newQ.text,
+      imageUrl: newQ.imageUrl || null,
+      optionA: newQ.optionA, optionB: newQ.optionB, optionC: newQ.optionC, optionD: newQ.optionD,
+      correctOption: newQ.correctOption,
+      subject: newQ.subject,
+      difficulty: newQ.difficulty,
+      solution: hasContent(newQ.solution) ? newQ.solution : null,
+      passageId: needsPassage ? newQ.passageId : null,
+      structuredData: isSyll
+        ? { statements: newQ.statements.filter(s => stripHtml(s)), conclusions: newQ.conclusions.filter(c => stripHtml(c)) }
+        : null,
+    }
     try {
-      const payload = { ...newQ, imageUrl: newQ.imageUrl || undefined }
-      const qRes = await api.post('/admin/questions', payload)
-      await api.post(`/admin/contests/${id}/questions`, {
-        questionId: qRes.data.id,
-        displayOrder: cqs.length + 1,
-        marks: Number(marks),
-        negativeMarks: Number(negMarks),
-      })
-      setNewQ(emptyQ); load()
+      if (editingQid) {
+        await api.put(`/admin/questions/${editingQid}`, payload)
+      } else {
+        const qRes = await api.post('/admin/questions', payload)
+        await api.post(`/admin/contests/${id}/questions`, {
+          questionId: qRes.data.id,
+          displayOrder: cqs.length + 1,
+          marks: Number(marks),
+          negativeMarks: Number(negMarks),
+        })
+      }
+      resetForm(); load()
     } catch (err: any) {
-      setCreateError(err.response?.data?.error || 'Failed to create question')
+      const dup = err?.response?.data?.duplicate
+      if (err?.response?.status === 409 && dup) {
+        setCreateError(`This question already exists in the bank — not added again. ("${stripHtml(dup.text).slice(0, 70)}…")`)
+      } else {
+        setCreateError(errStr(err, 'Failed to save question'))
+      }
     } finally {
       setCreating(false)
     }
+  }
+
+  async function uploadImage(file: File) {
+    setUploading(true); setCreateError('')
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await api.post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      setNewQ(f => ({ ...f, imageUrl: res.data.url }))
+    } catch (err: any) {
+      setCreateError(errStr(err, 'Image upload failed'))
+    } finally { setUploading(false) }
   }
 
   async function bulkImport() {
@@ -259,12 +364,6 @@ export default function ContestDetail() {
     } finally {
       setImporting(false)
     }
-  }
-
-  function handleImageFile(file: File) {
-    const reader = new FileReader()
-    reader.onload = () => setNewQ(q => ({ ...q, imageUrl: reader.result as string }))
-    reader.readAsDataURL(file)
   }
 
   function downloadTemplate() {
@@ -423,25 +522,27 @@ export default function ContestDetail() {
             <button className={`tab-btn ${tab === 'bank' ? 'active' : ''}`} onClick={() => { setTab('bank'); setAddError(''); setCreateError(''); setBulkError(''); setBulkSuccess('') }}>
               Pick from bank {availableBank.length > 0 && `(${availableBank.length})`}
             </button>
-            <button className={`tab-btn ${tab === 'create' ? 'active' : ''}`} onClick={() => { setTab('create'); setAddError(''); setCreateError(''); setBulkError(''); setBulkSuccess('') }}>
-              Create question
+            <button className={`tab-btn ${tab === 'create' ? 'active' : ''}`} onClick={() => { setTab('create'); resetForm(); setAddError(''); setBulkError(''); setBulkSuccess('') }}>
+              {editingQid ? '✎ Editing question' : 'Create question'}
             </button>
             <button className={`tab-btn ${tab === 'bulk' ? 'active' : ''}`} onClick={() => { setTab('bulk'); setAddError(''); setCreateError(''); setBulkError(''); setBulkSuccess('') }}>
               Bulk Import JSON
             </button>
           </div>
 
-          {/* Shared marks row */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ marginBottom: 0, width: 120 }}>
-              <label>Marks (+)</label>
-              <input className="input" type="number" value={marks} onChange={e => setMarks(Number(e.target.value))} step={0.5} min={0} />
+          {/* Shared marks row — applies when adding a question (not when editing an existing one) */}
+          {!(tab === 'create' && editingQid) && tab !== 'bulk' && (
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'flex-end' }}>
+              <div className="form-group" style={{ marginBottom: 0, width: 120 }}>
+                <label>Marks (+)</label>
+                <input className="input" type="number" value={marks} onChange={e => setMarks(Number(e.target.value))} step={0.5} min={0} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0, width: 160 }}>
+                <label>Negative marks (−)</label>
+                <input className="input" type="number" value={negMarks} onChange={e => setNegMarks(Number(e.target.value))} step={0.25} min={0} />
+              </div>
             </div>
-            <div className="form-group" style={{ marginBottom: 0, width: 160 }}>
-              <label>Negative marks (−)</label>
-              <input className="input" type="number" value={negMarks} onChange={e => setNegMarks(Number(e.target.value))} step={0.25} min={0} />
-            </div>
-          </div>
+          )}
 
           {tab === 'bank' && (
             <>
@@ -456,11 +557,14 @@ export default function ContestDetail() {
                     <label>Question</label>
                     <select className="input" value={selectedQId} onChange={e => setSelectedQId(e.target.value)} required>
                       <option value="">Select a question...</option>
-                      {availableBank.map(q => (
-                        <option key={q.id} value={q.id}>
-                          [{SECTION_LABELS[q.subject] ?? q.subject}] {q.text.slice(0, 90)}{q.text.length > 90 ? '...' : ''}
-                        </option>
-                      ))}
+                      {availableBank.map(q => {
+                        const label = stripHtml(q.text) || q.passage?.title || 'question'
+                        return (
+                          <option key={q.id} value={q.id}>
+                            [{TYPE_LABELS[q.questionType] ?? SECTION_LABELS[q.subject] ?? q.subject}] {label.slice(0, 90)}{label.length > 90 ? '...' : ''}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
                   <button className="btn btn-primary" type="submit" disabled={adding || !selectedQId} style={{ flexShrink: 0 }}>
@@ -512,72 +616,176 @@ export default function ContestDetail() {
             <>
               {createError && <div className="alert alert-error">{createError}</div>}
               <form onSubmit={createAndAdd}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                  {editingQid
+                    ? 'Editing this question updates it everywhere it is used.'
+                    : 'Creates a question in the bank and adds it to this contest.'}
+                </p>
+
+                {/* Question type selector */}
                 <div className="form-group">
-                  <label>Question text</label>
-                  <textarea
-                    className="input" rows={3}
-                    value={newQ.text}
-                    onChange={e => setNewQ(q => ({ ...q, text: e.target.value }))}
-                    required style={{ resize: 'vertical' }}
-                    placeholder="Type the question here..."
-                  />
+                  <label>Question Type</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 4 }}>
+                    {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
+                      <label key={t} style={{
+                        border: `2px solid ${newQ.questionType === t ? 'var(--primary)' : 'var(--border)'}`,
+                        borderRadius: 8, padding: '8px 10px', cursor: 'pointer', textAlign: 'center',
+                        background: newQ.questionType === t ? 'var(--primary-light)' : 'var(--surface)',
+                        fontSize: 13, fontWeight: 600,
+                        color: newQ.questionType === t ? 'var(--primary)' : 'var(--heading)',
+                      }}>
+                        <input type="radio" style={{ display: 'none' }} checked={newQ.questionType === t}
+                          onChange={() => setNewQ(f => ({ ...f, questionType: t }))} />
+                        {TYPE_LABELS[t]}
+                      </label>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Passage/Table selector */}
+                {(newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE') && (
+                  <div className="form-group">
+                    <label>Link to Passage / Table</label>
+                    {passages.filter(p => newQ.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                        No {newQ.questionType === 'TABLE' ? 'tables' : 'passages'} yet — create one in the Questions tab first.
+                      </p>
+                    ) : (
+                      <select className="input" value={newQ.passageId}
+                        onChange={e => setNewQ(f => ({ ...f, passageId: e.target.value }))} required>
+                        <option value="">-- Select --</option>
+                        {passages.filter(p => newQ.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').map(p => (
+                          <option key={p.id} value={p.id}>{p.type === 'TABLE' ? '📊' : '📄'} {p.title || stripHtml(p.content).slice(0, 60)}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+
+                {/* Syllogism statements / conclusions */}
+                {newQ.questionType === 'SYLLOGISM' && (
+                  <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 14, marginBottom: 16 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 14 }}>Statements</div>
+                    {newQ.statements.map((s, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, minWidth: 18 }}>{i + 1}.</span>
+                        <input className="input" style={{ flex: 1 }} value={s} placeholder={`Statement ${i + 1}`}
+                          onChange={e => setNewQ(f => { const st = [...f.statements]; st[i] = e.target.value; return { ...f, statements: st } })} />
+                        {newQ.statements.length > 1 && (
+                          <button type="button" style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}
+                            onClick={() => setNewQ(f => ({ ...f, statements: f.statements.filter((_, j) => j !== i) }))}>×</button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={() => setNewQ(f => ({ ...f, statements: [...f.statements, ''] }))}>+ Statement</button>
+
+                    <div style={{ fontWeight: 600, margin: '14px 0 10px', fontSize: 14 }}>Conclusions</div>
+                    {newQ.conclusions.map((c, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, minWidth: 22 }}>{['I.', 'II.', 'III.', 'IV.'][i] ?? `${i + 1}.`}</span>
+                        <input className="input" style={{ flex: 1 }} value={c} placeholder={`Conclusion ${i + 1}`}
+                          onChange={e => setNewQ(f => { const cs = [...f.conclusions]; cs[i] = e.target.value; return { ...f, conclusions: cs } })} />
+                        {newQ.conclusions.length > 1 && (
+                          <button type="button" style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}
+                            onClick={() => setNewQ(f => ({ ...f, conclusions: f.conclusions.filter((_, j) => j !== i) }))}>×</button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={() => setNewQ(f => ({ ...f, conclusions: [...f.conclusions, ''] }))}>+ Conclusion</button>
+                  </div>
+                )}
+
                 <div className="form-group">
-                  <label>Diagram / Image (optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="input"
-                    style={{ padding: '6px 12px' }}
-                    onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f) }}
-                  />
-                  {newQ.imageUrl && (
-                    <div style={{ marginTop: 8, position: 'relative', display: 'inline-block' }}>
-                      <img src={newQ.imageUrl} alt="preview" style={{ maxHeight: 160, maxWidth: '100%', borderRadius: 6, border: '1px solid var(--border)' }} />
-                      <button
-                        type="button"
-                        onClick={() => setNewQ(q => ({ ...q, imageUrl: '' }))}
-                        style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,.6)', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', padding: '2px 6px', fontSize: 12 }}
-                      >✕</button>
+                  <label>{newQ.questionType === 'SYLLOGISM' ? 'Question / Direction Text' : 'Question Text'}
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
+                      — toolbar for bold, color, x² super/subscript, 🖼 image (or drag &amp; drop)
+                    </span>
+                  </label>
+                  <RichEditor value={newQ.text} onChange={v => setNewQ(f => ({ ...f, text: v }))}
+                    minHeight={64} placeholder={newQ.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
+                </div>
+
+                {/* Near-duplicate warning */}
+                {!editingQid && similar.length > 0 && (
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 6 }}>
+                      ⚠ {similar.length} similar question{similar.length !== 1 ? 's' : ''} already exist — avoid duplicates
                     </div>
-                  )}
+                    {similar.map(s => (
+                      <div key={s.id} style={{ fontSize: 12, color: '#78350f', display: 'flex', gap: 8 }}>
+                        <span style={{ fontWeight: 700, fontSize: 11, background: '#fde68a', color: '#92400e', padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>{s.score}%</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Optional image */}
+                <div className="form-group">
+                  <label>Question Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label className="btn btn-ghost btn-sm" style={{ cursor: uploading ? 'wait' : 'pointer', margin: 0 }}>
+                      {uploading ? 'Uploading…' : newQ.imageUrl ? '🖼 Replace Image' : '📷 Upload Image'}
+                      <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style={{ display: 'none' }}
+                        disabled={uploading}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = '' }} />
+                    </label>
+                    {newQ.imageUrl && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <img src={newQ.imageUrl} alt="Question" style={{ height: 48, borderRadius: 6, border: '1px solid var(--border)' }} />
+                        <button type="button" className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }}
+                          onClick={() => setNewQ(f => ({ ...f, imageUrl: '' }))}>Remove</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
                 <div className="form-row">
                   {(['A', 'B', 'C', 'D'] as const).map(opt => (
                     <div className="form-group" key={opt}>
                       <label>Option {opt}</label>
-                      <input
-                        className="input"
-                        value={(newQ as any)[`option${opt}`]}
-                        onChange={e => setNewQ(q => ({ ...q, [`option${opt}`]: e.target.value }))}
-                        required
-                      />
+                      <RichEditor minHeight={40}
+                        value={newQ[`option${opt}` as keyof typeof emptyQ] as string}
+                        onChange={v => setNewQ(f => ({ ...f, [`option${opt}`]: v }))} placeholder={`Option ${opt}…`} />
                     </div>
                   ))}
                 </div>
+
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Correct option</label>
-                    <select className="input" value={newQ.correctOption} onChange={e => setNewQ(q => ({ ...q, correctOption: e.target.value }))}>
-                      {['A', 'B', 'C', 'D'].map(o => <option key={o}>{o}</option>)}
+                    <label>Correct Option</label>
+                    <select className="input" value={newQ.correctOption} onChange={e => setNewQ(f => ({ ...f, correctOption: e.target.value }))}>
+                      {['A', 'B', 'C', 'D'].map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
                     <label>Subject</label>
-                    <select className="input" value={newQ.subject} onChange={e => setNewQ(q => ({ ...q, subject: e.target.value }))}>
+                    <select className="input" value={newQ.subject} onChange={e => setNewQ(f => ({ ...f, subject: e.target.value }))}>
                       {SECTIONS.map(s => <option key={s} value={s}>{SECTION_LABELS[s]}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
                     <label>Difficulty</label>
-                    <select className="input" value={newQ.difficulty} onChange={e => setNewQ(q => ({ ...q, difficulty: e.target.value }))}>
-                      {DIFFICULTIES.map(d => <option key={d}>{d}</option>)}
+                    <select className="input" value={newQ.difficulty} onChange={e => setNewQ(f => ({ ...f, difficulty: e.target.value }))}>
+                      {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                   </div>
                 </div>
-                <button className="btn btn-primary" type="submit" disabled={creating}>
-                  {creating ? 'Creating & adding...' : 'Create & Add to Contest'}
-                </button>
+
+                <div className="form-group">
+                  <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                  <RichEditor value={newQ.solution} onChange={v => setNewQ(f => ({ ...f, solution: v }))}
+                    minHeight={80} placeholder="Explain the approach and steps…" />
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="btn btn-primary" type="submit" disabled={creating}>
+                    {creating ? 'Saving…' : editingQid ? 'Update Question' : 'Create & Add to Contest'}
+                  </button>
+                  {editingQid && (
+                    <button type="button" className="btn btn-ghost" onClick={resetForm}>Cancel edit</button>
+                  )}
+                </div>
               </form>
             </>
           )}
@@ -594,6 +802,7 @@ export default function ContestDetail() {
                   <tr>
                     <th>#</th>
                     <th>Question</th>
+                    <th>Type</th>
                     <th>Subject</th>
                     <th>Difficulty</th>
                     <th>Marks</th>
@@ -604,12 +813,27 @@ export default function ContestDetail() {
                   {cqs.map((cq, i) => (
                     <tr key={cq.questionId}>
                       <td style={{ color: 'var(--text-muted)', width: 36 }}>{i + 1}</td>
-                      <td style={{ maxWidth: 360 }}>{cq.question.text}</td>
+                      <td style={{ maxWidth: 360 }}>
+                        {cq.question.passage && (
+                          <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 600, marginBottom: 2 }}>
+                            {cq.question.passage.type === 'TABLE' ? '📊' : '📄'} {cq.question.passage.title || 'Passage'}
+                          </div>
+                        )}
+                        <div style={{ fontWeight: 500 }}>
+                          {(stripHtml(cq.question.text) || /<img/i.test(cq.question.text))
+                            ? <RichText html={cq.question.text} />
+                            : <em style={{ color: 'var(--text-muted)' }}>(syllogism)</em>}
+                        </div>
+                      </td>
+                      <td style={{ fontSize: 12 }}>{TYPE_LABELS[cq.question.questionType] ?? 'Standard'}</td>
                       <td style={{ fontSize: 13 }}>{SECTION_LABELS[cq.question.subject] ?? cq.question.subject}</td>
                       <td><span className={`badge badge-${cq.question.difficulty.toLowerCase()}`}>{cq.question.difficulty}</span></td>
                       <td style={{ fontSize: 13 }}>+{cq.marks} / −{cq.negativeMarks}</td>
                       <td>
-                        <button className="btn btn-sm btn-danger" onClick={() => removeQuestion(cq.questionId)}>Remove</button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-sm btn-ghost" onClick={() => editQuestion(cq.question)}>Edit</button>
+                          <button className="btn btn-sm btn-danger" onClick={() => removeQuestion(cq.questionId)}>Remove</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
