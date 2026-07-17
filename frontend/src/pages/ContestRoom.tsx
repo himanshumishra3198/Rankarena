@@ -7,6 +7,7 @@ import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
+import ReportModal from '../components/ReportModal'
 import { unlockAudio, playLowTimeAlert, playTick } from '../lib/sound'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
@@ -73,6 +74,9 @@ export default function ContestRoom() {
 
   // ── Feature 4: Submit modal ───────────────────────────────────────────
   const [showSubmitModal, setShowSubmitModal] = useState(false)
+
+  // ── Report a question ─────────────────────────────────────────────────
+  const [reportQId, setReportQId] = useState<string | null>(null)
 
   // ── Feature 5: Tab-switch warning ────────────────────────────────────
   const [tabSwitches, setTabSwitches] = useState(0)
@@ -313,16 +317,6 @@ export default function ContestRoom() {
     })
   }
 
-  function toggleMark(questionId: string) {
-    const q = questions.find(q => q.id === questionId)
-    if (!q || submittedSections.has(q.subject)) return
-    setMarkedForReview(prev => {
-      const next = new Set(prev)
-      next.has(questionId) ? next.delete(questionId) : next.add(questionId)
-      return next
-    })
-  }
-
   function clearAnswer(questionId: string) {
     setAnswers(prev => {
       const next = { ...prev }
@@ -456,6 +450,18 @@ export default function ContestRoom() {
     ? Math.round(Object.values(timeSpent).reduce((a, b) => a + b, 0) / visitedWithTime.length)
     : 0
 
+  // ── Exam-bar navigation (within the current section) ──────────────────
+  const isLastInSection = idxInSection === sectionQs.length - 1
+  function saveAndNext() {
+    const next = sectionQs[idxInSection + 1]
+    if (next) goToQuestion(next.id, currentSection)
+  }
+  function markReviewNext() {
+    if (!isSectionLocked) setMarkedForReview(prev => new Set(prev).add(currentQ.id))
+    const next = sectionQs[idxInSection + 1]
+    if (next) goToQuestion(next.id, currentSection)
+  }
+
   return (
     <div className="room-layout">
       {/* ── Instructions modal (feature 1) ───────────────────────── */}
@@ -480,6 +486,16 @@ export default function ContestRoom() {
 
       {/* ── Calculator (feature 3) ────────────────────────────────── */}
       {showCalc && <Calculator onClose={() => setShowCalc(false)} />}
+
+      {/* ── Report a question ─────────────────────────────────────── */}
+      {reportQId && (
+        <ReportModal
+          questionId={reportQId}
+          source={`contest:${contestId}`}
+          questionLabel={`Question ${questions.findIndex(q => q.id === reportQId) + 1}`}
+          onClose={() => setReportQId(null)}
+        />
+      )}
 
       {/* ── Header ───────────────────────────────────────────────── */}
       <div className="room-header">
@@ -638,6 +654,43 @@ export default function ContestRoom() {
             &nbsp;·&nbsp; {currentSection}
             &nbsp;·&nbsp; +{currentQ.marks} / −{currentQ.negativeMarks}
           </p>
+
+          {/* Exam-style action bar (above the question, like the mock room) */}
+          <div className="room-exam-bar room-exam-bar-top">
+            <div className="room-exam-left">
+              {!isSectionLocked && phase === 'active' && (
+                <>
+                  <button className={`btn btn-ghost mark-btn ${markedForReview.has(currentQ.id) ? 'mark-active' : ''}`}
+                    onClick={markReviewNext}>
+                    🔖 Mark for Review &amp; Next
+                  </button>
+                  <button className="btn btn-ghost" style={{ color: 'var(--danger)' }}
+                    disabled={!answers[currentQ.id]} onClick={() => clearAnswer(currentQ.id)}>
+                    Clear Response
+                  </button>
+                </>
+              )}
+              <button className="btn btn-ghost" style={{ fontSize: 13, color: 'var(--text-muted)' }}
+                onClick={() => setReportQId(currentQ.id)} title="Report a problem with this question">
+                ⚑ Report
+              </button>
+            </div>
+            <div className="room-exam-right">
+              <button className="btn btn-ghost" disabled={idxInSection === 0}
+                onClick={() => { const prev = sectionQs[idxInSection - 1]; if (prev) goToQuestion(prev.id, currentSection) }}>
+                ← Previous
+              </button>
+              {!isSectionLocked && phase === 'active' && (
+                <button className="btn room-submit-section-btn" onClick={() => submitSection(currentSection)}>
+                  Submit {SECTION_LABELS[currentSection]} ✓
+                </button>
+              )}
+              <button className="btn btn-primary" disabled={isLastInSection} onClick={saveAndNext}>
+                Save &amp; Next →
+              </button>
+            </div>
+          </div>
+
           <QuestionContent q={currentQ} />
 
           <div className="options">
@@ -651,52 +704,6 @@ export default function ContestRoom() {
                 <span className="option-text"><RichText html={optionText(currentQ, opt)} /></span>
               </div>
             ))}
-          </div>
-
-          {/* Actions row */}
-          {!isSectionLocked && phase === 'active' && (
-            <div className="room-actions">
-              <button
-                className={`btn btn-ghost mark-btn ${markedForReview.has(currentQ.id) ? 'mark-active' : ''}`}
-                onClick={() => toggleMark(currentQ.id)}
-              >
-                🔖 {markedForReview.has(currentQ.id) ? 'Marked for Review' : 'Mark for Review'}
-              </button>
-              {answers[currentQ.id] && (
-                <button className="btn btn-ghost" style={{ color: 'var(--danger)', fontSize: 13 }} onClick={() => clearAnswer(currentQ.id)}>
-                  Clear answer
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Navigation */}
-          <div className="room-nav">
-            <button
-              className="btn btn-ghost"
-              disabled={idxInSection === 0}
-              onClick={() => { const prev = sectionQs[idxInSection - 1]; if (prev) goToQuestion(prev.id, currentSection) }}
-            >
-              ← Prev
-            </button>
-
-            {!isSectionLocked && phase === 'active' && (
-              <button
-                className="btn btn-sm"
-                style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}
-                onClick={() => submitSection(currentSection)}
-              >
-                Submit {SECTION_LABELS[currentSection]} ✓
-              </button>
-            )}
-
-            <button
-              className="btn btn-ghost"
-              disabled={idxInSection === sectionQs.length - 1}
-              onClick={() => { const next = sectionQs[idxInSection + 1]; if (next) goToQuestion(next.id, currentSection) }}
-            >
-              Next →
-            </button>
           </div>
         </div>
       </div>

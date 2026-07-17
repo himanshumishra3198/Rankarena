@@ -177,6 +177,9 @@ export default function Result() {
   const [activeSection, setActiveSection] = useState<string>('all')
   const [copied, setCopied] = useState(false)
   const [reportQId, setReportQId] = useState<string | null>(null)
+  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
+  const [practiceOn, setPracticeOn] = useState<Set<string>>(new Set())
+  const [practiceAns, setPracticeAns] = useState<Record<string, string>>({})
 
   // timeSpent per questionId saved by ContestRoom on submit
   const [timeSpent, setTimeSpent] = useState<Record<string, number>>({})
@@ -194,7 +197,19 @@ export default function Result() {
       })
       .catch(() => setError('Result not available yet.'))
       .finally(() => setLoading(false))
+    api.get('/bookmarks/ids').then(r => setBookmarks(new Set(r.data))).catch(() => {})
   }, [contestId])
+
+  async function toggleBookmark(qid: string) {
+    setBookmarks(b => { const n = new Set(b); n.has(qid) ? n.delete(qid) : n.add(qid); return n })
+    try { await api.post(`/bookmarks/${qid}`) }
+    catch { setBookmarks(b => { const n = new Set(b); n.has(qid) ? n.delete(qid) : n.add(qid); return n }) }
+  }
+
+  function jumpToQuestion(qid: string) {
+    setActiveSection('all'); setReviewFilter('all'); setExpandedQ(qid)
+    setTimeout(() => document.getElementById(`cq-${qid}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 40)
+  }
 
   useEffect(() => {
     if (!result) return
@@ -510,6 +525,39 @@ export default function Result() {
           )}
         </div>
 
+        {/* ── Question Map ─────────────────────────────────────────────── */}
+        <div className="card" style={{ marginBottom: 20 }}>
+          <h2 style={{ marginBottom: 12 }}>Question Map</h2>
+          <div className="palette-legend">
+            <span><span className="pl-dot" style={{ background: '#16a34a' }} /> Correct</span>
+            <span><span className="pl-dot" style={{ background: '#dc2626' }} /> Incorrect</span>
+            <span><span className="pl-dot" style={{ background: '#fff', border: '1.5px solid var(--border)' }} /> Unattempted</span>
+            {markedSet.size > 0 && <span><span className="pl-dot" style={{ background: '#fff' }}>🔖</span> Marked for review</span>}
+          </div>
+          <div className="result-palette">
+            {questions.map((q, i) => {
+              const given = answers[q.id]
+              const isCorr = given === q.correctOption
+              const isWrng = given && given !== q.correctOption
+              const filled = isCorr || isWrng
+              const bg = isCorr ? '#16a34a' : isWrng ? '#dc2626' : 'var(--surface)'
+              return (
+                <button key={q.id} className={`rp-cell ${markedSet.has(q.id) ? 'rp-marked' : ''}`}
+                  style={{
+                    background: bg,
+                    color: filled ? '#fff' : 'var(--text)',
+                    borderColor: filled ? bg : 'var(--border)',
+                  }}
+                  title={markedSet.has(q.id) ? 'Marked for review' : undefined}
+                  onClick={() => jumpToQuestion(q.id)}>
+                  {i + 1}
+                  {markedSet.has(q.id) && <span className="rp-flag">🔖</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* ── Question Review ──────────────────────────────────────────── */}
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
@@ -542,7 +590,7 @@ export default function Result() {
                 ? timeEmoji(tSpent, avgTime) : null
 
               return (
-                <div key={q.id} className={`review-item ${isCorrect ? 'review-correct' : isWrong ? 'review-wrong' : 'review-skipped'}`}>
+                <div key={q.id} id={`cq-${q.id}`} className={`review-item ${isCorrect ? 'review-correct' : isWrong ? 'review-wrong' : 'review-skipped'}`}>
                   <div className="review-item-header" onClick={() => setExpandedQ(isOpen ? null : q.id)}>
                     <div className="review-item-left">
                       <span className="review-qnum">Q{qNum}</span>
@@ -564,6 +612,10 @@ export default function Result() {
                       <span className={`review-marks ${marksEarned > 0 ? 'pos' : marksEarned < 0 ? 'neg' : ''}`}>
                         {marksEarned > 0 ? '+' : ''}{marksEarned.toFixed(2)}
                       </span>
+                      <button className="bookmark-btn" title={bookmarks.has(q.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                        onClick={e => { e.stopPropagation(); toggleBookmark(q.id) }}>
+                        {bookmarks.has(q.id) ? '⭐' : '☆'}
+                      </button>
                       <span className="review-chevron">{isOpen ? '▲' : '▼'}</span>
                     </div>
                   </div>
@@ -594,20 +646,69 @@ export default function Result() {
                           )}
                         </div>
                       )}
-                      <div className="review-options">
-                        {(['A','B','C','D'] as const).map(opt => {
-                          const isCorrectOpt = opt === q.correctOption
-                          const isGivenOpt   = opt === given
+                      {practiceOn.has(q.id) ? (
+                        // ── Re-attempt / practice mode (won't change your score) ──
+                        (() => {
+                          const picked = practiceAns[q.id]
+                          const answered = !!picked
                           return (
-                            <div key={opt} className={`review-option ${isCorrectOpt ? 'correct-opt' : isGivenOpt ? 'wrong-opt' : ''}`}>
-                              <span className="option-label">{opt}</span>
-                              <span><RichText html={optText(q, opt)} /></span>
-                              {isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
-                              {isGivenOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your answer</span>}
-                            </div>
+                            <>
+                              <div className="practice-banner">🔄 Re-attempt mode — pick an answer (won't change your score)</div>
+                              <div className="review-options" style={{ marginTop: 10 }}>
+                                {(['A','B','C','D'] as const).map(opt => {
+                                  const isCorrectOpt = opt === q.correctOption
+                                  const isPicked = opt === picked
+                                  const cls = answered && isCorrectOpt ? 'correct-opt' : answered && isPicked ? 'wrong-opt' : ''
+                                  return (
+                                    <div key={opt} className={`review-option ${cls}`} style={{ cursor: answered ? 'default' : 'pointer' }}
+                                      onClick={() => { if (!answered) setPracticeAns(a => ({ ...a, [q.id]: opt })) }}>
+                                      <span className="option-label">{opt}</span>
+                                      <span><RichText html={optText(q, opt)} /></span>
+                                      {answered && isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct</span>}
+                                      {answered && isPicked && !isCorrectOpt && <span className="opt-tag wrong-tag">Your pick</span>}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                              {answered && (
+                                <div style={{ marginTop: 10, fontWeight: 700, color: picked === q.correctOption ? '#16a34a' : '#dc2626' }}>
+                                  {picked === q.correctOption ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
+                                </div>
+                              )}
+                              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                {answered && (
+                                  <button className="btn btn-ghost btn-sm" onClick={() => setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })}>Try again</button>
+                                )}
+                                <button className="btn btn-ghost btn-sm" onClick={() => {
+                                  setPracticeOn(s => { const n = new Set(s); n.delete(q.id); return n })
+                                  setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })
+                                }}>Exit practice</button>
+                              </div>
+                            </>
                           )
-                        })}
-                      </div>
+                        })()
+                      ) : (
+                        <>
+                          <div className="review-options">
+                            {(['A','B','C','D'] as const).map(opt => {
+                              const isCorrectOpt = opt === q.correctOption
+                              const isGivenOpt   = opt === given
+                              return (
+                                <div key={opt} className={`review-option ${isCorrectOpt ? 'correct-opt' : isGivenOpt ? 'wrong-opt' : ''}`}>
+                                  <span className="option-label">{opt}</span>
+                                  <span><RichText html={optText(q, opt)} /></span>
+                                  {isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
+                                  {isGivenOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your answer</span>}
+                                </div>
+                              )
+                            })}
+                          </div>
+                          <div style={{ marginTop: 10 }}>
+                            <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }}
+                              onClick={() => setPracticeOn(s => new Set(s).add(q.id))}>🔄 Re-attempt this question</button>
+                          </div>
+                        </>
+                      )}
 
                       {/* Detailed solution */}
                       {q.solution && (
