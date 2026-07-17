@@ -66,6 +66,7 @@ export default function MockTests() {
   }
 
   const filtered = filterSubject ? mocks.filter(m => m.subject === filterSubject) : mocks
+  const countFor = (s: string) => mocks.filter(m => m.subject === s).length
 
   return (
     <>
@@ -73,7 +74,13 @@ export default function MockTests() {
       <div className="page">
         <div className="page-header">
           <h1>Mock Tests</h1>
-          <button className="btn btn-primary" onClick={() => setShowForm(v => !v)}>
+          <button className="btn btn-primary" onClick={() => {
+            if (!showForm) {
+              setForm({ ...emptyForm, subject: (filterSubject || emptyForm.subject) as MockTest['subject'] })
+              setError('')
+            }
+            setShowForm(v => !v)
+          }}>
             {showForm ? 'Cancel' : '+ New Mock Test'}
           </button>
         </div>
@@ -116,17 +123,27 @@ export default function MockTests() {
         )}
 
         <div className="card">
-          <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-            <select className="input" style={{ width: 'auto' }} value={filterSubject}
-              onChange={e => setFilterSubject(e.target.value)}>
-              <option value="">All sections</option>
-              {SECTIONS.map(s => <option key={s} value={s}>{SECTION_LABELS[s]}</option>)}
-            </select>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{filtered.length} mock tests</span>
+          <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+            <button className={`tab-btn ${filterSubject === '' ? 'active' : ''}`}
+              onClick={() => setFilterSubject('')}>
+              All sections <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({mocks.length})</span>
+            </button>
+            {SECTIONS.map(s => (
+              <button key={s} className={`tab-btn ${filterSubject === s ? 'active' : ''}`}
+                onClick={() => setFilterSubject(s)}>
+                {SECTION_LABELS[s]} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({countFor(s)})</span>
+              </button>
+            ))}
           </div>
 
           {loading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
-          {!loading && filtered.length === 0 && <p className="empty">No mock tests yet.</p>}
+          {!loading && filtered.length === 0 && (
+            <p className="empty">
+              {filterSubject
+                ? `No ${SECTION_LABELS[filterSubject as MockTest['subject']]} mock tests yet.`
+                : 'No mock tests yet.'}
+            </p>
+          )}
           {filtered.length > 0 && (
             <table>
               <thead>
