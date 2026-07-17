@@ -397,21 +397,8 @@ export default function MockRoom() {
             </div>
           </div>
 
-          <QuestionContent q={currentQ} />
-
-          <div className="options">
-            {OPTIONS.map(opt => (
-              <div key={opt}
-                className={`option ${answers[currentQ.id] === opt ? 'selected' : ''}`}
-                onClick={() => selectAnswer(opt)}>
-                <span className="option-label">{opt}</span>
-                <span className="option-text"><RichText html={optionText(currentQ, opt)} /></span>
-              </div>
-            ))}
-          </div>
-
           {/* Exam-style action bar: review / clear on the left, navigation + Save & Next on the right */}
-          <div className="room-exam-bar">
+          <div className="room-exam-bar room-exam-bar-top">
             <div className="room-exam-left">
               <button className={`btn btn-ghost mark-btn ${marked.has(currentQ.id) ? 'mark-active' : ''}`} onClick={markReviewNext}>
                 🔖 Mark for Review &amp; Next
@@ -431,6 +418,19 @@ export default function MockRoom() {
                 ? <button className="btn btn-primary" onClick={saveAndNext}>Save &amp; Next →</button>
                 : <button className="btn btn-primary" onClick={() => setShowSubmit(true)}>Submit Test</button>}
             </div>
+          </div>
+
+          <QuestionContent q={currentQ} />
+
+          <div className="options">
+            {OPTIONS.map(opt => (
+              <div key={opt}
+                className={`option ${answers[currentQ.id] === opt ? 'selected' : ''}`}
+                onClick={() => selectAnswer(opt)}>
+                <span className="option-label">{opt}</span>
+                <span className="option-text"><RichText html={optionText(currentQ, opt)} /></span>
+              </div>
+            ))}
           </div>
 
           <div className="kbd-hint">

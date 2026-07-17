@@ -239,6 +239,8 @@ select.input { cursor: pointer; }
 
 /* Exam-style action bar (Mark for Review / Clear on the left, Previous / Save & Next on the right) */
 .room-exam-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+/* When the bar sits above the question, put the divider below it instead of above. */
+.room-exam-bar-top { margin-top: 4px; margin-bottom: 20px; padding-top: 0; padding-bottom: 20px; border-top: none; border-bottom: 1px solid var(--border); }
 .room-exam-left, .room-exam-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 @media (max-width: 640px) {
   .room-exam-bar { flex-direction: column; align-items: stretch; }
