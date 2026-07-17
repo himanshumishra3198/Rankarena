@@ -5,6 +5,7 @@ import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
+import { SegmentedRadio } from '../components/SegmentedRadio'
 import type { MockTest, MockTestQuestion, Question, Passage, QuestionType } from '../lib/types'
 import { SECTION_LABELS, SECTIONS } from '../lib/types'
 
@@ -17,7 +18,7 @@ const emptyCreate = {
   questionType: 'STANDARD' as QuestionType,
   text: '', imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
-  correctOption: 'A',
+  correctOption: '',
   difficulty: 'MEDIUM',
   solution: '',
   passageId: '',
@@ -138,6 +139,7 @@ export default function MockTestDetail() {
     if ((['A', 'B', 'C', 'D'] as const).some(o => !hasContent(cForm[`option${o}` as keyof typeof emptyCreate] as string))) {
       setError('All four options are required (text or image).'); return
     }
+    if (!cForm.correctOption) { setError('Select the correct option.'); return }
     if (needsPassage && !cForm.passageId) { setError('Select a passage/table for this question (create it in the Questions tab first).'); return }
 
     setCreating(true); setError('')
@@ -494,18 +496,16 @@ export default function MockTestDetail() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Correct Option</label>
-                  <select className="input" value={cForm.correctOption}
-                    onChange={e => setCForm(f => ({ ...f, correctOption: e.target.value }))}>
-                    {['A', 'B', 'C', 'D'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
+                  <label>Correct Option <span style={{ color: 'var(--danger)' }}>*</span></label>
+                  <SegmentedRadio value={cForm.correctOption}
+                    options={['A', 'B', 'C', 'D'].map(o => ({ value: o, label: o }))}
+                    onChange={v => setCForm(f => ({ ...f, correctOption: v }))} />
                 </div>
                 <div className="form-group">
                   <label>Difficulty</label>
-                  <select className="input" value={cForm.difficulty}
-                    onChange={e => setCForm(f => ({ ...f, difficulty: e.target.value }))}>
-                    {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                  <SegmentedRadio value={cForm.difficulty}
+                    options={DIFFICULTIES.map(d => ({ value: d as string, label: d }))}
+                    onChange={v => setCForm(f => ({ ...f, difficulty: v }))} />
                 </div>
               </div>
 

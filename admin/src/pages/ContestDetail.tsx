@@ -5,6 +5,7 @@ import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
+import { SegmentedRadio } from '../components/SegmentedRadio'
 import type { Contest, Question, ContestQuestion, Section, Passage, QuestionType } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
 
@@ -17,7 +18,7 @@ const emptyQ = {
   questionType: 'STANDARD' as QuestionType,
   text: '', imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
-  correctOption: 'A', subject: 'QUANT', difficulty: 'MEDIUM',
+  correctOption: '', subject: 'QUANT', difficulty: 'MEDIUM',
   solution: '', passageId: '',
   statements: ['', '', ''] as string[],
   conclusions: ['', '', ''] as string[],
@@ -284,6 +285,7 @@ export default function ContestDetail() {
     if ((['A', 'B', 'C', 'D'] as const).some(o => !hasContent(newQ[`option${o}` as keyof typeof emptyQ] as string))) {
       setCreateError('All four options are required (text or image).'); return
     }
+    if (!newQ.correctOption) { setCreateError('Select the correct option.'); return }
     if (needsPassage && !newQ.passageId) { setCreateError('Select a passage/table for this question (create it in the Questions tab first).'); return }
 
     setCreating(true); setCreateError('')
@@ -751,25 +753,23 @@ export default function ContestDetail() {
                   ))}
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Correct Option</label>
-                    <select className="input" value={newQ.correctOption} onChange={e => setNewQ(f => ({ ...f, correctOption: e.target.value }))}>
-                      {['A', 'B', 'C', 'D'].map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Subject</label>
-                    <select className="input" value={newQ.subject} onChange={e => setNewQ(f => ({ ...f, subject: e.target.value }))}>
-                      {SECTIONS.map(s => <option key={s} value={s}>{SECTION_LABELS[s]}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Difficulty</label>
-                    <select className="input" value={newQ.difficulty} onChange={e => setNewQ(f => ({ ...f, difficulty: e.target.value }))}>
-                      {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </div>
+                <div className="form-group">
+                  <label>Correct Option <span style={{ color: 'var(--danger)' }}>*</span></label>
+                  <SegmentedRadio value={newQ.correctOption}
+                    options={['A', 'B', 'C', 'D'].map(o => ({ value: o, label: o }))}
+                    onChange={v => setNewQ(f => ({ ...f, correctOption: v }))} />
+                </div>
+                <div className="form-group">
+                  <label>Subject</label>
+                  <SegmentedRadio value={newQ.subject}
+                    options={SECTIONS.map(s => ({ value: s as string, label: SECTION_LABELS[s] }))}
+                    onChange={v => setNewQ(f => ({ ...f, subject: v }))} />
+                </div>
+                <div className="form-group">
+                  <label>Difficulty</label>
+                  <SegmentedRadio value={newQ.difficulty}
+                    options={DIFFICULTIES.map(d => ({ value: d as string, label: d }))}
+                    onChange={v => setNewQ(f => ({ ...f, difficulty: v }))} />
                 </div>
 
                 <div className="form-group">
