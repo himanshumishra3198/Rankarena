@@ -414,9 +414,8 @@ export default function MockRoom() {
             </div>
             <div className="room-exam-right">
               <button className="btn btn-ghost" disabled={currentIdx === 0} onClick={() => goTo(currentIdx - 1)}>← Previous</button>
-              {currentIdx < questions.length - 1
-                ? <button className="btn btn-primary" onClick={saveAndNext}>Save &amp; Next →</button>
-                : <button className="btn btn-primary" onClick={() => setShowSubmit(true)}>Submit Test</button>}
+              <button className="btn room-submit-btn" onClick={() => setShowSubmit(true)}>Submit</button>
+              <button className="btn btn-primary" disabled={currentIdx === questions.length - 1} onClick={saveAndNext}>Save &amp; Next →</button>
             </div>
           </div>
 
