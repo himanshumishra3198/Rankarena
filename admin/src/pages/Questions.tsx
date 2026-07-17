@@ -636,12 +636,19 @@ export default function Questions() {
         {/* ── Questions list ─────────────────────────────────────────────── */}
         {tab === 'questions' && (
           <div className="card">
+            <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+              <button className={`tab-btn ${filterSubject === '' ? 'active' : ''}`}
+                onClick={() => setFilterSubject('')}>
+                All subjects
+              </button>
+              {SUBJECTS.map(s => (
+                <button key={s} className={`tab-btn ${filterSubject === s ? 'active' : ''}`}
+                  onClick={() => setFilterSubject(s)}>
+                  {SUBJECT_LABELS[s]}
+                </button>
+              ))}
+            </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-              <select className="input" style={{ width: 'auto' }} value={filterSubject}
-                onChange={e => setFilterSubject(e.target.value)}>
-                <option value="">All subjects</option>
-                {SUBJECTS.map(s => <option key={s} value={s}>{SUBJECT_LABELS[s]}</option>)}
-              </select>
               <select className="input" style={{ width: 'auto' }} value={filterType}
                 onChange={e => setFilterType(e.target.value)}>
                 <option value="">All types</option>
@@ -653,7 +660,11 @@ export default function Questions() {
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
-            {!loading && questions.length === 0 && <p className="empty">No questions yet.</p>}
+            {!loading && questions.length === 0 && (
+              <p className="empty">
+                {filterSubject ? `No ${SUBJECT_LABELS[filterSubject]} questions yet.` : 'No questions yet.'}
+              </p>
+            )}
             {questions.length > 0 && (
               <table>
                 <thead>
