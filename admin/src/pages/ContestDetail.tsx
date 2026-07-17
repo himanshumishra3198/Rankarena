@@ -147,6 +147,12 @@ export default function ContestDetail() {
   const [passages, setPassages] = useState<Passage[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Contest details editing (title / start time / duration)
+  const [editingDetails, setEditingDetails] = useState(false)
+  const [detailsForm, setDetailsForm] = useState({ title: '', startTime: '', durationMinutes: 60 })
+  const [savingDetails, setSavingDetails] = useState(false)
+  const [detailsError, setDetailsError] = useState('')
+
   // Section config editing
   const [editingConfig, setEditingConfig] = useState(false)
   const [draftLimits, setDraftLimits] = useState<Record<Section, number>>({ QUANT: 0, REASONING: 0, ENGLISH: 0, GK: 0 })
@@ -233,6 +239,44 @@ export default function ContestDetail() {
   async function setStatus(status: Contest['status']) {
     await api.post(`/admin/contests/${id}/status`, { status })
     load()
+  }
+
+  // ── Contest details (title / start time / duration) ───────────────────
+  // Convert a stored ISO timestamp to the value a <input type="datetime-local"> wants (local time).
+  function toLocalInput(iso: string): string {
+    const d = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+  function openEditDetails() {
+    if (!contest) return
+    setDetailsForm({
+      title: contest.title,
+      startTime: toLocalInput(contest.startTime),
+      durationMinutes: contest.durationMinutes,
+    })
+    setDetailsError('')
+    setEditingDetails(true)
+  }
+  async function saveDetails(e: FormEvent) {
+    e.preventDefault()
+    if (!detailsForm.title.trim()) { setDetailsError('Title is required.'); return }
+    if (!detailsForm.startTime) { setDetailsError('Start time is required.'); return }
+    setSavingDetails(true); setDetailsError('')
+    try {
+      await api.put(`/admin/contests/${id}`, {
+        title: detailsForm.title.trim(),
+        startTime: new Date(detailsForm.startTime).toISOString(),
+        durationMinutes: Number(detailsForm.durationMinutes),
+      })
+      setEditingDetails(false)
+      load()
+    } catch (err: any) {
+      const msg = err?.response?.data?.error
+      setDetailsError(typeof msg === 'string' ? msg : 'Failed to update contest — check the values and try again.')
+    } finally {
+      setSavingDetails(false)
+    }
   }
 
   // ── Add from bank ─────────────────────────────────────────────────────
@@ -408,8 +452,59 @@ export default function ContestDetail() {
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>← Back to Contests</button>
         </div>
 
+        {/* ── Contest details (title / start / duration) ───────────────── */}
+        {contest && !editingDetails && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+            <div>
+              <h1 style={{ marginBottom: 4 }}>{contest.title}</h1>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                {new Date(contest.startTime).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                &nbsp;·&nbsp; {contest.durationMinutes} min &nbsp;·&nbsp; −{Number(contest.negativeMarks)} negative
+              </div>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={openEditDetails} style={{ flexShrink: 0 }}>✎ Edit details</button>
+          </div>
+        )}
+
+        {contest && editingDetails && (
+          <div className="card" style={{ marginBottom: 16 }}>
+            <h2 style={{ marginBottom: 14 }}>Edit Contest</h2>
+            {detailsError && <div className="alert alert-error" style={{ marginBottom: 12 }}>{detailsError}</div>}
+            <form onSubmit={saveDetails}>
+              <div className="form-group">
+                <label>Title</label>
+                <input className="input" value={detailsForm.title} required
+                  onChange={e => setDetailsForm(f => ({ ...f, title: e.target.value }))} />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Start Time</label>
+                  <input className="input" type="datetime-local" value={detailsForm.startTime} required
+                    onChange={e => setDetailsForm(f => ({ ...f, startTime: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label>Duration (minutes)</label>
+                  <input className="input" type="number" min={1} value={detailsForm.durationMinutes}
+                    onChange={e => setDetailsForm(f => ({ ...f, durationMinutes: Number(e.target.value) }))} />
+                </div>
+              </div>
+              {contest.status !== 'SCHEDULED' && (
+                <p style={{ fontSize: 12, color: 'var(--warning)', marginBottom: 12 }}>
+                  ⚠ This contest is {contest.status.toLowerCase()} — changing the time or duration affects participants mid-flight.
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn btn-primary" type="submit" disabled={savingDetails}>
+                  {savingDetails ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button type="button" className="btn btn-ghost" onClick={() => { setEditingDetails(false); setDetailsError('') }}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* ── Live contest timer ───────────────────────────────────────── */}
-        {contest && <ContestTimer contest={contest} />}
+        {contest && !editingDetails && <ContestTimer contest={contest} />}
 
         {/* ── Status controls ──────────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 0' }}>
