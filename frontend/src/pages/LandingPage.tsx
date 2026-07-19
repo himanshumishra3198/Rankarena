@@ -12,6 +12,21 @@ interface LeaderboardEntry {
   rating: number;
 }
 
+interface PublicMock {
+  id: string;
+  title: string;
+  subject: "QUANT" | "REASONING" | "ENGLISH" | "GK";
+  durationMinutes: number;
+  questionCount: number;
+}
+
+const MOCK_SUBJECT_LABELS: Record<string, string> = {
+  QUANT: "Quantitative Aptitude",
+  REASONING: "Reasoning",
+  ENGLISH: "English",
+  GK: "General Awareness",
+};
+
 function effectivePhase(c: Contest): "scheduled" | "live" | "ended" {
   const now = Date.now();
   const startMs = new Date(c.startTime).getTime();
@@ -40,13 +55,19 @@ export default function LandingPage() {
   );
   const navigate = useNavigate();
   const [active, setActive] = useState<Contest[]>([]);
+  const [mocks, setMocks] = useState<PublicMock[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [, setTick] = useState(0);
 
   useEffect(() => {
-    Promise.all([api.get("/contests"), api.get("/ratings/leaderboard")])
-      .then(([contestsRes, lbRes]) => {
+    Promise.all([
+      api.get("/contests"),
+      api.get("/mocks/public"),
+      api.get("/ratings/leaderboard"),
+    ])
+      .then(([contestsRes, mocksRes, lbRes]) => {
         setActive(contestsRes.data.active ?? []);
+        setMocks(mocksRes.data ?? []);
         setLeaderboard((lbRes.data ?? []).slice(0, 3));
       })
       .catch(() => {});
@@ -158,6 +179,45 @@ export default function LandingPage() {
                 );
               })}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Sectional Mock Tests ────────────────────────── */}
+      {mocks.length > 0 && (
+        <section className="landing-section">
+          <div className="landing-section-inner">
+            <div className="landing-section-label">Free Sectional Mock Tests</div>
+            <p style={{ color: "var(--text-muted)", fontSize: 14, marginTop: -8, marginBottom: 20 }}>
+              Subject-wise practice with detailed solutions — attempt anytime, retake as often as you like.
+            </p>
+            <div className="landing-contests-grid">
+              {mocks.slice(0, 8).map((m) => (
+                <div key={m.id} className="landing-contest-card">
+                  <div className="landing-mock-subject">
+                    {MOCK_SUBJECT_LABELS[m.subject] ?? m.subject}
+                  </div>
+                  <div className="landing-contest-title">{m.title}</div>
+                  <div className="landing-contest-meta">
+                    {m.questionCount} questions &nbsp;·&nbsp; {m.durationMinutes} min
+                  </div>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ marginTop: "auto", width: "100%" }}
+                    onClick={() => navigate("/login")}
+                  >
+                    Login to Practice →
+                  </button>
+                </div>
+              ))}
+            </div>
+            {mocks.length > 8 && (
+              <div style={{ textAlign: "center", marginTop: 18 }}>
+                <button className="btn btn-primary" onClick={() => navigate("/register")}>
+                  Sign up to see all {mocks.length} mock tests →
+                </button>
+              </div>
+            )}
           </div>
         </section>
       )}

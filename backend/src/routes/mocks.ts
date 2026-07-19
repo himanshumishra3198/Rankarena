@@ -5,6 +5,27 @@ import { Prisma } from "../generated/prisma/client";
 import { authenticate, AuthRequest } from "../middleware/auth";
 
 const router = Router();
+
+// Public: list published mock tests (metadata only, no per-user attempt data).
+// Lets logged-out visitors browse mocks on the landing page before signing up.
+router.get("/public", async (_req, res: Response) => {
+  const mocks = await prisma.mockTest.findMany({
+    where: { isPublished: true },
+    orderBy: { createdAt: "asc" },
+    include: { _count: { select: { mockTestQuestions: true } } },
+  });
+  res.json(
+    mocks.map((m) => ({
+      id: m.id,
+      title: m.title,
+      subject: m.subject,
+      durationMinutes: m.durationMinutes,
+      negativeMarks: Number(m.negativeMarks),
+      questionCount: m._count.mockTestQuestions,
+    }))
+  );
+});
+
 router.use(authenticate);
 
 // List published mock tests (grouped client-side by subject). Includes the
