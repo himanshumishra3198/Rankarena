@@ -294,35 +294,40 @@ export default function LandingPage() {
 
       {/* ── Sectional Mock Tests ────────────────────────── */}
       {mocks.length > 0 && (
-        <section className="landing-section landing-how" id="mocks">
+        <section className="landing-section" id="mocks">
           <div className="landing-section-inner">
             <div className="landing-section-label">Free Sectional Mock Tests</div>
             <p className="landing-section-intro">
               Subject-wise practice with detailed solutions — attempt anytime, retake as often as you like.
             </p>
-            <div className="landing-contests-grid">
-              {mocks.slice(0, 8).map((m) => (
-                <div key={m.id} className="landing-contest-card">
-                  <div className="landing-mock-subject">
-                    {MOCK_SUBJECT_LABELS[m.subject] ?? m.subject}
+            <div className="mock-list">
+              <div className="mock-list-head">
+                <span>Mock Test</span>
+                <span>Questions</span>
+                <span>Duration</span>
+                <span />
+              </div>
+              {mocks.slice(0, 10).map((m) => (
+                <div key={m.id} className="mock-row">
+                  <div className="mock-row-main">
+                    <span className="landing-mock-subject">
+                      {MOCK_SUBJECT_LABELS[m.subject] ?? m.subject}
+                    </span>
+                    <span className="mock-row-title">{m.title}</span>
                   </div>
-                  <div className="landing-contest-title">{m.title}</div>
-                  <div className="landing-contest-meta">
-                    {m.questionCount} questions &nbsp;·&nbsp; {m.durationMinutes} min
+                  <div className="mock-row-cell">{m.questionCount} questions</div>
+                  <div className="mock-row-cell">{m.durationMinutes} min</div>
+                  <div className="mock-row-action">
+                    <button className="btn btn-primary btn-sm" onClick={() => navigate("/login")}>
+                      Practice →
+                    </button>
                   </div>
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    style={{ marginTop: "auto", width: "100%" }}
-                    onClick={() => navigate("/login")}
-                  >
-                    Login to Practice →
-                  </button>
                 </div>
               ))}
             </div>
-            {mocks.length > 8 && (
+            {mocks.length > 10 && (
               <div style={{ textAlign: "center", marginTop: 18 }}>
-                <button className="btn btn-primary" onClick={() => navigate("/register")}>
+                <button className="btn btn-ghost" onClick={() => navigate("/register")}>
                   Sign up to see all {mocks.length} mock tests →
                 </button>
               </div>

@@ -670,6 +670,24 @@ select.input { cursor: pointer; }
 .landing-contest-countdown { font-size: 13px; font-weight: 600; color: var(--primary); }
 .landing-mock-subject { font-size: 11px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: var(--primary); background: var(--primary-light); align-self: flex-start; padding: 2px 8px; border-radius: 20px; }
 
+/* ── Landing: mock tests as a contest-style list ────── */
+.mock-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+.mock-list-head, .mock-row { display: grid; grid-template-columns: minmax(0, 2.6fr) 1fr 1fr 130px; align-items: center; gap: 16px; padding: 13px 20px; }
+.mock-list-head { background: var(--bg); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+.mock-row { border-top: 1px solid var(--border); transition: background .12s; }
+.mock-row:hover { background: var(--primary-light); }
+.mock-row-main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.mock-row-title { font-size: 15px; font-weight: 600; color: var(--heading); line-height: 1.35; }
+.mock-row-cell { font-size: 13.5px; color: var(--text-muted); white-space: nowrap; }
+.mock-row-action { justify-self: end; }
+@media (max-width: 680px) {
+  .mock-list-head { display: none; }
+  .mock-row { grid-template-columns: 1fr; gap: 6px; padding: 14px 16px; }
+  .mock-row-cell { font-size: 12.5px; }
+  .mock-row-action { justify-self: stretch; margin-top: 4px; }
+  .mock-row-action .btn { width: 100%; }
+}
+
 /* How it works */
 .landing-how { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }
