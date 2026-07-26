@@ -1,7 +1,7 @@
 services:
 
   # ── Reverse Proxy (public-facing) ─────────────────────────────────────────
-  # HTTPS: serves the three hm0.org subdomains over TLS (Let's Encrypt),
+  # HTTPS: serves the rankarenas.com apex + subdomains over TLS (Let's Encrypt),
   # redirects HTTP->HTTPS, and serves the ACME challenge for renewals.
   # To revert to HTTP-only, mount ./nginx/nginx.http.conf instead.
   proxy:

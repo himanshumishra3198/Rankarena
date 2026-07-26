@@ -7,4 +7,4 @@ Disallow: /mocks/
 Disallow: /profile
 Disallow: /profile/
 
-Sitemap: https://rankarena.hm0.org/sitemap.xml
+Sitemap: https://rankarenas.com/sitemap.xml

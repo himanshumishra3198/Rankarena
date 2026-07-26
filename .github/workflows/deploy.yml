@@ -6,6 +6,10 @@ on:
 
 env:
   AWS_REGION: us-east-1
+  # Public API origin, baked into the frontend/admin bundles at build time.
+  # Not a secret — kept here so a domain change is a one-line edit in the repo
+  # rather than a manual GitHub secret update.
+  VITE_API_URL: https://api.rankarenas.com
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
@@ -55,7 +59,7 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to:   type=gha,mode=max,scope=frontend
           build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_API_URL=${{ env.VITE_API_URL }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/rankarena-frontend:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/rankarena-frontend:latest
@@ -69,7 +73,7 @@ jobs:
           cache-from: type=gha,scope=admin
           cache-to:   type=gha,mode=max,scope=admin
           build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_API_URL=${{ env.VITE_API_URL }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/rankarena-admin:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/rankarena-admin:latest

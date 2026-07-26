@@ -45,7 +45,7 @@ IMAGE_TAG=latest
 
 DATABASE_URL=postgresql://rankarena:REPLACE_PASSWORD@postgres:5432/rankarena
 JWT_SECRET=REPLACE_WITH_LONG_RANDOM_SECRET
-CORS_ORIGIN=https://rankarena.in,https://admin.rankarena.in
+CORS_ORIGIN=https://rankarenas.com,https://www.rankarenas.com,https://admin.rankarenas.com
 
 POSTGRES_DB=rankarena
 POSTGRES_USER=rankarena
@@ -60,14 +60,15 @@ echo "── 7. Setup Let's Encrypt SSL ─────────────�
 sudo apt-get install -y certbot
 
 # Point your DNS A records to this EC2 IP BEFORE running these commands.
-# Replace rankarena.in with your actual domain.
+# The first -d is the cert name and must stay rankarenas.com — nginx.conf reads
+# certs from /etc/letsencrypt/live/rankarenas.com/.
 
 # Temporarily allow port 80 in EC2 security group, then run:
 # sudo certbot certonly --standalone \
-#   -d rankarena.in \
-#   -d www.rankarena.in \
-#   -d api.rankarena.in \
-#   -d admin.rankarena.in \
+#   -d rankarenas.com \
+#   -d www.rankarenas.com \
+#   -d api.rankarenas.com \
+#   -d admin.rankarenas.com \
 #   --email your@email.com \
 #   --agree-tos \
 #   --non-interactive
