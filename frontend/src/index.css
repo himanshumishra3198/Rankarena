@@ -56,6 +56,9 @@ a  { color: var(--primary); text-decoration: none; }
 /* Layout */
 .page { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
 .page-wide { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+@media (max-width: 700px) {
+  .page, .page-wide { padding: 18px 12px; }
+}
 
 /* Card */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
@@ -102,6 +105,22 @@ select.input { cursor: pointer; }
 .navbar-username { font-size: 14px; font-weight: 500; color: var(--heading); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rating-badge { background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
 
+/* Navbar on small screens. Below ~1000px the five nav links plus the user chip
+   are wider than the viewport, which gave the whole page a horizontal scrollbar
+   on tablets — so the links become a horizontal scroll strip and the user chip
+   drops its text, letting .navbar-right always fit. Height stays 56px so the
+   sticky offsets that key off it (e.g. .mock-progress) keep lining up. */
+@media (max-width: 1000px) {
+  .navbar { padding: 0 12px; gap: 8px; }
+  .navbar-left { flex: 1; min-width: 0; }
+  .navbar-right { flex-shrink: 0; gap: 6px; }
+  .nav-links { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-link { padding: 6px 10px; font-size: 13px; white-space: nowrap; }
+}
+@media (max-width: 860px) { .navbar-username { display: none; } }
+@media (max-width: 700px) { .rating-badge { display: none; } }
+
 /* Contest table */
 .contest-table-header { padding: 12px 20px; font-weight: 600; font-size: 14px; color: var(--heading); background: var(--bg); border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; display: flex; align-items: center; gap: 10px; }
 .section-count-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--border); color: var(--text-muted); }
@@ -112,6 +131,14 @@ select.input { cursor: pointer; }
 .contest-table tr:last-child td { border-bottom: none; }
 .contest-table tr:hover td { background: var(--surface-raised); }
 .contest-table-name { font-weight: 600; color: var(--heading); }
+
+/* Leaderboard/contest tables: reclaim the horizontal cell padding on phones so
+   the player name and its tier chip have room to wrap. */
+@media (max-width: 600px) {
+  .contest-table { font-size: 13px; }
+  .contest-table th { padding: 9px 10px; }
+  .contest-table td { padding: 11px 10px; }
+}
 
 .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .badge-live { background: #fef9c3; color: #854d0e; }
@@ -230,6 +257,16 @@ select.input { cursor: pointer; }
 .option-label { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; transition: background .15s, border-color .15s; }
 .option.selected .option-label { background: var(--primary); border-color: var(--primary); color: #fff; }
 .option-text { font-size: 15px; color: var(--heading); }
+/* Let the "✓ Correct answer" tag drop to its own line instead of squeezing the
+   option text (it is pinned right with margin-left:auto). */
+@media (max-width: 600px) {
+  .option { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+  /* Zero flex-basis (not auto) so the text's base size doesn't exceed the space
+     left by the label and push itself onto its own flex line; it stays beside
+     the label and wraps internally, leaving only the trailing
+     "Correct answer" tag to drop. */
+  .option-text { font-size: 14px; flex: 1 1 0; min-width: 0; }
+}
 
 /* Action + nav row */
 .room-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
@@ -250,7 +287,37 @@ select.input { cursor: pointer; }
 .room-exam-left, .room-exam-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 @media (max-width: 640px) {
   .room-exam-bar { flex-direction: column; align-items: stretch; }
-  .room-exam-left, .room-exam-right { justify-content: space-between; }
+  /* Buttons size to their labels and wrap; forcing flex:1 splits the row into
+     ~110px columns and wraps "Mark for Review & Next" onto three lines. */
+  .room-exam-left, .room-exam-right { justify-content: flex-start; gap: 8px; }
+  .room-exam-left .btn, .room-exam-right .btn { padding: 8px 12px; font-size: 13px; }
+}
+
+/* ── Contest room on small screens ──────────────────────────────────────────
+   The room is a fixed 100vh shell with a 248px sidebar, which leaves ~80px for
+   the question on a phone. Drop the fixed height so the page scrolls normally
+   and stack the palette above the question (same shape as the mock room). */
+@media (max-width: 760px) {
+  .room-layout { height: auto; min-height: 100vh; }
+
+  .room-header { height: auto; flex-wrap: wrap; padding: 8px 12px; gap: 8px 10px; }
+  .room-title { flex-basis: 100%; white-space: normal; font-size: 14px; line-height: 1.35; }
+  .timer { font-size: 18px; }
+
+  .room-body { flex-direction: column; overflow: visible; }
+
+  .room-sidebar {
+    width: 100%; flex-shrink: 1; overflow-y: visible; padding: 12px;
+    border-right: none; border-bottom: 1px solid var(--border);
+  }
+  /* minmax, not a bare 36px track: with a fixed track size auto-fill can round
+     up to one track too many and overflow the sidebar. */
+  .q-grid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); justify-content: start; }
+  /* The 5-item legend is very tall stacked; lay it out inline instead. */
+  .sidebar-legend { flex-direction: row; flex-wrap: wrap; gap: 6px 14px; }
+
+  .room-content { padding: 18px 14px; max-width: none; overflow-y: visible; }
+  .question-text { font-size: 16px; margin-bottom: 18px; }
 }
 
 /* ── Waiting room ──────────────────────────────── */
@@ -475,10 +542,21 @@ select.input { cursor: pointer; }
 .review-time-verdict { font-size: 13px; font-weight: 600; margin-left: auto; }
 
 /* ── Sectional summary table ─────────────────────────────────── */
+/* Wide tables scroll inside their card instead of widening the page. Same idea
+   as .qc-table-wrap / .heatmap-scroll. */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
 .result-section-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .result-section-table th { text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
 .result-section-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .result-section-table tr:last-child td { border-bottom: none; }
+/* Inside .table-scroll, keep columns readable and let the user scroll rather
+   than squeezing 7 columns into a phone width. */
+@media (max-width: 700px) {
+  .result-section-table { min-width: 620px; }
+  .result-section-table th { padding: 8px 10px; }
+  .result-section-table td { padding: 10px 10px; }
+}
 
 /* ── Profile page ────────────────────────────────────────────── */
 .profile-header-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
@@ -513,6 +591,24 @@ select.input { cursor: pointer; }
   transform: scale(1.12);
   box-shadow: 0 3px 12px rgba(0,0,0,.25);
   font-weight: 800;
+}
+
+/* Profile header on small screens. The 84px avatar next to a 30px username
+   can't fit a phone-width card, so stack it and scale both down. */
+@media (max-width: 600px) {
+  .profile-header-card { flex-direction: column; align-items: stretch; gap: 16px; }
+  .profile-header-left { gap: 16px; min-width: 0; }
+  .profile-header-left > div { min-width: 0; }
+  .tier-legend { justify-content: flex-start; gap: 6px; }
+  .tier-chip { font-size: 11px; padding: 4px 10px; }
+  .tier-chip-active { transform: none; }
+  .profile-username { font-size: 24px; }
+}
+@media (max-width: 440px) {
+  .profile-header-left { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .profile-avatar { width: 64px; height: 64px; font-size: 28px; }
+  .profile-username { font-size: 22px; }
+  .follow-stats { gap: 16px; }
 }
 
 /* ── Follow stats ──────────────────────────────────────────── */
@@ -603,12 +699,15 @@ select.input { cursor: pointer; }
 .subject-perf-section { margin-bottom: 8px; }
 .subject-bars { display: flex; flex-direction: column; gap: 10px; }
 .subject-bar-row { display: grid; grid-template-columns: 140px 1fr 42px 120px; align-items: center; gap: 12px; }
-@media (max-width: 600px) { .subject-bar-row { grid-template-columns: 100px 1fr 36px; } .subject-bar-counts { display: none; } }
+@media (max-width: 600px) { .subject-bar-row { grid-template-columns: 100px 1fr 36px; } }
 .subject-bar-name  { font-size: 13px; font-weight: 600; color: var(--heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .subject-bar-track { height: 10px; background: var(--border); border-radius: 99px; overflow: hidden; }
 .subject-bar-fill  { height: 100%; border-radius: 99px; transition: width .6s ease; }
 .subject-bar-pct   { font-size: 13px; font-weight: 700; text-align: right; }
 .subject-bar-counts { display: flex; gap: 10px; font-size: 12px; font-weight: 600; }
+/* Must come after the rule above: the narrow grid drops to 3 columns, so this
+   4th child has to be hidden or it wraps onto a second row. */
+@media (max-width: 600px) { .subject-bar-counts { display: none; } }
 
 /* ── Activity summary row ────────────────────────────────────── */
 .activity-summary-row { display: flex; align-items: flex-start; gap: 32px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
@@ -629,6 +728,17 @@ select.input { cursor: pointer; }
 .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
 .achievement-badge { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; transition: transform .15s; cursor: default; }
 .achievement-badge:hover { transform: translateY(-2px); }
+
+/* Activity + achievements on small screens. The streak badge's margin-left:auto
+   pins it to the right once the summary row wraps, so let it go full width. */
+@media (max-width: 600px) {
+  .activity-summary-row { gap: 18px; }
+  .streak-badge { margin-left: 0; width: 100%; flex-direction: row; gap: 10px; padding: 10px 16px; }
+  .streak-fire { font-size: 22px; }
+  .streak-num { font-size: 24px; }
+  .achievements-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+  .achievement-badge { padding: 12px 8px; }
+}
 .achievement-earned { background: var(--surface-raised); border-color: var(--border); }
 .achievement-locked { background: var(--bg); opacity: .45; }
 .achievement-icon  { font-size: 26px; line-height: 1; }
@@ -829,6 +939,28 @@ select.input { cursor: pointer; }
 .home-lb-name { flex: 1; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-lb-rating { font-size: 14px; font-weight: 700; color: var(--heading); flex-shrink: 0; }
 
+/* Contests on small screens. The rows above put a flex-shrink:0 column on the
+   right, which starves the title once the viewport is narrow — so stack them
+   and let titles wrap instead of ellipsing to nothing. */
+@media (max-width: 700px) {
+  .live-contest-card { padding: 16px; gap: 10px 12px; }
+  .live-contest-title { white-space: normal; font-size: 16px; }
+  .live-contest-right { width: 100%; justify-content: space-between; gap: 12px; }
+  .live-timer { font-size: 20px; }
+  .live-contest-right .btn { flex: 1; justify-content: center; padding: 10px 14px; }
+
+  .upcoming-item,
+  .recent-result-row { flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 16px; }
+  .upcoming-title,
+  .recent-result-title { white-space: normal; }
+  .upcoming-item-right,
+  .recent-result-right { width: 100%; justify-content: space-between; }
+  .upcoming-item-right .btn { flex: 1; justify-content: center; padding: 8px 14px; }
+
+  .contest-table-header { padding: 12px 16px; }
+  .home-lb-row { padding: 10px 14px; }
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    Mock Tests
    ════════════════════════════════════════════════════════════════════════════ */
@@ -876,6 +1008,22 @@ select.input { cursor: pointer; }
 }
 .mock-result-btn:hover { background: var(--primary-light); }
 .mock-result-btn:active { transform: scale(.97); }
+
+/* Mock cards on small screens. Side-by-side "View Result" + "Retake" eat the
+   whole row at phone widths, so stack the actions under the title and let them
+   split the width evenly. 680px matches the landing mock list breakpoint. */
+@media (max-width: 680px) {
+  .mock-card { flex-direction: column; align-items: stretch; gap: 14px; padding: 16px; }
+  .mock-card-title { font-size: 15px; }
+  .mock-card-stats { gap: 8px 14px; }
+  .mock-card-actions { width: 100%; }
+  .mock-card-actions button { flex: 1; }
+  .mock-start-btn,
+  .mock-result-btn { padding: 12px 16px; font-size: 14px; }
+  .mock-section-tab { padding: 7px 12px; font-size: 12.5px; }
+  .mock-section-tabs { gap: 6px; margin-bottom: 18px; }
+  .mock-section-heading { font-size: 14px; }
+}
 
 /* ── Taking room ────────────────────────────────────────────── */
 .mock-room-loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--text-muted); }
@@ -925,9 +1073,15 @@ select.input { cursor: pointer; }
 .mock-bd-dot { width: 10px; height: 10px; border-radius: 50%; }
 
 @media (max-width: 760px) {
-  .mock-room-body { flex-direction: column; }
-  .mock-room-palette { width: 100%; position: static; order: -1; }
-  .q-grid { grid-template-columns: repeat(8, 1fr); }
+  .mock-room-body { flex-direction: column; padding: 12px; gap: 12px; }
+  .mock-room-palette { width: 100%; position: static; order: -1; padding: 14px; }
+  /* Horizontal padding only — vertical stays put so the sticky .mock-progress
+     (top: 56px) keeps sitting flush under the header. */
+  .mock-room-header { padding-left: 12px; padding-right: 12px; gap: 10px; }
+  .mock-room-main { padding: 16px 14px; }
+  /* .q-grid is handled by the shared room rule above — a fixed repeat(8, 1fr)
+     here overflowed, since 1fr floors at the 36px button (8 x 36 + gaps = 323px
+     in a ~296px palette on a 320px screen). */
 }
 
 /* Rich-text rendering: consistent sub/superscript in questions & options */
@@ -940,11 +1094,22 @@ select.input { cursor: pointer; }
 .section-head { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--heading); margin-bottom: 10px; }
 
 .perf-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+/* 5 cards need ~900px; without this they overflow between 760px and 900px.
+   Must stay above the 760px rule below, which wins once both match. */
+@media (max-width: 900px) { .perf-row { grid-template-columns: repeat(3, 1fr); } }
 .perf-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
 .perf-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
 .perf-value { font-size: 20px; font-weight: 800; color: var(--heading); line-height: 1.1; }
 .perf-sub { font-size: 13px; font-weight: 600; color: var(--text-muted); }
 .perf-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+/* Trim the card so its content genuinely fits a two-up layout on small phones
+   rather than just being clipped by minmax(0,1fr). */
+@media (max-width: 480px) {
+  .perf-card { padding: 12px; gap: 10px; }
+  .perf-icon { width: 36px; height: 36px; font-size: 17px; }
+  .perf-value { font-size: 17px; }
+  .perf-sub { font-size: 12px; }
+}
 
 .result-breakdown { display: flex; gap: 8px; flex-wrap: wrap; }
 .bd-pill { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
@@ -975,7 +1140,9 @@ select.input { cursor: pointer; }
 .sol-body { padding: 4px 16px 18px; border-top: 1px solid var(--border); }
 
 @media (max-width: 760px) {
-  .perf-row { grid-template-columns: repeat(2, 1fr); }
+  /* minmax(0,1fr): a plain 1fr floors at the card's min-content (~155px), so two
+     columns still overflow a 320px screen. */
+  .perf-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .mock-mute-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 16px; padding: 4px 9px; line-height: 1; }
@@ -1068,6 +1235,10 @@ select.input { cursor: pointer; }
 .result-tab { flex: 1; padding: 9px 12px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: background .15s, color .15s; }
 .result-tab:hover { color: var(--heading); }
 .result-tab.active { background: var(--primary); color: #fff; }
+@media (max-width: 480px) {
+  .result-tabs { gap: 2px; padding: 3px; }
+  .result-tab { padding: 8px 4px; font-size: 12.5px; }
+}
 
 .answer-bar { display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: var(--border); }
 .answer-bar > div { transition: flex .3s; }

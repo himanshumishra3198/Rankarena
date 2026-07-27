@@ -386,6 +386,7 @@ export default function Profile() {
         {ratingHistory.length > 0 && (
           <div className="card" style={{ marginTop: 16 }}>
             <h2 style={{ marginBottom: 14 }}>Contest History</h2>
+            <div className="table-scroll">
             <table className="result-section-table">
               <thead>
                 <tr>
@@ -426,6 +427,7 @@ export default function Profile() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 

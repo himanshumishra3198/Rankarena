@@ -375,6 +375,7 @@ export default function Result() {
         {/* ── Sectional Summary table ──────────────────────────────────── */}
         <div className="card" style={{ marginBottom: 20 }}>
           <h2 style={{ marginBottom: 16 }}>Sectional Summary</h2>
+          <div className="table-scroll">
           <table className="result-section-table">
             <thead>
               <tr>
@@ -415,6 +416,7 @@ export default function Result() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* ── Difficulty Breakdown ─────────────────────────────────────── */}
