@@ -105,18 +105,43 @@ select.input { cursor: pointer; }
 .navbar-username { font-size: 14px; font-weight: 500; color: var(--heading); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rating-badge { background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
 
+/* Hamburger + drawer, only rendered/shown below the mobile breakpoint. */
+.nav-toggle { display: none; width: 36px; height: 32px; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; padding: 0; }
+.nav-toggle:hover { background: var(--bg); }
+.nav-toggle-bars, .nav-toggle-bars::before, .nav-toggle-bars::after { content: ''; display: block; width: 16px; height: 2px; border-radius: 2px; background: var(--heading); transition: transform .18s, opacity .18s; }
+.nav-toggle-bars { position: relative; }
+.nav-toggle-bars::before { position: absolute; top: -5px; }
+.nav-toggle-bars::after { position: absolute; top: 5px; }
+.nav-toggle-bars.open { background: transparent; }
+.nav-toggle-bars.open::before { top: 0; transform: rotate(45deg); }
+.nav-toggle-bars.open::after { top: 0; transform: rotate(-45deg); }
+
+.nav-drawer-backdrop { position: fixed; inset: 56px 0 0; background: rgba(0,0,0,.35); z-index: 9; }
+.nav-drawer { position: absolute; top: 56px; right: 8px; left: 8px; z-index: 11; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.16); padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.nav-drawer-link { text-align: left; padding: 11px 14px; border-radius: 6px; font-size: 15px; font-weight: 500; color: var(--heading); background: transparent; border: none; cursor: pointer; }
+.nav-drawer-link:hover { background: var(--bg); }
+.nav-drawer-link.active { background: var(--primary-light); color: var(--primary); }
+.nav-drawer-sep { height: 1px; background: var(--border); margin: 4px 0; }
+.nav-drawer-logout { color: var(--danger); }
+
 /* Navbar on small screens. Below ~1000px the five nav links plus the user chip
    are wider than the viewport, which gave the whole page a horizontal scrollbar
-   on tablets — so the links become a horizontal scroll strip and the user chip
-   drops its text, letting .navbar-right always fit. Height stays 56px so the
+   on tablets — so the links tighten up and the user chip drops its text.
+   Below 880px they no longer fit at all and would be clipped mid-word, so the
+   inline row is replaced by the hamburger drawer. Height stays 56px so the
    sticky offsets that key off it (e.g. .mock-progress) keep lining up. */
 @media (max-width: 1000px) {
   .navbar { padding: 0 12px; gap: 8px; }
   .navbar-left { flex: 1; min-width: 0; }
   .navbar-right { flex-shrink: 0; gap: 6px; }
-  .nav-links { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links { flex: 1; min-width: 0; }
   .nav-link { padding: 6px 10px; font-size: 13px; white-space: nowrap; }
+}
+@media (max-width: 880px) {
+  .nav-links { display: none; }
+  .navbar-logout { display: none; }
+  .nav-toggle { display: flex; }
+  .navbar-left { flex: 0 1 auto; }
 }
 @media (max-width: 860px) { .navbar-username { display: none; } }
 @media (max-width: 700px) { .rating-badge { display: none; } }
