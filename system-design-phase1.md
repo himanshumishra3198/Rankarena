@@ -1,557 +1,476 @@
-# RankArena — Phase 1 System Design (As Built)
+# RankArena — System Design (As Built)
 
 ## Overview
 
-A Testbook-like app where students participate in live contests for SSC exams (CGL, CHSL, MTS, CPO, GD), modeled after the competitive feel of Codeforces but for MCQ-based government exams. Students get rated after every contest, track their growth on a profile page, and follow rivals on a live leaderboard.
+RankArena is a practice and competition platform for Indian government exam aspirants (SSC CGL, CHSL, MTS, CPO, GD). The idea is simple: take the way Codeforces makes programming competitive — live contests, ratings, colored tiers, leaderboards — and apply it to MCQ-based exam preparation.
+
+A student can do four things on the platform:
+
+1. **Compete** in live, timed contests against everyone else, and gain or lose rating based on where they place.
+2. **Practice** with mock tests at their own pace, any time, without affecting their rating.
+3. **Review** their mistakes — every wrong answer, the time spent per question, subject-wise strengths, and a bank of bookmarked questions.
+4. **Discuss** in the community — read contest announcements, share shortcuts, and comment on each other's write-ups.
+
+This document describes what is actually built and running, not a plan. If something is listed here, the code for it exists.
+
+---
+
+## What's built so far
+
+| Area | Status | What it does |
+|------|--------|--------------|
+| Accounts & auth | Done | Register, login, JWT sessions, student/admin roles |
+| Live contests | Done | Scheduled contests, timed exam room, autosave, server-side scoring |
+| Ratings | Done | Codeforces-style rating changes after every contest, 7 colored tiers |
+| Leaderboards | Done | Live per-contest ranking (Redis), plus a global all-time board |
+| Mock tests | Done | Unrated, self-paced practice papers grouped by subject |
+| Question types | Done | Standard MCQ, syllogism, reading-comprehension passages, data tables |
+| Result analysis | Done | Per-question review, time spent, subject breakdown, answer key |
+| Bookmarks | Done | Save any question for later revision |
+| Question reports | Done | Students flag bad questions; admins triage them |
+| Profile & social | Done | Rating graph, activity heatmap, streaks, follow other users |
+| Community | Done | Articles, threaded comments, up/down voting, pinned announcements |
+| Admin portal | Done | Separate app to manage contests, questions, mocks, reports, community |
+| Mobile support | Done | All pages usable on a phone, including a drawer nav |
+| Dark mode | Done | Full light/dark theming across both apps |
 
 ---
 
 ## Architecture
 
+Three separate applications talk to one backend:
+
 ```
 ┌─────────────────────┐    ┌─────────────────────┐
-│  Student Frontend   │    │   Admin Frontend     │
-│  (React + Vite)     │    │   (React + Vite)     │
-│  Port 5173          │    │   Port 5174          │
+│  Student Frontend   │    │   Admin Frontend    │
+│  (React + Vite)     │    │   (React + Vite)    │
+│  Port 5173          │    │   Port 5174         │
 └──────────┬──────────┘    └──────────┬──────────┘
            │                          │
            └─────────────┬────────────┘
-                         │ HTTP / REST
+                         │ HTTP / REST (JSON)
                          ▼
-              ┌──────────────────────┐
-              │   Express Backend    │
-              │   (Node.js, Port 4000)│
-              └────────┬─────────────┘
+              ┌───────────────────────┐
+              │    Express Backend    │
+              │  (Node.js, Port 4000) │
+              └────────┬──────────────┘
                        │
-          ┌────────────┼────────────┐
-          ▼            ▼            ▼
-   ┌────────────┐ ┌─────────┐ ┌─────────┐
-   │ PostgreSQL │ │  Redis  │ │ Prisma  │
-   │   (DB)     │ │(Sorted  │ │  ORM    │
-   │            │ │  Sets)  │ │         │
-   └────────────┘ └─────────┘ └─────────┘
+          ┌────────────┼─────────────┐
+          ▼            ▼             ▼
+   ┌────────────┐ ┌─────────┐ ┌─────────────┐
+   │ PostgreSQL │ │  Redis  │ │  S3-compat  │
+   │  (all data)│ │ (live   │ │  (question  │
+   │            │ │  ranks) │ │   images)   │
+   └────────────┘ └─────────┘ └─────────────┘
 ```
+
+**Why two frontends instead of one app with an admin section?** Keeping them separate means the student bundle never ships admin code, and an admin bug can't break the exam room. They share nothing but the API and a few copied components.
+
+**Why Redis alongside Postgres?** During a live contest, hundreds of students refresh the leaderboard at once. Asking Postgres to sort and rank every participant on each request is wasteful. Redis sorted sets answer "what rank is this user?" in roughly constant time, so Postgres is left to store the durable data.
 
 ---
 
 ## Tech Stack
 
-| Layer             | Choice             | Reason                                              |
-|-------------------|--------------------|-----------------------------------------------------|
-| Student Frontend  | React + Vite       | Fast dev, component reuse                           |
-| Admin Frontend    | React + Vite       | Separate app, same tech stack                       |
-| Backend           | Node.js + Express  | REST API, familiar ecosystem                        |
-| ORM               | Prisma             | Type-safe DB access, migrations                     |
-| Primary DB        | PostgreSQL 16      | Relational, handles JSONB for answers/drafts        |
-| Cache/Leaderboard | Redis 7            | Sorted sets for O(log n) rank queries               |
-| Auth              | JWT + bcrypt       | Stateless, bcrypt salt=10                           |
-| Validation        | Zod                | Schema-level validation on all routes               |
-| Rate Limiting     | express-rate-limit | Auth: 20/15min, Submit: 5/min                       |
-| Infrastructure    | Docker Compose     | Local postgres + redis in containers                |
+| Layer | Choice | Reason |
+|-------|--------|--------|
+| Student frontend | React + Vite | Fast dev loop, component reuse |
+| Admin frontend | React + Vite | Separate app, same stack |
+| Backend | Node.js + Express 5 | REST API, familiar ecosystem |
+| ORM | Prisma 7 | Type-safe DB access and migrations |
+| Primary DB | PostgreSQL 16 | Relational, with JSONB for answers and drafts |
+| Cache / leaderboard | Redis 7 | Sorted sets for cheap rank queries |
+| Auth | JWT + bcrypt | Stateless sessions, bcrypt salt rounds = 10 |
+| Validation | Zod | Every request body is schema-checked |
+| Rate limiting | express-rate-limit | Auth, submit, and community writes |
+| File storage | S3-compatible | Question images via presigned uploads |
+| Styling | Plain CSS | One stylesheet per app, CSS variables for theming |
+| Infrastructure | Docker Compose | Local Postgres + Redis; nginx in production |
+
+The frontend deliberately runs on very few dependencies — `react`, `react-dom`, `react-router-dom`, `axios`, and `dompurify`. Things like the Markdown renderer and the charts are written in-house rather than pulled from npm, to keep the bundle small and the supply chain narrow.
 
 ---
 
 ## Database Schema
 
-### `users`
-| Column        | Type      | Notes                              |
-|---------------|-----------|------------------------------------|
-| id            | UUID (PK) | auto-generated                     |
-| name          | TEXT      |                                    |
-| email         | TEXT      | unique                             |
-| password_hash | TEXT      | bcrypt hash                        |
-| role          | Enum      | `STUDENT` or `ADMIN`               |
-| rating        | INT       | starts at 1500                     |
-| created_at    | TIMESTAMP |                                    |
+Fifteen tables. Names in `snake_case` in the database, `camelCase` in the Prisma models.
 
-### `contests`
-| Column           | Type      | Notes                                           |
-|------------------|-----------|-------------------------------------------------|
-| id               | UUID (PK) |                                                 |
-| title            | TEXT      |                                                 |
-| start_time       | TIMESTAMP |                                                 |
-| duration_minutes | INT       |                                                 |
-| negative_marks   | DECIMAL   | default 0.5                                     |
-| section_limits   | JSONB     | `{ QUANT: 25, REASONING: 20, ... }` in minutes  |
-| status           | Enum      | `SCHEDULED`, `LIVE`, or `ENDED`                 |
-| created_at       | TIMESTAMP |                                                 |
+### Core
 
-### `questions`
-| Column        | Type      | Notes                                |
-|---------------|-----------|--------------------------------------|
-| id            | UUID (PK) |                                      |
-| text          | TEXT      |                                      |
-| image_url     | TEXT?     | optional diagram/image               |
-| option_a–d    | TEXT      |                                      |
-| correct_option| CHAR(1)   | `A`, `B`, `C`, or `D`               |
-| subject       | Enum      | `QUANT`, `REASONING`, `ENGLISH`, `GK`|
-| difficulty    | Enum      | `EASY`, `MEDIUM`, `HARD`             |
+**`users`** — id, name, email (unique), password_hash, role (`STUDENT` | `ADMIN`), rating (default 1500), created_at.
 
-### `contest_questions`
-| Column        | Type    | Notes                        |
-|---------------|---------|------------------------------|
-| contest_id    | UUID FK |                              |
-| question_id   | UUID FK | composite PK                 |
-| display_order | INT     | default order within section |
-| marks         | DECIMAL | default 2                    |
-| negative_marks| DECIMAL | default 0.5                  |
+**`contests`** — id, title, start_time, duration_minutes, negative_marks (default 0.5), section_limits (JSON, e.g. `{ QUANT: 25, REASONING: 20 }`), status (`SCHEDULED` | `LIVE` | `ENDED`).
 
-### `participations`
-| Column        | Type      | Notes                                        |
-|---------------|-----------|----------------------------------------------|
-| id            | UUID (PK) |                                              |
-| user_id       | UUID FK   |                                              |
-| contest_id    | UUID FK   | unique(user_id, contest_id)                  |
-| score         | DECIMAL   | server-computed on submit                    |
-| draft_answers | JSONB     | `{ questionId: "A" }` — autosaved every 30s  |
-| answers       | JSONB     | finalized on submit; draft_answers → NULL    |
-| time_spent    | JSONB     | `{ questionId: seconds }` — per-question     |
-| started_at    | TIMESTAMP |                                              |
-| submitted_at  | TIMESTAMP | null until submitted                         |
+**`questions`** — id, question_type, text, image_url, four options, correct_option, subject, difficulty, passage_id, structured_data (JSON), solution (HTML), fingerprint.
 
-### `rating_history`
-| Column             | Type      | Notes                           |
-|--------------------|-----------|---------------------------------|
-| id                 | UUID (PK) |                                 |
-| user_id            | UUID FK   |                                 |
-| contest_id         | UUID FK   | unique(user_id, contest_id)     |
-| old_rating         | INT       |                                 |
-| new_rating         | INT       |                                 |
-| rank               | INT       | final rank in that contest      |
-| total_participants | INT       |                                 |
-| created_at         | TIMESTAMP |                                 |
+The `fingerprint` column is a normalized hash of the question text plus its options. It exists so the admin panel can catch an exact duplicate before it's added to the bank twice.
 
-### `follows`
-| Column       | Type      | Notes                           |
-|--------------|-----------|---------------------------------|
-| id           | UUID (PK) |                                 |
-| follower_id  | UUID FK   |                                 |
-| following_id | UUID FK   | unique(follower_id, following_id)|
-| created_at   | TIMESTAMP |                                 |
+**`passages`** — id, title, content, type (`TEXT` | `TABLE`), table_data (JSON). One passage groups several questions — a reading comprehension paragraph, or a data table that four questions all refer to.
+
+**`contest_questions`** — links contests to questions, with display_order, marks, negative_marks. Composite primary key.
+
+**`participations`** — one row per (user, contest). Holds score, answers (JSON), draft_answers (JSON), time_spent (JSON), submitted_at.
+
+**`rating_history`** — one row per (user, contest) after rating is computed: old_rating, new_rating, rank, total_participants. This is what the profile rating graph reads.
+
+### Practice and review
+
+**`mock_tests`** — id, title, subject, duration_minutes, negative_marks, is_published.
+
+**`mock_test_questions`** — links mocks to questions with display_order, marks, negative_marks.
+
+**`mock_attempts`** — one row per (user, mock). Holds score, total_marks, correct/wrong/skipped counts, answers, time_spent, marked_for_review, started_at, submitted_at.
+
+**`bookmarks`** — (user_id, question_id) unique pair. A student's saved questions.
+
+**`question_reports`** — a student flagging a question: reason (`WRONG_ANSWER`, `TYPO`, `UNCLEAR`, `MULTIPLE_CORRECT`, `OTHER`), free-text details, status (`OPEN` | `RESOLVED` | `DISMISSED`).
+
+**`follows`** — (follower_id, following_id). Powers the friends-only leaderboard filter.
+
+### Community
+
+**`articles`** — id, author_id, title, body (Markdown), type (`GENERAL` | `ANNOUNCEMENT` | `TECHNIQUE` | `EDITORIAL`), pinned, score, comment_count, timestamps.
+
+**`article_comments`** — id, article_id, author_id, **parent_id** (points at another comment), body, score, deleted flag.
+
+The `parent_id` column is what makes replies work. A top-level comment has `parent_id = NULL`; a reply stores the id of the comment it answers. The frontend receives a flat list and rebuilds the tree.
+
+**`article_votes`** and **`comment_votes`** — value is `+1` or `-1`, unique per (target, user), so one person can only hold one vote on one thing.
+
+### A note on the two "score" columns
+
+`articles.score` and `article_comments.score` duplicate information that could be calculated by summing the vote rows. This is deliberate. Sorting the feed by popularity would otherwise mean summing votes for every article on every page load. The cached number is updated in the same database transaction as the vote itself, so the two can never drift apart.
 
 ---
 
-## API Reference
+## How the main flows work
 
-### Auth
-All auth routes have a rate limit of **20 requests per 15 minutes**.
+### 1. A live contest, start to finish
 
-| Method | Endpoint         | Auth | Description                                           |
-|--------|------------------|------|-------------------------------------------------------|
-| POST   | /auth/register   | —    | Register new student. Returns JWT + user object.      |
-| POST   | /auth/login      | —    | Login. Returns JWT + user object.                     |
+```
+[ADMIN]
+1. Create the contest                → POST /admin/contests
+2. Attach questions                  → POST /admin/contests/:id/questions/bulk
+3. Flip status to LIVE               → POST /admin/contests/:id/status
+4. Flip status to ENDED              → POST /admin/contests/:id/status
+                                       └─ triggers rating calculation in the background
 
-**Register body:** `{ name, email, password (min 6) }`
-**Login body:** `{ email, password }`
-**Response:** `{ token: "jwt...", user: { id, name, email, role, rating } }`
-
----
-
-### Contests (Student-Facing)
-
-| Method | Endpoint                     | Auth     | Description                                                              |
-|--------|------------------------------|----------|--------------------------------------------------------------------------|
-| GET    | /contests                    | Optional | List all contests. Returns `{ active: [], past: [] }` with `hasJoined`, `hasSubmitted` flags. |
-| GET    | /contests/:id                | —        | Contest detail including question count and participant count.             |
-| POST   | /contests/:id/join           | Required | Join a contest. Creates a Participation row. Idempotent (upsert).        |
-| GET    | /contests/:id/questions      | Required | Fetch questions shuffled per user. Correct answers omitted.               |
-| PATCH  | /contests/:id/draft          | Required | Autosave current answer state. Rejected if past deadline or already submitted. |
-| GET    | /contests/:id/draft          | Required | Fetch last saved draft. Used on page load/refresh.                        |
-| POST   | /contests/:id/submit         | Required | Final submit. Rate-limited to 5/min. Scores server-side, updates Redis.   |
-| GET    | /contests/:id/leaderboard    | Required | Real-time leaderboard. `?filter=friends` shows only followed users + self. `?limit=N` (max 100). Always includes current user. |
-| GET    | /contests/:id/result         | Required | Full result + answer key. Blocked while contest is still running.         |
-
-**GET /contests response:**
-```json
-{
-  "active": [{ "id", "title", "startTime", "durationMinutes", "negativeMarks", "status", "_count": { "participations" }, "hasJoined", "hasSubmitted" }],
-  "past":   [...]
-}
+[STUDENT]
+1. Browse contests                   → GET /contests
+2. Join                              → POST /contests/:id/join
+3. Load questions (shuffled per user)→ GET /contests/:id/questions
+4. Answer → saved locally instantly, pushed to server every 30s
+5. Submit                            → POST /contests/:id/submit
+                                       └─ server scores it and updates the Redis leaderboard
+6. See the result (after it ends)    → GET /contests/:id/result
+7. Rating updates on the profile     → GET /profile
 ```
 
-**GET /contests/:id/questions response (per question):**
-```json
-{ "id", "text", "optionA", "optionB", "optionC", "optionD", "subject", "difficulty", "marks", "negativeMarks" }
-```
-*(No `correctOption` field — never sent to client)*
+Two details worth calling out:
 
-**POST /contests/:id/submit body:**
-```json
-{ "answers": { "<questionId>": "A" | "B" | "C" | "D" }, "timeSpent": { "<questionId>": <seconds> } }
-```
+- **Questions are shuffled per user.** Two students sitting side by side see the same questions in a different order, which makes casual copying harder.
+- **The correct answer never leaves the server during a contest.** The question payload sent to the browser simply has no `correctOption` field. Scoring happens entirely on the backend, so no amount of poking at the browser reveals the key.
 
-**GET /contests/:id/leaderboard response (per entry):**
-```json
-{ "rank", "userId", "name", "rating", "score", "isCurrentUser" }
-```
+### 2. Draft autosave — not losing work
 
-**GET /contests/:id/result response:**
-```json
-{
-  "score", "rank", "totalParticipants", "submittedAt", "answers",
-  "questions": [{ ...fullQuestion, "correctOption", "marks", "negativeMarks" }],
-  "totalMaxMarks", "contestTitle", "durationMinutes", "sectionLimits",
-  "ratingChange": { "oldRating", "newRating", "delta" } | null,
-  "avgTimePerQuestion": { "<questionId>": <avgSeconds> }
-}
+An exam where a refresh wipes your answers is unusable. So answers are saved in two places at once:
+
+```
+Student picks an option
+        │
+        ├──→ localStorage, immediately        (survives refresh, needs no network)
+        │
+        └──→ every 30 seconds, PATCH /draft   (survives switching device or browser)
 ```
 
----
+On page load the app asks the server for a draft first, because that is the version that works if the student moved from a laptop to a phone. If there's no server draft, it falls back to localStorage. If neither exists, it starts fresh.
 
-### Ratings
+Final submit sends whatever is currently in memory — it doesn't depend on the last autosave having succeeded, so there's no race between the two.
 
-| Method | Endpoint                  | Auth     | Description                                                    |
-|--------|---------------------------|----------|----------------------------------------------------------------|
-| GET    | /ratings/users/:id/rating | Required | User's current rating + full rating history with contest names.|
-| GET    | /ratings/leaderboard      | —        | Global top-100 by rating. `?period=week|month|all`             |
+### 3. Scoring
 
-**GET /ratings/leaderboard response:**
-```json
-[{ "rank", "id", "name", "rating", "ratingChange" }]
+Same rules for contests and mocks:
+
 ```
-`ratingChange` is the net rating change within the selected period (null for `all`).
-
----
-
-### Profile
-
-| Method | Endpoint      | Auth     | Description                                      |
-|--------|---------------|----------|--------------------------------------------------|
-| GET    | /profile      | Required | Own profile. Includes email.                     |
-| GET    | /profile/:id  | Required | Public profile. Includes `isFollowing`, `isOwnProfile` flags. |
-
-**Profile response:**
-```json
-{
-  "user": { "id", "name", "email?", "role", "rating", "createdAt", "followerCount", "followingCount" },
-  "ratingHistory": [{ "contestId", "contestTitle", "date", "oldRating", "newRating", "rank", "totalParticipants" }],
-  "heatmap": { "YYYY-MM-DD": <contestCount> },
-  "stats": { "totalContests", "bestRank", "maxRating", "maxStreak", "currentStreak" },
-  "subjectStats": { "QUANT": { "correct", "wrong", "skipped" }, ... },
-  "verdictTotals": { "correct", "wrong", "skipped", "total" },
-  "isFollowing?": true | false,
-  "isOwnProfile?": true | false
-}
+correct answer   → + marks            (default 2)
+wrong answer     → − negative_marks   (default 0.5)
+skipped          →   0
 ```
 
----
+Score, correct/wrong/skipped counts, and the total are all computed server-side and stored on the attempt row.
 
-### Social (Follows)
+### 4. The rating system
 
-| Method | Endpoint             | Auth     | Description                                     |
-|--------|----------------------|----------|-------------------------------------------------|
-| POST   | /follows/:userId     | Required | Follow a user. Idempotent upsert.               |
-| DELETE | /follows/:userId     | Required | Unfollow a user.                                |
-| GET    | /follows/following   | Required | List of user IDs that I follow.                 |
-
----
-
-### Admin (All routes require `role: ADMIN` — 403 otherwise)
-
-**Contests:**
-
-| Method | Endpoint                              | Description                                               |
-|--------|---------------------------------------|-----------------------------------------------------------|
-| GET    | /admin/contests                       | All contests across all statuses.                         |
-| POST   | /admin/contests                       | Create contest.                                           |
-| PUT    | /admin/contests/:id                   | Edit contest (partial updates supported).                 |
-| DELETE | /admin/contests/:id                   | Delete contest + all related data. Clears Redis key.       |
-| POST   | /admin/contests/:id/status            | Set status: `SCHEDULED`, `LIVE`, or `ENDED`. Setting to `ENDED` triggers async rating computation. |
-| POST   | /admin/contests/:id/restart           | Reset an ENDED contest to a new start time. Wipes all participations and rating history. |
-
-**POST /admin/contests body:**
-```json
-{
-  "title": "SSC CGL Tier 1 Mock",
-  "startTime": "2026-06-01T10:00:00Z",
-  "durationMinutes": 60,
-  "negativeMarks": 0.5,
-  "sectionLimits": { "QUANT": 15, "REASONING": 15, "ENGLISH": 15, "GK": 15 }
-}
-```
-
-**Questions:**
-
-| Method | Endpoint                | Description                                    |
-|--------|-------------------------|------------------------------------------------|
-| POST   | /admin/questions        | Add a single question to the question bank.    |
-| GET    | /admin/questions        | List question bank. `?subject=QUANT&difficulty=EASY` |
-| PUT    | /admin/questions/:id    | Edit a question.                               |
-| DELETE | /admin/questions/:id    | Delete from bank.                              |
-
-**Contest ↔ Questions:**
-
-| Method | Endpoint                               | Description                                                 |
-|--------|----------------------------------------|-------------------------------------------------------------|
-| GET    | /admin/contests/:id/questions          | List questions assigned to a contest (with full question data). |
-| POST   | /admin/contests/:id/questions          | Add one existing question to a contest.                     |
-| DELETE | /admin/contests/:id/questions/:qid     | Remove a question from a contest.                           |
-| POST   | /admin/contests/:id/questions/bulk     | Create new questions AND add them to the contest in one call.|
-
-**POST /admin/questions body:**
-```json
-{
-  "text": "If 2x + 3 = 11, what is x?",
-  "optionA": "3", "optionB": "4", "optionC": "5", "optionD": "6",
-  "correctOption": "B",
-  "subject": "QUANT",
-  "difficulty": "EASY",
-  "imageUrl": "https://..." // optional
-}
-```
-
-**POST /admin/contests/:id/questions/bulk body** (array):
-```json
-[{ ...questionFields, "marks": 2, "negativeMarks": 0.5 }, ...]
-```
-
----
-
-## Contest Room — Features
-
-The exam interface is the most feature-rich part of the app:
-
-| Feature                    | How it works                                                                               |
-|----------------------------|--------------------------------------------------------------------------------------------|
-| **Waiting room**           | If contest hasn't started, shows countdown timer. Transitions automatically.               |
-| **Instructions modal**     | Shown once when exam goes live. Student must click "I'm Ready" to start.                   |
-| **Section-wise navigation**| 4 sections (QUANT, REASONING, ENGLISH, GK). Sequential locking — must submit current section to unlock next. |
-| **Per-section timers**     | Each section has its own countdown (from `sectionLimits` or equal split). Auto-submits the section when time runs out. |
-| **Question status tracking**| Each question is one of: `not-visited`, `not-answered`, `answered`, `marked`, `answered-marked`. Shown as colored grid in sidebar. |
-| **Mark for review**        | Student can flag questions for re-check. Bookmarks shown in sidebar.                       |
-| **Draft autosave**         | localStorage write on every answer. Backend sync every 30 seconds via PATCH /draft. On reload: backend-first, localStorage as fallback. |
-| **Per-question time**      | Tracks ms spent on each question. Sent to backend on submit as `timeSpent` JSON.           |
-| **Built-in calculator**    | Draggable floating calculator panel.                                                       |
-| **Fullscreen mode**        | Entered automatically on exam start. Warning shown if user exits fullscreen.               |
-| **Tab-switch detection**   | Counts tab/window switches. Shows warning badge in header.                                 |
-| **Auto-submit**            | When overall timer hits 0, answers are auto-submitted without student action.              |
-| **Submit confirmation modal** | Shows section-wise summary (answered/marked/total) before final submit.               |
-
----
-
-## Result Page — Analytics
-
-After the contest ends, students get a comprehensive breakdown:
-
-| Section                  | What it shows                                                              |
-|--------------------------|----------------------------------------------------------------------------|
-| **Overall stats**        | Score, rank, attempted, accuracy, percentile                               |
-| **Rating change card**   | Old rating → new rating with delta (shown only after rating is computed)   |
-| **Accuracy donut chart** | Interactive SVG donut: correct / wrong / skipped                           |
-| **Subject grid**         | Per-section score, bar chart, correct/wrong/skipped pills                  |
-| **Sectional summary**    | Table: score, attempted, accuracy, avg time/question, allotted time        |
-| **Difficulty breakdown** | Easy/Medium/Hard performance comparison with stacked bars                  |
-| **Time analysis**        | Top 3 slowest questions + top 3 fastest questions (color-coded by verdict) |
-| **Leaderboard**          | Top 10 + current user rank. Toggle: All / Friends only                     |
-| **Question review**      | Full answer key. Filter: all / correct / wrong / skipped. Per-section filter. Each question shows: your time vs avg time across all users, emoji indicator (🚀/⚡/😊/🐢/😰). |
-| **Share result**         | Copy-to-clipboard formatted text summary.                                  |
-
----
-
-## Profile Page
-
-| Section                | What it shows                                                                     |
-|------------------------|-----------------------------------------------------------------------------------|
-| **Profile header**     | Avatar initial, tier label + color, rating, max rating, follower/following count  |
-| **Tier badge system**  | Newbie / Pupil / Specialist / Expert / Candidate Master / Master / Grandmaster    |
-| **Rating history chart** | Line chart of rating over all contests                                          |
-| **Activity heatmap**   | 52-week GitHub-style heatmap of contest participation                             |
-| **Verdict summary**    | Total correct / wrong / skipped across all contests (with accuracy bar)           |
-| **Subject performance**| Bar chart for QUANT / REASONING / ENGLISH / GK accuracy                          |
-| **Streaks**            | Current streak + best streak (consecutive days with a contest submission)         |
-| **Achievements**       | 10 unlockable badges (First Steps, Competitor, Veteran, On Fire, Streak Master, Top Scorer, Rising Star, Expert, Sharpshooter, etc.) |
-| **Contest history**    | Table of every rated contest: date, rank, old/new rating, delta. Click to go to result. |
-
----
-
-## Rating System
-
-### Starting Rating
 Every new student starts at **1500**.
 
-### Tiers (Codeforces-Inspired)
+| Rating | Tier | Colour |
+|--------|------|--------|
+| under 1200 | Newbie | Grey |
+| 1200–1399 | Pupil | Green |
+| 1400–1599 | Specialist | Cyan |
+| 1600–1899 | Expert | Blue |
+| 1900–2099 | Candidate Master | Violet |
+| 2100–2299 | Master | Orange |
+| 2300+ | Grandmaster | Red |
 
-| Rating     | Tier             | Color  |
-|------------|------------------|--------|
-| < 1200     | Newbie           | Gray   |
-| 1200–1399  | Pupil            | Green  |
-| 1400–1599  | Specialist       | Cyan   |
-| 1600–1899  | Expert           | Blue   |
-| 1900–2099  | Candidate Master | Violet |
-| 2100–2299  | Master           | Orange |
-| 2300+      | Grandmaster      | Red    |
-
-### Calculation (after each contest)
-
-Triggered asynchronously when admin sets contest status to `ENDED`. Idempotent — skips if rating_history rows already exist for this contest.
+When an admin ends a contest, ratings are recomputed for everyone who took part:
 
 ```
-For each participant sorted by (score DESC, submitted_at ASC):
+Sort participants by (score DESC, submitted_at ASC)
 
-  rank = 1-indexed position
-  n    = total participants
+  rank = position in that list, starting at 1
+  n    = number of participants
 
   delta = round(((n - 2*rank + 1) / (n - 1)) * 50)
 
   new_rating = max(100, old_rating + delta)
 ```
 
-- Rank 1 gets **+50**; median rank gets **0**; last rank gets **−50**
-- Linear interpolation between those anchors for all other ranks
-- Rating floor is **100** (cannot go below)
-- Handles ties: earlier submission = better rank for equal score (encoded in Redis score)
+In plain terms: **first place gains +50, the middle of the pack gains nothing, and last place loses 50**, with everyone in between scaled smoothly along that line. Rating can never fall below 100. If two people score the same, whoever submitted earlier ranks higher.
 
----
+The whole calculation is idempotent — if it runs twice for the same contest it notices the existing `rating_history` rows and does nothing, so an accidental double status-flip can't inflate anyone's rating.
 
-## Leaderboard Design (Redis)
+### 5. The live leaderboard
+
+Redis holds one sorted set per contest:
 
 ```
 Key:   contest:{contestId}:leaderboard
-Type:  Sorted Set
-Score: (score * 1e10) − submittedAt_epoch_ms
+Score: (score × 1e10) − submitted_at_in_ms
 ```
 
-The score encoding bakes in the tiebreaker: higher raw score wins; for equal raw score, earlier submission time wins (lower epoch ms → higher encoded score).
+That score formula is a trick to encode the tiebreaker into a single number. The raw score dominates; subtracting the submission timestamp means that among equal scores, an earlier submission produces a slightly higher value and therefore a better rank. One number, both rules.
 
 ```
-On submit:    ZADD contest:{id}:leaderboard <encoded_score> <userId>
-Get rank:     ZREVRANK contest:{id}:leaderboard <userId>         → 0-indexed rank
-Get top N:    ZREVRANGE contest:{id}:leaderboard 0 N-1 WITHSCORES
-Extract score: floor(encoded_score / 1e10) → raw score
+On submit:  ZADD  contest:{id}:leaderboard <encoded> <userId>
+Your rank:  ZREVRANK contest:{id}:leaderboard <userId>
+Top N:      ZREVRANGE contest:{id}:leaderboard 0 N-1 WITHSCORES
 ```
 
-The leaderboard endpoint always includes the requesting user's own entry even if outside the top N.
+The endpoint always includes the requesting student's own row, even when they're nowhere near the top — seeing "you are 412th" is more useful than not appearing at all.
+
+### 6. Mock tests
+
+Mock tests are the low-pressure counterpart to contests: same exam room, same scoring, but **no rating effect and no deadline**. A student can take one whenever they like.
+
+Each mock belongs to a single subject and is only visible once an admin publishes it. A student gets one attempt row per mock, storing their answers, the time spent on each question, and which questions they flagged for review while taking it.
+
+### 7. Question types
+
+Not every exam question is a plain four-option MCQ, so `questions.question_type` supports four shapes:
+
+- **STANDARD** — an ordinary MCQ.
+- **SYLLOGISM** — statements and conclusions, stored in `structured_data` and rendered in the layout these questions traditionally use.
+- **PASSAGE** — the question is attached to a `passages` row holding a reading comprehension paragraph; several questions share one passage.
+- **TABLE** — attached to a passage whose `table_data` holds headers and rows, rendered as a data table for data-interpretation questions.
+
+### 8. Reporting a bad question
+
+Question banks accumulate errors — wrong answer keys, typos, questions with two correct options. Students can flag any question they meet, choosing a reason and optionally adding detail. Reports land in the admin portal with an open-count badge in the nav, and an admin marks each one resolved or dismissed. A student gets one open report per question; re-reporting updates the existing one rather than piling up duplicates.
+
+### 9. The community
+
+The community is the platform's discussion layer, modelled on Codeforces blogs.
+
+**Articles** have a category:
+
+| Category | Who can post | Used for |
+|----------|--------------|----------|
+| Announcement | Admins only | Official notices — upcoming contests, schedule changes |
+| Tip / Technique | Anyone | Shortcuts and methods |
+| Editorial | Anyone | Walkthroughs of contest or mock papers |
+| General | Anyone | Everything else |
+
+Articles are written in Markdown. Rather than adding a Markdown library, the app includes a small renderer supporting headings, bold, italic, code, code fences, lists, quotes, and links. Whatever it produces is passed through DOMPurify before reaching the page, so a post can't inject scripts or dangerous links into anyone else's browser.
+
+**Voting** works like Codeforces. Each person gets one vote per article or comment. Pressing the arrow you already chose removes your vote; pressing the opposite arrow flips it, moving the score by one step rather than two. You cannot vote on your own posts — self-upvoting is the fastest way to make a young ranking meaningless.
+
+**Comments** nest through `parent_id`, so replies sit under the comment they answer. On screen they indent up to five levels and then stop, so a long back-and-forth doesn't squeeze into a column two words wide on a phone.
+
+**Deleting** behaves differently at the two levels, on purpose:
+
+- Deleting a **comment** is a *soft* delete. The row stays, its text is blanked, and it displays as "[deleted]". This is because deleting it outright would take every reply underneath it along too, and those replies belong to other people.
+- Deleting an **article** is a *hard* delete, and its comments and votes are removed with it by database-level cascade rules. Once the article is gone, its discussion has nothing left to attach to.
+
+**Pinning** is admin-only. A pinned article sits at the top of the feed under every sort order, which is how a contest announcement stays visible.
+
+### 10. Profile and social
+
+A profile shows the rating graph over time, a GitHub-style activity heatmap, current and longest streaks, best rank, subject-wise correct/wrong/skipped totals, and follower counts. Following someone is what enables the friends-only filter on a contest leaderboard — useful when you care more about beating the five people you study with than about your absolute rank.
 
 ---
 
-## Draft Autosave Design
+## API Reference
 
-```
-Student selects answer
-        │
-        ▼
-React state (in-memory answers map)
-        │
-        ├──→ localStorage["draft-{contestId}"]     ← instant, no network, survives refresh
-        │
-        └──→ every 30s (setInterval)
-                │
-                ▼
-         PATCH /contests/:id/draft { answers: <full map> }
-                │
-                ▼
-         participations.draft_answers (JSONB, full overwrite each sync)
-```
+Every route below sits under the backend base URL (`http://localhost:4000` in development). Authenticated routes expect an `Authorization: Bearer <token>` header.
 
-**On page load / refresh:**
-1. GET /contests/:id/draft from backend (handles device switching)
-2. If backend draft exists → populate state + overwrite localStorage
-3. Else → read localStorage as fallback
-4. If neither → start fresh
+### Auth — `/auth` (rate limited: 20 requests / 15 min)
 
-**On final submit:**
-- POST /contests/:id/submit sends current in-memory state directly
-- No dependency on prior autosave; no race condition
-- Backend sets `submitted_at`, moves `draft_answers → answers`, nulls `draft_answers`
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/register` | — | Create a student account. Returns JWT + user. |
+| POST | `/auth/login` | — | Log in. Returns JWT + user. |
+
+### Contests — `/contests`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/contests` | Optional | Contest list, split into `active` and `past`, with `hasJoined` / `hasSubmitted` flags |
+| GET | `/contests/:id` | — | Contest detail, question and participant counts |
+| POST | `/contests/:id/join` | Required | Join. Idempotent |
+| GET | `/contests/:id/questions` | Required | Questions, shuffled per user, answer key stripped |
+| PATCH | `/contests/:id/draft` | Required | Autosave answers. Refused after the deadline |
+| GET | `/contests/:id/draft` | Required | Fetch saved draft on load |
+| POST | `/contests/:id/submit` | Required | Final submit (max 5/min). Scores and updates Redis |
+| GET | `/contests/:id/leaderboard` | Required | Live ranking. `?filter=friends`, `?limit=N` |
+| GET | `/contests/:id/result` | Required | Full result and answer key. Blocked until the contest ends |
+
+### Mock tests — `/mocks`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/mocks/public` | — | Published mocks for the logged-out landing page |
+| GET | `/mocks` | Required | Published mocks plus this user's best attempt |
+| GET | `/mocks/:id` | Required | Questions for the exam room |
+| POST | `/mocks/:id/submit` | Required | Score and store the attempt |
+| GET | `/mocks/:id/result` | Required | Result with the answer key and per-question review |
+
+### Community — `/community` (writes rate limited: 30 / 10 min; votes exempt)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/community/articles` | Required | Feed. `?sort=new\|top`, `?type=`, `?page=` |
+| GET | `/community/articles/:id` | Required | One article, with your vote and edit permission |
+| POST | `/community/articles` | Required | Create. `ANNOUNCEMENT` is admin-only |
+| PATCH | `/community/articles/:id` | Required | Edit. Author or admin |
+| DELETE | `/community/articles/:id` | Required | Delete. Author or admin. Cascades to comments and votes |
+| POST | `/community/articles/:id/pin` | Admin | Toggle pinned |
+| POST | `/community/articles/:id/vote` | Required | Vote `1`, `-1`, or `0`. Not on your own article |
+| GET | `/community/articles/:id/comments` | Required | Flat comment list; the client nests it |
+| POST | `/community/articles/:id/comments` | Required | Comment or reply (`parentId`) |
+| PATCH | `/community/comments/:id` | Required | Edit. Author or admin |
+| DELETE | `/community/comments/:id` | Required | Soft delete. Author or admin |
+| POST | `/community/comments/:id/vote` | Required | Vote on a comment |
+
+### Others
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/ratings/users/:id/rating` | Required | Rating plus full history |
+| GET | `/ratings/leaderboard` | — | Global top 100. `?period=week\|month\|all` |
+| GET | `/profile` | Required | Own profile (includes email) |
+| GET | `/profile/:id` | Required | Public profile, with `isFollowing` |
+| POST / DELETE | `/follows/:userId` | Required | Follow / unfollow |
+| GET | `/follows/following` | Required | IDs this user follows |
+| GET | `/bookmarks` | Required | Saved questions, full detail |
+| GET | `/bookmarks/ids` | Required | Just the ids, for toggling stars |
+| POST | `/bookmarks/:questionId` | Required | Toggle a bookmark |
+| POST | `/reports` | Required | Flag a question |
+| GET | `/stats/public` | — | Counts for the landing page |
+| GET | `/health` | — | Liveness check |
+
+### Admin — `/admin` (403 without `role: ADMIN`)
+
+Contests (list, create, edit, delete, set status, restart), questions (create, edit, delete, list, duplicate check), passages, contest–question links including bulk add, mock tests and their questions, report triage, and presigned image upload.
+
+---
+
+## The two frontends
+
+### Student app (port 5173)
+
+| Route | Page | What it's for |
+|-------|------|---------------|
+| `/` | Landing / Dashboard | Marketing page when logged out, home feed when logged in |
+| `/login`, `/register` | Auth | |
+| `/contests/:id` | Contest room | The exam interface: timer, palette, autosave |
+| `/contests/:id/result` | Result | Score, rank, per-question review, time analysis |
+| `/mocks` | Mock tests | Practice papers grouped by subject |
+| `/mocks/:id`, `/mocks/:id/result` | Mock room and result | |
+| `/bookmarks` | Bookmarks | Saved questions for revision |
+| `/leaderboard` | Global leaderboard | All-time and periodic rankings |
+| `/community` | Community feed | Articles, sorting, category filters |
+| `/community/new`, `/community/:id`, `/community/:id/edit` | Community | Write, read, and edit articles |
+| `/profile`, `/profile/:id` | Profile | Rating graph, heatmap, stats, follow |
+
+### Admin app (port 5174)
+
+| Route | Page | What it's for |
+|-------|------|---------------|
+| `/` | Contests | Create, edit, delete, change status |
+| `/contests/:id` | Contest detail | Attach questions, view participants |
+| `/questions` | Question bank | Create, edit, delete, filter, duplicate detection |
+| `/mocks`, `/mocks/:id` | Mock tests | Build and publish practice papers |
+| `/reports` | Reports | Triage flagged questions; open count badge in the nav |
+| `/community`, `/community/:id`, `/community/new` | Community | Post announcements, pin, moderate, delete comments |
+
+Both apps support light and dark themes, stored per browser, and both are usable on a phone. Below 880px the navigation collapses into a hamburger drawer rather than clipping the links.
 
 ---
 
 ## Security
 
-| Concern              | Implementation                                                              |
-|----------------------|-----------------------------------------------------------------------------|
-| Password storage     | bcrypt with salt rounds = 10                                                |
-| Authentication       | JWT (7-day expiry) — `Authorization: Bearer <token>`                        |
-| Authorization        | `authenticate` middleware on all protected routes                           |
-| Admin access         | `requireAdmin` middleware checks `role === ADMIN` — 403 otherwise           |
-| Correct answers      | Never included in question fetch response — scoring is server-side only     |
-| Submit deadline      | Server rejects submits after `startTime + durationMinutes`                  |
-| Draft deadline       | PATCH /draft rejected after contest deadline                                |
-| Rate limiting        | Auth routes: 20/15min; Submit: 5/min                                        |
-| Input validation     | Zod schemas on all route bodies; enum values enforced                       |
-| CORS                 | Allowlist via `CORS_ORIGIN` env var                                         |
-| JWT secret check     | Server refuses to start if `JWT_SECRET` is unset or uses the default value  |
-| Admin self-signup    | Disabled — admins are created via `scripts/create-admin.ts` seed script     |
+| Concern | How it's handled |
+|---------|------------------|
+| Password storage | bcrypt, salt rounds = 10 |
+| Sessions | JWT, 7-day expiry, sent as `Authorization: Bearer` |
+| Route protection | `authenticate` middleware on every protected route |
+| Admin access | `requireAdmin` checks `role === ADMIN`, else 403 |
+| Answer keys | Never sent to the browser during a contest or mock |
+| Deadlines | Submits and draft saves are refused server-side after the deadline |
+| Ownership | Editing or deleting an article or comment is re-checked on the server, never trusted from the client |
+| Reply grafting | A reply's parent must belong to the same article, so a forged `parentId` can't move a comment onto another thread |
+| Self-voting | Rejected server-side |
+| Input validation | Zod schemas on all request bodies |
+| XSS | All user Markdown and rich text passes through DOMPurify with a strict tag and URL allowlist |
+| Rate limiting | Auth 20/15min, submit 5/min, community writes 30/10min |
+| CORS | Origin allowlist via `CORS_ORIGIN` |
+| Secrets | The server refuses to boot if `JWT_SECRET` is missing or left at its default |
+| Admin signup | Not possible through the API; admins are created by a seed script |
 
 ---
 
-## Admin Portal (Separate App)
+## Running it locally
 
-The admin frontend is a separate Vite + React app (`/admin`, port 5174) with its own routing:
+```bash
+# 1. Start Postgres and Redis
+docker compose up -d
 
-| Page              | Functionality                                                               |
-|-------------------|-----------------------------------------------------------------------------|
-| Login             | Admin-only login; student token gets 403 on all admin API calls             |
-| Contests list     | Table of all contests with status badges; create, edit, delete, set status  |
-| Contest detail    | Add/remove questions; trigger status transitions; view participant count     |
-| Questions bank    | Create, edit, delete questions; filter by subject and difficulty            |
+# 2. Backend
+cd backend
+npm install
+npx prisma migrate deploy     # create the tables
+npm run dev                   # http://localhost:4000
 
----
+# 3. Student app
+cd frontend && npm install && npm run dev    # http://localhost:5173
 
-## Data Flow — Full Contest Lifecycle
-
-```
-[ADMIN]
-1. Create contest            → POST /admin/contests
-2. Add questions             → POST /admin/contests/:id/questions/bulk
-3. Set status → LIVE         → POST /admin/contests/:id/status { "status": "LIVE" }
-4. Set status → ENDED        → POST /admin/contests/:id/status { "status": "ENDED" }
-                               → Triggers async computeContestRatings()
-
-[STUDENT]
-1. Browse contests           → GET /contests
-2. Join contest              → POST /contests/:id/join
-3. Fetch questions           → GET /contests/:id/questions (shuffled per user)
-4. Take exam                 → answer → localStorage, 30s sync → PATCH /draft
-5. Submit answers            → POST /contests/:id/submit { answers, timeSpent }
-                             → Server scores, updates Redis leaderboard
-6. View result               → GET /contests/:id/result (blocked until contest ends)
-7. View leaderboard          → GET /contests/:id/leaderboard?filter=all|friends
-8. Rating reflected          → GET /profile (after admin ends contest)
+# 4. Admin app
+cd admin && npm install && npm run dev       # http://localhost:5174
 ```
 
+The backend needs a `.env` with at least `DATABASE_URL` and a real `JWT_SECRET`. Admin accounts are created with the script in `scripts/`, or by flipping a user's `role` to `ADMIN` directly in the database.
+
 ---
 
-## Suggested Extra Features for Phase 2
+## What's next
 
-### High Priority
+Items below are not built yet, roughly in the order they'd pay off.
 
-**1. Practice Mode**
-Solo, untimed, unrated question practice. Students pick a subject and difficulty and get questions from the bank. No rating effect. Valuable for daily preparation between live contests.
+**1. Automatic contest status transitions.** An admin currently has to flip a contest to LIVE and then to ENDED by hand. A scheduled job reading `start_time` and `duration_minutes` would let contests run unattended and remove the main source of human error.
 
-**2. Email Notifications**
-Send emails 24h and 30 minutes before a contest starts. Uses the `nodemailer` package + any transactional email provider (Resend, SendGrid). Students opt in during registration.
+**2. Email notifications.** A reminder 24 hours and 30 minutes before a contest starts, and a note when results are ready.
 
-**3. Contest Auto-Status Transitions**
-Right now an admin must manually set status to LIVE and ENDED. A background cron job should read `start_time` and `start_time + duration_minutes` and flip status automatically. Eliminates human error and lets contests run unattended.
+**3. Admin analytics.** Per contest: score distribution, per-question solve rate, average time per question. This is how you find out a question was badly worded rather than hard.
 
-**4. Admin Analytics Dashboard**
-Per-contest: average score, score distribution histogram, per-question solve rate, average time per question, question discrimination index. Helps admins calibrate difficulty and spot bad questions.
+**4. Public community pages.** Community articles currently require login. Contest announcements would reach more people if they were readable — and indexable by search engines — without an account. This needs a logged-out navigation variant.
 
-### Medium Priority
+**5. Daily challenge.** Five questions a day from the bank, feeding the existing streak counter. Cheap to build on top of what mocks already do.
 
-**5. Question Discussion / Explanations**
-After a contest ends, show a discussion thread per question. Students can post solution approaches. Moderatable by admins. Biggest value-add for learning, not just competing.
+**6. Question difficulty auto-calibration.** Compare each question's real solve rate against its stored Easy/Medium/Hard tag and correct the tag over time, so difficulty labels stay honest.
 
-**6. Bookmark / Saved Questions**
-Students mark specific questions to review later (from the result page). A `bookmarks` table with `userId + questionId`. Feeds into a personal practice list.
+**7. In-app notifications.** A bell for "contest starting soon", "your result is ready", "someone replied to your comment". The community makes this more valuable than it was before.
 
-**7. Daily Challenge**
-5 questions every day drawn from the bank. Completing it increments the streak counter. Keeps students engaged even on non-contest days. Much simpler than a full practice mode.
+**8. CSV import for questions.** Bulk import exists as a JSON API, which suits developers and nobody else. A CSV upload with column mapping and a preview would let non-technical admins build banks from Excel.
 
-**8. Contest Search and Filtering**
-Students can filter contests by: upcoming only, past only, subject focus (Quant-heavy, GK-heavy), duration range. Important once the contest list grows beyond 20 entries.
-
-### Lower Priority (But Good ROI)
-
-**9. Question Difficulty Auto-Calibration**
-After each contest, compute the actual solve rate per question. Adjust the stored `difficulty` enum if the real solve rate diverges significantly from Easy/Medium/Hard expectations. Makes the difficulty tags more trustworthy over time.
-
-**10. Mobile-Responsive Exam UI**
-The contest room is currently desktop-only (sidebar + content split). A stacked mobile layout would open the platform to students who only have phones — the majority of SSC aspirants.
-
-**11. CSV Bulk Import for Questions**
-Right now bulk upload exists as a JSON array API. A CSV upload form in the admin panel (with column mapping and preview before import) would be far more practical for non-technical admins building question banks from Excel.
-
-**12. Notifications Bell (In-App)**
-In-app notification system for: "Contest starting in 30 min", "Your result is ready", "You moved up to Expert". Stored in a `notifications` table, polled or pushed via SSE.
+**9. Shared frontend package.** `RichText`, `Markdown`, and `time` are duplicated between the student and admin apps. At three or four shared files this is fine; past that it should become a real shared module.
