@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
 import VoteButtons from '../components/VoteButtons'
 import api from '../lib/api'
 import { timeAgo } from '../lib/time'
@@ -240,7 +239,6 @@ export default function Community() {
           </div>
         )}
       </div>
-      <Footer />
     </>
   )
 }

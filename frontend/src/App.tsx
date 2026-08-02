@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import LandingPage from './pages/LandingPage'
 import Home from './pages/Home'
 import ContestList from './pages/ContestList'
 import ContestRoom from './pages/ContestRoom'
@@ -30,7 +29,6 @@ export default function App() {
         {/* One home page for everyone, Codeforces-style: the same feed and
             sidebar whether or not you're signed in. */}
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<LandingPage />} />
         <Route path="/contests" element={<PrivateRoute><ContestList /></PrivateRoute>} />
         <Route path="/contests/:id" element={<PrivateRoute><ContestRoom /></PrivateRoute>} />
         <Route path="/contests/:id/result" element={<PrivateRoute><Result /></PrivateRoute>} />

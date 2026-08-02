@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
 import api from '../lib/api'
 import { timeAgo } from '../lib/time'
 import { getTier } from '../lib/tiers'
@@ -319,7 +318,6 @@ export default function Home() {
           </aside>
         </div>
       </div>
-      <Footer />
     </>
   )
 }
