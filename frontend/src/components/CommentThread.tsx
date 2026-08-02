@@ -31,16 +31,24 @@ export function buildTree(comments: ArticleComment[]): CommentNode[] {
 // column a few characters wide on a phone.
 const MAX_INDENT = 5
 
+// Total comments in a subtree, so a collapsed node can say how much is hidden
+// rather than only counting its direct children.
+function subtreeSize(node: CommentNode): number {
+  return node.children.reduce((n, c) => n + 1 + subtreeSize(c), 0)
+}
+
 function CommentRow({
   node,
   depth,
   currentUserId,
+  articleAuthorId,
   onReply,
   onChanged,
 }: {
   node: CommentNode
   depth: number
   currentUserId: string
+  articleAuthorId: string
   onReply: (parentId: string, body: string) => Promise<void>
   onChanged: () => void
 }) {
@@ -116,23 +124,42 @@ function CommentRow({
               <span className="comment-deleted-label">[deleted]</span>
             ) : (
               <>
-                <Link
-                  to={`/profile/${node.author!.id}`}
-                  className="comment-author"
-                  style={{ color: tier!.fg }}
-                >
-                  {node.author!.name}
+                <Link to={`/profile/${node.author!.id}`} className="comment-byline">
+                  <span
+                    className="comment-avatar"
+                    style={{ background: tier!.bg, color: tier!.fg }}
+                  >
+                    {node.author!.name[0].toUpperCase()}
+                  </span>
+                  <span className="comment-author" style={{ color: tier!.fg }}>
+                    {node.author!.name}
+                  </span>
                 </Link>
+                {node.author!.id === articleAuthorId && (
+                  <span className="comment-tag comment-tag-op" title="Original poster">OP</span>
+                )}
+                {node.author!.role === 'ADMIN' && (
+                  <span className="comment-tag comment-tag-staff">Staff</span>
+                )}
+                {node.author!.id === currentUserId && (
+                  <span className="comment-tag comment-tag-you">You</span>
+                )}
                 <span className="comment-dot">·</span>
                 <span className="comment-time">{timeAgo(node.createdAt)}</span>
                 {node.updatedAt !== node.createdAt && (
-                  <span className="comment-edited">(edited)</span>
+                  <span className="comment-edited">edited</span>
                 )}
               </>
             )}
             {node.children.length > 0 && (
-              <button className="comment-collapse" onClick={() => setCollapsed(c => !c)}>
-                {collapsed ? `[+] ${node.children.length} repl${node.children.length > 1 ? 'ies' : 'y'}` : '[−]'}
+              <button
+                className="comment-collapse"
+                onClick={() => setCollapsed(c => !c)}
+                aria-expanded={!collapsed}
+              >
+                {collapsed
+                  ? `Show ${subtreeSize(node)} more`
+                  : 'Hide replies'}
               </button>
             )}
           </div>
@@ -163,9 +190,9 @@ function CommentRow({
           {error && <p className="comment-error">{error}</p>}
 
           {!node.deleted && !editing && (
-            <div className="comment-actions">
+            <div className="comment-actions comment-actions-hover">
               <button className="comment-action" onClick={() => setReplying(r => !r)}>
-                {replying ? 'Cancel' : 'Reply'}
+                {replying ? '✕ Cancel' : '↩ Reply'}
               </button>
               {node.canModify && (
                 <>
@@ -182,7 +209,7 @@ function CommentRow({
             <div className="comment-editor">
               <textarea
                 className="input comment-textarea"
-                placeholder="Write a reply… (Markdown supported)"
+                placeholder={`Reply to ${node.author?.name ?? "this comment"}…`}
                 value={draft}
                 onChange={e => setDraft(e.target.value)}
                 rows={3}
@@ -206,6 +233,7 @@ function CommentRow({
               node={child}
               depth={depth + 1}
               currentUserId={currentUserId}
+              articleAuthorId={articleAuthorId}
               onReply={onReply}
               onChanged={onChanged}
             />
@@ -219,17 +247,25 @@ function CommentRow({
 export default function CommentThread({
   comments,
   currentUserId,
+  articleAuthorId,
   onReply,
   onChanged,
 }: {
   comments: ArticleComment[]
   currentUserId: string
+  articleAuthorId: string
   onReply: (parentId: string | null, body: string) => Promise<void>
   onChanged: () => void
 }) {
   const tree = buildTree(comments)
   if (tree.length === 0) {
-    return <p className="comment-empty">No comments yet. Start the discussion.</p>
+    return (
+      <div className="comment-empty">
+        <span className="comment-empty-icon">💭</span>
+        <p className="comment-empty-title">No comments yet</p>
+        <p className="comment-empty-sub">Be the first to add something useful.</p>
+      </div>
+    )
   }
   return (
     <div className="comment-thread">
@@ -239,6 +275,7 @@ export default function CommentThread({
           node={node}
           depth={0}
           currentUserId={currentUserId}
+          articleAuthorId={articleAuthorId}
           onReply={onReply}
           onChanged={onChanged}
         />

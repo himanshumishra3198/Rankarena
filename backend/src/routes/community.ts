@@ -143,6 +143,9 @@ router.get("/articles", async (req: AuthRequest, res: Response) => {
       title: a.title,
       // Enough for a list preview without shipping whole articles.
       excerpt: a.body.slice(0, 300),
+      // Computed here because the excerpt is truncated — the client can't
+      // derive a reading time from what it receives.
+      readingMinutes: Math.max(1, Math.round(a.body.trim().split(/\s+/).length / 200)),
       type: a.type,
       pinned: a.pinned,
       score: a.score,

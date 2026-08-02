@@ -23,6 +23,17 @@ export const TYPE_LABEL: Record<ArticleType, string> = {
   EDITORIAL: 'Editorial',
 }
 
+// A leading glyph per category, so the feed is scannable at a glance even
+// before the colour registers.
+export const TYPE_ICON: Record<ArticleType, string> = {
+  GENERAL: '💬',
+  ANNOUNCEMENT: '📣',
+  TECHNIQUE: '💡',
+  EDITORIAL: '📖',
+}
+
+
+
 export default function Community() {
   usePageMeta('Community — RankArena', 'Contest announcements, techniques and discussion from the RankArena community.')
   const navigate = useNavigate()
@@ -107,58 +118,95 @@ export default function Community() {
           </div>
         </div>
 
-        {error && <div className="card community-empty">{error}</div>}
+        {error && <div className="card community-notice community-notice-error">{error}</div>}
 
         {loading ? (
-          <div className="card community-empty">Loading…</div>
+          // Skeleton rows keep the layout from jumping when results land.
+          <div className="article-list">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="article-row article-skeleton" aria-hidden="true">
+                <div className="skeleton-vote" />
+                <div className="article-row-body">
+                  <div className="skeleton-line skeleton-pill" />
+                  <div className="skeleton-line skeleton-title" />
+                  <div className="skeleton-line" />
+                  <div className="skeleton-line skeleton-short" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : articles.length === 0 ? (
-          <div className="card community-empty">
-            <p>No articles here yet.</p>
+          <div className="card community-notice">
+            <span className="community-empty-icon">✍️</span>
+            <p className="community-empty-title">
+              {type ? 'Nothing in this category yet' : 'The community is quiet right now'}
+            </p>
+            <p className="community-empty-sub">
+              {type
+                ? 'Try another category, or write the first post here.'
+                : 'Share a shortcut you use, break down a tricky question, or ask the room.'}
+            </p>
             <button className="btn btn-primary btn-sm" onClick={() => navigate('/community/new')}>
-              Write the first one
+              Write the first article
             </button>
           </div>
         ) : (
           <div className="article-list">
             {articles.map(a => {
               const tier = getTier(a.author.rating)
+              const isMine = a.author.id === user.id
               return (
-                <div key={a.id} className={`article-row ${a.pinned ? 'pinned' : ''}`}>
+                <article
+                  key={a.id}
+                  className={`article-row cat-${a.type.toLowerCase()} ${a.pinned ? 'pinned' : ''}`}
+                >
                   <VoteButtons
                     kind="articles"
                     id={a.id}
                     score={a.score}
                     myVote={a.myVote}
-                    disabled={a.author.id === user.id}
+                    disabled={isMine}
                   />
                   <div className="article-row-body">
                     <div className="article-row-top">
                       {a.pinned && <span className="article-pin">📌 Pinned</span>}
-                      <span className={`article-type article-type-${a.type.toLowerCase()}`}>
-                        {TYPE_LABEL[a.type]}
+                      <span className="article-type">
+                        {TYPE_ICON[a.type]} {TYPE_LABEL[a.type]}
                       </span>
+                      {isMine && <span className="article-mine">Yours</span>}
                     </div>
+
                     <Link to={`/community/${a.id}`} className="article-title-link">
                       {a.title}
                     </Link>
                     <p className="article-excerpt">{a.excerpt}</p>
+
                     <div className="article-row-meta">
-                      <Link
-                        to={`/profile/${a.author.id}`}
-                        className="article-author"
-                        style={{ color: tier.fg }}
-                      >
-                        {a.author.name}
+                      <Link to={`/profile/${a.author.id}`} className="article-byline">
+                        <span
+                          className="article-avatar"
+                          style={{ background: tier.bg, color: tier.fg }}
+                        >
+                          {a.author.name[0].toUpperCase()}
+                        </span>
+                        <span className="article-author" style={{ color: tier.fg }}>
+                          {a.author.name}
+                        </span>
                       </Link>
+                      {a.author.role === 'ADMIN' && <span className="article-admin-tag">Staff</span>}
                       <span className="comment-dot">·</span>
                       <span>{timeAgo(a.createdAt)}</span>
                       <span className="comment-dot">·</span>
+                      <span>{a.readingMinutes} min read</span>
                       <Link to={`/community/${a.id}`} className="article-comment-count">
-                        💬 {a.commentCount}
+                        <span aria-hidden="true">💬</span>
+                        {a.commentCount === 0
+                          ? 'Comment'
+                          : `${a.commentCount} ${a.commentCount === 1 ? 'comment' : 'comments'}`}
                       </Link>
                     </div>
                   </div>
-                </div>
+                </article>
               )
             })}
           </div>

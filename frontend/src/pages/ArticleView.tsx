@@ -9,7 +9,7 @@ import { timeAgo } from '../lib/time'
 import { getTier } from '../lib/tiers'
 import { usePageMeta } from '../lib/seo'
 import type { Article, ArticleComment } from '../lib/types'
-import { TYPE_LABEL } from './Community'
+import { TYPE_LABEL, TYPE_ICON } from './Community'
 
 export default function ArticleView() {
   const { id } = useParams<{ id: string }>()
@@ -97,8 +97,10 @@ export default function ArticleView() {
       <>
         <Navbar />
         <div className="page">
-          <div className="card community-empty">
-            <p>This article no longer exists.</p>
+          <div className="card community-notice">
+            <span className="community-empty-icon">🔍</span>
+            <p className="community-empty-title">This article no longer exists</p>
+            <p className="community-empty-sub">It may have been deleted by its author or a moderator.</p>
             <Link to="/community" className="btn btn-primary btn-sm">Back to Community</Link>
           </div>
         </div>
@@ -110,7 +112,15 @@ export default function ArticleView() {
     return (
       <>
         <Navbar />
-        <div className="page"><p className="empty">Loading…</p></div>
+        <div className="page">
+          <div className="card article-skeleton" aria-hidden="true">
+            <div className="skeleton-line skeleton-pill" />
+            <div className="skeleton-line skeleton-title" />
+            <div className="skeleton-line" />
+            <div className="skeleton-line" />
+            <div className="skeleton-line skeleton-short" />
+          </div>
+        </div>
       </>
     )
   }
@@ -123,7 +133,7 @@ export default function ArticleView() {
       <div className="page">
         <Link to="/community" className="article-back">← Community</Link>
 
-        <article className="card article-full">
+        <article className={`card article-full cat-${article.type.toLowerCase()}`}>
           <div className="article-full-head">
             <VoteButtons
               kind="articles"
@@ -135,23 +145,30 @@ export default function ArticleView() {
             <div className="article-full-headtext">
               <div className="article-row-top">
                 {article.pinned && <span className="article-pin">📌 Pinned</span>}
-                <span className={`article-type article-type-${article.type.toLowerCase()}`}>
-                  {TYPE_LABEL[article.type]}
+                <span className="article-type">
+                  {TYPE_ICON[article.type]} {TYPE_LABEL[article.type]}
                 </span>
               </div>
               <h1 className="article-full-title">{article.title}</h1>
               <div className="article-row-meta">
-                <Link
-                  to={`/profile/${article.author.id}`}
-                  className="article-author"
-                  style={{ color: tier.fg }}
-                >
-                  {article.author.name}
+                <Link to={`/profile/${article.author.id}`} className="article-byline">
+                  <span
+                    className="article-avatar"
+                    style={{ background: tier.bg, color: tier.fg }}
+                  >
+                    {article.author.name[0].toUpperCase()}
+                  </span>
+                  <span className="article-author" style={{ color: tier.fg }}>
+                    {article.author.name}
+                  </span>
                 </Link>
+                {article.author.role === 'ADMIN' && (
+                  <span className="article-admin-tag">Staff</span>
+                )}
                 <span className="comment-dot">·</span>
                 <span>{timeAgo(article.createdAt)}</span>
                 {article.updatedAt !== article.createdAt && (
-                  <span className="comment-edited">(edited)</span>
+                  <span className="comment-edited">edited</span>
                 )}
               </div>
             </div>
@@ -185,13 +202,16 @@ export default function ArticleView() {
 
         <section className="card article-comments">
           <h2 className="article-comments-title">
-            {article.commentCount} {article.commentCount === 1 ? 'comment' : 'comments'}
+            <span aria-hidden="true">💬</span>
+            {article.commentCount === 0
+              ? 'Discussion'
+              : `${article.commentCount} ${article.commentCount === 1 ? 'comment' : 'comments'}`}
           </h2>
 
           <div className="comment-editor">
             <textarea
               className="input comment-textarea"
-              placeholder="Add a comment… (Markdown supported)"
+              placeholder="Share your take — Markdown works here."
               value={draft}
               onChange={e => setDraft(e.target.value)}
               rows={4}
@@ -212,6 +232,7 @@ export default function ArticleView() {
           <CommentThread
             comments={comments}
             currentUserId={user.id}
+            articleAuthorId={article.author.id}
             onReply={postComment}
             onChanged={refresh}
           />

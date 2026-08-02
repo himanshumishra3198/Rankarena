@@ -79,6 +79,7 @@ export interface ArticleListItem {
   id: string
   title: string
   excerpt: string
+  readingMinutes: number
   type: ArticleType
   pinned: boolean
   score: number
