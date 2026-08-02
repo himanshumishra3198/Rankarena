@@ -42,6 +42,7 @@ function CommentRow({
   depth,
   currentUserId,
   articleAuthorId,
+  signedIn,
   onReply,
   onChanged,
 }: {
@@ -49,6 +50,7 @@ function CommentRow({
   depth: number
   currentUserId: string
   articleAuthorId: string
+  signedIn: boolean
   onReply: (parentId: string, body: string) => Promise<void>
   onChanged: () => void
 }) {
@@ -114,7 +116,7 @@ function CommentRow({
             id={node.id}
             score={node.score}
             myVote={node.myVote}
-            disabled={node.author?.id === currentUserId}
+            disabled={node.author?.id === currentUserId || !signedIn}
           />
         )}
 
@@ -189,7 +191,7 @@ function CommentRow({
 
           {error && <p className="comment-error">{error}</p>}
 
-          {!node.deleted && !editing && (
+          {!node.deleted && !editing && signedIn && (
             <div className="comment-actions comment-actions-hover">
               <button className="comment-action" onClick={() => setReplying(r => !r)}>
                 {replying ? '✕ Cancel' : '↩ Reply'}
@@ -234,6 +236,7 @@ function CommentRow({
               depth={depth + 1}
               currentUserId={currentUserId}
               articleAuthorId={articleAuthorId}
+              signedIn={signedIn}
               onReply={onReply}
               onChanged={onChanged}
             />
@@ -248,12 +251,14 @@ export default function CommentThread({
   comments,
   currentUserId,
   articleAuthorId,
+  signedIn,
   onReply,
   onChanged,
 }: {
   comments: ArticleComment[]
   currentUserId: string
   articleAuthorId: string
+  signedIn: boolean
   onReply: (parentId: string | null, body: string) => Promise<void>
   onChanged: () => void
 }) {
@@ -276,6 +281,7 @@ export default function CommentThread({
           depth={0}
           currentUserId={currentUserId}
           articleAuthorId={articleAuthorId}
+          signedIn={signedIn}
           onReply={onReply}
           onChanged={onChanged}
         />

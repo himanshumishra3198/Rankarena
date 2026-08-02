@@ -47,6 +47,7 @@ export default function Community() {
   const type = params.get('type') || ''
   const page = Math.max(1, Number(params.get('page')) || 1)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const signedIn = Boolean(localStorage.getItem('token'))
 
   useEffect(() => {
     let cancelled = false
@@ -85,8 +86,11 @@ export default function Community() {
             <h1 style={{ marginBottom: 6 }}>Community</h1>
             <p className="community-sub">Contest announcements, techniques, and discussion.</p>
           </div>
-          <button className="btn btn-primary" onClick={() => navigate('/community/new')}>
-            Write article
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate(signedIn ? '/community/new' : '/login')}
+          >
+            {signedIn ? 'Write article' : 'Log in to write'}
           </button>
         </div>
 
@@ -146,8 +150,11 @@ export default function Community() {
                 ? 'Try another category, or write the first post here.'
                 : 'Share a shortcut you use, break down a tricky question, or ask the room.'}
             </p>
-            <button className="btn btn-primary btn-sm" onClick={() => navigate('/community/new')}>
-              Write the first article
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => navigate(signedIn ? '/community/new' : '/register')}
+            >
+              {signedIn ? 'Write the first article' : 'Create an account to post'}
             </button>
           </div>
         ) : (
@@ -165,7 +172,7 @@ export default function Community() {
                     id={a.id}
                     score={a.score}
                     myVote={a.myVote}
-                    disabled={isMine}
+                    disabled={isMine || !signedIn}
                   />
                   <div className="article-row-body">
                     <div className="article-row-top">

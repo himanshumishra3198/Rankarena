@@ -1,10 +1,13 @@
 import { Router, Response } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
-import { authenticate, AuthRequest } from "../middleware/auth";
+import { authenticate, optionalAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
-router.use(authenticate);
+
+// Reads are public so guests can browse the home feed and article pages.
+// Every write route below re-applies `authenticate` explicitly.
+router.use(optionalAuth);
 
 const ARTICLE_TYPES = ["GENERAL", "ANNOUNCEMENT", "TECHNIQUE", "EDITORIAL"] as const;
 
@@ -27,7 +30,8 @@ const authorSelect = { id: true, name: true, rating: true, role: true } as const
 
 /** Author or admin may edit/delete. */
 function canModify(req: AuthRequest, authorId: string) {
-  return req.user!.id === authorId || req.user!.role === "ADMIN";
+  if (!req.user) return false;
+  return req.user.id === authorId || req.user.role === "ADMIN";
 }
 
 /**
@@ -99,6 +103,57 @@ async function applyVote(opts: {
   });
 }
 
+/* ----------------------------- contributors ------------------------------ */
+
+// Top contributors for the home sidebar: total votes earned across a user's
+// articles and comments. Public, and grouped in the database rather than by
+// loading every row into memory.
+router.get("/contributors", async (_req, res: Response) => {
+  const [byArticle, byComment] = await Promise.all([
+    prisma.article.groupBy({
+      by: ["authorId"],
+      _sum: { score: true },
+    }),
+    prisma.articleComment.groupBy({
+      by: ["authorId"],
+      where: { deleted: false },
+      _sum: { score: true },
+    }),
+  ]);
+
+  const totals = new Map<string, number>();
+  for (const row of [...byArticle, ...byComment]) {
+    totals.set(row.authorId, (totals.get(row.authorId) ?? 0) + (row._sum.score ?? 0));
+  }
+
+  // Only surface people with a positive contribution — a leaderboard of
+  // negative scores would be a pillory, not a ranking.
+  const ranked = [...totals.entries()]
+    .filter(([, score]) => score > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  if (ranked.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: ranked.map(([id]) => id) } },
+    select: { id: true, name: true, rating: true },
+  });
+  const byId = new Map(users.map((u) => [u.id, u]));
+
+  res.json(
+    ranked
+      .map(([id, contribution], i) => {
+        const user = byId.get(id);
+        return user ? { rank: i + 1, ...user, contribution } : null;
+      })
+      .filter(Boolean)
+  );
+});
+
 /* ------------------------------- articles -------------------------------- */
 
 // List articles. sort=new (default) | top; optional type filter; paginated.
@@ -126,9 +181,10 @@ router.get("/articles", async (req: AuthRequest, res: Response) => {
   ]);
 
   // The caller's own votes, so the list can highlight arrows without N queries.
-  const myVotes = rows.length
+  // Guests have none, so skip the query entirely.
+  const myVotes = rows.length && req.user
     ? await prisma.articleVote.findMany({
-        where: { userId: req.user!.id, articleId: { in: rows.map((r) => r.id) } },
+        where: { userId: req.user.id, articleId: { in: rows.map((r) => r.id) } },
         select: { articleId: true, value: true },
       })
     : [];
@@ -166,14 +222,16 @@ router.get("/articles/:id", async (req: AuthRequest, res: Response) => {
     res.status(404).json({ error: "Article not found" });
     return;
   }
-  const myVote = await prisma.articleVote.findUnique({
-    where: { articleId_userId: { articleId: article.id, userId: req.user!.id } },
-    select: { value: true },
-  });
+  const myVote = req.user
+    ? await prisma.articleVote.findUnique({
+        where: { articleId_userId: { articleId: article.id, userId: req.user.id } },
+        select: { value: true },
+      })
+    : null;
   res.json({ ...article, myVote: myVote?.value ?? 0, canModify: canModify(req, article.authorId) });
 });
 
-router.post("/articles", async (req: AuthRequest, res: Response) => {
+router.post("/articles", authenticate, async (req: AuthRequest, res: Response) => {
   const parsed = articleSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues });
@@ -191,7 +249,7 @@ router.post("/articles", async (req: AuthRequest, res: Response) => {
   res.status(201).json(article);
 });
 
-router.patch("/articles/:id", async (req: AuthRequest, res: Response) => {
+router.patch("/articles/:id", authenticate, async (req: AuthRequest, res: Response) => {
   const existing = await prisma.article.findUnique({
     where: { id: req.params.id as string },
     select: { id: true, authorId: true },
@@ -221,7 +279,7 @@ router.patch("/articles/:id", async (req: AuthRequest, res: Response) => {
   res.json(article);
 });
 
-router.delete("/articles/:id", async (req: AuthRequest, res: Response) => {
+router.delete("/articles/:id", authenticate, async (req: AuthRequest, res: Response) => {
   const existing = await prisma.article.findUnique({
     where: { id: req.params.id as string },
     select: { id: true, authorId: true },
@@ -240,7 +298,7 @@ router.delete("/articles/:id", async (req: AuthRequest, res: Response) => {
 });
 
 // Admins pin an article to the top of the list (contest announcements).
-router.post("/articles/:id/pin", async (req: AuthRequest, res: Response) => {
+router.post("/articles/:id/pin", authenticate, async (req: AuthRequest, res: Response) => {
   if (req.user!.role !== "ADMIN") {
     res.status(403).json({ error: "Admin access required" });
     return;
@@ -261,7 +319,7 @@ router.post("/articles/:id/pin", async (req: AuthRequest, res: Response) => {
   res.json(article);
 });
 
-router.post("/articles/:id/vote", async (req: AuthRequest, res: Response) => {
+router.post("/articles/:id/vote", authenticate, async (req: AuthRequest, res: Response) => {
   const parsed = voteSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues });
@@ -306,9 +364,9 @@ router.get("/articles/:id/comments", async (req: AuthRequest, res: Response) => 
     include: { author: { select: authorSelect } },
   });
 
-  const myVotes = comments.length
+  const myVotes = comments.length && req.user
     ? await prisma.commentVote.findMany({
-        where: { userId: req.user!.id, commentId: { in: comments.map((c) => c.id) } },
+        where: { userId: req.user.id, commentId: { in: comments.map((c) => c.id) } },
         select: { commentId: true, value: true },
       })
     : [];
@@ -331,7 +389,7 @@ router.get("/articles/:id/comments", async (req: AuthRequest, res: Response) => 
   );
 });
 
-router.post("/articles/:id/comments", async (req: AuthRequest, res: Response) => {
+router.post("/articles/:id/comments", authenticate, async (req: AuthRequest, res: Response) => {
   const parsed = commentSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues });
@@ -374,7 +432,7 @@ router.post("/articles/:id/comments", async (req: AuthRequest, res: Response) =>
   res.status(201).json({ ...comment, myVote: 0, canModify: true });
 });
 
-router.patch("/comments/:id", async (req: AuthRequest, res: Response) => {
+router.patch("/comments/:id", authenticate, async (req: AuthRequest, res: Response) => {
   const existing = await prisma.articleComment.findUnique({
     where: { id: req.params.id as string },
     select: { id: true, authorId: true, deleted: true },
@@ -401,7 +459,7 @@ router.patch("/comments/:id", async (req: AuthRequest, res: Response) => {
 });
 
 // Soft delete: blank the body but keep the row so replies stay reachable.
-router.delete("/comments/:id", async (req: AuthRequest, res: Response) => {
+router.delete("/comments/:id", authenticate, async (req: AuthRequest, res: Response) => {
   const existing = await prisma.articleComment.findUnique({
     where: { id: req.params.id as string },
     select: { id: true, authorId: true, articleId: true, deleted: true },
@@ -427,7 +485,7 @@ router.delete("/comments/:id", async (req: AuthRequest, res: Response) => {
   res.json({ ok: true });
 });
 
-router.post("/comments/:id/vote", async (req: AuthRequest, res: Response) => {
+router.post("/comments/:id/vote", authenticate, async (req: AuthRequest, res: Response) => {
   const parsed = voteSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues });

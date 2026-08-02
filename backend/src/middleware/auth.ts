@@ -27,6 +27,32 @@ export function authenticate(
   }
 }
 
+/**
+ * Attaches req.user when a valid token is present, but lets the request
+ * through either way. Used by pages guests can read — the community feed and
+ * article pages — where a signed-in caller additionally gets their own vote
+ * state, and a guest simply gets none.
+ */
+export function optionalAuth(
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (token) {
+    try {
+      req.user = jwt.verify(token, process.env.JWT_SECRET!) as {
+        id: string;
+        role: string;
+      };
+    } catch {
+      // An expired or bogus token is treated as "not signed in" rather than
+      // an error, so a stale tab can still read public pages.
+    }
+  }
+  next();
+}
+
 export function requireAdmin(
   req: AuthRequest,
   res: Response,

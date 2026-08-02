@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import LandingPage from './pages/LandingPage'
-import Dashboard from './pages/Dashboard'
+import Home from './pages/Home'
+import ContestList from './pages/ContestList'
 import ContestRoom from './pages/ContestRoom'
 import Result from './pages/Result'
 import MockTests from './pages/MockTests'
@@ -20,17 +21,17 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
 }
 
-function HomePage() {
-  return localStorage.getItem('token') ? <Dashboard /> : <LandingPage />
-}
-
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<HomePage />} />
+        {/* One home page for everyone, Codeforces-style: the same feed and
+            sidebar whether or not you're signed in. */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<LandingPage />} />
+        <Route path="/contests" element={<PrivateRoute><ContestList /></PrivateRoute>} />
         <Route path="/contests/:id" element={<PrivateRoute><ContestRoom /></PrivateRoute>} />
         <Route path="/contests/:id/result" element={<PrivateRoute><Result /></PrivateRoute>} />
         <Route path="/mocks" element={<PrivateRoute><MockTests /></PrivateRoute>} />
@@ -39,11 +40,11 @@ export default function App() {
         <Route path="/bookmarks" element={<PrivateRoute><Bookmarks /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/profile/:id" element={<PrivateRoute><PublicProfile /></PrivateRoute>} />
-        <Route path="/leaderboard" element={<PrivateRoute><Leaderboard /></PrivateRoute>} />
-        <Route path="/community" element={<PrivateRoute><Community /></PrivateRoute>} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/community" element={<Community />} />
         {/* Static segment before the dynamic one so /community/new isn't read as an id. */}
         <Route path="/community/new" element={<PrivateRoute><ArticleEditor /></PrivateRoute>} />
-        <Route path="/community/:id" element={<PrivateRoute><ArticleView /></PrivateRoute>} />
+        <Route path="/community/:id" element={<ArticleView />} />
         <Route path="/community/:id/edit" element={<PrivateRoute><ArticleEditor /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

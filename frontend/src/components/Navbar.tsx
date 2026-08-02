@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toggleTheme, getTheme } from '../lib/theme'
 
+// `guest: true` means the link is shown to logged-out visitors too. The rest
+// are hidden rather than shown-and-bounced, so a guest never clicks into a
+// login redirect from the nav.
 const NAV_ITEMS = [
-  { path: '/', label: 'Contests' },
+  { path: '/', label: 'Home', guest: true },
+  { path: '/contests', label: 'Contests', guest: true },
   { path: '/mocks', label: 'Mock Tests' },
-  { path: '/leaderboard', label: 'Leaderboard' },
-  { path: '/community', label: 'Community' },
+  { path: '/leaderboard', label: 'Leaderboard', guest: true },
+  { path: '/community', label: 'Community', guest: true },
   { path: '/bookmarks', label: 'Bookmarks' },
   { path: '/profile', label: 'Profile' },
 ]
@@ -15,6 +19,8 @@ export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const signedIn = Boolean(localStorage.getItem('token'))
+  const navItems = NAV_ITEMS.filter(i => signedIn || i.guest)
   const [dark, setDark] = useState(getTheme() === 'dark')
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -40,7 +46,7 @@ export default function Navbar() {
 
   const isActive = (path: string) =>
     path === '/'
-      ? location.pathname === '/' || location.pathname.startsWith('/contest')
+      ? location.pathname === '/'
       : location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
@@ -50,7 +56,7 @@ export default function Navbar() {
           Rank<span>Arena</span>
         </button>
         <div className="nav-links">
-          {NAV_ITEMS.map(item => (
+          {navItems.map(item => (
             <button
               key={item.path}
               className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
@@ -66,12 +72,21 @@ export default function Navbar() {
         <button className="theme-toggle" onClick={handleThemeToggle} title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
           {dark ? '☀️' : '🌙'}
         </button>
-        <button className="navbar-user" onClick={() => navigate('/profile')}>
-          <span className="navbar-avatar">{(user.name || '?')[0].toUpperCase()}</span>
-          <span className="navbar-username">{user.name}</span>
-          <span className="rating-badge">⭐ {user.rating ?? 1500}</span>
-        </button>
-        <button className="btn btn-ghost btn-sm navbar-logout" onClick={logout}>Logout</button>
+        {signedIn ? (
+          <>
+            <button className="navbar-user" onClick={() => navigate('/profile')}>
+              <span className="navbar-avatar">{(user.name || '?')[0].toUpperCase()}</span>
+              <span className="navbar-username">{user.name}</span>
+              <span className="rating-badge">⭐ {user.rating ?? 1500}</span>
+            </button>
+            <button className="btn btn-ghost btn-sm navbar-logout" onClick={logout}>Logout</button>
+          </>
+        ) : (
+          <div className="navbar-guest">
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/login')}>Log in</button>
+            <button className="btn btn-primary btn-sm" onClick={() => navigate('/register')}>Sign up</button>
+          </div>
+        )}
         <button
           className="nav-toggle"
           onClick={() => setMenuOpen(o => !o)}
@@ -86,7 +101,7 @@ export default function Navbar() {
         <>
           <div className="nav-drawer-backdrop" onClick={() => setMenuOpen(false)} />
           <div className="nav-drawer">
-            {NAV_ITEMS.map(item => (
+            {navItems.map(item => (
               <button
                 key={item.path}
                 className={`nav-drawer-link ${isActive(item.path) ? 'active' : ''}`}
@@ -96,7 +111,14 @@ export default function Navbar() {
               </button>
             ))}
             <div className="nav-drawer-sep" />
-            <button className="nav-drawer-link nav-drawer-logout" onClick={logout}>Logout</button>
+            {signedIn ? (
+              <button className="nav-drawer-link nav-drawer-logout" onClick={logout}>Logout</button>
+            ) : (
+              <>
+                <button className="nav-drawer-link" onClick={() => navigate('/login')}>Log in</button>
+                <button className="nav-drawer-link nav-drawer-signup" onClick={() => navigate('/register')}>Sign up</button>
+              </>
+            )}
           </div>
         </>
       )}

@@ -1590,3 +1590,103 @@ select.input { cursor: pointer; }
   /* Reclaim width on phones: replies stop indenting much sooner. */
   .comment-children { margin-left: 6px; padding-left: 11px; }
 }
+
+/* ======================== Home (guest + signed in) =====================
+   One page for both, Codeforces-style: the feed on the left, sidebar
+   widgets on the right. The only guest-specific piece is the intro block. */
+
+.home-page { padding-top: 20px; }
+
+/* Guest intro — a compact pitch above the feed, not a separate landing page. */
+.guest-intro { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 12px; padding: 22px 24px; margin-bottom: 22px; box-shadow: var(--shadow); }
+.guest-intro-title { font-size: 24px; font-weight: 800; color: var(--heading); margin: 0 0 8px; letter-spacing: -.3px; line-height: 1.25; }
+.guest-intro-sub { font-size: 14px; color: var(--text-muted); line-height: 1.65; margin: 0 0 14px; max-width: 52ch; }
+.guest-stats { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+.guest-stats strong { color: var(--heading); font-weight: 700; }
+.guest-intro-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Feed */
+.feed-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.feed-title { font-size: 17px; font-weight: 700; color: var(--heading); margin: 0; }
+.feed-more { font-size: 13px; font-weight: 600; color: var(--primary); text-decoration: none; }
+.feed-more:hover { text-decoration: underline; }
+.feed-list { display: flex; flex-direction: column; gap: 14px; }
+
+.feed-entry { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px 15px; box-shadow: var(--shadow); overflow: hidden; transition: border-color .18s, box-shadow .18s; }
+.feed-entry::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent, var(--border)); opacity: .75; }
+.feed-entry:hover { border-color: var(--accent, var(--primary)); box-shadow: var(--shadow-md); }
+.feed-entry-top { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+.feed-entry-title { display: block; font-size: 19px; font-weight: 700; color: var(--heading); text-decoration: none; line-height: 1.3; margin-bottom: 5px; transition: color .15s; }
+.feed-entry-title:hover { color: var(--accent, var(--primary)); }
+.feed-entry-byline { font-size: 12.5px; color: var(--text-muted); margin: 0 0 10px; }
+.feed-entry-byline .article-author { text-decoration: none; }
+.feed-entry-byline .article-author:hover { text-decoration: underline; }
+.feed-entry-excerpt { font-size: 14px; color: var(--text); line-height: 1.7; margin: 0 0 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.feed-entry-foot { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); padding-top: 11px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.feed-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+.feed-score.positive { color: var(--success); }
+.feed-score.negative { color: var(--danger); }
+.feed-comments { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); text-decoration: none; font-weight: 600; padding: 3px 9px; border-radius: 20px; transition: background .15s, color .15s; }
+.feed-comments:hover { background: var(--bg); color: var(--primary); }
+
+/* Sidebar widgets — the boxed "→ Heading" pattern from Codeforces. */
+.home-sidebar { gap: 16px; }
+.side-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); }
+.side-card-head { padding: 9px 14px; font-size: 13px; font-weight: 700; color: var(--primary); background: var(--bg); border-bottom: 1px solid var(--border); }
+.side-card-body { padding: 14px; }
+.side-card-foot { padding: 8px 14px 11px; border-top: 1px solid var(--border); }
+.side-empty { font-size: 13px; color: var(--text-muted); text-align: center; }
+.side-link { font-size: 12.5px; font-weight: 600; color: var(--primary); text-decoration: none; }
+.side-link:hover { text-decoration: underline; }
+
+.side-attention { border-color: var(--primary); }
+.attention-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin: 0 0 6px; text-align: center; }
+.attention-title { display: block; font-size: 14px; font-weight: 700; color: var(--primary); text-decoration: none; text-align: center; line-height: 1.4; margin-bottom: 8px; }
+.attention-title:hover { text-decoration: underline; }
+.attention-clock { font-size: 21px; font-weight: 800; color: var(--heading); text-align: center; margin: 0 0 12px; font-variant-numeric: tabular-nums; letter-spacing: .5px; }
+.attention-registered { display: block; text-align: center; font-size: 13px; font-weight: 700; color: var(--success); }
+
+.rating-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.rating-block-tier { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; }
+.rating-block-value { font-size: 30px; font-weight: 800; line-height: 1.1; }
+.rating-block .side-link { margin-top: 8px; }
+
+.side-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.side-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; padding: 8px 14px 6px; border-bottom: 1px solid var(--border); }
+.side-table th:last-child, .side-table td:last-child { text-align: right; }
+.side-table td { padding: 6px 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+.side-table tr:last-child td { border-bottom: none; }
+.side-row-me { background: var(--primary-light); }
+.side-user { font-weight: 700; text-decoration: none; }
+.side-user:hover { text-decoration: underline; }
+.side-num { font-weight: 700; color: var(--heading); font-variant-numeric: tabular-nums; }
+
+.side-results { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; }
+.side-result { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-decoration: none; font-size: 13px; }
+.side-result-title { color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-result:hover .side-result-title { color: var(--primary); }
+.side-result-delta { font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.side-result-delta.pos { color: var(--success); }
+.side-result-delta.neg { color: var(--danger); }
+
+/* Guest prompt in place of the comment box */
+.comment-signin { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 16px; background: var(--bg); border: 1px dashed var(--border); border-radius: var(--radius); font-size: 14px; color: var(--text-muted); }
+
+/* Guest nav */
+.navbar-guest { display: flex; align-items: center; gap: 8px; }
+.nav-drawer-signup { color: var(--primary); font-weight: 700; }
+
+@media (max-width: 980px) {
+  /* Sidebar drops under the feed rather than squeezing it. */
+  .home-layout { grid-template-columns: 1fr; }
+  .home-sidebar { flex-direction: row; flex-wrap: wrap; margin-top: 20px; }
+  .home-sidebar > .side-card { flex: 1 1 260px; }
+}
+@media (max-width: 600px) {
+  .guest-intro { padding: 18px; }
+  .guest-intro-title { font-size: 20px; }
+  .feed-entry { padding: 15px 17px 13px; }
+  .feed-entry-title { font-size: 17px; }
+  .feed-comments { margin-left: 0; padding-left: 0; }
+  .home-sidebar { flex-direction: column; }
+}

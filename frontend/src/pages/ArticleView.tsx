@@ -22,6 +22,7 @@ export default function ArticleView() {
   const [notFound, setNotFound] = useState(false)
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const signedIn = Boolean(localStorage.getItem('token'))
   usePageMeta(article ? `${article.title} — RankArena` : 'Article — RankArena')
 
   const loadComments = useCallback(async () => {
@@ -140,7 +141,7 @@ export default function ArticleView() {
               id={article.id}
               score={article.score}
               myVote={article.myVote}
-              disabled={article.author.id === user.id}
+              disabled={article.author.id === user.id || !signedIn}
             />
             <div className="article-full-headtext">
               <div className="article-row-top">
@@ -208,30 +209,39 @@ export default function ArticleView() {
               : `${article.commentCount} ${article.commentCount === 1 ? 'comment' : 'comments'}`}
           </h2>
 
-          <div className="comment-editor">
-            <textarea
-              className="input comment-textarea"
-              placeholder="Share your take — Markdown works here."
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              rows={4}
-            />
-            <div className="comment-actions">
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={submitTopLevel}
-                disabled={posting || !draft.trim()}
-              >
-                {posting ? 'Posting…' : 'Post comment'}
-              </button>
+          {signedIn ? (
+            <div className="comment-editor">
+              <textarea
+                className="input comment-textarea"
+                placeholder="Share your take — Markdown works here."
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                rows={4}
+              />
+              <div className="comment-actions">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={submitTopLevel}
+                  disabled={posting || !draft.trim()}
+                >
+                  {posting ? 'Posting…' : 'Post comment'}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="comment-signin">
+              <span>Join the discussion —</span>
+              <Link to="/register" className="btn btn-primary btn-sm">Create an account</Link>
+              <Link to="/login" className="side-link">or log in</Link>
+            </div>
+          )}
 
           {error && <p className="comment-error">{error}</p>}
 
           <CommentThread
             comments={comments}
             currentUserId={user.id}
+            signedIn={signedIn}
             articleAuthorId={article.author.id}
             onReply={postComment}
             onChanged={refresh}
