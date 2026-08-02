@@ -12,6 +12,9 @@ import Bookmarks from './pages/Bookmarks'
 import Profile from './pages/Profile'
 import PublicProfile from './pages/PublicProfile'
 import Leaderboard from './pages/Leaderboard'
+import Community from './pages/Community'
+import ArticleView from './pages/ArticleView'
+import ArticleEditor from './pages/ArticleEditor'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
@@ -37,6 +40,11 @@ export default function App() {
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/profile/:id" element={<PrivateRoute><PublicProfile /></PrivateRoute>} />
         <Route path="/leaderboard" element={<PrivateRoute><Leaderboard /></PrivateRoute>} />
+        <Route path="/community" element={<PrivateRoute><Community /></PrivateRoute>} />
+        {/* Static segment before the dynamic one so /community/new isn't read as an id. */}
+        <Route path="/community/new" element={<PrivateRoute><ArticleEditor /></PrivateRoute>} />
+        <Route path="/community/:id" element={<PrivateRoute><ArticleView /></PrivateRoute>} />
+        <Route path="/community/:id/edit" element={<PrivateRoute><ArticleEditor /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

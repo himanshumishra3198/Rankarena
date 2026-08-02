@@ -9,6 +9,10 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/Article'
+export type * from './models/ArticleComment'
+export type * from './models/ArticleVote'
+export type * from './models/CommentVote'
 export type * from './models/Bookmark'
 export type * from './models/Follow'
 export type * from './models/Contest'

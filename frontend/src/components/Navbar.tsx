@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { path: '/', label: 'Contests' },
   { path: '/mocks', label: 'Mock Tests' },
   { path: '/leaderboard', label: 'Leaderboard' },
+  { path: '/community', label: 'Community' },
   { path: '/bookmarks', label: 'Bookmarks' },
   { path: '/profile', label: 'Profile' },
 ]

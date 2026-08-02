@@ -75,6 +75,16 @@ export const ReportStatus = {
 export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
 
 
+export const ArticleType = {
+  GENERAL: 'GENERAL',
+  ANNOUNCEMENT: 'ANNOUNCEMENT',
+  TECHNIQUE: 'TECHNIQUE',
+  EDITORIAL: 'EDITORIAL'
+} as const
+
+export type ArticleType = (typeof ArticleType)[keyof typeof ArticleType]
+
+
 export const PassageType = {
   TEXT: 'TEXT',
   TABLE: 'TABLE'

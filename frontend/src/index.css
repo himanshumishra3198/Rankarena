@@ -1361,3 +1361,135 @@ select.input { cursor: pointer; }
 
 .answer-bar { display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: var(--border); }
 .answer-bar > div { transition: flex .3s; }
+
+/* ============================ Community ============================== */
+
+.community-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+.community-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.community-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.community-tabs { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px; }
+.community-tab { padding: 6px 14px; border: none; background: transparent; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; }
+.community-tab.active { background: var(--surface); color: var(--heading); box-shadow: var(--shadow); }
+.community-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.community-chip { padding: 5px 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: border-color .15s, color .15s; }
+.community-chip:hover { color: var(--heading); }
+.community-chip.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.community-empty { text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.community-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; }
+.community-page-label { font-size: 13px; color: var(--text-muted); }
+
+/* Vote control */
+.vote-box { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.vote-column { flex-direction: column; }
+.vote-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 12px; line-height: 1; padding: 3px 5px; border-radius: 4px; transition: color .15s, background .15s; }
+.vote-btn:hover:not(:disabled) { background: var(--bg); color: var(--heading); }
+.vote-btn:disabled { opacity: .35; cursor: not-allowed; }
+.vote-btn.active-up { color: var(--success); }
+.vote-btn.active-down { color: var(--danger); }
+.vote-score { font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 26px; text-align: center; }
+.vote-score.positive { color: var(--success); }
+.vote-score.negative { color: var(--danger); }
+
+/* Article list */
+.article-list { display: flex; flex-direction: column; gap: 10px; }
+.article-row { display: flex; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+.article-row.pinned { border-color: var(--primary); }
+.article-row-body { min-width: 0; flex: 1; }
+.article-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.article-pin { font-size: 11px; font-weight: 700; color: var(--primary); }
+.article-type { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; background: var(--border); color: var(--text-muted); }
+.article-type-announcement { background: var(--primary-light); color: var(--primary); }
+.article-type-technique { background: var(--success-light); color: var(--success); }
+.article-type-editorial { background: var(--danger-light); color: var(--danger); }
+.article-title-link { font-size: 17px; font-weight: 700; color: var(--heading); text-decoration: none; display: block; margin-bottom: 4px; }
+.article-title-link:hover { color: var(--primary); }
+.article-excerpt { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.article-row-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; }
+.article-author { font-weight: 700; text-decoration: none; }
+.article-author:hover { text-decoration: underline; }
+.article-comment-count { color: var(--text-muted); text-decoration: none; }
+.article-comment-count:hover { color: var(--primary); }
+
+/* Article detail */
+.article-back { display: inline-block; font-size: 13px; color: var(--text-muted); text-decoration: none; margin-bottom: 14px; }
+.article-back:hover { color: var(--primary); }
+.article-full { margin-bottom: 16px; }
+.article-full-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 18px; }
+.article-full-headtext { min-width: 0; flex: 1; }
+.article-full-title { font-size: 26px; font-weight: 800; color: var(--heading); margin: 0 0 8px; line-height: 1.25; }
+.article-owner-actions { display: flex; gap: 8px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.article-danger { color: var(--danger); }
+
+/* Comments */
+.article-comments-title { font-size: 16px; font-weight: 700; color: var(--heading); margin: 0 0 16px; }
+.comment-thread { margin-top: 20px; display: flex; flex-direction: column; gap: 16px; }
+.comment-main { display: flex; gap: 12px; align-items: flex-start; }
+.comment-body-col { min-width: 0; flex: 1; }
+.comment-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; flex-wrap: wrap; }
+.comment-author { font-weight: 700; text-decoration: none; }
+.comment-author:hover { text-decoration: underline; }
+.comment-dot { color: var(--border); }
+.comment-edited { font-style: italic; }
+.comment-collapse { background: none; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; padding: 0 4px; font-family: inherit; }
+.comment-collapse:hover { color: var(--primary); }
+.comment-text { font-size: 14px; line-height: 1.65; color: var(--heading); }
+.comment-deleted-label { font-style: italic; }
+.comment-deleted-body { font-size: 13px; color: var(--text-muted); font-style: italic; margin: 0; }
+.comment-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+.comment-action { background: none; border: none; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; padding: 2px 0; font-family: inherit; }
+.comment-action:hover { color: var(--primary); }
+.comment-action-danger:hover { color: var(--danger); }
+.comment-editor { margin-top: 8px; }
+.comment-textarea { font-family: inherit; line-height: 1.6; resize: vertical; }
+.comment-error { color: var(--danger); font-size: 12px; margin: 6px 0 0; }
+.comment-empty { color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0; margin: 0; }
+/* Replies indent with a rail, up to the depth cap set in CommentThread. */
+.comment-children { margin-left: 16px; padding-left: 16px; border-left: 2px solid var(--border); margin-top: 14px; display: flex; flex-direction: column; gap: 14px; }
+.comment-children-flat { margin-left: 0; padding-left: 0; border-left: none; }
+
+/* Editor */
+.editor-card { display: flex; flex-direction: column; }
+.editor-label { font-size: 13px; font-weight: 600; color: var(--heading); margin-bottom: 6px; }
+.editor-types { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.editor-type { padding: 7px 14px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; }
+.editor-type.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.editor-hint { font-size: 12px; color: var(--text-muted); margin: 0 0 18px; }
+.editor-body-head { display: flex; align-items: center; justify-content: space-between; }
+.editor-preview-toggle { background: none; border: none; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0 0 6px; font-family: inherit; }
+.editor-textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.7; resize: vertical; }
+.editor-preview { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; min-height: 200px; background: var(--bg); }
+.editor-error { color: var(--danger); font-size: 13px; margin: 12px 0 0; }
+.editor-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.editor-label + .input { margin-bottom: 18px; }
+
+/* Rendered Markdown */
+.markdown { color: var(--heading); line-height: 1.7; word-wrap: break-word; overflow-wrap: break-word; }
+.markdown > *:first-child { margin-top: 0; }
+.markdown > *:last-child { margin-bottom: 0; }
+.markdown h1 { font-size: 22px; font-weight: 700; margin: 26px 0 10px; }
+.markdown h2 { font-size: 19px; font-weight: 700; margin: 24px 0 10px; }
+.markdown h3 { font-size: 16px; font-weight: 700; margin: 20px 0 8px; }
+.markdown h4 { font-size: 14px; font-weight: 700; margin: 18px 0 8px; }
+.markdown p { margin: 0 0 14px; }
+.markdown a { color: var(--primary); text-decoration: underline; }
+.markdown ul, .markdown ol { margin: 0 0 14px; padding-left: 24px; }
+.markdown li { margin-bottom: 5px; }
+.markdown blockquote { margin: 0 0 14px; padding: 8px 16px; border-left: 3px solid var(--primary); background: var(--bg); color: var(--text-muted); border-radius: 0 var(--radius) var(--radius) 0; }
+.markdown blockquote p:last-child { margin-bottom: 0; }
+.markdown code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+/* Code blocks scroll on their own so a long line can't widen the page. */
+.markdown pre { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; overflow-x: auto; margin: 0 0 14px; }
+.markdown pre code { background: none; border: none; padding: 0; font-size: 13px; line-height: 1.6; }
+.markdown hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+
+@media (max-width: 600px) {
+  .community-header { flex-direction: column; align-items: stretch; }
+  .community-controls { flex-direction: column; align-items: stretch; }
+  .community-tabs { justify-content: center; }
+  .article-row { padding: 14px; gap: 10px; }
+  .article-title-link { font-size: 16px; }
+  .article-full-title { font-size: 21px; }
+  .article-full-head { gap: 10px; }
+  /* Reclaim width on phones: replies stop indenting much sooner. */
+  .comment-children { margin-left: 6px; padding-left: 10px; }
+}

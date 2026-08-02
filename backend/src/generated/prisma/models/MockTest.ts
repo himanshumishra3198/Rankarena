@@ -418,10 +418,6 @@ export type MockTestScalarRelationFilter = {
   isNot?: Prisma.MockTestWhereInput
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type MockTestCreateNestedOneWithoutMockTestQuestionsInput = {
   create?: Prisma.XOR<Prisma.MockTestCreateWithoutMockTestQuestionsInput, Prisma.MockTestUncheckedCreateWithoutMockTestQuestionsInput>
   connectOrCreate?: Prisma.MockTestCreateOrConnectWithoutMockTestQuestionsInput

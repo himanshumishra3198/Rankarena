@@ -20,6 +20,7 @@ import followRoutes from "./routes/follows";
 import reportRoutes from "./routes/reports";
 import bookmarkRoutes from "./routes/bookmarks";
 import statsRoutes from "./routes/stats";
+import communityRoutes from "./routes/community";
 import prisma from "./lib/prisma";
 import { computeFingerprint } from "./lib/fingerprint";
 
@@ -60,6 +61,19 @@ const submitLimiter = rateLimit({
   message: { error: "Too many submission attempts." },
 });
 
+// Community writes are user-generated content, so cap the posting rate to
+// blunt spam. Reads (GET) are left alone.
+const communityWriteLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Votes are exempt: they're idempotent per target, and someone reading
+  // through the feed can legitimately cast a lot of them in a short spell.
+  skip: (req) => req.method === "GET" || req.path.endsWith("/vote"),
+  message: { error: "You're posting too fast, please slow down." },
+});
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/auth", authLimiter, authRoutes);
@@ -74,6 +88,7 @@ app.use("/follows", followRoutes);
 app.use("/reports", reportRoutes);
 app.use("/bookmarks", bookmarkRoutes);
 app.use("/stats", statsRoutes);
+app.use("/community", communityWriteLimiter, communityRoutes);
 
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled promise rejection:", reason);

@@ -624,10 +624,6 @@ export type EnumQuestionTypeFieldUpdateOperationsInput = {
   set?: $Enums.QuestionType
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type EnumSubjectFieldUpdateOperationsInput = {
   set?: $Enums.Subject
 }

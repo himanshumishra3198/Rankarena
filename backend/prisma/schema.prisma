@@ -23,8 +23,95 @@ model User {
   bookmarks       Bookmark[]
   following       Follow[]         @relation("UserFollowing")
   followers       Follow[]         @relation("UserFollowers")
+  articles        Article[]
+  articleComments ArticleComment[]
+  articleVotes    ArticleVote[]
+  commentVotes    CommentVote[]
 
   @@map("users")
+}
+
+// A community post — contest announcements, technique write-ups, editorials.
+// `score` and `commentCount` are denormalized so the list page can sort by
+// popularity without aggregating votes/comments on every request; both are
+// kept in step with their source tables inside a transaction.
+model Article {
+  id           String      @id @default(uuid())
+  authorId     String      @map("author_id")
+  title        String
+  body         String
+  type         ArticleType @default(GENERAL)
+  pinned       Boolean     @default(false)
+  score        Int         @default(0)
+  commentCount Int         @default(0)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  author   User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  votes    ArticleVote[]
+  comments ArticleComment[]
+
+  @@index([createdAt])
+  @@index([score])
+  @@index([authorId])
+  @@map("articles")
+}
+
+// Threaded comment. Replies point at their parent, so a thread is rebuilt by
+// nesting on `parentId`. Deletes are soft (body blanked, `deleted` set) so a
+// removed parent doesn't orphan the replies underneath it.
+model ArticleComment {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  authorId  String   @map("author_id")
+  parentId  String?  @map("parent_id")
+  body      String
+  score     Int      @default(0)
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  article  Article          @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author   User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent   ArticleComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  ArticleComment[] @relation("CommentReplies")
+  votes    CommentVote[]
+
+  @@index([articleId])
+  @@index([parentId])
+  @@map("article_comments")
+}
+
+// value is +1 or -1. One row per user per article; voting the same way twice
+// deletes the row (unvote), matching Codeforces' toggle behaviour.
+model ArticleVote {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  userId    String   @map("user_id")
+  value     Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@map("article_votes")
+}
+
+model CommentVote {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  userId    String   @map("user_id")
+  value     Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment ArticleComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@map("comment_votes")
 }
 
 // A student's saved question for later revision.
@@ -278,6 +365,13 @@ enum ReportStatus {
   OPEN
   RESOLVED
   DISMISSED
+}
+
+enum ArticleType {
+  GENERAL
+  ANNOUNCEMENT
+  TECHNIQUE
+  EDITORIAL
 }
 
 enum PassageType {
