@@ -76,3 +76,54 @@ export interface ContestQuestion {
   negativeMarks: number
   question: Question
 }
+
+export type ArticleType = 'GENERAL' | 'ANNOUNCEMENT' | 'TECHNIQUE' | 'EDITORIAL'
+
+export interface ArticleAuthor {
+  id: string
+  name: string
+  rating: number
+  role: 'STUDENT' | 'ADMIN'
+}
+
+export interface ArticleListItem {
+  id: string
+  title: string
+  excerpt: string
+  type: ArticleType
+  pinned: boolean
+  score: number
+  commentCount: number
+  createdAt: string
+  author: ArticleAuthor
+  myVote: number
+}
+
+export interface Article {
+  id: string
+  title: string
+  body: string
+  type: ArticleType
+  pinned: boolean
+  score: number
+  commentCount: number
+  createdAt: string
+  updatedAt: string
+  authorId: string
+  author: ArticleAuthor
+  myVote: number
+  canModify: boolean
+}
+
+export interface ArticleComment {
+  id: string
+  parentId: string | null
+  body: string
+  deleted: boolean
+  score: number
+  createdAt: string
+  updatedAt: string
+  author: ArticleAuthor | null
+  myVote: number
+  canModify: boolean
+}

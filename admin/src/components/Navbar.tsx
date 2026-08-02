@@ -52,6 +52,12 @@ export default function Navbar() {
             Mock Tests
           </button>
           <button
+            className={`nav-link ${pathname.startsWith('/community') ? 'active' : ''}`}
+            onClick={() => navigate('/community')}
+          >
+            Community
+          </button>
+          <button
             className={`nav-link ${pathname.startsWith('/reports') ? 'active' : ''}`}
             onClick={() => navigate('/reports')}
           >

@@ -6,6 +6,9 @@ import Questions from './pages/Questions'
 import MockTests from './pages/MockTests'
 import MockTestDetail from './pages/MockTestDetail'
 import Reports from './pages/Reports'
+import Community from './pages/Community'
+import ArticleDetail from './pages/ArticleDetail'
+import ArticleEditor from './pages/ArticleEditor'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
@@ -22,6 +25,11 @@ export default function App() {
         <Route path="/mocks" element={<PrivateRoute><MockTests /></PrivateRoute>} />
         <Route path="/mocks/:id" element={<PrivateRoute><MockTestDetail /></PrivateRoute>} />
         <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
+        <Route path="/community" element={<PrivateRoute><Community /></PrivateRoute>} />
+        {/* Static segment before the dynamic one so /community/new isn't read as an id. */}
+        <Route path="/community/new" element={<PrivateRoute><ArticleEditor /></PrivateRoute>} />
+        <Route path="/community/:id" element={<PrivateRoute><ArticleDetail /></PrivateRoute>} />
+        <Route path="/community/:id/edit" element={<PrivateRoute><ArticleEditor /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
