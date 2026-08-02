@@ -90,6 +90,9 @@ const FAQS = [
 ];
 
 export default function LandingPage() {
+  // This page is now /about rather than the home page, so it has to cope with
+  // a signed-in visitor arriving on it.
+  const isSignedIn = Boolean(localStorage.getItem("token"));
   usePageMeta(
     "RankArena — Live SSC Mock Tests & Rated Contests (CGL, CHSL, MTS, CPO, GD)",
     "Compete in timed, ranked SSC mock contests and sectional mock tests for CGL, CHSL, MTS, CPO and GD. Live leaderboards, ratings, detailed solutions and performance analysis.",
@@ -189,21 +192,29 @@ export default function LandingPage() {
     <div className="landing-root">
       {/* ── Navbar ─────────────────────────────────────── */}
       <nav className="landing-nav">
-        <span className="navbar-brand" style={{ cursor: "default" }}>
+        <button className="navbar-brand" onClick={() => navigate("/")}>
           Rank<span>Arena</span>
-        </span>
+        </button>
         <div className="landing-nav-links">
           <a href="#contests">Contests</a>
           <a href="#mocks">Mock Tests</a>
           <a href="#leaderboard">Leaderboard</a>
         </div>
         <div className="landing-nav-actions">
+          {isSignedIn ? (
+            <button className="btn btn-primary btn-sm" onClick={() => navigate("/")}>
+              Go to home →
+            </button>
+          ) : (
+          <>
           <button className="btn btn-ghost btn-sm" onClick={() => navigate("/login")}>
             Login
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => navigate("/register")}>
             Sign Up Free
           </button>
+          </>
+          )}
         </div>
       </nav>
 
@@ -477,9 +488,9 @@ export default function LandingPage() {
 
       {/* ── Footer ──────────────────────────────────────── */}
       <footer className="landing-footer">
-        <span className="navbar-brand" style={{ cursor: "default", fontSize: 16 }}>
+        <button className="navbar-brand" style={{ fontSize: 16 }} onClick={() => navigate("/")}>
           Rank<span>Arena</span>
-        </span>
+        </button>
         <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
           Built for SSC aspirants
         </span>
