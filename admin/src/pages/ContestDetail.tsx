@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar'
 import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
 import { SegmentedRadio } from '../components/SegmentedRadio'
+import { TOPICS_BY_SUBJECT } from '../lib/topics'
 import type { Contest, Question, ContestQuestion, Section, Passage, QuestionType } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
 
@@ -18,7 +19,7 @@ const emptyQ = {
   questionType: 'STANDARD' as QuestionType,
   text: '', imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
-  correctOption: '', subject: 'QUANT', difficulty: 'MEDIUM',
+  correctOption: '', subject: 'QUANT', topic: '', difficulty: 'MEDIUM',
   solution: '', passageId: '',
   statements: ['', '', ''] as string[],
   conclusions: ['', '', ''] as string[],
@@ -309,6 +310,7 @@ export default function ContestDetail() {
       optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
       correctOption: q.correctOption,
       subject: q.subject,
+      topic: q.topic ?? '',
       difficulty: q.difficulty,
       solution: q.solution ?? '',
       passageId: q.passageId ?? '',
@@ -340,6 +342,7 @@ export default function ContestDetail() {
       optionA: newQ.optionA, optionB: newQ.optionB, optionC: newQ.optionC, optionD: newQ.optionD,
       correctOption: newQ.correctOption,
       subject: newQ.subject,
+      topic: newQ.topic || null,
       difficulty: newQ.difficulty,
       solution: hasContent(newQ.solution) ? newQ.solution : null,
       passageId: needsPassage ? newQ.passageId : null,
@@ -858,13 +861,29 @@ export default function ContestDetail() {
                   <label>Subject</label>
                   <SegmentedRadio value={newQ.subject}
                     options={SECTIONS.map(s => ({ value: s as string, label: SECTION_LABELS[s] }))}
-                    onChange={v => setNewQ(f => ({ ...f, subject: v }))} />
+                    onChange={v => setNewQ(f => ({
+                      ...f,
+                      subject: v,
+                      // Topics are subject-scoped, so a subject change drops a
+                      // tag that no longer applies.
+                      topic: TOPICS_BY_SUBJECT[v as keyof typeof TOPICS_BY_SUBJECT]?.includes(f.topic) ? f.topic : '',
+                    }))} />
                 </div>
                 <div className="form-group">
                   <label>Difficulty</label>
                   <SegmentedRadio value={newQ.difficulty}
                     options={DIFFICULTIES.map(d => ({ value: d as string, label: d }))}
                     onChange={v => setNewQ(f => ({ ...f, difficulty: v }))} />
+                </div>
+                <div className="form-group">
+                  <label>Topic <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                  <select className="input" value={newQ.topic}
+                    onChange={e => setNewQ(f => ({ ...f, topic: e.target.value }))}>
+                    <option value="">— No topic —</option>
+                    {(TOPICS_BY_SUBJECT[newQ.subject as keyof typeof TOPICS_BY_SUBJECT] ?? []).map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="form-group">

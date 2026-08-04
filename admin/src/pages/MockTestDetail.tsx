@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar'
 import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
 import { SegmentedRadio } from '../components/SegmentedRadio'
+import { TOPICS_BY_SUBJECT } from '../lib/topics'
 import type { MockTest, MockTestQuestion, Question, Passage, QuestionType } from '../lib/types'
 import { SECTION_LABELS, SECTIONS } from '../lib/types'
 
@@ -19,6 +20,7 @@ const emptyCreate = {
   text: '', imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
   correctOption: '',
+  topic: '',
   difficulty: 'MEDIUM',
   solution: '',
   passageId: '',
@@ -118,6 +120,7 @@ export default function MockTestDetail() {
       text: q.text, imageUrl: q.imageUrl ?? '',
       optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
       correctOption: q.correctOption,
+      topic: q.topic ?? '',
       difficulty: q.difficulty,
       solution: q.solution ?? '',
       passageId: q.passageId ?? '',
@@ -150,6 +153,7 @@ export default function MockTestDetail() {
       optionA: cForm.optionA, optionB: cForm.optionB, optionC: cForm.optionC, optionD: cForm.optionD,
       correctOption: cForm.correctOption,
       subject: mock.subject,
+      topic: cForm.topic || null,
       difficulty: cForm.difficulty,
       solution: hasContent(cForm.solution) ? cForm.solution : null,
       passageId: needsPassage ? cForm.passageId : null,
@@ -506,6 +510,17 @@ export default function MockTestDetail() {
                   <SegmentedRadio value={cForm.difficulty}
                     options={DIFFICULTIES.map(d => ({ value: d as string, label: d }))}
                     onChange={v => setCForm(f => ({ ...f, difficulty: v }))} />
+                </div>
+                <div className="form-group">
+                  {/* The mock fixes the subject, so the topic list follows it. */}
+                  <label>Topic <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                  <select className="input" value={cForm.topic}
+                    onChange={e => setCForm(f => ({ ...f, topic: e.target.value }))}>
+                    <option value="">— No topic —</option>
+                    {(TOPICS_BY_SUBJECT[mock.subject as keyof typeof TOPICS_BY_SUBJECT] ?? []).map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

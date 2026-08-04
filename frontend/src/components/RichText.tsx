@@ -27,11 +27,21 @@ function blocksToBr(html: string): string {
   const tmp = document.createElement('div')
   tmp.innerHTML = html
   tmp.querySelectorAll('div, p').forEach((el) => {
-    el.parentNode?.insertBefore(document.createElement('br'), el.nextSibling)
-    while (el.firstChild) el.parentNode!.insertBefore(el.firstChild, el)
+    const parent = el.parentNode
+    if (!parent) return
+    // A block starts a new line, so the break belongs BEFORE it. Chrome leaves
+    // the first typed line unwrapped and wraps only the ones after it, so
+    // appending the break instead merged the first two lines together.
+    if (!(parent === tmp && parent.firstChild === el)) {
+      parent.insertBefore(document.createElement('br'), el)
+    }
+    // Chrome emits <div><br></div> for a blank line. The break just added is
+    // that blank line; keeping the inner one too would double the gap.
+    if (el.childNodes.length === 1 && el.firstChild!.nodeName === 'BR') el.firstChild!.remove()
+    while (el.firstChild) parent.insertBefore(el.firstChild, el)
     el.remove()
   })
-  return tmp.innerHTML.replace(/(<br\s*\/?>)+$/i, '')
+  return tmp.innerHTML.replace(/^(<br\s*\/?>)+/i, '').replace(/(<br\s*\/?>)+$/i, '')
 }
 
 // Render admin-authored rich text safely (sanitized HTML) in the student app.
