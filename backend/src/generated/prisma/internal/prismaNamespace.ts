@@ -1840,6 +1840,7 @@ export const QuestionScalarFieldEnum = {
   optionD: 'optionD',
   correctOption: 'correctOption',
   subject: 'subject',
+  topic: 'topic',
   difficulty: 'difficulty',
   passageId: 'passageId',
   structuredData: 'structuredData',

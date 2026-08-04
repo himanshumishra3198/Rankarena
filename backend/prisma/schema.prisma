@@ -184,6 +184,9 @@ model Question {
   optionD        String       @map("option_d")
   correctOption  String       @map("correct_option")
   subject        Subject
+  // Optional syllabus topic, validated against src/lib/topics.ts rather than
+  // an enum so the list can change without a migration.
+  topic          String?
   difficulty     Difficulty   @default(MEDIUM)
   passageId      String?      @map("passage_id")
   structuredData Json?        @map("structured_data") // for SYLLOGISM: { statements: string[], conclusions: string[] }
@@ -197,6 +200,7 @@ model Question {
   bookmarks         Bookmark[]
 
   @@index([fingerprint])
+  @@index([subject, topic])
   @@map("questions")
 }
 

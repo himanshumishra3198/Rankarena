@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import api from '../lib/api'
+import { TOPICS_BY_SUBJECT } from '../lib/topics'
 import Navbar from '../components/Navbar'
 import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
@@ -32,6 +33,7 @@ const emptyForm = {
   optionA: '', optionB: '', optionC: '', optionD: '',
   correctOption: 'A' as Question['correctOption'],
   subject: 'REASONING' as Question['subject'],
+  topic: '',
   difficulty: 'MEDIUM' as Question['difficulty'],
   passageId: '',
   solution: '',
@@ -156,6 +158,7 @@ export default function Questions() {
   const [tab, setTab] = useState<'questions' | 'passages'>('questions')
   const [showForm, setShowForm] = useState(false)
   const [showPassageForm, setShowPassageForm] = useState(false)
+  const [filterTopic, setFilterTopic] = useState('')
   const [form, setForm] = useState(emptyForm)
   const [passageForm, setPassageForm] = useState(emptyPassageForm)
   const [saving, setSaving] = useState(false)
@@ -227,6 +230,7 @@ export default function Questions() {
       api.get('/admin/questions', {
         params: {
           ...(filterSubject ? { subject: filterSubject } : {}),
+          ...(filterTopic ? { topic: filterTopic } : {}),
           ...(filterType ? { questionType: filterType } : {}),
         }
       }),
@@ -237,7 +241,7 @@ export default function Questions() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [filterSubject, filterType])
+  useEffect(() => { load() }, [filterSubject, filterType, filterTopic])
 
   // ── Open / close / edit helpers ───────────────────────────────────────────
   function openCreateQuestion() {
@@ -255,6 +259,7 @@ export default function Questions() {
       optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
       correctOption: q.correctOption as any,
       subject: q.subject,
+      topic: q.topic ?? '',
       difficulty: q.difficulty,
       passageId: q.passageId ?? '',
       solution: q.solution ?? '',
@@ -307,6 +312,7 @@ export default function Questions() {
         optionC: form.optionC, optionD: form.optionD,
         correctOption: form.correctOption,
         subject: form.subject,
+        topic: form.topic || null,
         difficulty: form.difficulty,
         passageId: (form.questionType === 'PASSAGE' || form.questionType === 'TABLE') && form.passageId
           ? form.passageId : null,
@@ -596,7 +602,16 @@ export default function Questions() {
                 <div className="form-group">
                   <label>Subject</label>
                   <select className="input" value={form.subject}
-                    onChange={e => set('subject', e.target.value as any)}>
+                    onChange={e => {
+                      const next = e.target.value as Question['subject']
+                      setForm(f => ({
+                        ...f,
+                        subject: next,
+                        // A topic belongs to one subject, so switching subject
+                        // drops a tag that no longer applies.
+                        topic: TOPICS_BY_SUBJECT[next].includes(f.topic) ? f.topic : '',
+                      }))
+                    }}>
                     {SUBJECTS.map(s => <option key={s} value={s}>{SUBJECT_LABELS[s]}</option>)}
                   </select>
                 </div>
@@ -607,6 +622,23 @@ export default function Questions() {
                     {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
+              </div>
+
+              {/* Optional syllabus topic; the options follow the chosen subject. */}
+              <div className="form-group">
+                <label>
+                  Topic{' '}
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                    (optional — helps filter the bank and build topic-wise practice later)
+                  </span>
+                </label>
+                <select className="input" value={form.topic}
+                  onChange={e => set('topic', e.target.value)}>
+                  <option value="">— No topic —</option>
+                  {TOPICS_BY_SUBJECT[form.subject].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Detailed solution */}
@@ -638,12 +670,12 @@ export default function Questions() {
           <div className="card">
             <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
               <button className={`tab-btn ${filterSubject === '' ? 'active' : ''}`}
-                onClick={() => setFilterSubject('')}>
+                onClick={() => { setFilterSubject(''); setFilterTopic('') }}>
                 All subjects
               </button>
               {SUBJECTS.map(s => (
                 <button key={s} className={`tab-btn ${filterSubject === s ? 'active' : ''}`}
-                  onClick={() => setFilterSubject(s)}>
+                  onClick={() => { setFilterSubject(s); setFilterTopic('') }}>
                   {SUBJECT_LABELS[s]}
                 </button>
               ))}
@@ -656,6 +688,16 @@ export default function Questions() {
                   <option key={t} value={t}>{TYPE_LABELS[t]}</option>
                 ))}
               </select>
+              {filterSubject && (
+                <select className="input" style={{ width: 'auto' }} value={filterTopic}
+                  onChange={e => setFilterTopic(e.target.value)}>
+                  <option value="">All topics</option>
+                  <option value="__none">— Untagged —</option>
+                  {TOPICS_BY_SUBJECT[filterSubject as keyof typeof TOPICS_BY_SUBJECT].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              )}
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{questions.length} questions</span>
             </div>
 
@@ -668,7 +710,7 @@ export default function Questions() {
             {questions.length > 0 && (
               <table>
                 <thead>
-                  <tr><th>#</th><th>Question</th><th>Type</th><th>Subject</th><th>Diff</th><th>Ans</th><th></th></tr>
+                  <tr><th>#</th><th>Question</th><th>Type</th><th>Subject</th><th>Topic</th><th>Diff</th><th>Ans</th><th></th></tr>
                 </thead>
                 <tbody>
                   {questions.map((q, i) => (
@@ -706,6 +748,9 @@ export default function Questions() {
                         }}>{TYPE_LABELS[q.questionType]}</span>
                       </td>
                       <td style={{ fontSize: 13 }}>{SUBJECT_LABELS[q.subject]}</td>
+                      <td style={{ fontSize: 12.5, color: q.topic ? 'var(--heading)' : 'var(--text-muted)' }}>
+                        {q.topic || '—'}
+                      </td>
                       <td><span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span></td>
                       <td style={{ fontWeight: 700, color: 'var(--success)' }}>{q.correctOption}</td>
                       <td>

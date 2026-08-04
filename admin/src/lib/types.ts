@@ -61,6 +61,7 @@ export interface Question {
   optionD: string
   correctOption: string
   subject: 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+  topic?: string | null
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   passageId?: string | null
   passage?: Passage | null

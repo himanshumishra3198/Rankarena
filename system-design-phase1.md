@@ -101,9 +101,11 @@ Fifteen tables. Names in `snake_case` in the database, `camelCase` in the Prisma
 
 **`contests`** — id, title, start_time, duration_minutes, negative_marks (default 0.5), section_limits (JSON, e.g. `{ QUANT: 25, REASONING: 20 }`), status (`SCHEDULED` | `LIVE` | `ENDED`).
 
-**`questions`** — id, question_type, text, image_url, four options, correct_option, subject, difficulty, passage_id, structured_data (JSON), solution (HTML), fingerprint.
+**`questions`** — id, question_type, text, image_url, four options, correct_option, subject, **topic**, difficulty, passage_id, structured_data (JSON), solution (HTML), fingerprint.
 
 The `fingerprint` column is a normalized hash of the question text plus its options. It exists so the admin panel can catch an exact duplicate before it's added to the bank twice.
+
+`topic` is an optional syllabus tag — "Percentage", "Blood Relations", "Reading Comprehension" and so on, twelve per subject. It's plain text validated against `backend/src/lib/topics.ts` rather than a database enum, so the topic list can be edited without a migration; the cost is that the database won't enforce it, so every write path checks the value belongs to the question's subject. Changing a question's subject clears a topic that doesn't exist under the new one, rather than leaving a mismatched tag behind.
 
 **`passages`** — id, title, content, type (`TEXT` | `TABLE`), table_data (JSON). One passage groups several questions — a reading comprehension paragraph, or a data table that four questions all refer to.
 

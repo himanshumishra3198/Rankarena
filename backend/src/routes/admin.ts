@@ -4,6 +4,7 @@ import prisma from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
 import redis from "../lib/redis";
 import { computeFingerprint } from "../lib/fingerprint";
+import { isValidTopic } from "../lib/topics";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -17,6 +18,8 @@ function toQuestionData(d: Record<string, any>) {
     if (d[k] !== undefined) out[k] = d[k];
   }
   if (d.imageUrl !== undefined) out.imageUrl = d.imageUrl ?? null;
+  // Empty string from an unselected dropdown means "untagged", same as null.
+  if (d.topic !== undefined) out.topic = d.topic ? d.topic : null;
   if (d.passageId !== undefined) out.passageId = d.passageId ?? null;
   if (d.solution !== undefined) out.solution = d.solution ?? null;
   if (d.structuredData !== undefined) {
@@ -277,6 +280,9 @@ const questionSchema = z.object({
   optionD: z.string().min(1),
   correctOption: z.enum(["A", "B", "C", "D"]),
   subject: z.enum(["QUANT", "REASONING", "ENGLISH", "GK"]),
+  // Optional. Checked against the subject's topic list in the handlers, where
+  // the effective subject is known (an edit may change only one of the two).
+  topic: z.string().max(120).optional().nullable(),
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
   passageId: z.string().uuid().optional().nullable(),
   structuredData: z.record(z.string(), z.any()).optional().nullable(),
@@ -289,6 +295,11 @@ router.post("/questions", async (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
+  if (!isValidTopic(parsed.data.subject, parsed.data.topic)) {
+    res.status(400).json({ error: `"${parsed.data.topic}" is not a topic of ${parsed.data.subject}.` });
+    return;
+  }
+
   // Block exact duplicates
   const fingerprint = fingerprintOf(parsed.data);
   const existing = await prisma.question.findFirst({
@@ -334,10 +345,13 @@ router.get("/questions/similar", async (req: AuthRequest, res: Response) => {
 router.get("/questions", async (req: AuthRequest, res: Response) => {
   const subject = req.query.subject as string | undefined;
   const difficulty = req.query.difficulty as string | undefined;
+  const topic = req.query.topic as string | undefined;
   const questions = await prisma.question.findMany({
     where: {
       ...(subject ? { subject: subject as any } : {}),
       ...(difficulty ? { difficulty: difficulty as any } : {}),
+      // "__none" filters to questions nobody has tagged yet.
+      ...(topic ? (topic === "__none" ? { topic: null } : { topic }) : {}),
     },
     include: { passage: true },
     orderBy: { subject: "asc" },
@@ -351,6 +365,31 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues });
     return;
+  }
+
+  // A partial edit may change the subject, the topic, or only one of them, so
+  // validate the pair that the question will actually end up with. Moving a
+  // question to a new subject silently clears a topic that doesn't exist
+  // there, rather than rejecting the edit or leaving a mismatched tag behind.
+  if (parsed.data.subject !== undefined || parsed.data.topic !== undefined) {
+    const current = await prisma.question.findUnique({
+      where: { id },
+      select: { subject: true, topic: true },
+    });
+    if (!current) {
+      res.status(404).json({ error: "Question not found" });
+      return;
+    }
+    const nextSubject = parsed.data.subject ?? current.subject;
+    const nextTopic = parsed.data.topic !== undefined ? parsed.data.topic : current.topic;
+
+    if (parsed.data.topic !== undefined && !isValidTopic(nextSubject, nextTopic)) {
+      res.status(400).json({ error: `"${nextTopic}" is not a topic of ${nextSubject}.` });
+      return;
+    }
+    if (parsed.data.topic === undefined && !isValidTopic(nextSubject, nextTopic)) {
+      (parsed.data as Record<string, any>).topic = null;
+    }
   }
 
   const data = toQuestionData(parsed.data) as Prisma.QuestionUncheckedUpdateInput;
