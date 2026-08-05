@@ -265,21 +265,46 @@ select.input { cursor: pointer; }
 .question-text { font-size: 17px; font-weight: 500; color: var(--heading); line-height: 1.7; margin-bottom: 24px; }
 
 /* ── Rich question context (passage / table / syllogism) ───────────────────── */
+/* The passage is shared context, so it reads as a distinct block from the
+   question below it: its own surface, an accent edge, and a label. */
 .qc-context {
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 4px solid var(--primary);
   border-radius: var(--radius);
-  padding: 16px 18px;
-  margin-bottom: 18px;
+  padding: 18px 22px 20px;
+  margin-bottom: 22px;
 }
-.qc-context-title { font-weight: 600; font-size: 15px; color: var(--heading); margin-bottom: 10px; line-height: 1.5; }
+.qc-context-label {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+.qc-context-title { font-weight: 700; font-size: 15px; color: var(--heading); margin-bottom: 12px; line-height: 1.55; }
 .qc-context-text { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
-.qc-passage-text { font-size: 15px; line-height: 1.8; white-space: pre-wrap; margin-bottom: 0; }
 
-.qc-table-wrap { overflow-x: auto; }
+/* Reading typography: a comfortable measure, generous leading, and real
+   spacing between paragraphs so a long passage stays scannable. */
+.qc-passage-body { max-width: 68ch; }
+.qc-passage-para {
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--text);
+  margin: 0 0 14px;
+  text-align: left;
+}
+.qc-passage-para:last-child { margin-bottom: 0; }
+
+.qc-table-wrap { overflow-x: auto; margin-top: 4px; }
 .qc-table { border-collapse: collapse; width: 100%; font-size: 14px; }
-.qc-table th, .qc-table td { border: 1px solid var(--border); padding: 7px 12px; text-align: center; }
+.qc-table th, .qc-table td { border: 1px solid var(--border); padding: 9px 14px; text-align: center; }
 .qc-table th { background: var(--bg); font-weight: 600; color: var(--heading); }
 .qc-table td { color: var(--text); }
 .qc-table tbody tr:nth-child(even) { background: var(--bg); }
@@ -1561,4 +1586,11 @@ select.input { cursor: pointer; }
 /* ============================== Site footer =========================== */
 
 @media (max-width: 600px) {
+}
+
+/* Passage block on small screens: less padding, same readable leading. */
+@media (max-width: 600px) {
+  .qc-context { padding: 14px 16px 16px; margin-bottom: 18px; }
+  .qc-passage-para { font-size: 15px; line-height: 1.8; }
+  .qc-context-title { font-size: 14.5px; }
 }

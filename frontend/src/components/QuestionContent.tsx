@@ -19,6 +19,29 @@ interface QuestionLike {
   passage?: PassageLike | null
 }
 
+// Passage text is authored in a plain textarea, so it arrives as plain text
+// with newlines. Blank lines separate paragraphs; single newlines are line
+// breaks within one. Splitting here gives real paragraph spacing instead of
+// leaning on white-space:pre-wrap, which renders a wall of text.
+function PassageBody({ content }: { content: string }) {
+  const paragraphs = content.replace(/\r\n/g, '\n').split(/\n{2,}/).filter(p => p.trim())
+  if (paragraphs.length === 0) return null
+  return (
+    <div className="qc-passage-body">
+      {paragraphs.map((para, i) => (
+        <p key={i} className="qc-passage-para">
+          {para.split('\n').map((line, j, arr) => (
+            <span key={j}>
+              {line}
+              {j < arr.length - 1 && <br />}
+            </span>
+          ))}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 function DataTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
     <div className="qc-table-wrap">
@@ -45,17 +68,22 @@ export function QuestionContext({ q }: { q: QuestionLike }) {
     <>
       {/* Passage / Table context block */}
       {q.passage && (
-        <div className="qc-context">
+        <section className="qc-context" aria-label="Passage for this question">
+          {/* A label makes it obvious this block is shared context and not the
+              question itself — the two used to be easy to confuse. */}
+          <div className="qc-context-label">
+            {q.passage.type === 'TABLE' ? '📊 Data table' : '📄 Passage'}
+          </div>
           {q.passage.title && <div className="qc-context-title">{q.passage.title}</div>}
           {q.passage.type === 'TABLE' && q.passage.tableData ? (
             <>
-              {q.passage.content && <p className="qc-context-text">{q.passage.content}</p>}
+              {q.passage.content && <PassageBody content={q.passage.content} />}
               <DataTable headers={q.passage.tableData.headers} rows={q.passage.tableData.rows} />
             </>
           ) : (
-            <p className="qc-context-text qc-passage-text">{q.passage.content}</p>
+            <PassageBody content={q.passage.content} />
           )}
-        </div>
+        </section>
       )}
 
       {/* Syllogism: statements + conclusions */}
