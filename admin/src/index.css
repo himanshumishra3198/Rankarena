@@ -170,6 +170,12 @@ tr:hover td { background: var(--surface-raised); }
 .re-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
 .re-content { border: none !important; border-radius: 0 !important; outline: none; padding: 10px 12px; font-size: 14px; line-height: 1.6; color: var(--heading); }
 .re-content:empty:before { content: attr(data-placeholder); color: var(--text-muted); }
+/* TipTap keeps an empty <p> in the editor, so :empty never matches.
+   The Placeholder extension tags that first node instead. */
+.re-content p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--text-muted); float: left; height: 0; pointer-events: none; }
+.re-content p { margin: 0; }
+.re-content:focus, .re-content:focus-visible { outline: none; }
+.re-content .ProseMirror-selectednode { outline: 2px solid var(--primary); border-radius: 4px; }
 .re-content sub { vertical-align: sub; font-size: 0.75em; }
 .re-content sup { vertical-align: super; font-size: 0.75em; }
 
