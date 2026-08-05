@@ -1604,3 +1604,94 @@ select.input { cursor: pointer; }
   .qc-passage-para { font-size: 15px; line-height: 1.8; }
   .qc-context-title { font-size: 14.5px; }
 }
+
+/* ============================ Contests page ==========================
+   The countdown is the reason people open this page, so it leads: large
+   tabular digits with unit labels, not a sentence buried in a table cell. */
+
+.contest-section-heading { font-size: 15px; font-weight: 700; color: var(--heading); margin: 28px 0 12px; }
+
+/* Featured contest */
+.contest-hero {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 14px;
+  padding: 26px 28px 24px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.contest-hero.is-live { border-left-color: var(--danger); }
+.contest-hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--primary); margin-bottom: 10px;
+}
+.contest-hero.is-live .contest-hero-eyebrow { color: var(--danger); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: live-pulse 1.6s ease-in-out infinite; }
+@keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.8); } }
+
+.contest-hero-title { font-size: 27px; font-weight: 800; color: var(--heading); margin: 0 0 10px; line-height: 1.2; letter-spacing: -.4px; }
+.contest-hero-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
+.cd-dot { color: var(--border); }
+
+.contest-hero-clock { margin-bottom: 22px; }
+.contest-hero-clocklabel { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.contest-hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.contest-registered { font-size: 15px; font-weight: 700; color: var(--success); }
+.contest-registered-sm { font-size: 13px; font-weight: 700; color: var(--success); white-space: nowrap; }
+
+/* Countdown clock */
+.cd-clock { display: flex; align-items: flex-start; }
+.cd-seg-wrap { display: flex; align-items: flex-start; }
+.cd-seg { display: flex; flex-direction: column; align-items: center; }
+.cd-value { font-variant-numeric: tabular-nums; font-weight: 800; line-height: 1; color: var(--heading); }
+.cd-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
+.cd-colon { font-weight: 800; line-height: 1; color: var(--border); }
+
+.cd-hero .cd-value { font-size: 46px; }
+.cd-hero .cd-seg { min-width: 62px; }
+.cd-hero .cd-colon { font-size: 34px; margin: 0 6px; }
+.cd-tone-primary.cd-hero .cd-value { color: var(--primary); }
+.cd-tone-danger.cd-hero .cd-value { color: var(--danger); }
+
+.cd-row .cd-value { font-size: 22px; }
+.cd-row .cd-seg { min-width: 32px; }
+.cd-row .cd-label { font-size: 8.5px; margin-top: 3px; }
+.cd-row .cd-colon { font-size: 17px; margin: 0 3px; }
+.cd-tone-danger.cd-row .cd-value { color: var(--danger); }
+
+/* Secondary upcoming rows */
+.contest-rows { display: flex; flex-direction: column; gap: 10px; }
+.contest-row {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow);
+}
+.contest-row.is-live { border-left-color: var(--danger); }
+.contest-row-main { flex: 1; min-width: 0; }
+.contest-row-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--heading); margin-bottom: 3px; }
+.contest-live-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; color: var(--danger); }
+.contest-row-meta { font-size: 12.5px; color: var(--text-muted); }
+.contest-row-clock { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.contest-row-clocklabel { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--text-muted); }
+.contest-row-action { flex-shrink: 0; min-width: 92px; text-align: right; }
+
+.contest-past-cell { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+
+@media (max-width: 720px) {
+  .contest-hero { padding: 20px 18px; }
+  .contest-hero-title { font-size: 21px; }
+  .cd-hero .cd-value { font-size: 34px; }
+  .cd-hero .cd-seg { min-width: 48px; }
+  .cd-hero .cd-colon { font-size: 26px; margin: 0 3px; }
+  /* The row collapses so the clock keeps its size instead of being squeezed. */
+  .contest-row { flex-direction: column; align-items: stretch; gap: 12px; }
+  .contest-row-clock { align-items: flex-start; }
+  .contest-row-action { text-align: left; }
+}
+
+/* Larger primary action, used by the contest hero. */
+.btn-lg { padding: 12px 26px; font-size: 15px; font-weight: 600; border-radius: 9px; }
