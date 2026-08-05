@@ -94,28 +94,33 @@ function FeaturedContest({ contest, joining, onJoin }: {
 
   return (
     <section className={`contest-hero ${isLive ? 'is-live' : ''}`}>
-      <div className="contest-hero-eyebrow">
-        {isLive
-          ? <><span className="live-dot" aria-hidden="true" /> Live now</>
-          : 'Next contest'}
+      {/* Two columns: identity on the left, the clock and its action on the
+          right. Stacking these made the card tall and mostly empty. */}
+      <div className="contest-hero-left">
+        <div className="contest-hero-eyebrow">
+          {isLive
+            ? <><span className="live-dot" aria-hidden="true" /> Live now</>
+            : 'Next contest'}
+        </div>
+
+        <h1 className="contest-hero-title">{contest.title}</h1>
+
+        <div className="contest-hero-meta">
+          <span>🗓 {formatStart(contest.startTime)}</span>
+          <span className="cd-dot">·</span>
+          <span>⏱ {formatDuration(contest.durationMinutes)}</span>
+          <span className="cd-dot">·</span>
+          <span>👥 {count} registered</span>
+          {Number(contest.negativeMarks) > 0 && (
+            <>
+              <span className="cd-dot">·</span>
+              <span>−{Number(contest.negativeMarks)} per wrong</span>
+            </>
+          )}
+        </div>
       </div>
 
-      <h1 className="contest-hero-title">{contest.title}</h1>
-
-      <div className="contest-hero-meta">
-        <span>🗓 {formatStart(contest.startTime)}</span>
-        <span className="cd-dot">·</span>
-        <span>⏱ {formatDuration(contest.durationMinutes)}</span>
-        <span className="cd-dot">·</span>
-        <span>👥 {count} registered</span>
-        {Number(contest.negativeMarks) > 0 && (
-          <>
-            <span className="cd-dot">·</span>
-            <span>−{Number(contest.negativeMarks)} per wrong</span>
-          </>
-        )}
-      </div>
-
+      <div className="contest-hero-right">
       <div className="contest-hero-clock">
         <div className="contest-hero-clocklabel">{isLive ? 'Ends in' : 'Starts in'}</div>
         <CountdownClock ms={ms} size="hero" tone={isLive ? 'danger' : 'primary'} />
@@ -139,6 +144,7 @@ function FeaturedContest({ contest, joining, onJoin }: {
             {joining ? 'Registering…' : 'Register now »'}
           </button>
         )}
+      </div>
       </div>
     </section>
   )
