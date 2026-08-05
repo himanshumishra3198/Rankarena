@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
 import { authenticate, optionalAuth, AuthRequest } from "../middleware/auth";
+import { makeExcerpt } from "../lib/excerpt";
 
 const router = Router();
 
@@ -197,8 +198,9 @@ router.get("/articles", async (req: AuthRequest, res: Response) => {
     articles: rows.map((a) => ({
       id: a.id,
       title: a.title,
-      // Enough for a list preview without shipping whole articles.
-      excerpt: a.body.slice(0, 300),
+      // Markdown syntax stripped: the feed renders this as plain text, and a
+      // truncated slice of raw Markdown would show unclosed ** and half-links.
+      excerpt: makeExcerpt(a.body, 300),
       // Computed here because the excerpt is truncated — the client can't
       // derive a reading time from what it receives.
       readingMinutes: Math.max(1, Math.round(a.body.trim().split(/\s+/).length / 200)),
