@@ -108,44 +108,30 @@ async function applyVote(opts: {
 
 // Top contributors for the home sidebar.
 //
-// Ranking on votes alone (the Codeforces definition) needs a large voting
-// population to mean anything. Here it hid people who had written several
-// articles that simply hadn't been voted on yet, while a single upvote put
-// someone else top. So contribution counts the work as well as the reception:
-// an article is worth more than a comment, and every vote received adds one.
+// Articles only. Ranking on votes alone (the Codeforces definition) needs a
+// large voting population to mean anything and hid authors whose posts hadn't
+// been voted on yet. Counting comments too went the other way, letting someone
+// who had only ever left a comment onto a board meant for people who write.
+// So: writing an article is what makes you a contributor, and votes on those
+// articles add to the score.
 const ARTICLE_POINTS = 2;
-const COMMENT_POINTS = 1;
 
 router.get("/contributors", async (_req, res: Response) => {
-  const [articleAgg, commentAgg] = await Promise.all([
-    prisma.article.groupBy({
-      by: ["authorId"],
-      _sum: { score: true },
-      _count: { _all: true },
-    }),
-    prisma.articleComment.groupBy({
-      by: ["authorId"],
-      where: { deleted: false },
-      _sum: { score: true },
-      _count: { _all: true },
-    }),
-  ]);
+  const articleAgg = await prisma.article.groupBy({
+    by: ["authorId"],
+    _sum: { score: true },
+    _count: { _all: true },
+  });
 
-  const totals = new Map<string, number>();
-  const add = (id: string, points: number) => totals.set(id, (totals.get(id) ?? 0) + points);
-
-  for (const row of articleAgg) {
-    add(row.authorId, row._count._all * ARTICLE_POINTS + (row._sum.score ?? 0));
-  }
-  for (const row of commentAgg) {
-    add(row.authorId, row._count._all * COMMENT_POINTS + (row._sum.score ?? 0));
-  }
-
-  // Someone whose posts have been downvoted into negative territory drops off
-  // rather than appearing on what is meant to be a positive board.
-  const ranked = [...totals.entries()]
-    .filter(([, points]) => points > 0)
-    .sort((a, b) => b[1] - a[1])
+  // Authors only — groupBy already excludes anyone with no articles.
+  // Negative totals drop off, since this is meant to be a positive board.
+  const ranked = articleAgg
+    .map((row) => ({
+      authorId: row.authorId,
+      contribution: row._count._all * ARTICLE_POINTS + (row._sum.score ?? 0),
+    }))
+    .filter((r) => r.contribution > 0)
+    .sort((a, b) => b.contribution - a.contribution)
     .slice(0, 5);
 
   if (ranked.length === 0) {
@@ -154,16 +140,16 @@ router.get("/contributors", async (_req, res: Response) => {
   }
 
   const users = await prisma.user.findMany({
-    where: { id: { in: ranked.map(([id]) => id) } },
+    where: { id: { in: ranked.map((r) => r.authorId) } },
     select: { id: true, name: true, rating: true },
   });
   const byId = new Map(users.map((u) => [u.id, u]));
 
   res.json(
     ranked
-      .map(([id, contribution], i) => {
-        const user = byId.get(id);
-        return user ? { rank: i + 1, ...user, contribution } : null;
+      .map((r, i) => {
+        const user = byId.get(r.authorId);
+        return user ? { rank: i + 1, ...user, contribution: r.contribution } : null;
       })
       .filter(Boolean)
   );
