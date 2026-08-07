@@ -106,31 +106,45 @@ async function applyVote(opts: {
 
 /* ----------------------------- contributors ------------------------------ */
 
-// Top contributors for the home sidebar: total votes earned across a user's
-// articles and comments. Public, and grouped in the database rather than by
-// loading every row into memory.
+// Top contributors for the home sidebar.
+//
+// Ranking on votes alone (the Codeforces definition) needs a large voting
+// population to mean anything. Here it hid people who had written several
+// articles that simply hadn't been voted on yet, while a single upvote put
+// someone else top. So contribution counts the work as well as the reception:
+// an article is worth more than a comment, and every vote received adds one.
+const ARTICLE_POINTS = 2;
+const COMMENT_POINTS = 1;
+
 router.get("/contributors", async (_req, res: Response) => {
-  const [byArticle, byComment] = await Promise.all([
+  const [articleAgg, commentAgg] = await Promise.all([
     prisma.article.groupBy({
       by: ["authorId"],
       _sum: { score: true },
+      _count: { _all: true },
     }),
     prisma.articleComment.groupBy({
       by: ["authorId"],
       where: { deleted: false },
       _sum: { score: true },
+      _count: { _all: true },
     }),
   ]);
 
   const totals = new Map<string, number>();
-  for (const row of [...byArticle, ...byComment]) {
-    totals.set(row.authorId, (totals.get(row.authorId) ?? 0) + (row._sum.score ?? 0));
+  const add = (id: string, points: number) => totals.set(id, (totals.get(id) ?? 0) + points);
+
+  for (const row of articleAgg) {
+    add(row.authorId, row._count._all * ARTICLE_POINTS + (row._sum.score ?? 0));
+  }
+  for (const row of commentAgg) {
+    add(row.authorId, row._count._all * COMMENT_POINTS + (row._sum.score ?? 0));
   }
 
-  // Only surface people with a positive contribution — a leaderboard of
-  // negative scores would be a pillory, not a ranking.
+  // Someone whose posts have been downvoted into negative territory drops off
+  // rather than appearing on what is meant to be a positive board.
   const ranked = [...totals.entries()]
-    .filter(([, score]) => score > 0)
+    .filter(([, points]) => points > 0)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
