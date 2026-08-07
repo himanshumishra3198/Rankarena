@@ -192,7 +192,7 @@ export default function ContestDetail() {
     const c: Contest = contestRes.data
     setContest(c)
     setCqs(cqsRes.data)
-    setBank(bankRes.data)
+    setBank(bankRes.data.questions)
     setPassages(pRes.data)
     // seed draft config from current values
     const limits = c.sectionLimits ?? Object.fromEntries(

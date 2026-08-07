@@ -159,6 +159,11 @@ export default function Questions() {
   const [showForm, setShowForm] = useState(false)
   const [showPassageForm, setShowPassageForm] = useState(false)
   const [filterTopic, setFilterTopic] = useState('')
+  const [search, setSearch] = useState('')            // what's typed
+  const [searchQuery, setSearchQuery] = useState('')  // what's been sent
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const PER_PAGE = 25
   const [form, setForm] = useState(emptyForm)
   const [passageForm, setPassageForm] = useState(emptyPassageForm)
   const [saving, setSaving] = useState(false)
@@ -226,22 +231,37 @@ export default function Questions() {
   }
 
   async function load() {
+    setLoading(true)
     const [qRes, pRes] = await Promise.all([
       api.get('/admin/questions', {
         params: {
           ...(filterSubject ? { subject: filterSubject } : {}),
           ...(filterTopic ? { topic: filterTopic } : {}),
           ...(filterType ? { questionType: filterType } : {}),
+          ...(searchQuery ? { search: searchQuery } : {}),
+          page,
+          perPage: PER_PAGE,
         }
       }),
       api.get('/admin/passages'),
     ])
-    setQuestions(qRes.data)
+    setQuestions(qRes.data.questions)
+    setTotal(qRes.data.total)
     setPassages(pRes.data)
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [filterSubject, filterType, filterTopic])
+  useEffect(() => { load() }, [filterSubject, filterType, filterTopic, searchQuery, page])
+
+  // Debounce typing so the bank isn't queried on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(search.trim()), 350)
+    return () => clearTimeout(t)
+  }, [search])
+
+  // Any change to what's being looked at starts again from page 1 — staying on
+  // page 7 of a narrower result set lands on an empty screen.
+  useEffect(() => { setPage(1) }, [filterSubject, filterType, filterTopic, searchQuery])
 
   // ── Open / close / edit helpers ───────────────────────────────────────────
   function openCreateQuestion() {
@@ -359,6 +379,10 @@ export default function Questions() {
   }
 
   const passageMap = Object.fromEntries(passages.map(p => [p.id, p]))
+
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
+  const rangeFrom = total === 0 ? 0 : (page - 1) * PER_PAGE + 1
+  const rangeTo = Math.min(page * PER_PAGE, total)
 
   return (
     <>
@@ -660,7 +684,7 @@ export default function Questions() {
           {(['questions', 'passages'] as const).map(t => (
             <button key={t} className={`btn btn-sm ${tab === t ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setTab(t)} style={{ textTransform: 'capitalize' }}>
-              {t} {t === 'questions' ? `(${questions.length})` : `(${passages.length})`}
+              {t} {t === 'questions' ? `(${total})` : `(${passages.length})`}
             </button>
           ))}
         </div>
@@ -681,6 +705,20 @@ export default function Questions() {
               ))}
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="qb-search">
+                <span className="qb-search-icon" aria-hidden="true">🔍</span>
+                <input
+                  className="input qb-search-input"
+                  type="search"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search question text or options…"
+                  aria-label="Search questions"
+                />
+                {search && (
+                  <button className="qb-search-clear" onClick={() => setSearch('')} title="Clear search">×</button>
+                )}
+              </div>
               <select className="input" style={{ width: 'auto' }} value={filterType}
                 onChange={e => setFilterType(e.target.value)}>
                 <option value="">All types</option>
@@ -698,13 +736,18 @@ export default function Questions() {
                   ))}
                 </select>
               )}
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{questions.length} questions</span>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                {total} {total === 1 ? 'question' : 'questions'}
+                {searchQuery && <> matching “{searchQuery}”</>}
+              </span>
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
             {!loading && questions.length === 0 && (
               <p className="empty">
-                {filterSubject ? `No ${SUBJECT_LABELS[filterSubject]} questions yet.` : 'No questions yet.'}
+                {searchQuery
+                  ? `No questions match “${searchQuery}”.`
+                  : filterSubject ? `No ${SUBJECT_LABELS[filterSubject]} questions yet.` : 'No questions yet.'}
               </p>
             )}
             {questions.length > 0 && (
@@ -763,6 +806,23 @@ export default function Questions() {
                   ))}
                 </tbody>
               </table>
+            )}
+
+            {totalPages > 1 && (
+              <div className="qb-pagination">
+                <button className="btn btn-ghost btn-sm" disabled={page <= 1 || loading}
+                  onClick={() => setPage(1)}>« First</button>
+                <button className="btn btn-ghost btn-sm" disabled={page <= 1 || loading}
+                  onClick={() => setPage(p => p - 1)}>← Previous</button>
+                <span className="qb-page-label">
+                  Page <strong>{page}</strong> of {totalPages}
+                  <span className="qb-page-range"> · showing {rangeFrom}–{rangeTo} of {total}</span>
+                </span>
+                <button className="btn btn-ghost btn-sm" disabled={page >= totalPages || loading}
+                  onClick={() => setPage(p => p + 1)}>Next →</button>
+                <button className="btn btn-ghost btn-sm" disabled={page >= totalPages || loading}
+                  onClick={() => setPage(totalPages)}>Last »</button>
+              </div>
             )}
           </div>
         )}

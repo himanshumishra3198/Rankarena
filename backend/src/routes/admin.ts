@@ -342,21 +342,50 @@ router.get("/questions/similar", async (req: AuthRequest, res: Response) => {
   res.json(rows.map((r) => ({ ...r, score: Math.round(Number(r.score) * 100) })));
 });
 
+// Question bank listing: filters, free-text search, optional pagination.
+//
+// Paging is opt-in via ?page — without it the whole filtered set comes back,
+// which is what the contest and mock builders rely on to populate their
+// pickers. The response shape is the same either way.
 router.get("/questions", async (req: AuthRequest, res: Response) => {
   const subject = req.query.subject as string | undefined;
   const difficulty = req.query.difficulty as string | undefined;
   const topic = req.query.topic as string | undefined;
-  const questions = await prisma.question.findMany({
-    where: {
-      ...(subject ? { subject: subject as any } : {}),
-      ...(difficulty ? { difficulty: difficulty as any } : {}),
-      // "__none" filters to questions nobody has tagged yet.
-      ...(topic ? (topic === "__none" ? { topic: null } : { topic }) : {}),
-    },
-    include: { passage: true },
-    orderBy: { subject: "asc" },
-  });
-  res.json(questions);
+  const search = (req.query.search as string | undefined)?.trim();
+
+  const paged = req.query.page !== undefined;
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const perPage = Math.min(100, Math.max(5, Number(req.query.perPage) || 25));
+
+  // Search spans the question and all four options, so an admin can find a
+  // question by a phrase in the stem or by an answer they remember.
+  const searchWhere = search
+    ? {
+        OR: (["text", "optionA", "optionB", "optionC", "optionD"] as const).map((field) => ({
+          [field]: { contains: search, mode: "insensitive" as const },
+        })),
+      }
+    : {};
+
+  const where = {
+    ...(subject ? { subject: subject as any } : {}),
+    ...(difficulty ? { difficulty: difficulty as any } : {}),
+    // "__none" filters to questions nobody has tagged yet.
+    ...(topic ? (topic === "__none" ? { topic: null } : { topic }) : {}),
+    ...searchWhere,
+  };
+
+  const [total, questions] = await Promise.all([
+    prisma.question.count({ where }),
+    prisma.question.findMany({
+      where,
+      include: { passage: true },
+      orderBy: { subject: "asc" },
+      ...(paged ? { skip: (page - 1) * perPage, take: perPage } : {}),
+    }),
+  ]);
+
+  res.json({ questions, total, page: paged ? page : 1, perPage: paged ? perPage : total });
 });
 
 router.put("/questions/:id", async (req: AuthRequest, res: Response) => {

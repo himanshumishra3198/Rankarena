@@ -73,7 +73,7 @@ export default function MockTestDetail() {
     const m = (mockRes.data as MockTest[]).find(x => x.id === id) ?? null
     setMock(m)
     setMtqs(mtqRes.data)
-    setBank(bankRes.data)
+    setBank(bankRes.data.questions)
     setPassages(pRes.data)
     if (m) setNegMarks(m.negativeMarks)
     setLoading(false)
