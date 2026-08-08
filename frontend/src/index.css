@@ -1591,6 +1591,10 @@ select.input { cursor: pointer; }
   .feed-entry-title { font-size: 17px; }
   .feed-comments { margin-left: 0; padding-left: 0; }
   .home-sidebar { flex-direction: column; }
+  /* Undo the row layout's 260px basis: stacked back into a column it becomes a
+     HEIGHT, padding short cards with dead space and shrinking taller ones until
+     overflow:hidden clips their footer. Each card sizes to its content. */
+  .home-sidebar > .side-card { flex: 0 0 auto; }
 }
 
 /* ============================== Site footer =========================== */
