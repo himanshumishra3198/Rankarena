@@ -362,6 +362,10 @@ export default function MockRoom() {
   return (
     <div className="mock-room">
       {/* Header */}
+      {/* Header and progress bar stick together as one unit, so the header can
+          change height (it wraps to two rows on a phone) without the progress
+          bar needing a matching magic offset. */}
+      <div className="mock-room-topbar">
       <div className="mock-room-header">
         <div className="mock-room-title">{mock.title}</div>
         <button className="mock-mute-btn" title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -382,6 +386,7 @@ export default function MockRoom() {
       {/* Progress bar */}
       <div className="mock-progress">
         <div className="mock-progress-fill" style={{ width: `${(answeredCount / questions.length) * 100}%` }} />
+      </div>
       </div>
 
       <div className="mock-room-body">

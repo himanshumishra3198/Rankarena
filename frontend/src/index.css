@@ -1062,10 +1062,11 @@ select.input { cursor: pointer; }
 /* ── Taking room ────────────────────────────────────────────── */
 .mock-room-loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--text-muted); }
 .mock-room { min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; }
+.mock-room-topbar { position: sticky; top: 0; z-index: 10; }
 .mock-room-header {
   display: flex; align-items: center; gap: 16px;
   background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: 12px 24px; position: sticky; top: 0; z-index: 10;
+  padding: 12px 24px;
 }
 .mock-room-title { flex: 1; font-weight: 700; font-size: 15px; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mock-room-timer {
@@ -1109,9 +1110,7 @@ select.input { cursor: pointer; }
 @media (max-width: 760px) {
   .mock-room-body { flex-direction: column; padding: 12px; gap: 12px; }
   .mock-room-palette { width: 100%; position: static; order: -1; padding: 14px; }
-  /* Horizontal padding only — vertical stays put so the sticky .mock-progress
-     (top: 56px) keeps sitting flush under the header. */
-  .mock-room-header { padding-left: 12px; padding-right: 12px; gap: 10px; }
+  .mock-room-header { padding: 8px 12px; gap: 8px; }
   .mock-room-main { padding: 16px 14px; }
   /* .q-grid is handled by the shared room rule above — a fixed repeat(8, 1fr)
      here overflowed, since 1fr floors at the 36px button (8 x 36 + gaps = 323px
@@ -1207,7 +1206,7 @@ select.input { cursor: pointer; }
 }
 
 /* ── Mock room UI polish ───────────────────────────────────── */
-.mock-progress { height: 4px; background: var(--border); position: sticky; top: 56px; z-index: 9; }
+.mock-progress { height: 4px; background: var(--border); }
 .mock-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #7c3aed); transition: width .3s ease; }
 
 .diff-chip { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 2px 8px; border-radius: 20px; }
@@ -1725,3 +1724,15 @@ select.input { cursor: pointer; }
 
 /* Larger primary action, used by the contest hero. */
 .btn-lg { padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: 8px; }
+
+/* Exam room header on phones. Six items on one row left the test title with
+   about 30px — it rendered as "En…". The title now takes its own row and the
+   controls sit beneath it, with the timer and Submit pushed right. Height is
+   free to change because .mock-room-topbar carries the sticky positioning. */
+@media (max-width: 640px) {
+  .mock-room-header { flex-wrap: wrap; row-gap: 7px; }
+  .mock-room-title { flex: 1 1 100%; font-size: 13.5px; line-height: 1.3; }
+  .mock-mute-btn { padding: 4px 7px; font-size: 14px; }
+  .mock-room-timer { margin-left: auto; font-size: 17px; padding: 3px 10px; }
+  .mock-room-header .btn { padding: 6px 12px; }
+}
