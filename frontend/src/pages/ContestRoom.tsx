@@ -5,6 +5,7 @@ import type { Contest, Question } from '../lib/types'
 import InstructionsModal from '../components/InstructionsModal'
 import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
+import SectionCompleteModal from '../components/SectionCompleteModal'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
@@ -54,6 +55,8 @@ export default function ContestRoom() {
   const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set())
   const [visited, setVisited] = useState<Set<string>>(new Set())
   const [submittedSections, setSubmittedSections] = useState<Set<string>>(new Set())
+  // Set when a section locks, to raise the between-sections checkpoint.
+  const [sectionDone, setSectionDone] = useState<{ section: string; timedOut: boolean } | null>(null)
   const [currentSection, setCurrentSection] = useState<string>('QUANT')
   const [currentQId, setCurrentQId] = useState<string>('')
   const isAdmin = JSON.parse(localStorage.getItem('user') || '{}').role === 'ADMIN'
@@ -360,13 +363,33 @@ export default function ContestRoom() {
       : `Submit ${SECTION_LABELS[section]} section? You will not be able to change your answers.`
     if (!window.confirm(msg)) return
     persistSectionSubmit(section)
-    // Stay on the current (now locked) section — user navigates manually
+    setSectionDone({ section, timedOut: false })
   }
 
   function autoSubmitSection(section: string) {
     if (submittedSectionsRef.current.has(section)) return
     persistSectionSubmit(section)
-    // Stay on the current section — user sees the locked banner and navigates manually
+    // Raised on expiry too — that's the case a candidate is least likely to
+    // notice, since nothing else on screen changes.
+    setSectionDone({ section, timedOut: true })
+  }
+
+  /** First section still unattempted, in paper order. */
+  function nextUnsubmittedSection(after: Set<string>): string | null {
+    return availableSections.find(s => !after.has(s)) ?? null
+  }
+
+  /**
+   * Move into the next section. Navigating to its first question is what
+   * stamps sectionEnteredAt, so the section's clock starts here — on the
+   * candidate's click — rather than while the checkpoint was on screen.
+   */
+  function startNextSection() {
+    const next = nextUnsubmittedSection(submittedSectionsRef.current)
+    setSectionDone(null)
+    if (!next) return
+    const first = (sectionQuestions[next] ?? [])[0]
+    if (first) goToQuestion(first.id, next)
   }
 
   // ── Final submit ──────────────────────────────────────────────────────
@@ -485,6 +508,28 @@ export default function ContestRoom() {
       )}
 
       {/* ── Submit confirmation modal (feature 4) ────────────────── */}
+      {/* Between-sections checkpoint. Sits above the room but below the final
+          submit modal, which supersedes it once the candidate is finishing. */}
+      {sectionDone && !showSubmitModal && (() => {
+        const done = sectionDone.section
+        const qs = sectionQuestions[done] ?? []
+        const answeredCount = qs.filter(q => answers[q.id]).length
+        const next = nextUnsubmittedSection(submittedSections)
+        return (
+          <SectionCompleteModal
+            sectionLabel={SECTION_LABELS[done] ?? done}
+            answered={answeredCount}
+            total={qs.length}
+            timedOut={sectionDone.timedOut}
+            nextSectionLabel={next ? (SECTION_LABELS[next] ?? next) : null}
+            nextCount={next ? (sectionQuestions[next] ?? []).length : 0}
+            nextMinutes={next ? Math.round(getSectionTimeSecs(next) / 60) : 0}
+            onStartNext={startNextSection}
+            onReviewAndSubmit={() => { setSectionDone(null); setShowSubmitModal(true) }}
+          />
+        )
+      })()}
+
       {showSubmitModal && (
         <SubmitModal
           sections={getSectionSummaries()}
