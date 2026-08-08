@@ -21,6 +21,7 @@ import reportRoutes from "./routes/reports";
 import bookmarkRoutes from "./routes/bookmarks";
 import statsRoutes from "./routes/stats";
 import communityRoutes from "./routes/community";
+import notificationRoutes from "./routes/notifications";
 import prisma from "./lib/prisma";
 import { computeFingerprint } from "./lib/fingerprint";
 
@@ -89,6 +90,7 @@ app.use("/reports", reportRoutes);
 app.use("/bookmarks", bookmarkRoutes);
 app.use("/stats", statsRoutes);
 app.use("/community", communityWriteLimiter, communityRoutes);
+app.use("/notifications", notificationRoutes);
 
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled promise rejection:", reason);

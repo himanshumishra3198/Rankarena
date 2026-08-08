@@ -243,6 +243,8 @@ export type UserWhereInput = {
   articleComments?: Prisma.ArticleCommentListRelationFilter
   articleVotes?: Prisma.ArticleVoteListRelationFilter
   commentVotes?: Prisma.CommentVoteListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
+  actedNotifications?: Prisma.NotificationListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -264,6 +266,8 @@ export type UserOrderByWithRelationInput = {
   articleComments?: Prisma.ArticleCommentOrderByRelationAggregateInput
   articleVotes?: Prisma.ArticleVoteOrderByRelationAggregateInput
   commentVotes?: Prisma.CommentVoteOrderByRelationAggregateInput
+  notifications?: Prisma.NotificationOrderByRelationAggregateInput
+  actedNotifications?: Prisma.NotificationOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -288,6 +292,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   articleComments?: Prisma.ArticleCommentListRelationFilter
   articleVotes?: Prisma.ArticleVoteListRelationFilter
   commentVotes?: Prisma.CommentVoteListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
+  actedNotifications?: Prisma.NotificationListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -337,6 +343,8 @@ export type UserCreateInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -358,6 +366,8 @@ export type UserUncheckedCreateInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserUpdateInput = {
@@ -379,6 +389,8 @@ export type UserUpdateInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -400,6 +412,8 @@ export type UserUncheckedUpdateInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -475,6 +489,11 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -493,6 +512,36 @@ export type IntFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserCreateNestedOneWithoutNotificationsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutActedNotificationsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutActedNotificationsInput, Prisma.UserUncheckedCreateWithoutActedNotificationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutActedNotificationsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationsInput
+  upsert?: Prisma.UserUpsertWithoutNotificationsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput, Prisma.UserUpdateWithoutNotificationsInput>, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
+}
+
+export type UserUpdateOneWithoutActedNotificationsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutActedNotificationsInput, Prisma.UserUncheckedCreateWithoutActedNotificationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutActedNotificationsInput
+  upsert?: Prisma.UserUpsertWithoutActedNotificationsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutActedNotificationsInput, Prisma.UserUpdateWithoutActedNotificationsInput>, Prisma.UserUncheckedUpdateWithoutActedNotificationsInput>
 }
 
 export type UserCreateNestedOneWithoutArticlesInput = {
@@ -649,6 +698,214 @@ export type UserUpdateOneRequiredWithoutRatingHistoryNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRatingHistoryInput, Prisma.UserUpdateWithoutRatingHistoryInput>, Prisma.UserUncheckedUpdateWithoutRatingHistoryInput>
 }
 
+export type UserCreateWithoutNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash: string
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+}
+
+export type UserUncheckedCreateWithoutNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash: string
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutNotificationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+}
+
+export type UserCreateWithoutActedNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash: string
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutActedNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash: string
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutActedNotificationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutActedNotificationsInput, Prisma.UserUncheckedCreateWithoutActedNotificationsInput>
+}
+
+export type UserUpsertWithoutNotificationsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutNotificationsInput, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutNotificationsInput, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
+}
+
+export type UserUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserUpsertWithoutActedNotificationsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutActedNotificationsInput, Prisma.UserUncheckedUpdateWithoutActedNotificationsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutActedNotificationsInput, Prisma.UserUncheckedCreateWithoutActedNotificationsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutActedNotificationsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutActedNotificationsInput, Prisma.UserUncheckedUpdateWithoutActedNotificationsInput>
+}
+
+export type UserUpdateWithoutActedNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutActedNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+}
+
 export type UserCreateWithoutArticlesInput = {
   id?: string
   name: string
@@ -667,6 +924,8 @@ export type UserCreateWithoutArticlesInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutArticlesInput = {
@@ -687,6 +946,8 @@ export type UserUncheckedCreateWithoutArticlesInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutArticlesInput = {
@@ -723,6 +984,8 @@ export type UserUpdateWithoutArticlesInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticlesInput = {
@@ -743,6 +1006,8 @@ export type UserUncheckedUpdateWithoutArticlesInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutArticleCommentsInput = {
@@ -763,6 +1028,8 @@ export type UserCreateWithoutArticleCommentsInput = {
   articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutArticleCommentsInput = {
@@ -783,6 +1050,8 @@ export type UserUncheckedCreateWithoutArticleCommentsInput = {
   articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutArticleCommentsInput = {
@@ -819,6 +1088,8 @@ export type UserUpdateWithoutArticleCommentsInput = {
   articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticleCommentsInput = {
@@ -839,6 +1110,8 @@ export type UserUncheckedUpdateWithoutArticleCommentsInput = {
   articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutArticleVotesInput = {
@@ -859,6 +1132,8 @@ export type UserCreateWithoutArticleVotesInput = {
   articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutArticleVotesInput = {
@@ -879,6 +1154,8 @@ export type UserUncheckedCreateWithoutArticleVotesInput = {
   articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutArticleVotesInput = {
@@ -915,6 +1192,8 @@ export type UserUpdateWithoutArticleVotesInput = {
   articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticleVotesInput = {
@@ -935,6 +1214,8 @@ export type UserUncheckedUpdateWithoutArticleVotesInput = {
   articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutCommentVotesInput = {
@@ -955,6 +1236,8 @@ export type UserCreateWithoutCommentVotesInput = {
   articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutCommentVotesInput = {
@@ -975,6 +1258,8 @@ export type UserUncheckedCreateWithoutCommentVotesInput = {
   articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutCommentVotesInput = {
@@ -1011,6 +1296,8 @@ export type UserUpdateWithoutCommentVotesInput = {
   articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentVotesInput = {
@@ -1031,6 +1318,8 @@ export type UserUncheckedUpdateWithoutCommentVotesInput = {
   articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutBookmarksInput = {
@@ -1051,6 +1340,8 @@ export type UserCreateWithoutBookmarksInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutBookmarksInput = {
@@ -1071,6 +1362,8 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutBookmarksInput = {
@@ -1107,6 +1400,8 @@ export type UserUpdateWithoutBookmarksInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBookmarksInput = {
@@ -1127,6 +1422,8 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutFollowingInput = {
@@ -1147,6 +1444,8 @@ export type UserCreateWithoutFollowingInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutFollowingInput = {
@@ -1167,6 +1466,8 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutFollowingInput = {
@@ -1192,6 +1493,8 @@ export type UserCreateWithoutFollowersInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutFollowersInput = {
@@ -1212,6 +1515,8 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutFollowersInput = {
@@ -1248,6 +1553,8 @@ export type UserUpdateWithoutFollowingInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowingInput = {
@@ -1268,6 +1575,8 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserUpsertWithoutFollowersInput = {
@@ -1299,6 +1608,8 @@ export type UserUpdateWithoutFollowersInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowersInput = {
@@ -1319,6 +1630,8 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutQuestionReportsInput = {
@@ -1339,6 +1652,8 @@ export type UserCreateWithoutQuestionReportsInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutQuestionReportsInput = {
@@ -1359,6 +1674,8 @@ export type UserUncheckedCreateWithoutQuestionReportsInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutQuestionReportsInput = {
@@ -1395,6 +1712,8 @@ export type UserUpdateWithoutQuestionReportsInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutQuestionReportsInput = {
@@ -1415,6 +1734,8 @@ export type UserUncheckedUpdateWithoutQuestionReportsInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutMockAttemptsInput = {
@@ -1435,6 +1756,8 @@ export type UserCreateWithoutMockAttemptsInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutMockAttemptsInput = {
@@ -1455,6 +1778,8 @@ export type UserUncheckedCreateWithoutMockAttemptsInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutMockAttemptsInput = {
@@ -1491,6 +1816,8 @@ export type UserUpdateWithoutMockAttemptsInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMockAttemptsInput = {
@@ -1511,6 +1838,8 @@ export type UserUncheckedUpdateWithoutMockAttemptsInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutParticipationsInput = {
@@ -1531,6 +1860,8 @@ export type UserCreateWithoutParticipationsInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutParticipationsInput = {
@@ -1551,6 +1882,8 @@ export type UserUncheckedCreateWithoutParticipationsInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutParticipationsInput = {
@@ -1587,6 +1920,8 @@ export type UserUpdateWithoutParticipationsInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutParticipationsInput = {
@@ -1607,6 +1942,8 @@ export type UserUncheckedUpdateWithoutParticipationsInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutRatingHistoryInput = {
@@ -1627,6 +1964,8 @@ export type UserCreateWithoutRatingHistoryInput = {
   articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutRatingHistoryInput = {
@@ -1647,6 +1986,8 @@ export type UserUncheckedCreateWithoutRatingHistoryInput = {
   articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutRatingHistoryInput = {
@@ -1683,6 +2024,8 @@ export type UserUpdateWithoutRatingHistoryInput = {
   articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRatingHistoryInput = {
@@ -1703,6 +2046,8 @@ export type UserUncheckedUpdateWithoutRatingHistoryInput = {
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
 }
 
 
@@ -1722,6 +2067,8 @@ export type UserCountOutputType = {
   articleComments: number
   articleVotes: number
   commentVotes: number
+  notifications: number
+  actedNotifications: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1736,6 +2083,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   articleComments?: boolean | UserCountOutputTypeCountArticleCommentsArgs
   articleVotes?: boolean | UserCountOutputTypeCountArticleVotesArgs
   commentVotes?: boolean | UserCountOutputTypeCountCommentVotesArgs
+  notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
+  actedNotifications?: boolean | UserCountOutputTypeCountActedNotificationsArgs
 }
 
 /**
@@ -1825,6 +2174,20 @@ export type UserCountOutputTypeCountCommentVotesArgs<ExtArgs extends runtime.Typ
   where?: Prisma.CommentVoteWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountActedNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1845,6 +2208,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   articleComments?: boolean | Prisma.User$articleCommentsArgs<ExtArgs>
   articleVotes?: boolean | Prisma.User$articleVotesArgs<ExtArgs>
   commentVotes?: boolean | Prisma.User$commentVotesArgs<ExtArgs>
+  notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
+  actedNotifications?: boolean | Prisma.User$actedNotificationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1891,6 +2256,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   articleComments?: boolean | Prisma.User$articleCommentsArgs<ExtArgs>
   articleVotes?: boolean | Prisma.User$articleVotesArgs<ExtArgs>
   commentVotes?: boolean | Prisma.User$commentVotesArgs<ExtArgs>
+  notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
+  actedNotifications?: boolean | Prisma.User$actedNotificationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1910,6 +2277,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     articleComments: Prisma.$ArticleCommentPayload<ExtArgs>[]
     articleVotes: Prisma.$ArticleVotePayload<ExtArgs>[]
     commentVotes: Prisma.$CommentVotePayload<ExtArgs>[]
+    notifications: Prisma.$NotificationPayload<ExtArgs>[]
+    actedNotifications: Prisma.$NotificationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2324,6 +2693,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   articleComments<T extends Prisma.User$articleCommentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$articleCommentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ArticleCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   articleVotes<T extends Prisma.User$articleVotesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$articleVotesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ArticleVotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   commentVotes<T extends Prisma.User$commentVotesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commentVotesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommentVotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  actedNotifications<T extends Prisma.User$actedNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$actedNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3014,6 +3385,54 @@ export type User$commentVotesArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.CommentVoteScalarFieldEnum | Prisma.CommentVoteScalarFieldEnum[]
+}
+
+/**
+ * User.notifications
+ */
+export type User$notificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null
+  where?: Prisma.NotificationWhereInput
+  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+}
+
+/**
+ * User.actedNotifications
+ */
+export type User$actedNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null
+  where?: Prisma.NotificationWhereInput
+  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
 }
 
 /**

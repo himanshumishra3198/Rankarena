@@ -75,6 +75,16 @@ export const ReportStatus = {
 export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
 
 
+export const NotificationType = {
+  FOLLOW: 'FOLLOW',
+  ARTICLE_VOTE: 'ARTICLE_VOTE',
+  COMMENT_VOTE: 'COMMENT_VOTE',
+  ANNOUNCEMENT: 'ANNOUNCEMENT'
+} as const
+
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
+
+
 export const ArticleType = {
   GENERAL: 'GENERAL',
   ANNOUNCEMENT: 'ANNOUNCEMENT',

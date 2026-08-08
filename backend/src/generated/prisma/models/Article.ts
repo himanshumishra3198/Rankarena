@@ -542,10 +542,6 @@ export type EnumArticleTypeFieldUpdateOperationsInput = {
   set?: $Enums.ArticleType
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type ArticleCreateNestedOneWithoutCommentsInput = {
   create?: Prisma.XOR<Prisma.ArticleCreateWithoutCommentsInput, Prisma.ArticleUncheckedCreateWithoutCommentsInput>
   connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutCommentsInput

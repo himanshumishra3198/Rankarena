@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "../lib/prisma";
 import { authenticate, optionalAuth, AuthRequest } from "../middleware/auth";
 import { makeExcerpt } from "../lib/excerpt";
+import { notifyVote, notifyAnnouncement } from "../lib/notify";
 
 const router = Router();
 
@@ -248,6 +249,14 @@ router.post("/articles", authenticate, async (req: AuthRequest, res: Response) =
     data: { ...parsed.data, authorId: req.user!.id },
     include: { author: { select: authorSelect } },
   });
+
+  // Announcements reach everyone; other article types notify nobody.
+  if (article.type === "ANNOUNCEMENT") {
+    notifyAnnouncement(article.id, article.authorId).catch((e) =>
+      console.error("notifyAnnouncement failed:", e)
+    );
+  }
+
   res.status(201).json(article);
 });
 
@@ -345,6 +354,16 @@ router.post("/articles/:id/vote", authenticate, async (req: AuthRequest, res: Re
     userId: req.user!.id,
     value: parsed.data.value,
   });
+
+  // Side effect only — never let it fail the vote.
+  notifyVote({
+    kind: "article",
+    targetId: article.id,
+    authorId: article.authorId,
+    actorId: req.user!.id,
+    value: result.myVote,
+  }).catch((e) => console.error("notifyVote (article) failed:", e));
+
   res.json(result);
 });
 
@@ -511,6 +530,15 @@ router.post("/comments/:id/vote", authenticate, async (req: AuthRequest, res: Re
     userId: req.user!.id,
     value: parsed.data.value,
   });
+
+  notifyVote({
+    kind: "comment",
+    targetId: comment.id,
+    authorId: comment.authorId,
+    actorId: req.user!.id,
+    value: result.myVote,
+  }).catch((e) => console.error("notifyVote (comment) failed:", e));
+
   res.json(result);
 });
 

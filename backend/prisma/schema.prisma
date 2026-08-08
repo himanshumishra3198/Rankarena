@@ -27,8 +27,40 @@ model User {
   articleComments ArticleComment[]
   articleVotes    ArticleVote[]
   commentVotes    CommentVote[]
+  notifications   Notification[]   @relation("NotificationRecipient")
+  actedNotifications Notification[] @relation("NotificationActor")
 
   @@map("users")
+}
+
+// One row per thing a user should be told about.
+//
+// `actorId` is whoever caused it — the follower, the voter — and is null for
+// system-wide notices like announcements. The target columns are nullable
+// because which one applies depends on `type`; only one is ever set.
+//
+// Votes upsert on (userId, actorId, type, target) so that toggling a vote
+// updates the existing row instead of piling up a new notification each time.
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  actorId   String?          @map("actor_id")
+  articleId String?          @map("article_id")
+  commentId String?          @map("comment_id")
+  // Copied from the vote so the text can say "upvoted" or "downvoted" without
+  // reading back a vote row that may since have been cleared.
+  voteValue Int?             @map("vote_value")
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user  User  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, actorId, type, articleId, commentId])
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
 
 // A community post — contest announcements, technique write-ups, editorials.
@@ -369,6 +401,13 @@ enum ReportStatus {
   OPEN
   RESOLVED
   DISMISSED
+}
+
+enum NotificationType {
+  FOLLOW
+  ARTICLE_VOTE
+  COMMENT_VOTE
+  ANNOUNCEMENT
 }
 
 enum ArticleType {

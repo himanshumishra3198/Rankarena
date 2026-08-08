@@ -605,10 +605,6 @@ export type ArticleCommentUpdateManyWithoutParentNestedInput = {
   deleteMany?: Prisma.ArticleCommentScalarWhereInput | Prisma.ArticleCommentScalarWhereInput[]
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type ArticleCommentUncheckedUpdateManyWithoutParentNestedInput = {
   create?: Prisma.XOR<Prisma.ArticleCommentCreateWithoutParentInput, Prisma.ArticleCommentUncheckedCreateWithoutParentInput> | Prisma.ArticleCommentCreateWithoutParentInput[] | Prisma.ArticleCommentUncheckedCreateWithoutParentInput[]
   connectOrCreate?: Prisma.ArticleCommentCreateOrConnectWithoutParentInput | Prisma.ArticleCommentCreateOrConnectWithoutParentInput[]

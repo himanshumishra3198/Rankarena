@@ -1736,3 +1736,39 @@ select.input { cursor: pointer; }
   .mock-room-timer { margin-left: auto; font-size: 17px; padding: 3px 10px; }
   .mock-room-header .btn { padding: 6px 12px; }
 }
+
+/* ============================ Notifications ============================ */
+
+.notif-wrap { position: relative; display: flex; align-items: center; }
+.notif-bell { position: relative; background: none; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; padding: 4px 8px; font-size: 15px; line-height: 1; transition: background .15s, border-color .15s; }
+.notif-bell:hover, .notif-bell.active { background: var(--bg); border-color: var(--primary); }
+.notif-badge { position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface); }
+
+.notif-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 340px; max-width: calc(100vw - 24px); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.18); z-index: 40; overflow: hidden; }
+.notif-panel-head { padding: 11px 14px; font-size: 13px; font-weight: 700; color: var(--heading); border-bottom: 1px solid var(--border); background: var(--bg); }
+.notif-list { max-height: 380px; overflow-y: auto; }
+
+.notif-item { display: flex; gap: 10px; width: 100%; text-align: left; padding: 11px 14px; background: none; border: none; border-bottom: 1px solid var(--border); cursor: pointer; font-family: inherit; transition: background .12s; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--bg); }
+/* Unread carries a tinted background and an accent edge, so the panel is
+   scannable without needing a per-row dot. */
+.notif-item.unread { background: var(--primary-light); box-shadow: inset 3px 0 0 var(--primary); }
+.notif-item.unread:hover { background: var(--primary-light); filter: brightness(.98); }
+.notif-icon { font-size: 15px; line-height: 1.4; flex-shrink: 0; }
+.notif-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.notif-text { font-size: 13px; line-height: 1.5; color: var(--text); word-break: break-word; }
+.notif-text strong { font-weight: 700; }
+.notif-time { font-size: 11.5px; color: var(--text-muted); }
+
+.notif-empty { padding: 28px 20px; text-align: center; color: var(--text-muted); font-size: 13px; }
+.notif-empty-icon { font-size: 26px; display: block; margin-bottom: 8px; }
+.notif-empty p { margin: 0; }
+.notif-empty-sub { font-size: 12px; margin-top: 5px !important; line-height: 1.55; }
+
+@media (max-width: 600px) {
+  /* Anchor the panel to the viewport rather than the bell, which sits near
+     the right edge on a phone. */
+  .notif-panel { position: fixed; top: 60px; left: 12px; right: 12px; width: auto; max-width: none; }
+  .notif-list { max-height: 60vh; }
+}

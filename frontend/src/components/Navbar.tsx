@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toggleTheme, getTheme } from '../lib/theme'
+import NotificationBell from './NotificationBell'
 
 // `guest: true` means the link is shown to logged-out visitors too. The rest
 // are hidden rather than shown-and-bounced, so a guest never clicks into a
@@ -74,6 +75,7 @@ export default function Navbar() {
         </button>
         {signedIn ? (
           <>
+            <NotificationBell />
             <button className="navbar-user" onClick={() => navigate('/profile')}>
               <span className="navbar-avatar">{(user.name || '?')[0].toUpperCase()}</span>
               <span className="navbar-username">{user.name}</span>

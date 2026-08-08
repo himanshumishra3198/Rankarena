@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import prisma from "../lib/prisma";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { notifyFollow } from "../lib/notify";
 
 const router = Router();
 
@@ -25,6 +26,11 @@ router.post("/:userId", authenticate, async (req: AuthRequest, res: Response) =>
     create: { followerId, followingId },
     update: {},
   });
+
+  // Best-effort: a failed notification must not fail the follow itself.
+  notifyFollow(followerId, followingId).catch((e) =>
+    console.error("notifyFollow failed:", e)
+  );
 
   res.json({ following: true });
 });
