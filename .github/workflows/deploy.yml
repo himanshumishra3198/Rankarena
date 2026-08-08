@@ -12,7 +12,7 @@ env:
   VITE_API_URL: https://api.rankarenas.com
   # GA4 measurement id (G-XXXXXXXXXX). Leave empty to disable analytics
   # entirely — the tag is only injected when this has a value.
-  VITE_GA_ID: ""
+  VITE_GA_ID: "G-MQ6676CDQX"
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
