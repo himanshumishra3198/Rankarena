@@ -23,7 +23,7 @@ router.get("/", async (req, res: Response) => {
   const contestSelect = {
     id: true, title: true, startTime: true, durationMinutes: true,
     negativeMarks: true, status: true,
-    _count: { select: { participations: true } },
+    _count: { select: { participations: { where: { isTest: false } } } },
   } as const;
 
   const [active, past] = await Promise.all([
@@ -88,7 +88,7 @@ router.get("/:id", async (req, res: Response) => {
   const contest = await prisma.contest.findUnique({
     where: { id },
     include: {
-      _count: { select: { contestQuestions: true, participations: true } },
+      _count: { select: { contestQuestions: true, participations: { where: { isTest: false } } } },
     },
   });
   if (!contest) {
@@ -111,10 +111,14 @@ router.post("/:id/join", authenticate, async (req: AuthRequest, res: Response) =
     return;
   }
 
+  // Admin attempts are test runs: recorded in full for the admin's own
+  // review, but excluded from every leaderboard, rating and public count.
+  const isTest = req.user!.role === "ADMIN";
+
   const participation = await prisma.participation.upsert({
     where: { userId_contestId: { userId: req.user!.id, contestId } },
-    create: { userId: req.user!.id, contestId },
-    update: {},
+    create: { userId: req.user!.id, contestId, isTest },
+    update: { isTest },
   });
 
   res.status(201).json(participation);
@@ -271,6 +275,8 @@ router.post("/:id/submit", authenticate, async (req: AuthRequest, res: Response)
 
   const submittedAt = new Date();
 
+  const isTest = req.user!.role === "ADMIN";
+
   await prisma.participation.update({
     where: { userId_contestId: { userId: req.user!.id, contestId } },
     data: {
@@ -280,12 +286,18 @@ router.post("/:id/submit", authenticate, async (req: AuthRequest, res: Response)
       markedForReview: markedForReview ?? Prisma.JsonNull,
       score,
       submittedAt,
+      isTest,
     },
   });
 
-  // Update Redis leaderboard — encode tiebreaker (earlier submission = higher rank for same score)
-  const redisScore = score * 1e10 - submittedAt.getTime();
-  await redis.zadd(`contest:${contestId}:leaderboard`, redisScore, req.user!.id);
+  // Test attempts never enter the shared leaderboard. Keeping them out of
+  // Redis is what stops them shifting everyone else's rank and the totals
+  // derived from ZCARD.
+  if (!isTest) {
+    // Encode the tiebreaker: earlier submission wins at equal score.
+    const redisScore = score * 1e10 - submittedAt.getTime();
+    await redis.zadd(`contest:${contestId}:leaderboard`, redisScore, req.user!.id);
+  }
 
   res.json({ score });
 });
@@ -370,7 +382,7 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
   const [participation, contest] = await Promise.all([
     prisma.participation.findUnique({
       where: { userId_contestId: { userId: req.user!.id, contestId } },
-      select: { answers: true, score: true, submittedAt: true, markedForReview: true },
+      select: { answers: true, score: true, submittedAt: true, markedForReview: true, isTest: true },
     }),
     prisma.contest.findUnique({
       where: { id: contestId },
@@ -418,7 +430,7 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
       select: { oldRating: true, newRating: true, rank: true },
     }),
     prisma.participation.findMany({
-      where: { contestId, submittedAt: { not: null } },
+      where: { contestId, submittedAt: { not: null }, isTest: false },
       select: { timeSpent: true },
     }),
   ]);
@@ -449,7 +461,10 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
 
   res.json({
     score: participation.score,
+    // A test attempt is never added to the Redis leaderboard, so zrevrank
+    // returns null and the rank is reported as absent rather than invented.
     rank: rank !== null ? rank + 1 : null,
+    isTest: participation.isTest,
     totalParticipants: total,
     submittedAt: participation.submittedAt,
     answers: participation.answers,

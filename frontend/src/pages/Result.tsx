@@ -19,7 +19,7 @@ interface RichQuestion {
 }
 
 interface ResultData {
-  score: number; rank: number | null; totalParticipants: number
+  score: number; rank: number | null; totalParticipants: number; isTest?: boolean
   submittedAt: string; answers: Record<string, string>
   markedForReview: string[]
   questions: RichQuestion[]; totalMaxMarks: number
@@ -227,7 +227,7 @@ export default function Result() {
   if (error)   return <><Navbar /><div className="page"><div className="alert alert-error">{error}</div></div></>
   if (!result) return null
 
-  const { answers, questions, totalMaxMarks, score, rank, totalParticipants, ratingChange, avgTimePerQuestion } = result
+  const { answers, questions, totalMaxMarks, score, rank, totalParticipants, ratingChange, avgTimePerQuestion, isTest } = result
   const numScore = Number(score)
 
   // ── Overall derived stats ────────────────────────────────────────────────
@@ -307,6 +307,16 @@ export default function Result() {
     <>
       <Navbar />
       <div className="page" style={{ maxWidth: 1100 }}>
+      {isTest && (
+        <div className="test-attempt-banner">
+          <span aria-hidden="true">🧪</span>
+          <div>
+            <strong>Test attempt — not counted.</strong> You took this as an admin,
+            so it stays out of the leaderboard, the ratings and the public stats.
+            Your answers and analysis below are complete.
+          </div>
+        </div>
+      )}
 
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>

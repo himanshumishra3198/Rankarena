@@ -1794,3 +1794,17 @@ select.input { cursor: pointer; }
   /* The mark alone carries the brand once the bar gets tight. */
   .logo-word { font-size: 16px; }
 }
+
+/* Shown on a result an admin produced while testing — it is deliberately loud,
+   because a score that looks real but counts for nothing is worse than no
+   score at all. */
+.test-attempt-banner {
+  display: flex; align-items: flex-start; gap: 11px;
+  background: var(--warning-light, #fffbeb);
+  border: 1px solid var(--warning, #d97706);
+  border-left: 4px solid var(--warning, #d97706);
+  border-radius: var(--radius);
+  padding: 13px 16px; margin-bottom: 18px;
+  font-size: 13.5px; line-height: 1.6; color: var(--text);
+}
+.test-attempt-banner strong { color: var(--heading); }

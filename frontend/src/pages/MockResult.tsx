@@ -25,7 +25,7 @@ interface MockResultData {
   timeSpent: Record<string, number>
   markedForReview: string[]
   submittedAt: string
-  rank: number; totalTakers: number; percentile: number
+  rank: number | null; totalTakers: number; percentile: number | null; isTest?: boolean
   topScorers: { rank: number; name: string; score: number; isCurrentUser: boolean }[]
   questionStats: Record<string, { correctPct: number; avgTime: number }>
   questions: ResultQuestion[]
@@ -183,6 +183,16 @@ export default function MockResult() {
     <>
       <Navbar />
       <div className="page" style={{ maxWidth: 1000 }}>
+      {data.isTest && (
+        <div className="test-attempt-banner">
+          <span aria-hidden="true">🧪</span>
+          <div>
+            <strong>Test attempt — not counted.</strong> You took this as an admin,
+            so it stays out of the leaderboard, the ratings and the public stats.
+            Your answers and analysis below are complete.
+          </div>
+        </div>
+      )}
         <button className="btn btn-ghost btn-sm" style={{ marginBottom: 14 }} onClick={() => navigate('/mocks')}>← Mock Tests</button>
 
         {/* ── Hero: score donut + headline stats ───────────────────── */}
@@ -193,7 +203,9 @@ export default function MockResult() {
             <div className="result-hero-sub">{SECTION_LABELS[data.subject] ?? data.subject}</div>
             <h1 className="result-hero-title">{data.mockTitle}</h1>
             <div className="result-hero-chips">
-              <span className="hero-chip">🏅 Rank <b>#{data.rank}</b>/{data.totalTakers}</span>
+              {data.rank !== null && (
+                <span className="hero-chip">🏅 Rank <b>#{data.rank}</b>/{data.totalTakers}</span>
+              )}
               <span className="hero-chip">📊 <b>{data.percentile}%</b> percentile</span>
               <span className="hero-chip">🎯 <b>{accuracy.toFixed(1)}%</b> accuracy</span>
             </div>
@@ -212,7 +224,9 @@ export default function MockResult() {
         {tab === 'overview' && (
           <>
             <div className="perf-row">
-              <StatCard icon="🏅" color="#ef4444" value={`#${data.rank}`} sub={`/ ${data.totalTakers}`} label="Rank" />
+              <StatCard icon="🏅" color="#ef4444"
+                value={data.rank !== null ? `#${data.rank}` : '—'}
+                sub={data.rank !== null ? `/ ${data.totalTakers}` : 'not ranked'} label="Rank" />
               <StatCard icon="🏆" color="#7c3aed" value={`${data.score}`} sub={`/ ${data.totalMarks}`} label="Score" />
               <StatCard icon="📝" color="#0ea5e9" value={`${answered}`} sub={`/ ${data.questions.length}`} label="Attempted" />
               <StatCard icon="🎯" color="#16a34a" value={`${accuracy.toFixed(1)}%`} label="Accuracy" />

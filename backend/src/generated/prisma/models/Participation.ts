@@ -36,6 +36,7 @@ export type ParticipationSumAggregateOutputType = {
 
 export type ParticipationMinAggregateOutputType = {
   id: string | null
+  isTest: boolean | null
   userId: string | null
   contestId: string | null
   score: runtime.Decimal | null
@@ -45,6 +46,7 @@ export type ParticipationMinAggregateOutputType = {
 
 export type ParticipationMaxAggregateOutputType = {
   id: string | null
+  isTest: boolean | null
   userId: string | null
   contestId: string | null
   score: runtime.Decimal | null
@@ -54,6 +56,7 @@ export type ParticipationMaxAggregateOutputType = {
 
 export type ParticipationCountAggregateOutputType = {
   id: number
+  isTest: number
   userId: number
   contestId: number
   score: number
@@ -77,6 +80,7 @@ export type ParticipationSumAggregateInputType = {
 
 export type ParticipationMinAggregateInputType = {
   id?: true
+  isTest?: true
   userId?: true
   contestId?: true
   score?: true
@@ -86,6 +90,7 @@ export type ParticipationMinAggregateInputType = {
 
 export type ParticipationMaxAggregateInputType = {
   id?: true
+  isTest?: true
   userId?: true
   contestId?: true
   score?: true
@@ -95,6 +100,7 @@ export type ParticipationMaxAggregateInputType = {
 
 export type ParticipationCountAggregateInputType = {
   id?: true
+  isTest?: true
   userId?: true
   contestId?: true
   score?: true
@@ -195,6 +201,7 @@ export type ParticipationGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
 
 export type ParticipationGroupByOutputType = {
   id: string
+  isTest: boolean
   userId: string
   contestId: string
   score: runtime.Decimal
@@ -231,6 +238,7 @@ export type ParticipationWhereInput = {
   OR?: Prisma.ParticipationWhereInput[]
   NOT?: Prisma.ParticipationWhereInput | Prisma.ParticipationWhereInput[]
   id?: Prisma.StringFilter<"Participation"> | string
+  isTest?: Prisma.BoolFilter<"Participation"> | boolean
   userId?: Prisma.StringFilter<"Participation"> | string
   contestId?: Prisma.StringFilter<"Participation"> | string
   score?: Prisma.DecimalFilter<"Participation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -246,6 +254,7 @@ export type ParticipationWhereInput = {
 
 export type ParticipationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   contestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -265,6 +274,7 @@ export type ParticipationWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ParticipationWhereInput | Prisma.ParticipationWhereInput[]
   OR?: Prisma.ParticipationWhereInput[]
   NOT?: Prisma.ParticipationWhereInput | Prisma.ParticipationWhereInput[]
+  isTest?: Prisma.BoolFilter<"Participation"> | boolean
   userId?: Prisma.StringFilter<"Participation"> | string
   contestId?: Prisma.StringFilter<"Participation"> | string
   score?: Prisma.DecimalFilter<"Participation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -280,6 +290,7 @@ export type ParticipationWhereUniqueInput = Prisma.AtLeast<{
 
 export type ParticipationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   contestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -301,6 +312,7 @@ export type ParticipationScalarWhereWithAggregatesInput = {
   OR?: Prisma.ParticipationScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ParticipationScalarWhereWithAggregatesInput | Prisma.ParticipationScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Participation"> | string
+  isTest?: Prisma.BoolWithAggregatesFilter<"Participation"> | boolean
   userId?: Prisma.StringWithAggregatesFilter<"Participation"> | string
   contestId?: Prisma.StringWithAggregatesFilter<"Participation"> | string
   score?: Prisma.DecimalWithAggregatesFilter<"Participation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -314,6 +326,7 @@ export type ParticipationScalarWhereWithAggregatesInput = {
 
 export type ParticipationCreateInput = {
   id?: string
+  isTest?: boolean
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -327,6 +340,7 @@ export type ParticipationCreateInput = {
 
 export type ParticipationUncheckedCreateInput = {
   id?: string
+  isTest?: boolean
   userId: string
   contestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -340,6 +354,7 @@ export type ParticipationUncheckedCreateInput = {
 
 export type ParticipationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -353,6 +368,7 @@ export type ParticipationUpdateInput = {
 
 export type ParticipationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   contestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -366,6 +382,7 @@ export type ParticipationUncheckedUpdateInput = {
 
 export type ParticipationCreateManyInput = {
   id?: string
+  isTest?: boolean
   userId: string
   contestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -379,6 +396,7 @@ export type ParticipationCreateManyInput = {
 
 export type ParticipationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -390,6 +408,7 @@ export type ParticipationUpdateManyMutationInput = {
 
 export type ParticipationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   contestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -418,6 +437,7 @@ export type ParticipationUserIdContestIdCompoundUniqueInput = {
 
 export type ParticipationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   contestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -435,6 +455,7 @@ export type ParticipationAvgOrderByAggregateInput = {
 
 export type ParticipationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   contestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -444,6 +465,7 @@ export type ParticipationMaxOrderByAggregateInput = {
 
 export type ParticipationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   contestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -541,6 +563,7 @@ export type ParticipationUncheckedUpdateManyWithoutContestNestedInput = {
 
 export type ParticipationCreateWithoutUserInput = {
   id?: string
+  isTest?: boolean
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -553,6 +576,7 @@ export type ParticipationCreateWithoutUserInput = {
 
 export type ParticipationUncheckedCreateWithoutUserInput = {
   id?: string
+  isTest?: boolean
   contestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -594,6 +618,7 @@ export type ParticipationScalarWhereInput = {
   OR?: Prisma.ParticipationScalarWhereInput[]
   NOT?: Prisma.ParticipationScalarWhereInput | Prisma.ParticipationScalarWhereInput[]
   id?: Prisma.StringFilter<"Participation"> | string
+  isTest?: Prisma.BoolFilter<"Participation"> | boolean
   userId?: Prisma.StringFilter<"Participation"> | string
   contestId?: Prisma.StringFilter<"Participation"> | string
   score?: Prisma.DecimalFilter<"Participation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -607,6 +632,7 @@ export type ParticipationScalarWhereInput = {
 
 export type ParticipationCreateWithoutContestInput = {
   id?: string
+  isTest?: boolean
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -619,6 +645,7 @@ export type ParticipationCreateWithoutContestInput = {
 
 export type ParticipationUncheckedCreateWithoutContestInput = {
   id?: string
+  isTest?: boolean
   userId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -657,6 +684,7 @@ export type ParticipationUpdateManyWithWhereWithoutContestInput = {
 
 export type ParticipationCreateManyUserInput = {
   id?: string
+  isTest?: boolean
   contestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -669,6 +697,7 @@ export type ParticipationCreateManyUserInput = {
 
 export type ParticipationUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -681,6 +710,7 @@ export type ParticipationUpdateWithoutUserInput = {
 
 export type ParticipationUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   contestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -693,6 +723,7 @@ export type ParticipationUncheckedUpdateWithoutUserInput = {
 
 export type ParticipationUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   contestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -705,6 +736,7 @@ export type ParticipationUncheckedUpdateManyWithoutUserInput = {
 
 export type ParticipationCreateManyContestInput = {
   id?: string
+  isTest?: boolean
   userId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -717,6 +749,7 @@ export type ParticipationCreateManyContestInput = {
 
 export type ParticipationUpdateWithoutContestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -729,6 +762,7 @@ export type ParticipationUpdateWithoutContestInput = {
 
 export type ParticipationUncheckedUpdateWithoutContestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -741,6 +775,7 @@ export type ParticipationUncheckedUpdateWithoutContestInput = {
 
 export type ParticipationUncheckedUpdateManyWithoutContestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   draftAnswers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -755,6 +790,7 @@ export type ParticipationUncheckedUpdateManyWithoutContestInput = {
 
 export type ParticipationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   contestId?: boolean
   score?: boolean
@@ -770,6 +806,7 @@ export type ParticipationSelect<ExtArgs extends runtime.Types.Extensions.Interna
 
 export type ParticipationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   contestId?: boolean
   score?: boolean
@@ -785,6 +822,7 @@ export type ParticipationSelectCreateManyAndReturn<ExtArgs extends runtime.Types
 
 export type ParticipationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   contestId?: boolean
   score?: boolean
@@ -800,6 +838,7 @@ export type ParticipationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
 
 export type ParticipationSelectScalar = {
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   contestId?: boolean
   score?: boolean
@@ -811,7 +850,7 @@ export type ParticipationSelectScalar = {
   submittedAt?: boolean
 }
 
-export type ParticipationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "contestId" | "score" | "draftAnswers" | "answers" | "timeSpent" | "markedForReview" | "startedAt" | "submittedAt", ExtArgs["result"]["participation"]>
+export type ParticipationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "isTest" | "userId" | "contestId" | "score" | "draftAnswers" | "answers" | "timeSpent" | "markedForReview" | "startedAt" | "submittedAt", ExtArgs["result"]["participation"]>
 export type ParticipationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   contest?: boolean | Prisma.ContestDefaultArgs<ExtArgs>
@@ -833,6 +872,7 @@ export type $ParticipationPayload<ExtArgs extends runtime.Types.Extensions.Inter
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    isTest: boolean
     userId: string
     contestId: string
     score: runtime.Decimal
@@ -1268,6 +1308,7 @@ export interface Prisma__ParticipationClient<T, Null = never, ExtArgs extends ru
  */
 export interface ParticipationFieldRefs {
   readonly id: Prisma.FieldRef<"Participation", 'String'>
+  readonly isTest: Prisma.FieldRef<"Participation", 'Boolean'>
   readonly userId: Prisma.FieldRef<"Participation", 'String'>
   readonly contestId: Prisma.FieldRef<"Participation", 'String'>
   readonly score: Prisma.FieldRef<"Participation", 'Decimal'>

@@ -44,6 +44,7 @@ export type MockAttemptSumAggregateOutputType = {
 
 export type MockAttemptMinAggregateOutputType = {
   id: string | null
+  isTest: boolean | null
   userId: string | null
   mockTestId: string | null
   score: runtime.Decimal | null
@@ -57,6 +58,7 @@ export type MockAttemptMinAggregateOutputType = {
 
 export type MockAttemptMaxAggregateOutputType = {
   id: string | null
+  isTest: boolean | null
   userId: string | null
   mockTestId: string | null
   score: runtime.Decimal | null
@@ -70,6 +72,7 @@ export type MockAttemptMaxAggregateOutputType = {
 
 export type MockAttemptCountAggregateOutputType = {
   id: number
+  isTest: number
   userId: number
   mockTestId: number
   score: number
@@ -104,6 +107,7 @@ export type MockAttemptSumAggregateInputType = {
 
 export type MockAttemptMinAggregateInputType = {
   id?: true
+  isTest?: true
   userId?: true
   mockTestId?: true
   score?: true
@@ -117,6 +121,7 @@ export type MockAttemptMinAggregateInputType = {
 
 export type MockAttemptMaxAggregateInputType = {
   id?: true
+  isTest?: true
   userId?: true
   mockTestId?: true
   score?: true
@@ -130,6 +135,7 @@ export type MockAttemptMaxAggregateInputType = {
 
 export type MockAttemptCountAggregateInputType = {
   id?: true
+  isTest?: true
   userId?: true
   mockTestId?: true
   score?: true
@@ -233,6 +239,7 @@ export type MockAttemptGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 
 export type MockAttemptGroupByOutputType = {
   id: string
+  isTest: boolean
   userId: string
   mockTestId: string
   score: runtime.Decimal
@@ -272,6 +279,7 @@ export type MockAttemptWhereInput = {
   OR?: Prisma.MockAttemptWhereInput[]
   NOT?: Prisma.MockAttemptWhereInput | Prisma.MockAttemptWhereInput[]
   id?: Prisma.StringFilter<"MockAttempt"> | string
+  isTest?: Prisma.BoolFilter<"MockAttempt"> | boolean
   userId?: Prisma.StringFilter<"MockAttempt"> | string
   mockTestId?: Prisma.StringFilter<"MockAttempt"> | string
   score?: Prisma.DecimalFilter<"MockAttempt"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -290,6 +298,7 @@ export type MockAttemptWhereInput = {
 
 export type MockAttemptOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   mockTestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -312,6 +321,7 @@ export type MockAttemptWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.MockAttemptWhereInput | Prisma.MockAttemptWhereInput[]
   OR?: Prisma.MockAttemptWhereInput[]
   NOT?: Prisma.MockAttemptWhereInput | Prisma.MockAttemptWhereInput[]
+  isTest?: Prisma.BoolFilter<"MockAttempt"> | boolean
   userId?: Prisma.StringFilter<"MockAttempt"> | string
   mockTestId?: Prisma.StringFilter<"MockAttempt"> | string
   score?: Prisma.DecimalFilter<"MockAttempt"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -330,6 +340,7 @@ export type MockAttemptWhereUniqueInput = Prisma.AtLeast<{
 
 export type MockAttemptOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   mockTestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -354,6 +365,7 @@ export type MockAttemptScalarWhereWithAggregatesInput = {
   OR?: Prisma.MockAttemptScalarWhereWithAggregatesInput[]
   NOT?: Prisma.MockAttemptScalarWhereWithAggregatesInput | Prisma.MockAttemptScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"MockAttempt"> | string
+  isTest?: Prisma.BoolWithAggregatesFilter<"MockAttempt"> | boolean
   userId?: Prisma.StringWithAggregatesFilter<"MockAttempt"> | string
   mockTestId?: Prisma.StringWithAggregatesFilter<"MockAttempt"> | string
   score?: Prisma.DecimalWithAggregatesFilter<"MockAttempt"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -370,6 +382,7 @@ export type MockAttemptScalarWhereWithAggregatesInput = {
 
 export type MockAttemptCreateInput = {
   id?: string
+  isTest?: boolean
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   correctCount?: number
@@ -386,6 +399,7 @@ export type MockAttemptCreateInput = {
 
 export type MockAttemptUncheckedCreateInput = {
   id?: string
+  isTest?: boolean
   userId: string
   mockTestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -402,6 +416,7 @@ export type MockAttemptUncheckedCreateInput = {
 
 export type MockAttemptUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   correctCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -418,6 +433,7 @@ export type MockAttemptUpdateInput = {
 
 export type MockAttemptUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   mockTestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -434,6 +450,7 @@ export type MockAttemptUncheckedUpdateInput = {
 
 export type MockAttemptCreateManyInput = {
   id?: string
+  isTest?: boolean
   userId: string
   mockTestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -450,6 +467,7 @@ export type MockAttemptCreateManyInput = {
 
 export type MockAttemptUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   correctCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -464,6 +482,7 @@ export type MockAttemptUpdateManyMutationInput = {
 
 export type MockAttemptUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   mockTestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -495,6 +514,7 @@ export type MockAttemptUserIdMockTestIdCompoundUniqueInput = {
 
 export type MockAttemptCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   mockTestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -519,6 +539,7 @@ export type MockAttemptAvgOrderByAggregateInput = {
 
 export type MockAttemptMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   mockTestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -532,6 +553,7 @@ export type MockAttemptMaxOrderByAggregateInput = {
 
 export type MockAttemptMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  isTest?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   mockTestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
@@ -637,6 +659,7 @@ export type MockAttemptUncheckedUpdateManyWithoutMockTestNestedInput = {
 
 export type MockAttemptCreateWithoutUserInput = {
   id?: string
+  isTest?: boolean
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   correctCount?: number
@@ -652,6 +675,7 @@ export type MockAttemptCreateWithoutUserInput = {
 
 export type MockAttemptUncheckedCreateWithoutUserInput = {
   id?: string
+  isTest?: boolean
   mockTestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -696,6 +720,7 @@ export type MockAttemptScalarWhereInput = {
   OR?: Prisma.MockAttemptScalarWhereInput[]
   NOT?: Prisma.MockAttemptScalarWhereInput | Prisma.MockAttemptScalarWhereInput[]
   id?: Prisma.StringFilter<"MockAttempt"> | string
+  isTest?: Prisma.BoolFilter<"MockAttempt"> | boolean
   userId?: Prisma.StringFilter<"MockAttempt"> | string
   mockTestId?: Prisma.StringFilter<"MockAttempt"> | string
   score?: Prisma.DecimalFilter<"MockAttempt"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -712,6 +737,7 @@ export type MockAttemptScalarWhereInput = {
 
 export type MockAttemptCreateWithoutMockTestInput = {
   id?: string
+  isTest?: boolean
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   correctCount?: number
@@ -727,6 +753,7 @@ export type MockAttemptCreateWithoutMockTestInput = {
 
 export type MockAttemptUncheckedCreateWithoutMockTestInput = {
   id?: string
+  isTest?: boolean
   userId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -768,6 +795,7 @@ export type MockAttemptUpdateManyWithWhereWithoutMockTestInput = {
 
 export type MockAttemptCreateManyUserInput = {
   id?: string
+  isTest?: boolean
   mockTestId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -783,6 +811,7 @@ export type MockAttemptCreateManyUserInput = {
 
 export type MockAttemptUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   correctCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -798,6 +827,7 @@ export type MockAttemptUpdateWithoutUserInput = {
 
 export type MockAttemptUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   mockTestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -813,6 +843,7 @@ export type MockAttemptUncheckedUpdateWithoutUserInput = {
 
 export type MockAttemptUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   mockTestId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -828,6 +859,7 @@ export type MockAttemptUncheckedUpdateManyWithoutUserInput = {
 
 export type MockAttemptCreateManyMockTestInput = {
   id?: string
+  isTest?: boolean
   userId: string
   score?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -843,6 +875,7 @@ export type MockAttemptCreateManyMockTestInput = {
 
 export type MockAttemptUpdateWithoutMockTestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   correctCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -858,6 +891,7 @@ export type MockAttemptUpdateWithoutMockTestInput = {
 
 export type MockAttemptUncheckedUpdateWithoutMockTestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -873,6 +907,7 @@ export type MockAttemptUncheckedUpdateWithoutMockTestInput = {
 
 export type MockAttemptUncheckedUpdateManyWithoutMockTestInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  isTest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -890,6 +925,7 @@ export type MockAttemptUncheckedUpdateManyWithoutMockTestInput = {
 
 export type MockAttemptSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   mockTestId?: boolean
   score?: boolean
@@ -908,6 +944,7 @@ export type MockAttemptSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type MockAttemptSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   mockTestId?: boolean
   score?: boolean
@@ -926,6 +963,7 @@ export type MockAttemptSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 
 export type MockAttemptSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   mockTestId?: boolean
   score?: boolean
@@ -944,6 +982,7 @@ export type MockAttemptSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 
 export type MockAttemptSelectScalar = {
   id?: boolean
+  isTest?: boolean
   userId?: boolean
   mockTestId?: boolean
   score?: boolean
@@ -958,7 +997,7 @@ export type MockAttemptSelectScalar = {
   submittedAt?: boolean
 }
 
-export type MockAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "mockTestId" | "score" | "totalMarks" | "correctCount" | "wrongCount" | "skippedCount" | "answers" | "timeSpent" | "markedForReview" | "startedAt" | "submittedAt", ExtArgs["result"]["mockAttempt"]>
+export type MockAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "isTest" | "userId" | "mockTestId" | "score" | "totalMarks" | "correctCount" | "wrongCount" | "skippedCount" | "answers" | "timeSpent" | "markedForReview" | "startedAt" | "submittedAt", ExtArgs["result"]["mockAttempt"]>
 export type MockAttemptInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   mockTest?: boolean | Prisma.MockTestDefaultArgs<ExtArgs>
@@ -980,6 +1019,7 @@ export type $MockAttemptPayload<ExtArgs extends runtime.Types.Extensions.Interna
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    isTest: boolean
     userId: string
     mockTestId: string
     score: runtime.Decimal
@@ -1418,6 +1458,7 @@ export interface Prisma__MockAttemptClient<T, Null = never, ExtArgs extends runt
  */
 export interface MockAttemptFieldRefs {
   readonly id: Prisma.FieldRef<"MockAttempt", 'String'>
+  readonly isTest: Prisma.FieldRef<"MockAttempt", 'Boolean'>
   readonly userId: Prisma.FieldRef<"MockAttempt", 'String'>
   readonly mockTestId: Prisma.FieldRef<"MockAttempt", 'String'>
   readonly score: Prisma.FieldRef<"MockAttempt", 'Decimal'>

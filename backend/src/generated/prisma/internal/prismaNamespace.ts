@@ -1982,6 +1982,7 @@ export type MockTestQuestionScalarFieldEnum = (typeof MockTestQuestionScalarFiel
 
 export const MockAttemptScalarFieldEnum = {
   id: 'id',
+  isTest: 'isTest',
   userId: 'userId',
   mockTestId: 'mockTestId',
   score: 'score',
@@ -2012,6 +2013,7 @@ export type ContestQuestionScalarFieldEnum = (typeof ContestQuestionScalarFieldE
 
 export const ParticipationScalarFieldEnum = {
   id: 'id',
+  isTest: 'isTest',
   userId: 'userId',
   contestId: 'contestId',
   score: 'score',

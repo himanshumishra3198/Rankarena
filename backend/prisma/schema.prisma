@@ -288,6 +288,7 @@ model MockTestQuestion {
 
 model MockAttempt {
   id           String    @id @default(uuid())
+  isTest       Boolean   @default(false) @map("is_test")
   userId       String    @map("user_id")
   mockTestId   String    @map("mock_test_id")
   score        Decimal   @default(0)
@@ -305,6 +306,7 @@ model MockAttempt {
   mockTest MockTest @relation(fields: [mockTestId], references: [id])
 
   @@unique([userId, mockTestId])
+  @@index([mockTestId, isTest])
   @@map("mock_attempts")
 }
 
@@ -322,8 +324,14 @@ model ContestQuestion {
   @@map("contest_questions")
 }
 
+// `isTest` marks an attempt that must never reach a leaderboard, a rating or a
+// public statistic — an admin trying the product out. It is stamped from the
+// user's role when the row is written rather than derived from the role at
+// read time, so promoting someone to admin later cannot retroactively remove
+// their genuine attempts and silently shift everyone else's historical ranks.
 model Participation {
   id           String    @id @default(uuid())
+  isTest       Boolean   @default(false) @map("is_test")
   userId       String    @map("user_id")
   contestId    String    @map("contest_id")
   score        Decimal   @default(0)
@@ -338,6 +346,7 @@ model Participation {
   contest Contest @relation(fields: [contestId], references: [id])
 
   @@unique([userId, contestId])
+  @@index([contestId, isTest])
   @@map("participations")
 }
 

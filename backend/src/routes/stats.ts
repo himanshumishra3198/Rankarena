@@ -8,12 +8,13 @@ const router = Router();
 router.get("/public", async (_req, res: Response) => {
   const [aspirants, mockTests, questions, contests, mockSubs, contestSubs] =
     await Promise.all([
-      prisma.user.count(),
+      // Admin accounts are staff, not aspirants.
+      prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.mockTest.count({ where: { isPublished: true } }),
       prisma.question.count(),
       prisma.contest.count(),
-      prisma.mockAttempt.count({ where: { submittedAt: { not: null } } }),
-      prisma.participation.count({ where: { submittedAt: { not: null } } }),
+      prisma.mockAttempt.count({ where: { submittedAt: { not: null }, isTest: false } }),
+      prisma.participation.count({ where: { submittedAt: { not: null }, isTest: false } }),
     ]);
 
   res.json({

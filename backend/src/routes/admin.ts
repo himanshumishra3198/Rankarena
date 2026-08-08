@@ -126,8 +126,11 @@ async function computeContestRatings(contestId: string) {
   const existing = await prisma.ratingHistory.count({ where: { contestId } });
   if (existing > 0) return;
 
+  // Test attempts are excluded before ranking, not after. The delta formula
+  // divides by the participant count, so leaving an admin in the set would
+  // change n and shift the rating of every genuine participant.
   const participations = await prisma.participation.findMany({
-    where: { contestId, submittedAt: { not: null } },
+    where: { contestId, submittedAt: { not: null }, isTest: false },
     select: { userId: true, score: true, submittedAt: true },
     orderBy: [{ score: "desc" }, { submittedAt: "asc" }],
   });

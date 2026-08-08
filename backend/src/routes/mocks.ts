@@ -148,10 +148,14 @@ router.post("/:id/submit", async (req: AuthRequest, res: Response) => {
     markedForReview: markedForReview ?? Prisma.JsonNull, submittedAt,
   };
 
+  // Admin runs are test attempts: kept for the admin's own review, excluded
+  // from rank, percentile, the mock leaderboard and the public counters.
+  const isTest = req.user!.role === "ADMIN";
+
   await prisma.mockAttempt.upsert({
     where: { userId_mockTestId: { userId: req.user!.id, mockTestId } },
-    create: { userId: req.user!.id, mockTestId, ...data },
-    update: { ...data, startedAt: new Date() },
+    create: { userId: req.user!.id, mockTestId, isTest, ...data },
+    update: { ...data, isTest, startedAt: new Date() },
   });
 
   res.json({ score, totalMarks, correct, wrong, skipped });
@@ -193,19 +197,21 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
 
   // ── Rank / percentile + per-question aggregates across all submitted attempts ──
   const allAttempts = await prisma.mockAttempt.findMany({
-    where: { mockTestId, submittedAt: { not: null } },
+    where: { mockTestId, submittedAt: { not: null }, isTest: false },
     select: { userId: true, score: true, answers: true, timeSpent: true },
   });
 
   const totalTakers = allAttempts.length;
   const myScore = Number(attempt.score);
-  // Rank = 1 + number of attempts with a strictly higher score.
+  // A test attempt isn't in the ranked set, so it has no rank or percentile —
+  // reported as null rather than a position it never actually held.
   const higher = allAttempts.filter((a) => Number(a.score) > myScore).length;
-  const rank = higher + 1;
-  // Percentile = % of takers you scored at least as well as (excluding yourself).
-  const percentile = totalTakers > 1
-    ? Math.round((allAttempts.filter((a) => Number(a.score) < myScore).length / (totalTakers - 1)) * 1000) / 10
-    : 100;
+  const rank = attempt.isTest ? null : higher + 1;
+  const percentile = attempt.isTest
+    ? null
+    : totalTakers > 1
+      ? Math.round((allAttempts.filter((a) => Number(a.score) < myScore).length / (totalTakers - 1)) * 1000) / 10
+      : 100;
 
   // Per-question: how many answered, how many correct, total time (for averages).
   const correctMap = new Map(mtqs.map((m) => [m.questionId, m.question.correctOption]));
@@ -235,7 +241,7 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
 
   // Top scorers (leaderboard for this mock) — highest score, earliest submit wins ties.
   const topRows = await prisma.mockAttempt.findMany({
-    where: { mockTestId, submittedAt: { not: null } },
+    where: { mockTestId, submittedAt: { not: null }, isTest: false },
     orderBy: [{ score: "desc" }, { submittedAt: "asc" }],
     take: 10,
     select: { userId: true, score: true, user: { select: { name: true } } },
@@ -260,6 +266,7 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
     timeSpent: attempt.timeSpent ?? {},
     markedForReview: attempt.markedForReview ?? [],
     submittedAt: attempt.submittedAt,
+    isTest: attempt.isTest,
     rank,
     totalTakers,
     percentile,
