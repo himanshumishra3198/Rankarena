@@ -163,6 +163,8 @@ export default function ContestDetail() {
 
   // Add question state
   const [tab, setTab] = useState<AddTab>('bank')
+  // Subject filter for reviewing the paper section by section.
+  const [reviewSubject, setReviewSubject] = useState<string>('')
   const [selectedQId, setSelectedQId] = useState('')
   const [marks, setMarks] = useState(2)
   const [negMarks, setNegMarks] = useState(0.5)
@@ -446,6 +448,10 @@ export default function ContestDetail() {
   const draftTotal = Object.values(draftLimits).reduce((a, b) => a + b, 0)
 
   if (loading) return <><Navbar /><div className="page"><p style={{ color: 'var(--text-muted)' }}>Loading...</p></div></>
+
+  const visibleCqs = reviewSubject
+    ? cqs.filter(cq => cq.question.subject === reviewSubject)
+    : cqs
 
   return (
     <>
@@ -907,9 +913,33 @@ export default function ContestDetail() {
 
         {/* ── Questions in contest ─────────────────────────────────────── */}
         <div className="card">
-          <h2 style={{ marginBottom: 14 }}>Questions in Contest ({cqs.length})</h2>
+          <div className="cq-head">
+            <h2 style={{ margin: 0 }}>
+              Questions in Contest ({reviewSubject ? `${visibleCqs.length} of ${cqs.length}` : cqs.length})
+            </h2>
+            {cqs.length > 0 && (
+              <div className="cq-filters">
+                <button className={`cq-chip ${reviewSubject === '' ? 'active' : ''}`}
+                  onClick={() => setReviewSubject('')}>
+                  All ({cqs.length})
+                </button>
+                {SECTIONS.map(sec => {
+                  const n = cqs.filter(c => c.question.subject === sec).length
+                  return (
+                    <button key={sec} disabled={n === 0}
+                      className={`cq-chip ${reviewSubject === sec ? 'active' : ''}`}
+                      onClick={() => setReviewSubject(sec)}>
+                      {SECTION_LABELS[sec]} ({n})
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
           {cqs.length === 0
             ? <p className="empty">No questions added yet. Use the form above to add some.</p>
+            : visibleCqs.length === 0
+            ? <p className="empty">No {SECTION_LABELS[reviewSubject as keyof typeof SECTION_LABELS] ?? ''} questions in this contest.</p>
             : (
               <table>
                 <thead>
@@ -924,9 +954,11 @@ export default function ContestDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {cqs.map((cq, i) => (
+                  {visibleCqs.map((cq) => (
                     <tr key={cq.questionId}>
-                      <td style={{ color: 'var(--text-muted)', width: 36 }}>{i + 1}</td>
+                      <td style={{ color: 'var(--text-muted)', width: 36 }}>
+                        {cqs.findIndex(c => c.questionId === cq.questionId) + 1}
+                      </td>
                       <td style={{ maxWidth: 360 }}>
                         {cq.question.passage && (
                           <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 600, marginBottom: 2 }}>

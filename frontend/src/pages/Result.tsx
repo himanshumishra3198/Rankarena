@@ -166,6 +166,7 @@ export default function Result() {
   const navigate = useNavigate()
 
   const [result, setResult] = useState<ResultData | null>(null)
+  const [tab, setTab] = useState<'overview' | 'solutions' | 'leaderboard'>('overview')
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [lbFilter, setLbFilter] = useState<'all' | 'friends'>('all')
   const [lbLoading, setLbLoading] = useState(false)
@@ -332,6 +333,15 @@ export default function Result() {
           </button>
         </div>
 
+
+        {/* ── Tabs ─────────────────────────────────────────────────────── */}
+        <div className="result-tabs">
+          {([['overview', '📈 Overview'], ['solutions', '📝 Solutions'], ['leaderboard', '🏆 Leaderboard']] as const).map(([t, label]) => (
+            <button key={t} className={`result-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{label}</button>
+          ))}
+        </div>
+
+        {tab === 'overview' && (<>
         {/* ── Overall Performance Summary ──────────────────────────────── */}
         <div className="card result-summary-card">
           <div className="result-summary-title">Overall Performance Summary</div>
@@ -493,6 +503,9 @@ export default function Result() {
           </div>
         )}
 
+        </>)}
+
+        {tab === 'leaderboard' && (<>
         {/* ── Leaderboard ──────────────────────────────────────────────── */}
         <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
@@ -537,6 +550,9 @@ export default function Result() {
           )}
         </div>
 
+        </>)}
+
+        {tab === 'solutions' && (<>
         {/* ── Question Map ─────────────────────────────────────────────── */}
         <div className="card" style={{ marginBottom: 20 }}>
           <h2 style={{ marginBottom: 12 }}>Question Map</h2>
@@ -754,6 +770,7 @@ export default function Result() {
         <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
           <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back to Contests</button>
         </div>
+        </>)}
       </div>
 
       {reportQId && (

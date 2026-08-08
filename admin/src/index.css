@@ -304,3 +304,11 @@ tr:hover td { background: var(--surface-raised); }
   /* The mark alone carries the brand once the bar gets tight. */
   .logo-word { font-size: 16px; }
 }
+
+/* Contest question review: filter the paper by section. */
+.cq-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.cq-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.cq-chip { padding: 5px 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; font-family: inherit; transition: border-color .15s, color .15s, background .15s; }
+.cq-chip:hover:not(:disabled) { color: var(--heading); border-color: var(--text-muted); }
+.cq-chip.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.cq-chip:disabled { opacity: .45; cursor: not-allowed; }
