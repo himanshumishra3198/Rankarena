@@ -394,12 +394,18 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     return;
   }
 
-  // Don't expose correct answers while the contest is still running
+  // Don't expose correct answers while the contest is still running.
+  //
+  // Admins are exempt: their attempts are test runs that never reach a
+  // leaderboard or rating, and waiting out a three-hour window to check that a
+  // paper renders correctly makes the feature useless. Nothing is disclosed
+  // that they can't already read in the admin panel, where the answer key
+  // lives in plain sight.
   const contestEndMs = contest
     ? new Date(contest.startTime).getTime() + contest.durationMinutes * 60_000
     : 0;
   const contestLive = Date.now() < contestEndMs;
-  if (contestLive) {
+  if (contestLive && req.user!.role !== "ADMIN") {
     res.status(400).json({ error: "Answer key is available after the contest ends." });
     return;
   }
