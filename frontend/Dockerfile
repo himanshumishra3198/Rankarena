@@ -8,9 +8,14 @@ RUN npm install
 
 COPY . .
 
-# VITE_API_URL is injected at build time so it gets baked into the JS bundle
+# Injected at build time so they get baked into the JS bundle.
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+
+# GA4 measurement id. Left empty, the analytics tag never loads — so previews
+# and local builds send nothing. Not a secret: it is visible in page source.
+ARG VITE_GA_ID
+ENV VITE_GA_ID=$VITE_GA_ID
 
 RUN npm run build
 

@@ -10,6 +10,9 @@ env:
   # Not a secret — kept here so a domain change is a one-line edit in the repo
   # rather than a manual GitHub secret update.
   VITE_API_URL: https://api.rankarenas.com
+  # GA4 measurement id (G-XXXXXXXXXX). Leave empty to disable analytics
+  # entirely — the tag is only injected when this has a value.
+  VITE_GA_ID: ""
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
@@ -60,6 +63,7 @@ jobs:
           cache-to:   type=gha,mode=max,scope=frontend
           build-args: |
             VITE_API_URL=${{ env.VITE_API_URL }}
+            VITE_GA_ID=${{ env.VITE_GA_ID }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/rankarena-frontend:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/rankarena-frontend:latest
