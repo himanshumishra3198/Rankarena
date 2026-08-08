@@ -1474,12 +1474,28 @@ select.input { cursor: pointer; }
 .markdown hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
 @media (max-width: 600px) {
-  .community-header { flex-direction: column; align-items: stretch; }
-  .community-controls { flex-direction: column; align-items: stretch; }
-  .community-tabs { justify-content: center; }
-  .community-filters { justify-content: center; }
-  .article-row { padding: 14px 16px 13px; gap: 11px; }
+  /* The page header ate most of the first screen: a full-width button, a
+     full-width sort band, and chips on two rows. Everything now sizes to its
+     own content and sits left-aligned. */
+  .page > h1 { font-size: 22px; }
+  .community-sub { font-size: 13px; margin-bottom: 14px; }
+  .community-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .community-header .btn { align-self: flex-start; }
+
+  .community-controls { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+  .community-tabs { align-self: flex-start; padding: 2px; }
+  .community-tab { padding: 6px 13px; font-size: 12.5px; }
+  .community-filters { gap: 5px; }
+  .community-chip { padding: 5px 10px; font-size: 11.5px; }
+
+  .article-row { padding: 12px 13px 10px; gap: 8px; }
   .article-title-link { font-size: 16px; }
+  .article-excerpt { font-size: 12.5px; -webkit-line-clamp: 2; margin-bottom: 8px; }
+  /* Keep the byline on one line — it was wrapping "Comment" onto its own row. */
+  .article-row-meta { gap: 5px; font-size: 11.5px; }
+  .article-row-top { margin-bottom: 5px; }
+  .vote-column .vote-btn { padding: 3px 4px; }
+  .vote-score { min-width: 22px; font-size: 12px; }
   .article-full-title { font-size: 21px; }
   .article-full-head { gap: 11px; }
   .article-comment-count { margin-left: 0; padding-left: 0; }
