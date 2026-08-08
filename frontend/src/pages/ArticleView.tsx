@@ -7,7 +7,7 @@ import CommentThread from '../components/CommentThread'
 import api from '../lib/api'
 import { timeAgo } from '../lib/time'
 import { getTier } from '../lib/tiers'
-import { usePageMeta } from '../lib/seo'
+import { usePageMeta, useJsonLd } from '../lib/seo'
 import type { Article, ArticleComment } from '../lib/types'
 import { TYPE_LABEL, TYPE_ICON } from './Community'
 
@@ -23,7 +23,30 @@ export default function ArticleView() {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const signedIn = Boolean(localStorage.getItem('token'))
-  usePageMeta(article ? `${article.title} — RankArenas` : 'Article — RankArenas')
+  // The excerpt doubles as the meta description and the share-card text.
+  usePageMeta(
+    article ? `${article.title} — RankArenas` : 'Article — RankArenas',
+    article ? article.body.replace(/[#*`>_~\[\]()]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160) : undefined,
+    { type: 'article' }
+  )
+  useJsonLd(
+    article
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: article.title,
+          datePublished: article.createdAt,
+          dateModified: article.updatedAt,
+          author: { '@type': 'Person', name: article.author.name },
+          publisher: {
+            '@type': 'Organization',
+            name: 'RankArenas',
+            logo: { '@type': 'ImageObject', url: 'https://rankarenas.com/favicon.svg' },
+          },
+          mainEntityOfPage: `https://rankarenas.com/community/${article.id}`,
+        }
+      : null
+  )
 
   const loadComments = useCallback(async () => {
     if (!id) return

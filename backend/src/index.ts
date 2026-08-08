@@ -22,6 +22,7 @@ import bookmarkRoutes from "./routes/bookmarks";
 import statsRoutes from "./routes/stats";
 import communityRoutes from "./routes/community";
 import notificationRoutes from "./routes/notifications";
+import seoRoutes from "./routes/seo";
 import prisma from "./lib/prisma";
 import { computeFingerprint } from "./lib/fingerprint";
 
@@ -91,6 +92,8 @@ app.use("/bookmarks", bookmarkRoutes);
 app.use("/stats", statsRoutes);
 app.use("/community", communityWriteLimiter, communityRoutes);
 app.use("/notifications", notificationRoutes);
+// Served at the API origin; nginx proxies rankarenas.com/sitemap.xml here.
+app.use("/", seoRoutes);
 
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled promise rejection:", reason);

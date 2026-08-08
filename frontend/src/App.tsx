@@ -15,6 +15,7 @@ import Leaderboard from './pages/Leaderboard'
 import Community from './pages/Community'
 import ArticleView from './pages/ArticleView'
 import ArticleEditor from './pages/ArticleEditor'
+import AnalyticsTracker from './components/AnalyticsTracker'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
@@ -23,6 +24,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <AnalyticsTracker />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
