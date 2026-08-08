@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Logo from '../components/Logo'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -32,7 +33,10 @@ export default function Login() {
   return (
     <div className="auth-wrap">
       <div className="card auth-card">
-        <h2 style={{ textAlign: 'center', marginBottom: 4 }}>RankArena Admin</h2>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
+          <Logo size={30} />
+          <span className="logo-suffix" style={{ alignSelf: 'center' }}>Admin</span>
+        </div>
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>Sign in to manage contests</p>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>

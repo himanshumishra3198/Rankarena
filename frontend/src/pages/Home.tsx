@@ -36,7 +36,7 @@ function countdown(ms: number): string {
 
 export default function Home() {
   usePageMeta(
-    'RankArena — SSC contests, mock tests and community',
+    'RankArenas — SSC contests, mock tests and community',
     'Live rated contests, free mock tests and an active community for SSC CGL, CHSL, MTS, CPO and GD aspirants.'
   )
   const navigate = useNavigate()

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toggleTheme, getTheme } from '../lib/theme'
 import NotificationBell from './NotificationBell'
+import Logo from './Logo'
 
 // `guest: true` means the link is shown to logged-out visitors too. The rest
 // are hidden rather than shown-and-bounced, so a guest never clicks into a
@@ -53,8 +54,8 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <button className="navbar-brand" onClick={() => navigate('/')}>
-          Rank<span>Arena</span>
+        <button className="navbar-brand" onClick={() => navigate('/')} aria-label="RankArenas home">
+          <Logo />
         </button>
         <div className="nav-links">
           {navItems.map(item => (

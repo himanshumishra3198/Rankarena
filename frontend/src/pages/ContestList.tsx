@@ -199,7 +199,7 @@ function UpcomingRow({ contest, joining, onJoin }: {
 }
 
 export default function ContestList() {
-  usePageMeta('Contests — RankArena', 'Upcoming and past rated SSC contests on RankArena.')
+  usePageMeta('Contests — RankArenas', 'Upcoming and past rated SSC contests on RankArenas.')
   const navigate = useNavigate()
   const [active, setActive] = useState<Contest[]>([])
   const [past, setPast] = useState<Contest[]>([])

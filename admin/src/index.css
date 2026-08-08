@@ -64,8 +64,7 @@ select.input { cursor: pointer; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 10; }
-.navbar-brand { font-weight: 700; font-size: 18px; color: var(--heading); }
-.navbar-brand span { color: var(--primary); }
+.navbar-brand { display: inline-flex; align-items: center; }
 .nav-links { display: flex; gap: 4px; }
 .nav-link { padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; border: none; background: transparent; }
 .nav-link:hover, .nav-link.active { background: var(--primary-light); color: var(--primary); }
@@ -288,4 +287,20 @@ tr:hover td { background: var(--surface-raised); }
 @media (max-width: 600px) {
   .qb-search { max-width: none; }
   .qb-page-range { display: none; }
+}
+
+/* ================================ Logo ================================ */
+
+.logo { display: inline-flex; align-items: center; gap: 9px; }
+.logo-mark { flex-shrink: 0; display: block; }
+/* Two flat fills, no gradients — identical in both themes and crisp at 16px. */
+.logo-badge { fill: var(--primary); }
+.logo-bar { fill: #fff; }
+.logo-word { font-weight: 800; font-size: 18px; letter-spacing: -.3px; color: var(--heading); white-space: nowrap; }
+.logo-word span { color: var(--primary); }
+.logo-suffix { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 8px; }
+
+@media (max-width: 420px) {
+  /* The mark alone carries the brand once the bar gets tight. */
+  .logo-word { font-size: 16px; }
 }

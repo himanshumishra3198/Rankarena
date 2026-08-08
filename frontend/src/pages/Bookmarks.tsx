@@ -25,7 +25,7 @@ function optText(q: BQuestion, opt: string) {
 }
 
 export default function Bookmarks() {
-  usePageMeta('Bookmarks — RankArena', 'Your saved questions for revision.')
+  usePageMeta('Bookmarks — RankArenas', 'Your saved questions for revision.')
   const [items, setItems] = useState<BQuestion[] | null>(null)
   const [filter, setFilter] = useState<string>('all')
   const [solOpen, setSolOpen] = useState<Set<string>>(new Set())

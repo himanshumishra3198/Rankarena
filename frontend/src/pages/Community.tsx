@@ -35,7 +35,7 @@ export const TYPE_ICON: Record<ArticleType, string> = {
 
 
 export default function Community() {
-  usePageMeta('Community — RankArena', 'Contest announcements, techniques and discussion from the RankArena community.')
+  usePageMeta('Community — RankArenas', 'Contest announcements, techniques and discussion from the RankArenas community.')
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [articles, setArticles] = useState<ArticleListItem[]>([])

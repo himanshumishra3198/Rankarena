@@ -107,8 +107,7 @@ select.input { cursor: pointer; }
 /* Navbar */
 .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
 .navbar-left { display: flex; align-items: center; gap: 8px; }
-.navbar-brand { font-weight: 700; font-size: 18px; color: var(--heading); background: none; border: none; cursor: pointer; padding: 0 8px 0 0; }
-.navbar-brand span { color: var(--primary); }
+.navbar-brand { display: inline-flex; align-items: center; background: none; border: none; cursor: pointer; padding: 0 8px 0 0; }
 .navbar-right { display: flex; align-items: center; gap: 10px; }
 
 /* Nav links */
@@ -1779,3 +1778,19 @@ select.input { cursor: pointer; }
    a navigation link: label on the left, current state on the right. */
 .nav-drawer-theme { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .nav-drawer-theme-state { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; }
+
+/* ================================ Logo ================================ */
+
+.logo { display: inline-flex; align-items: center; gap: 9px; }
+.logo-mark { flex-shrink: 0; display: block; }
+/* Two flat fills, no gradients — identical in both themes and crisp at 16px. */
+.logo-badge { fill: var(--primary); }
+.logo-bar { fill: #fff; }
+.logo-word { font-weight: 800; font-size: 18px; letter-spacing: -.3px; color: var(--heading); white-space: nowrap; }
+.logo-word span { color: var(--primary); }
+.logo-suffix { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 8px; }
+
+@media (max-width: 420px) {
+  /* The mark alone carries the brand once the bar gets tight. */
+  .logo-word { font-size: 16px; }
+}

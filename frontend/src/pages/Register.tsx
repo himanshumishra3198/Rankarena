@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import Logo from '../components/Logo'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import { usePageMeta } from '../lib/seo'
 
 export default function Register() {
-  usePageMeta('Sign up — RankArena', 'Create a free RankArena account to compete in rated SSC mock contests for CGL, CHSL, MTS, CPO and GD.')
+  usePageMeta('Sign up — RankArenas', 'Create a free RankArenas account to compete in rated SSC mock contests for CGL, CHSL, MTS, CPO and GD.')
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -33,7 +34,7 @@ export default function Register() {
     <div className="auth-wrap">
       <div className="card auth-card">
         <div className="auth-title">
-          <h1 style={{ fontSize: 22, marginBottom: 4 }}>RankArena</h1>
+          <Logo size={30} />
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Create your account</p>
         </div>
         {error && <div className="alert alert-error">{error}</div>}

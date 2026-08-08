@@ -35,7 +35,7 @@ export default function ArticleEditor() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const isEdit = Boolean(id)
-  usePageMeta(isEdit ? 'Edit article — RankArena' : 'Write an article — RankArena')
+  usePageMeta(isEdit ? 'Edit article — RankArenas' : 'Write an article — RankArenas')
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const isAdmin = user.role === 'ADMIN'

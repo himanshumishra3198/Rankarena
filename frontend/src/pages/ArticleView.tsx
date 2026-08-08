@@ -23,7 +23,7 @@ export default function ArticleView() {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const signedIn = Boolean(localStorage.getItem('token'))
-  usePageMeta(article ? `${article.title} — RankArena` : 'Article — RankArena')
+  usePageMeta(article ? `${article.title} — RankArenas` : 'Article — RankArenas')
 
   const loadComments = useCallback(async () => {
     if (!id) return

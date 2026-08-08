@@ -16,7 +16,7 @@ interface Entry {
 const RANK_MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
 export default function Leaderboard() {
-  usePageMeta('Leaderboard — RankArena', 'Top-rated SSC aspirants on RankArena. See the live rankings across mock contests.')
+  usePageMeta('Leaderboard — RankArenas', 'Top-rated SSC aspirants on RankArenas. See the live rankings across mock contests.')
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()

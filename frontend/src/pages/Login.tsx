@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import Logo from '../components/Logo'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import { usePageMeta } from '../lib/seo'
 
 export default function Login() {
-  usePageMeta('Log in — RankArena', 'Log in to RankArena to take SSC mock contests and sectional tests.')
+  usePageMeta('Log in — RankArenas', 'Log in to RankArenas to take SSC mock contests and sectional tests.')
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,7 +33,7 @@ export default function Login() {
     <div className="auth-wrap">
       <div className="card auth-card">
         <div className="auth-title">
-          <h1 style={{ fontSize: 22, marginBottom: 4 }}>RankArena</h1>
+          <Logo size={30} />
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Sign in to your account</p>
         </div>
         {error && <div className="alert alert-error">{error}</div>}

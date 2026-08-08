@@ -296,7 +296,7 @@ export default function Result() {
       '',
       ...sectionStats.map(s => `${SECTION_SHORT[s.sec]}: ${s.earned.toFixed(1)}/${s.maxM}  (${s.cor}✓ ${s.wrg}✗)`),
       '',
-      `🔗 RankArena`,
+      `🔗 RankArenas`,
     ]
     navigator.clipboard.writeText(lines.join('\n'))
     setCopied(true)

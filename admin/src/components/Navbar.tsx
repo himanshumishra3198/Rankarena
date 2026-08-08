@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getTheme, toggleTheme } from '../lib/theme'
 import api from '../lib/api'
+import Logo from './Logo'
 
 export default function Navbar() {
   const navigate = useNavigate()
@@ -29,8 +30,8 @@ export default function Navbar() {
     <nav className="navbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
         <span className="navbar-brand">
-          Rank<span>Arena</span>{' '}
-          <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)' }}>Admin</span>
+          <Logo />
+          <span className="logo-suffix">Admin</span>
         </span>
         <div className="nav-links">
           <button

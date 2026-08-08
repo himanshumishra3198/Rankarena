@@ -1,6 +1,6 @@
 {
-  "name": "RankArena — SSC Mock Tests & Contests",
-  "short_name": "RankArena",
+  "name": "RankArenas — SSC Mock Tests & Contests",
+  "short_name": "RankArenas",
   "description": "Live SSC mock contests and sectional tests with ratings and leaderboards.",
   "start_url": "/",
   "display": "standalone",
