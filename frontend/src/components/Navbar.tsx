@@ -70,6 +70,8 @@ export default function Navbar() {
       </div>
 
       <div className="navbar-right">
+        {/* Hidden on phones by CSS — the drawer carries it there instead, so
+            the bar keeps room for the bell and the user chip. */}
         <button className="theme-toggle" onClick={handleThemeToggle} title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
           {dark ? '☀️' : '🌙'}
         </button>
@@ -112,6 +114,15 @@ export default function Navbar() {
                 {item.label}
               </button>
             ))}
+            <div className="nav-drawer-sep" />
+            <button
+              className="nav-drawer-link nav-drawer-theme"
+              onClick={handleThemeToggle}
+              aria-pressed={dark}
+            >
+              <span>{dark ? '☀️' : '🌙'} {dark ? 'Light mode' : 'Dark mode'}</span>
+              <span className="nav-drawer-theme-state">{dark ? 'Dark' : 'Light'}</span>
+            </button>
             <div className="nav-drawer-sep" />
             {signedIn ? (
               <button className="nav-drawer-link nav-drawer-logout" onClick={logout}>Logout</button>

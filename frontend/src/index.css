@@ -163,6 +163,8 @@ select.input { cursor: pointer; }
 @media (max-width: 880px) {
   .nav-links { display: none; }
   .navbar-logout { display: none; }
+  /* Moves into the drawer at this width — see .nav-drawer-theme. */
+  .theme-toggle { display: none; }
   .nav-toggle { display: flex; }
   .navbar-left { flex: 0 1 auto; }
 }
@@ -1772,3 +1774,8 @@ select.input { cursor: pointer; }
   .notif-panel { position: fixed; top: 60px; left: 12px; right: 12px; width: auto; max-width: none; }
   .notif-list { max-height: 60vh; }
 }
+
+/* Theme switch inside the mobile drawer. Reads as a settings row rather than
+   a navigation link: label on the left, current state on the right. */
+.nav-drawer-theme { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nav-drawer-theme-state { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; }
