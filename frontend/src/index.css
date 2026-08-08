@@ -1808,3 +1808,4 @@ select.input { cursor: pointer; }
   font-size: 13.5px; line-height: 1.6; color: var(--text);
 }
 .test-attempt-banner strong { color: var(--heading); }
+.contest-hero-registered { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

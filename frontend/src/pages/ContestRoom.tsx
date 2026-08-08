@@ -56,6 +56,7 @@ export default function ContestRoom() {
   const [submittedSections, setSubmittedSections] = useState<Set<string>>(new Set())
   const [currentSection, setCurrentSection] = useState<string>('QUANT')
   const [currentQId, setCurrentQId] = useState<string>('')
+  const isAdmin = JSON.parse(localStorage.getItem('user') || '{}').role === 'ADMIN'
   const [phase, setPhase] = useState<Phase>('loading')
   const [timeLeft, setTimeLeft] = useState(0)
   const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
@@ -188,16 +189,25 @@ export default function ContestRoom() {
     if (!contest) return
     const startMs = new Date(contest.startTime).getTime()
     const endMs = startMs + contest.durationMinutes * 60 * 1000
+
+    // An admin testing a paper can't wait for the scheduled start, so they get
+    // the room immediately with the contest's full duration on the clock. Their
+    // attempt is a test run either way — it never reaches a leaderboard or a
+    // rating — so starting early changes nothing for anyone else.
+    const adminPreview = isAdmin && Date.now() < startMs
+    const previewEndMs = Date.now() + contest.durationMinutes * 60 * 1000
+
     const tick = () => {
       const now = Date.now()
-      if (now < startMs) { setPhase('waiting'); setTimeLeft(Math.floor((startMs - now) / 1000)) }
+      if (adminPreview) { setPhase('active'); setTimeLeft(Math.max(0, Math.floor((previewEndMs - now) / 1000))) }
+      else if (now < startMs) { setPhase('waiting'); setTimeLeft(Math.floor((startMs - now) / 1000)) }
       else if (now < endMs) { setPhase('active'); setTimeLeft(Math.floor((endMs - now) / 1000)) }
       else { setPhase('ended'); setTimeLeft(0) }
     }
     tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [contest])
+  }, [contest, isAdmin])
 
   // Unlock audio on first interaction; low-time cues (chess.com style).
   useEffect(() => {

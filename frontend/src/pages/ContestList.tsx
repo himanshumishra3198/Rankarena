@@ -138,11 +138,25 @@ function FeaturedContest({ contest, joining, onJoin }: {
             </button>
           )
         ) : contest.hasJoined ? (
-          <span className="contest-registered">✓ You're registered — good luck</span>
+          <div className="contest-hero-registered">
+            <span className="contest-registered">✓ You're registered — good luck</span>
+            {isAdmin() && (
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/contests/${contest.id}`)}>
+                🧪 Open as test
+              </button>
+            )}
+          </div>
         ) : (
-          <button className="btn btn-primary btn-lg" onClick={() => onJoin(contest)} disabled={joining}>
-            {joining ? 'Registering…' : 'Register now »'}
-          </button>
+          <div className="contest-hero-registered">
+            <button className="btn btn-primary btn-lg" onClick={() => onJoin(contest)} disabled={joining}>
+              {joining ? 'Registering…' : 'Register now »'}
+            </button>
+            {isAdmin() && (
+              <button className="btn btn-ghost btn-sm" onClick={() => onJoin(contest)} disabled={joining}>
+                🧪 Open as test
+              </button>
+            )}
+          </div>
         )}
       </div>
       </div>
@@ -187,7 +201,13 @@ function UpcomingRow({ contest, joining, onJoin }: {
                 {joining ? '…' : contest.hasJoined ? 'Continue' : 'Enter'}
               </button>
         ) : contest.hasJoined ? (
-          <span className="contest-registered-sm">✓ Registered</span>
+          isAdmin() ? (
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/contests/${contest.id}`)}>
+              🧪 Test
+            </button>
+          ) : (
+            <span className="contest-registered-sm">✓ Registered</span>
+          )
         ) : (
           <button className="btn btn-primary btn-sm" onClick={() => onJoin(contest)} disabled={joining}>
             {joining ? '…' : 'Register'}
@@ -197,6 +217,8 @@ function UpcomingRow({ contest, joining, onJoin }: {
     </div>
   )
 }
+
+const isAdmin = () => JSON.parse(localStorage.getItem('user') || '{}').role === 'ADMIN'
 
 export default function ContestList() {
   usePageMeta('Contests — RankArenas', 'Upcoming and past rated SSC contests on RankArenas.')
@@ -231,7 +253,8 @@ export default function ContestList() {
         return
       }
     }
-    if (effectivePhase(contest) === 'live') {
+    // Admins are testing, so they go straight in even before the start.
+    if (effectivePhase(contest) === 'live' || isAdmin()) {
       navigate(`/contests/${contest.id}`)
     } else {
       setActive(prev => prev.map(c => (c.id === contest.id ? { ...c, hasJoined: true } : c)))
