@@ -4,11 +4,9 @@ import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import { QuestionContext } from '../components/QuestionContent'
-import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
-import QuestionDetailModal from '../components/QuestionDetailModal'
-import { fmtSecs, timeVerdict as timeEmoji } from '../lib/time'
+import QuestionDetail from '../components/QuestionDetail'
+import { fmtSecs } from '../lib/time'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RichQuestion {
@@ -55,10 +53,6 @@ const DIFF_COLORS = { EASY: '#16a34a', MEDIUM: '#d97706', HARD: '#dc2626' }
 type ReviewFilter = 'all' | 'correct' | 'wrong' | 'skipped' | 'marked'
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
-function optText(q: RichQuestion, opt: string) {
-  return ({ A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD } as any)[opt] ?? ''
-}
-
 // Strips the sanitized rich text down to a plain excerpt for the compact
 // cards. -webkit-line-clamp counts line boxes, so an inline diagram counts as
 // one whole "line" and squeezes the text out; and a half-rendered figure in a
@@ -176,15 +170,13 @@ export default function Result() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all')
-  const [expandedQ, setExpandedQ] = useState<string | null>(null)
-  const [solOpenQ, setSolOpenQ] = useState<string | null>(null)
+  // Which question the panel below the map is showing. Null means "the first
+  // one in whatever the map is currently showing".
+  const [selectedQId, setSelectedQId] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<string>('all')
   const [copied, setCopied] = useState(false)
   const [reportQId, setReportQId] = useState<string | null>(null)
-  const [detailQId, setDetailQId] = useState<string | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
-  const [practiceOn, setPracticeOn] = useState<Set<string>>(new Set())
-  const [practiceAns, setPracticeAns] = useState<Record<string, string>>({})
 
   // timeSpent per questionId saved by ContestRoom on submit
   const [timeSpent, setTimeSpent] = useState<Record<string, number>>({})
@@ -221,9 +213,21 @@ export default function Result() {
     catch { setBookmarks(b => { const n = new Set(b); n.has(qid) ? n.delete(qid) : n.add(qid); return n }) }
   }
 
-  function jumpToQuestion(qid: string) {
-    setActiveSection('all'); setReviewFilter('all'); setExpandedQ(qid)
-    setTimeout(() => document.getElementById(`cq-${qid}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 40)
+  // Show a question in the panel under the map. Paging calls this too, so the
+  // panel stays in view when the one before it was tall enough to scroll past.
+  function selectQuestion(qid: string) {
+    setSelectedQId(qid)
+    // Always bring the panel up. On a phone the map is tall enough that the
+    // panel sits below the fold, so without this a tap looks like it did
+    // nothing; and when paging, the next question wants to start at the top.
+    setTimeout(() => document.getElementById('question-detail')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30)
+  }
+
+  // From the overview: switch tabs, then show it.
+  function openInSolutions(qid: string) {
+    setActiveSection('all'); setReviewFilter('all'); setTab('solutions'); setSelectedQId(qid)
+    setTimeout(() => document.getElementById('question-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
   }
 
   useEffect(() => {
@@ -325,6 +329,11 @@ export default function Result() {
     if (reviewFilter === 'marked')  return markedSet.has(q.id)
     return true
   })
+
+  // Falling back to the first match covers both "nothing picked yet" and "the
+  // filter just changed and the previous pick is no longer on the map".
+  const selectedIdx = Math.max(0, reviewQs.findIndex(q => q.id === selectedQId))
+  const selectedQ = reviewQs[selectedIdx] ?? null
 
   // ── Share ────────────────────────────────────────────────────────────────
   function copyResult() {
@@ -515,7 +524,7 @@ export default function Result() {
         {hasTimeData && (
           <div className="card" style={{ marginBottom: 20 }}>
             <h2 style={{ marginBottom: 20 }}>Time Analysis</h2>
-            <p className="time-analysis-hint">Tap any question to read it in full, with the options and solution.</p>
+            <p className="time-analysis-hint">Tap any question to open it in Solutions, with the options and solution.</p>
             <div className="time-analysis-grid">
               {[
                 { label: 'Most time spent — review these', items: slowest },
@@ -536,7 +545,7 @@ export default function Result() {
                           key={q.id}
                           type="button"
                           className={`time-q-card tq-${verdict}`}
-                          onClick={() => setDetailQId(q.id)}
+                          onClick={() => openInSolutions(q.id)}
                           aria-label={`Open question ${qNum}`}
                         >
                           <div className="time-q-meta">
@@ -611,42 +620,9 @@ export default function Result() {
         {tab === 'solutions' && (<>
         {/* ── Question Map ─────────────────────────────────────────────── */}
         <div className="card" style={{ marginBottom: 20 }}>
-          <h2 style={{ marginBottom: 12 }}>Question Map</h2>
-          <div className="palette-legend">
-            <span><span className="pl-dot" style={{ background: '#16a34a' }} /> Correct</span>
-            <span><span className="pl-dot" style={{ background: '#dc2626' }} /> Incorrect</span>
-            <span><span className="pl-dot" style={{ background: '#fff', border: '1.5px solid var(--border)' }} /> Unattempted</span>
-            {markedSet.size > 0 && <span><span className="pl-dot" style={{ background: '#fff' }}>🔖</span> Marked for review</span>}
-          </div>
-          <div className="result-palette">
-            {questions.map((q, i) => {
-              const given = answers[q.id]
-              const isCorr = given === q.correctOption
-              const isWrng = given && given !== q.correctOption
-              const filled = isCorr || isWrng
-              const bg = isCorr ? '#16a34a' : isWrng ? '#dc2626' : 'var(--surface)'
-              return (
-                <button key={q.id} className={`rp-cell ${markedSet.has(q.id) ? 'rp-marked' : ''}`}
-                  style={{
-                    background: bg,
-                    color: filled ? '#fff' : 'var(--text)',
-                    borderColor: filled ? bg : 'var(--border)',
-                  }}
-                  title={markedSet.has(q.id) ? 'Marked for review' : undefined}
-                  onClick={() => setDetailQId(q.id)}>
-                  {i + 1}
-                  {markedSet.has(q.id) && <span className="rp-flag">🔖</span>}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* ── Question Review ──────────────────────────────────────────── */}
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-            <h2 style={{ margin: 0 }}>Question Review</h2>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="qmap-head">
+            <h2 style={{ margin: 0 }}>Question Map</h2>
+            <div className="qmap-filters">
               <select className="input" style={{ width: 'auto', fontSize: 13, padding: '4px 10px' }} value={activeSection} onChange={e => setActiveSection(e.target.value)}>
                 <option value="all">All Sections</option>
                 {SECTIONS.map(s => <option key={s} value={s}>{SECTION_SHORT[s]}</option>)}
@@ -658,203 +634,68 @@ export default function Result() {
               ))}
             </div>
           </div>
-
-          <div className="review-list">
-            {reviewQs.length === 0 && <p className="empty">No questions match this filter.</p>}
-            {reviewQs.map(q => {
-              const given     = answers[q.id]
-              const isCorrect = given === q.correctOption
-              const isWrong   = given && given !== q.correctOption
-              const marksEarned = isCorrect ? q.marks : isWrong ? -q.negativeMarks : 0
-              const isOpen    = expandedQ === q.id
-              const qNum      = questions.indexOf(q) + 1
-              const tSpent    = timeSpent[q.id]
-              const avgTime   = avgTimePerQuestion[q.id]
-              const emojiInfo = tSpent !== undefined && avgTime !== undefined
-                ? timeEmoji(tSpent, avgTime) : null
-
-              return (
-                <div key={q.id} id={`cq-${q.id}`} className={`review-item ${isCorrect ? 'review-correct' : isWrong ? 'review-wrong' : 'review-skipped'}`}>
-                  <div className="review-item-header" onClick={() => setExpandedQ(isOpen ? null : q.id)}>
-                    <div className="review-item-left">
-                      <span className="review-qnum">Q{qNum}</span>
-                      <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
-                      <span style={{ fontSize: 12, color: SECTION_COLORS[q.subject], fontWeight: 600 }}>{SECTION_SHORT[q.subject]}</span>
-                      {markedSet.has(q.id) && <span className="badge" style={{ background: '#fef3c7', color: '#b45309' }}>🔖 Marked</span>}
-                      {tSpent !== undefined && (
-                        <span className="review-time-chip" title={emojiInfo?.label}>
-                          {emojiInfo && <span style={{ marginRight: 2 }}>{emojiInfo.emoji}</span>}
-                          {fmtSecs(tSpent)}
-                          {avgTime !== undefined && <span style={{ color: 'var(--text-muted)', marginLeft: 4 }}>/ avg {fmtSecs(avgTime)}</span>}
-                        </span>
-                      )}
-                    </div>
-                    <div className="review-item-right">
-                      <span className={`review-verdict ${isCorrect ? 'correct' : isWrong ? 'wrong' : 'skipped'}`}>
-                        {isCorrect ? '✓ Correct' : isWrong ? '✗ Wrong' : '— Skipped'}
-                      </span>
-                      <span className={`review-marks ${marksEarned > 0 ? 'pos' : marksEarned < 0 ? 'neg' : ''}`}>
-                        {marksEarned > 0 ? '+' : ''}{marksEarned.toFixed(2)}
-                      </span>
-                      <button className="bookmark-btn" title={bookmarks.has(q.id) ? 'Remove bookmark' : 'Bookmark for revision'}
-                        onClick={e => { e.stopPropagation(); toggleBookmark(q.id) }}>
-                        {bookmarks.has(q.id) ? '⭐' : '☆'}
-                      </button>
-                      <span className="review-chevron">{isOpen ? '▲' : '▼'}</span>
-                    </div>
-                  </div>
-
-                  {isOpen && (
-                    <div className="review-item-body">
-                      <QuestionContext q={q} />
-                      {q.imageUrl && (
-                        <div style={{ marginBottom: 12 }}>
-                          <img src={q.imageUrl} alt="Question diagram" style={{ maxHeight: 200, maxWidth: '100%', borderRadius: 6, border: '1px solid var(--border)' }} />
-                        </div>
-                      )}
-                      <RichText as="p" className="review-qtext" html={q.text} />
-                      {tSpent !== undefined && (
-                        <div className="review-time-row">
-                          <span className="review-time-stat">
-                            <span className="review-time-label">Your time</span>
-                            <span className="review-time-val" style={{ color: emojiInfo?.color }}>{emojiInfo?.emoji} {fmtSecs(tSpent)}</span>
-                          </span>
-                          {avgTime !== undefined && (
-                            <span className="review-time-stat">
-                              <span className="review-time-label">Avg across all users</span>
-                              <span className="review-time-val">{fmtSecs(avgTime)}</span>
-                            </span>
-                          )}
-                          {emojiInfo && (
-                            <span className="review-time-verdict" style={{ color: emojiInfo.color }}>{emojiInfo.label}</span>
-                          )}
-                        </div>
-                      )}
-                      {practiceOn.has(q.id) ? (
-                        // ── Re-attempt / practice mode (won't change your score) ──
-                        (() => {
-                          const picked = practiceAns[q.id]
-                          const answered = !!picked
-                          return (
-                            <>
-                              <div className="practice-banner">🔄 Re-attempt mode — pick an answer (won't change your score)</div>
-                              <div className="review-options" style={{ marginTop: 10 }}>
-                                {(['A','B','C','D'] as const).map(opt => {
-                                  const isCorrectOpt = opt === q.correctOption
-                                  const isPicked = opt === picked
-                                  const cls = answered && isCorrectOpt ? 'correct-opt' : answered && isPicked ? 'wrong-opt' : ''
-                                  return (
-                                    <div key={opt} className={`review-option ${cls}`} style={{ cursor: answered ? 'default' : 'pointer' }}
-                                      onClick={() => { if (!answered) setPracticeAns(a => ({ ...a, [q.id]: opt })) }}>
-                                      <span className="option-label">{opt}</span>
-                                      <span><RichText html={optText(q, opt)} /></span>
-                                      {answered && isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct</span>}
-                                      {answered && isPicked && !isCorrectOpt && <span className="opt-tag wrong-tag">Your pick</span>}
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                              {answered && (
-                                <div style={{ marginTop: 10, fontWeight: 700, color: picked === q.correctOption ? '#16a34a' : '#dc2626' }}>
-                                  {picked === q.correctOption ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
-                                </div>
-                              )}
-                              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                                {answered && (
-                                  <button className="btn btn-ghost btn-sm" onClick={() => setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })}>Try again</button>
-                                )}
-                                <button className="btn btn-ghost btn-sm" onClick={() => {
-                                  setPracticeOn(s => { const n = new Set(s); n.delete(q.id); return n })
-                                  setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })
-                                }}>Exit practice</button>
-                              </div>
-                            </>
-                          )
-                        })()
-                      ) : (
-                        <>
-                          <div className="review-options">
-                            {(['A','B','C','D'] as const).map(opt => {
-                              const isCorrectOpt = opt === q.correctOption
-                              const isGivenOpt   = opt === given
-                              return (
-                                <div key={opt} className={`review-option ${isCorrectOpt ? 'correct-opt' : isGivenOpt ? 'wrong-opt' : ''}`}>
-                                  <span className="option-label">{opt}</span>
-                                  <span><RichText html={optText(q, opt)} /></span>
-                                  {isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
-                                  {isGivenOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your answer</span>}
-                                </div>
-                              )
-                            })}
-                          </div>
-                          <div style={{ marginTop: 10 }}>
-                            <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }}
-                              onClick={() => setPracticeOn(s => new Set(s).add(q.id))}>🔄 Re-attempt this question</button>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Detailed solution */}
-                      {q.solution && (
-                        <div className="sol-explain">
-                          <button className="sol-explain-toggle" onClick={() => setSolOpenQ(solOpenQ === q.id ? null : q.id)}>
-                            <span style={{ fontSize: 16 }}>👁</span> {solOpenQ === q.id ? 'Hide Solution' : 'View Solution'}
-                          </button>
-                          {solOpenQ === q.id && (
-                            <div className="sol-explain-body">
-                              <div className="sol-explain-title">Solution</div>
-                              <RichText as="div" className="sol-explain-text" html={q.solution} />
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div style={{ marginTop: 12, textAlign: 'right' }}>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }}
-                          onClick={() => setReportQId(q.id)} title="Report a problem with this question">
-                          ⚑ Report a problem
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+          <div className="palette-legend">
+            <span><span className="pl-dot" style={{ background: '#16a34a' }} /> Correct</span>
+            <span><span className="pl-dot" style={{ background: '#dc2626' }} /> Incorrect</span>
+            <span><span className="pl-dot" style={{ background: '#fff', border: '1.5px solid var(--border)' }} /> Unattempted</span>
+            {markedSet.size > 0 && <span><span className="pl-dot" style={{ background: '#fff' }}>🔖</span> Marked for review</span>}
           </div>
+          {reviewQs.length === 0 ? (
+            <p className="empty">No questions match this filter.</p>
+          ) : (
+            <div className="result-palette">
+              {reviewQs.map(q => {
+                const given = answers[q.id]
+                const isCorr = given === q.correctOption
+                const isWrng = given && given !== q.correctOption
+                const filled = isCorr || isWrng
+                const bg = isCorr ? '#16a34a' : isWrng ? '#dc2626' : 'var(--surface)'
+                return (
+                  <button key={q.id}
+                    className={`rp-cell ${markedSet.has(q.id) ? 'rp-marked' : ''} ${selectedQ?.id === q.id ? 'rp-current' : ''}`}
+                    style={{
+                      background: bg,
+                      color: filled ? '#fff' : 'var(--text)',
+                      borderColor: filled ? bg : 'var(--border)',
+                    }}
+                    title={markedSet.has(q.id) ? 'Marked for review' : undefined}
+                    onClick={() => selectQuestion(q.id)}>
+                    {questions.indexOf(q) + 1}
+                    {markedSet.has(q.id) && <span className="rp-flag">🔖</span>}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
+
+        {/* ── The selected question, on its own ────────────────────────── */}
+        {selectedQ && (
+          <div className="card" id="question-detail">
+            <QuestionDetail
+              q={selectedQ}
+              qNum={questions.indexOf(selectedQ) + 1}
+              position={{ index: selectedIdx + 1, total: reviewQs.length }}
+              given={answers[selectedQ.id]}
+              marked={markedSet.has(selectedQ.id)}
+              timeSpent={timeSpent[selectedQ.id]}
+              avgTime={avgTimePerQuestion[selectedQ.id]}
+              subjectLabel={SECTION_SHORT[selectedQ.subject]}
+              subjectColor={SECTION_COLORS[selectedQ.subject]}
+              bookmarked={bookmarks.has(selectedQ.id)}
+              onToggleBookmark={() => toggleBookmark(selectedQ.id)}
+              onReport={() => setReportQId(selectedQ.id)}
+              onPrev={selectedIdx > 0 ? () => selectQuestion(reviewQs[selectedIdx - 1].id) : undefined}
+              onNext={selectedIdx < reviewQs.length - 1 ? () => selectQuestion(reviewQs[selectedIdx + 1].id) : undefined}
+            />
+          </div>
+        )}
 
         <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
           <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back to Contests</button>
         </div>
         </>)}
       </div>
-
-      {detailQId && (() => {
-        const idx = questions.findIndex(x => x.id === detailQId)
-        if (idx < 0) return null
-        const q = questions[idx]
-        return (
-          <QuestionDetailModal
-            q={q}
-            qNum={idx + 1}
-            total={questions.length}
-            given={answers[q.id]}
-            marked={markedSet.has(q.id)}
-            timeSpent={timeSpent[q.id]}
-            avgTime={avgTimePerQuestion[q.id]}
-            subjectLabel={SECTION_SHORT[q.subject]}
-            subjectColor={SECTION_COLORS[q.subject]}
-            bookmarked={bookmarks.has(q.id)}
-            onToggleBookmark={() => toggleBookmark(q.id)}
-            onReport={() => { setDetailQId(null); setReportQId(q.id) }}
-            onOpenInReview={() => { setDetailQId(null); setTab('solutions'); jumpToQuestion(q.id) }}
-            // Paging follows the paper's order, so it matches the map above.
-            onPrev={idx > 0 ? () => setDetailQId(questions[idx - 1].id) : undefined}
-            onNext={idx < questions.length - 1 ? () => setDetailQId(questions[idx + 1].id) : undefined}
-            onClose={() => setDetailQId(null)}
-          />
-        )
-      })()}
 
       {reportQId && (
         <ReportModal

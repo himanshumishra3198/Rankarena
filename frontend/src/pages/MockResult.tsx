@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import { QuestionContext } from '../components/QuestionContent'
-import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
-import QuestionDetailModal from '../components/QuestionDetailModal'
+import QuestionDetail from '../components/QuestionDetail'
 
 interface ResultQuestion {
   id: string; text: string; imageUrl?: string
@@ -46,14 +44,6 @@ type Verdict = 'correct' | 'wrong' | 'skipped'
 type Filter = 'all' | Verdict | 'marked'
 
 
-function optText(q: ResultQuestion, opt: string) {
-  return ({ A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD } as any)[opt] ?? ''
-}
-function fmtTime(s: number) {
-  if (!s || s <= 0) return '0:00'
-  const m = Math.floor(s / 60), r = Math.round(s % 60)
-  return `${m}:${String(r).padStart(2, '0')}`
-}
 
 // ── Summary stat card ─────────────────────────────────────────────────────────
 function StatCard({ icon, color, value, sub, label }: {
@@ -134,13 +124,11 @@ export default function MockResult() {
   const [data, setData] = useState<MockResultData | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('all')
-  const [open, setOpen] = useState<Set<string>>(new Set())
-  const [solOpen, setSolOpen] = useState<Set<string>>(new Set())
+  // Which question the panel below the map is showing. Null means "the first
+  // one in whatever the map is currently showing".
+  const [selectedQId, setSelectedQId] = useState<string | null>(null)
   const [reportQId, setReportQId] = useState<string | null>(null)
-  const [detailQId, setDetailQId] = useState<string | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
-  const [practiceOn, setPracticeOn] = useState<Set<string>>(new Set())
-  const [practiceAns, setPracticeAns] = useState<Record<string, string>>({})
   const [tab, setTab] = useState<'overview' | 'solutions' | 'leaderboard'>('overview')
 
   useEffect(() => {
@@ -175,13 +163,18 @@ export default function MockResult() {
   const filtered = data.questions.filter(q =>
     filter === 'all' ? true : filter === 'marked' ? marked.has(q.id) : verdicts.get(q.id) === filter)
 
-  function jumpTo(idx: number) {
-    const q = data!.questions[idx]
-    setOpen(o => new Set(o).add(q.id))
-    setTimeout(() => document.getElementById(`mq-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 30)
-  }
-  function toggle(qid: string) {
-    setOpen(o => { const n = new Set(o); n.has(qid) ? n.delete(qid) : n.add(qid); return n })
+  // Falling back to the first match covers both "nothing picked yet" and "the
+  // filter just changed and the previous pick is no longer on the map".
+  const selectedIdx = Math.max(0, filtered.findIndex(q => q.id === selectedQId))
+  const selectedQ = filtered[selectedIdx] ?? null
+
+  function selectQuestion(qid: string) {
+    setSelectedQId(qid)
+    // Always bring the panel up. On a phone the map is tall enough that the
+    // panel sits below the fold, so without this a tap looks like it did
+    // nothing; and when paging, the next question wants to start at the top.
+    setTimeout(() => document.getElementById('question-detail')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30)
   }
 
   const VC: Record<Verdict, string> = { correct: '#16a34a', wrong: '#dc2626', skipped: '#94a3b8' }
@@ -288,210 +281,74 @@ export default function MockResult() {
         {/* ── Question palette ─────────────────────────────────────── */}
         <div className="section-head">Question Map</div>
         <div className="card">
+          <div className="qmap-head">
+            <div className="qmap-filters">
+              {(['all', 'correct', 'wrong', 'skipped', ...(marked.size > 0 ? ['marked' as Filter] : [])] as Filter[]).map(f => (
+                <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ textTransform: 'capitalize' }} onClick={() => setFilter(f)}>
+                  {f === 'marked' ? '🔖 Marked' : f} {f === 'all' ? `(${data.questions.length})` : f === 'correct' ? `(${data.correct})` : f === 'wrong' ? `(${data.wrong})` : f === 'skipped' ? `(${data.skipped})` : `(${marked.size})`}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="palette-legend">
             <span><span className="pl-dot" style={{ background: VC.correct }} /> Correct</span>
             <span><span className="pl-dot" style={{ background: VC.wrong }} /> Incorrect</span>
             <span><span className="pl-dot" style={{ background: '#fff', border: '1.5px solid var(--border)' }} /> Unattempted</span>
             {marked.size > 0 && <span><span className="pl-dot" style={{ background: '#fff' }}>🔖</span> Marked for review</span>}
           </div>
-          <div className="result-palette">
-            {data.questions.map((q, i) => {
-              const v = verdicts.get(q.id)!
-              const filled = v !== 'skipped'
-              return (
-                <button key={q.id} className={`rp-cell ${marked.has(q.id) ? 'rp-marked' : ''}`}
-                  style={{
-                    background: filled ? VC[v] : 'var(--surface)',
-                    color: filled ? '#fff' : 'var(--text)',
-                    borderColor: filled ? VC[v] : 'var(--border)',
-                  }}
-                  title={marked.has(q.id) ? 'Marked for review' : undefined}
-                  onClick={() => setDetailQId(q.id)}>
-                  {i + 1}
-                  {marked.has(q.id) && <span className="rp-flag">🔖</span>}
-                </button>
-              )
-            })}
-          </div>
+          {filtered.length === 0 ? (
+            <p className="empty">No questions match this filter.</p>
+          ) : (
+            <div className="result-palette">
+              {filtered.map(q => {
+                const v = verdicts.get(q.id)!
+                const filled = v !== 'skipped'
+                return (
+                  <button key={q.id}
+                    className={`rp-cell ${marked.has(q.id) ? 'rp-marked' : ''} ${selectedQ?.id === q.id ? 'rp-current' : ''}`}
+                    style={{
+                      background: filled ? VC[v] : 'var(--surface)',
+                      color: filled ? '#fff' : 'var(--text)',
+                      borderColor: filled ? VC[v] : 'var(--border)',
+                    }}
+                    title={marked.has(q.id) ? 'Marked for review' : undefined}
+                    onClick={() => selectQuestion(q.id)}>
+                    {data.questions.indexOf(q) + 1}
+                    {marked.has(q.id) && <span className="rp-flag">🔖</span>}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ── Question-by-question review ──────────────────────────── */}
+        {/* ── The selected question, on its own ────────────────────────── */}
         <div className="section-head" style={{ marginTop: 28 }}>Solutions</div>
-        <div className="card">
-          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-            {(['all', 'correct', 'wrong', 'skipped', ...(marked.size > 0 ? ['marked' as Filter] : [])] as Filter[]).map(f => (
-              <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ textTransform: 'capitalize' }} onClick={() => setFilter(f)}>
-                {f === 'marked' ? '🔖 Marked' : f} {f === 'all' ? `(${data.questions.length})` : f === 'correct' ? `(${data.correct})` : f === 'wrong' ? `(${data.wrong})` : f === 'skipped' ? `(${data.skipped})` : `(${marked.size})`}
-              </button>
-            ))}
+        {selectedQ ? (
+          <div className="card" id="question-detail">
+            <QuestionDetail
+              q={selectedQ}
+              qNum={data.questions.indexOf(selectedQ) + 1}
+              position={{ index: selectedIdx + 1, total: filtered.length }}
+              given={data.answers[selectedQ.id]}
+              marked={marked.has(selectedQ.id)}
+              timeSpent={data.timeSpent[selectedQ.id]}
+              avgTime={data.questionStats[selectedQ.id]?.avgTime}
+              correctPct={data.questionStats[selectedQ.id]?.correctPct}
+              subjectLabel={SECTION_SHORT[selectedQ.subject] ?? selectedQ.subject}
+              bookmarked={bookmarks.has(selectedQ.id)}
+              onToggleBookmark={() => toggleBookmark(selectedQ.id)}
+              onReport={() => setReportQId(selectedQ.id)}
+              onPrev={selectedIdx > 0 ? () => selectQuestion(filtered[selectedIdx - 1].id) : undefined}
+              onNext={selectedIdx < filtered.length - 1 ? () => selectQuestion(filtered[selectedIdx + 1].id) : undefined}
+            />
           </div>
-
-          {filtered.map((q) => {
-            const idx = data.questions.findIndex(x => x.id === q.id)
-            const given = data.answers[q.id]
-            const v = verdicts.get(q.id)!
-            const isOpen = open.has(q.id)
-            const yourTime = data.timeSpent[q.id] ?? 0
-            const stats = data.questionStats[q.id] ?? { correctPct: 0, avgTime: 0 }
-            const label = v === 'correct' ? 'Correct' : v === 'wrong' ? 'Incorrect' : 'Skipped'
-
-            return (
-              <div key={q.id} id={`mq-${q.id}`} className="sol-item">
-                <div className="sol-head" onClick={() => toggle(q.id)}>
-                  <span className="sol-qno">Q{idx + 1}</span>
-                  <span className="sol-badge" style={{ background: VC[v], color: '#fff' }}>{label}</span>
-                  {marked.has(q.id) && <span className="sol-badge" style={{ background: '#fef3c7', color: '#b45309' }}>🔖 Marked</span>}
-                  <span className="sol-meta">⏱ You {fmtTime(yourTime)}{stats.avgTime > 0 && <> · Avg {fmtTime(stats.avgTime)}</>}</span>
-                  {stats.correctPct > 0 && <span className="sol-meta sol-meta-pct">{stats.correctPct}% got it right</span>}
-                  <span className="sol-marks" style={{ color: v === 'correct' ? '#16a34a' : v === 'wrong' ? '#dc2626' : 'var(--text-muted)' }}>
-                    {v === 'correct' ? `+${q.marks}` : v === 'wrong' ? `−${q.negativeMarks}` : '0'}
-                  </span>
-                  <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <button className="bookmark-btn" title={bookmarks.has(q.id) ? 'Remove bookmark' : 'Bookmark for revision'}
-                      onClick={e => { e.stopPropagation(); toggleBookmark(q.id) }}>
-                      {bookmarks.has(q.id) ? '⭐' : '☆'}
-                    </button>
-                    <span style={{ color: 'var(--text-muted)' }}>{isOpen ? '▲' : '▼'}</span>
-                  </span>
-                </div>
-
-                {isOpen && (
-                  <div className="sol-body">
-                    <QuestionContext q={q} />
-                    {q.imageUrl && (
-                      <div style={{ marginBottom: 12 }}>
-                        <img src={q.imageUrl} alt="Question" style={{ maxHeight: 220, maxWidth: '100%', borderRadius: 6, border: '1px solid var(--border)' }} />
-                      </div>
-                    )}
-                    {q.text && <RichText as="p" className="review-qtext" html={q.text} />}
-
-                    {practiceOn.has(q.id) ? (
-                      // ── Re-attempt / practice mode ──────────────────────
-                      (() => {
-                        const picked = practiceAns[q.id]
-                        const answered = !!picked
-                        return (
-                          <>
-                            <div className="practice-banner">🔄 Re-attempt mode — pick an answer (won't change your score)</div>
-                            <div className="options" style={{ marginTop: 10 }}>
-                              {(['A', 'B', 'C', 'D'] as const).map(opt => {
-                                const isCorrect = opt === q.correctOption
-                                const isPicked = opt === picked
-                                let bc = 'var(--border)', bg = 'transparent'
-                                if (answered && isCorrect) { bc = '#16a34a'; bg = 'rgba(22,163,74,.08)' }
-                                else if (answered && isPicked) { bc = '#dc2626'; bg = 'rgba(220,38,38,.06)' }
-                                return (
-                                  <div key={opt} className="option" style={{ cursor: answered ? 'default' : 'pointer', borderColor: bc, background: bg }}
-                                    onClick={() => { if (!answered) setPracticeAns(a => ({ ...a, [q.id]: opt })) }}>
-                                    <span className="option-label">{opt}</span>
-                                    <span className="option-text"><RichText html={optText(q, opt)} /></span>
-                                    {answered && isCorrect && <span style={{ marginLeft: 'auto', color: '#16a34a', fontWeight: 700, fontSize: 13 }}>✓ Correct</span>}
-                                    {answered && isPicked && !isCorrect && <span style={{ marginLeft: 'auto', color: '#dc2626', fontWeight: 700, fontSize: 13 }}>Your pick</span>}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                            {answered && (
-                              <div style={{ marginTop: 10, fontWeight: 700, color: picked === q.correctOption ? '#16a34a' : '#dc2626' }}>
-                                {picked === q.correctOption ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
-                              </div>
-                            )}
-                            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                              {answered && (
-                                <button className="btn btn-ghost btn-sm" onClick={() => setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })}>Try again</button>
-                              )}
-                              <button className="btn btn-ghost btn-sm" onClick={() => {
-                                setPracticeOn(s => { const n = new Set(s); n.delete(q.id); return n })
-                                setPracticeAns(a => { const n = { ...a }; delete n[q.id]; return n })
-                              }}>Exit practice</button>
-                            </div>
-                          </>
-                        )
-                      })()
-                    ) : (
-                      // ── Normal review (your answer vs correct) ──────────
-                      <>
-                        <div className="options" style={{ marginTop: 10 }}>
-                          {(['A', 'B', 'C', 'D'] as const).map(opt => {
-                            const isCorrect = opt === q.correctOption
-                            const isGiven = opt === given
-                            return (
-                              <div key={opt} className="option" style={{
-                                cursor: 'default',
-                                borderColor: isCorrect ? '#16a34a' : isGiven ? '#dc2626' : 'var(--border)',
-                                background: isCorrect ? 'rgba(22,163,74,.08)' : isGiven ? 'rgba(220,38,38,.06)' : 'transparent',
-                              }}>
-                                <span className="option-label">{opt}</span>
-                                <span className="option-text"><RichText html={optText(q, opt)} /></span>
-                                {isCorrect && <span style={{ marginLeft: 'auto', color: '#16a34a', fontWeight: 700, fontSize: 13 }}>✓ Correct answer</span>}
-                                {isGiven && !isCorrect && <span style={{ marginLeft: 'auto', color: '#dc2626', fontWeight: 700, fontSize: 13 }}>Your answer</span>}
-                              </div>
-                            )
-                          })}
-                        </div>
-                        <div style={{ marginTop: 10 }}>
-                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }}
-                            onClick={() => setPracticeOn(s => new Set(s).add(q.id))}>🔄 Re-attempt this question</button>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Detailed solution */}
-                    {q.solution && (
-                      <div className="sol-explain">
-                        <button className="sol-explain-toggle"
-                          onClick={() => setSolOpen(s => { const n = new Set(s); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n })}>
-                          <span style={{ fontSize: 16 }}>👁</span> {solOpen.has(q.id) ? 'Hide Solution' : 'View Solution'}
-                        </button>
-                        {solOpen.has(q.id) && (
-                          <div className="sol-explain-body">
-                            <div className="sol-explain-title">Solution</div>
-                            <RichText as="div" className="sol-explain-text" html={q.solution} />
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div style={{ marginTop: 12, textAlign: 'right' }}>
-                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }}
-                        onClick={() => setReportQId(q.id)} title="Report a problem with this question">
-                        ⚑ Report a problem
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        ) : (
+          <div className="card"><p className="empty">No questions match this filter.</p></div>
+        )}
         </>)}
       </div>
-
-      {detailQId && (() => {
-        const idx = data.questions.findIndex(x => x.id === detailQId)
-        if (idx < 0) return null
-        const q = data.questions[idx]
-        return (
-          <QuestionDetailModal
-            q={q}
-            qNum={idx + 1}
-            total={data.questions.length}
-            given={data.answers[q.id]}
-            marked={marked.has(q.id)}
-            timeSpent={data.timeSpent[q.id]}
-            avgTime={data.questionStats[q.id]?.avgTime}
-            subjectLabel={SECTION_SHORT[q.subject] ?? q.subject}
-            bookmarked={bookmarks.has(q.id)}
-            onToggleBookmark={() => toggleBookmark(q.id)}
-            onReport={() => { setDetailQId(null); setReportQId(q.id) }}
-            onOpenInReview={() => { setDetailQId(null); setTab('solutions'); jumpTo(idx) }}
-            onPrev={idx > 0 ? () => setDetailQId(data.questions[idx - 1].id) : undefined}
-            onNext={idx < data.questions.length - 1 ? () => setDetailQId(data.questions[idx + 1].id) : undefined}
-            onClose={() => setDetailQId(null)}
-          />
-        )
-      })()}
 
       {reportQId && (
         <ReportModal
