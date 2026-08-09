@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../components/ConfirmDialog'
 import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -42,6 +43,7 @@ function errStr(err: any, fallback: string): string {
 
 export default function MockTestDetail() {
   const { id } = useParams<{ id: string }>()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [mock, setMock] = useState<MockTest | null>(null)
   const [mtqs, setMtqs] = useState<MockTestQuestion[]>([])
@@ -195,7 +197,12 @@ export default function MockTestDetail() {
   }
 
   async function removeQuestion(qid: string) {
-    if (!window.confirm('Remove this question from the mock?')) return
+    if (!(await confirm({
+      title: 'Remove this question?',
+      message: 'It is taken out of this mock test but stays in the question bank.',
+      confirmLabel: 'Remove',
+      danger: true,
+    }))) return
     await api.delete(`/admin/mocks/${id}/questions/${qid}`)
     load()
   }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../components/ConfirmDialog'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -14,6 +15,7 @@ const emptyForm = {
 }
 
 export default function MockTests() {
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [mocks, setMocks] = useState<MockTest[]>([])
   const [loading, setLoading] = useState(true)
@@ -60,7 +62,12 @@ export default function MockTests() {
   }
 
   async function deleteMock(id: string) {
-    if (!window.confirm('Delete this mock test? All attempts will be removed.')) return
+    if (!(await confirm({
+      title: 'Delete this mock test?',
+      message: 'The mock and every attempt recorded against it will be removed. This cannot be undone.',
+      confirmLabel: 'Delete mock test',
+      danger: true,
+    }))) return
     await api.delete(`/admin/mocks/${id}`)
     load()
   }

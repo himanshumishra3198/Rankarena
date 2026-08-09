@@ -8,11 +8,13 @@ import api from '../lib/api'
 import { timeAgo } from '../lib/time'
 import { getTier } from '../lib/tiers'
 import { usePageMeta, useJsonLd } from '../lib/seo'
+import { useConfirm } from '../components/ConfirmDialog'
 import type { Article, ArticleComment } from '../lib/types'
 import { TYPE_LABEL, TYPE_ICON } from './Community'
 
 export default function ArticleView() {
   const { id } = useParams<{ id: string }>()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [article, setArticle] = useState<Article | null>(null)
   const [comments, setComments] = useState<ArticleComment[]>([])
@@ -98,7 +100,12 @@ export default function ArticleView() {
   }
 
   async function removeArticle() {
-    if (!window.confirm('Delete this article and all of its comments?')) return
+    if (!(await confirm({
+      title: 'Delete this article?',
+      message: 'The article and every comment on it will be removed. This cannot be undone.',
+      confirmLabel: 'Delete article',
+      danger: true,
+    }))) return
     try {
       await api.delete(`/community/articles/${id}`)
       navigate('/community')

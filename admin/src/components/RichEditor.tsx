@@ -8,6 +8,7 @@ import { Color } from '@tiptap/extension-color'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import api from '../lib/api'
+import { useNotify } from './ConfirmDialog'
 
 const COLORS = ['#dc2626', '#2563eb', '#16a34a', '#d97706', '#7c3aed', '#0f172a']
 
@@ -103,6 +104,7 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
   minHeight?: number
   singleLine?: boolean
 }) {
+  const notify = useNotify()
   const fileRef = useRef<HTMLInputElement>(null)
   const [showSymbols, setShowSymbols] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -179,7 +181,7 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
       })
       editorRef.current?.chain().focus().setImage({ src: res.data.url, alt: '' }).run()
     } catch {
-      alert('Image upload failed.')
+      notify('Image upload failed', 'The image could not be uploaded. Check the file and try again.')
     } finally {
       setUploading(false)
     }

@@ -6,6 +6,7 @@ import { getTier } from '../lib/tiers'
 import type { ArticleComment } from '../lib/types'
 import Markdown from './Markdown'
 import VoteButtons from './VoteButtons'
+import { useConfirm } from './ConfirmDialog'
 
 export interface CommentNode extends ArticleComment {
   children: CommentNode[]
@@ -54,6 +55,7 @@ function CommentRow({
   onReply: (parentId: string, body: string) => Promise<void>
   onChanged: () => void
 }) {
+  const confirm = useConfirm()
   const [replying, setReplying] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -95,7 +97,12 @@ function CommentRow({
   }
 
   async function remove() {
-    if (!window.confirm('Delete this comment? Replies to it will stay.')) return
+    if (!(await confirm({
+      title: 'Delete this comment?',
+      message: 'It will show as removed. Replies underneath it stay where they are.',
+      confirmLabel: 'Delete comment',
+      danger: true,
+    }))) return
     setBusy(true)
     try {
       await api.delete(`/community/comments/${node.id}`)

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import type { MockTestData, Question } from '../lib/types'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
@@ -43,6 +44,8 @@ function formatTime(secs: number) {
 
 export default function MockRoom() {
   const { id } = useParams<{ id: string }>()
+  const confirm = useConfirm()
+  const notify = useNotify()
   const navigate = useNavigate()
 
   const [mock, setMock] = useState<MockTestData | null>(null)
@@ -146,7 +149,7 @@ export default function MockRoom() {
     } catch {
       submittedRef.current = false
       setPhase('active')
-      alert('Submission failed. Please try again.')
+      notify('Submission failed', 'Something went wrong sending your answers. Please try again.')
     }
   }, [answers, marked, id, navigate, flushTime])
 
@@ -345,9 +348,14 @@ export default function MockRoom() {
     setMarked(m => new Set(m).add(currentQ.id))
     if (currentIdx < questions.length - 1) goTo(currentIdx + 1)
   }
-  function clearAll() {
+  async function clearAll() {
     if (Object.keys(answers).length === 0) return
-    if (!window.confirm('Clear ALL your answers? This cannot be undone.')) return
+    if (!(await confirm({
+      title: 'Clear all answers?',
+      message: 'Every answer you have given in this test will be removed. This cannot be undone.',
+      confirmLabel: 'Clear all',
+      danger: true,
+    }))) return
     setAnswers({})
   }
   function toggleFullscreen() {

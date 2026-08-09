@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useConfirm } from '../components/ConfirmDialog'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
@@ -21,6 +22,7 @@ function depthOf(c: ArticleComment, byId: Map<string, ArticleComment>): number {
 
 export default function ArticleDetail() {
   const { id } = useParams<{ id: string }>()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [article, setArticle] = useState<Article | null>(null)
   const [comments, setComments] = useState<ArticleComment[]>([])
@@ -58,7 +60,12 @@ export default function ArticleDetail() {
 
   async function removeArticle() {
     if (!article) return
-    if (!window.confirm(`Delete "${article.title}"? Its comments go with it.`)) return
+    if (!(await confirm({
+      title: 'Delete this article?',
+      message: `“${article.title}” and every comment on it will be removed. This cannot be undone.`,
+      confirmLabel: 'Delete article',
+      danger: true,
+    }))) return
     try {
       await api.delete(`/community/articles/${id}`)
       navigate('/community')
@@ -68,7 +75,12 @@ export default function ArticleDetail() {
   }
 
   async function removeComment(commentId: string) {
-    if (!window.confirm('Delete this comment? Replies to it will stay.')) return
+    if (!(await confirm({
+      title: 'Delete this comment?',
+      message: 'It will show as removed. Replies underneath it stay where they are.',
+      confirmLabel: 'Delete comment',
+      danger: true,
+    }))) return
     setBusy(commentId)
     try {
       await api.delete(`/community/comments/${commentId}`)

@@ -6,6 +6,7 @@ import InstructionsModal from '../components/InstructionsModal'
 import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import SectionCompleteModal from '../components/SectionCompleteModal'
+import { useConfirm } from '../components/ConfirmDialog'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
@@ -59,6 +60,7 @@ export default function ContestRoom() {
   const [sectionDone, setSectionDone] = useState<{ section: string; timedOut: boolean } | null>(null)
   const [currentSection, setCurrentSection] = useState<string>('QUANT')
   const [currentQId, setCurrentQId] = useState<string>('')
+  const confirm = useConfirm()
   const isAdmin = JSON.parse(localStorage.getItem('user') || '{}').role === 'ADMIN'
   const [phase, setPhase] = useState<Phase>('loading')
   const [timeLeft, setTimeLeft] = useState(0)
@@ -355,13 +357,21 @@ export default function ContestRoom() {
     localStorage.setItem(`submitted-sections-${contestId}`, JSON.stringify([...next]))
   }
 
-  function submitSection(section: string) {
+  async function submitSection(section: string) {
     const qs = sectionQuestions[section] ?? []
     const unanswered = qs.filter(q => !answers[q.id]).length
-    const msg = unanswered > 0
-      ? `${unanswered} question(s) in ${SECTION_LABELS[section]} are unanswered.\n\nOnce submitted you cannot change your answers. Continue?`
-      : `Submit ${SECTION_LABELS[section]} section? You will not be able to change your answers.`
-    if (!window.confirm(msg)) return
+    const label = SECTION_LABELS[section] ?? section
+    const ok = await confirm({
+      title: `Submit ${label}?`,
+      message: 'Once submitted you cannot change your answers in this section.',
+      detail: unanswered > 0
+        ? `${unanswered} of ${qs.length} question${qs.length === 1 ? '' : 's'} still unanswered.`
+        : undefined,
+      confirmLabel: `Submit ${label}`,
+      cancelLabel: 'Keep working',
+      danger: unanswered > 0,
+    })
+    if (!ok) return
     persistSectionSubmit(section)
     setSectionDone({ section, timedOut: false })
   }

@@ -312,3 +312,15 @@ tr:hover td { background: var(--surface-raised); }
 .cq-chip:hover:not(:disabled) { color: var(--heading); border-color: var(--text-muted); }
 .cq-chip.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
 .cq-chip:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── In-app confirm, replacing window.confirm / alert ────────────────────── */
+.confirm-overlay { z-index: 300; }
+.confirm-box { max-width: 420px; padding: 24px; }
+.confirm-title { font-size: 17px; font-weight: 700; color: var(--heading); margin: 0 0 8px; line-height: 1.35; }
+.confirm-message { font-size: 14px; line-height: 1.65; color: var(--text); margin: 0; }
+.confirm-detail { font-size: 13.5px; font-weight: 600; color: #d97706; background: rgba(234,179,8,.12); border-radius: var(--radius); padding: 9px 12px; margin: 12px 0 0; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .confirm-actions { flex-direction: column-reverse; }
+  .confirm-actions .btn { width: 100%; justify-content: center; }
+}

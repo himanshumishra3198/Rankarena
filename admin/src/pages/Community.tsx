@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../components/ConfirmDialog'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
@@ -21,6 +22,7 @@ export const TYPE_LABEL: Record<ArticleType, string> = {
 }
 
 export default function Community() {
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [articles, setArticles] = useState<ArticleListItem[]>([])
   const [type, setType] = useState<'' | ArticleType>('')
@@ -58,7 +60,12 @@ export default function Community() {
   }
 
   async function remove(a: ArticleListItem) {
-    if (!window.confirm(`Delete "${a.title}"? Its comments go with it.`)) return
+    if (!(await confirm({
+      title: 'Delete this article?',
+      message: `“${a.title}” and every comment on it will be removed. This cannot be undone.`,
+      confirmLabel: 'Delete article',
+      danger: true,
+    }))) return
     setBusyId(a.id)
     try {
       await api.delete(`/community/articles/${a.id}`)

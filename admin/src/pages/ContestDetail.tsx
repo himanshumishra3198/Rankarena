@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../components/ConfirmDialog'
 import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -140,6 +141,7 @@ function ContestTimer({ contest }: { contest: Contest }) {
 
 export default function ContestDetail() {
   const { id } = useParams<{ id: string }>()
+  const confirm = useConfirm()
   const navigate = useNavigate()
 
   const [contest, setContest] = useState<Contest | null>(null)
@@ -432,7 +434,12 @@ export default function ContestDetail() {
   }
 
   async function removeQuestion(qid: string) {
-    if (!window.confirm('Remove this question from the contest?')) return
+    if (!(await confirm({
+      title: 'Remove this question?',
+      message: 'It is taken out of this contest but stays in the question bank.',
+      confirmLabel: 'Remove',
+      danger: true,
+    }))) return
     await api.delete(`/admin/contests/${id}/questions/${qid}`)
     load()
   }

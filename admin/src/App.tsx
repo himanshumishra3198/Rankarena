@@ -9,6 +9,7 @@ import Reports from './pages/Reports'
 import Community from './pages/Community'
 import ArticleDetail from './pages/ArticleDetail'
 import ArticleEditor from './pages/ArticleEditor'
+import { ConfirmProvider } from './components/ConfirmDialog'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
@@ -16,6 +17,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <ConfirmProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -33,5 +35,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ConfirmProvider>
   )
 }

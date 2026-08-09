@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
@@ -163,6 +164,8 @@ function DonutRing({ correct, wrong, skipped }: { correct: number; wrong: number
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Result() {
   const { id: contestId } = useParams<{ id: string }>()
+  const confirm = useConfirm()
+  const notify = useNotify()
   const navigate = useNavigate()
 
   const [result, setResult] = useState<ResultData | null>(null)
@@ -227,7 +230,12 @@ export default function Result() {
 
   async function retakeAsTest() {
     if (retaking) return
-    if (!window.confirm('Clear your previous attempt and take this contest again? Only your own test attempt is reset.')) return
+    if (!(await confirm({
+      title: 'Retake this contest?',
+      message: 'Your previous attempt is cleared so you can take it again. Only your own test attempt is reset — nobody else is affected.',
+      confirmLabel: 'Clear and retake',
+      danger: true,
+    }))) return
     setRetaking(true)
     try {
       await api.post(`/contests/${contestId}/retake`)
@@ -239,7 +247,7 @@ export default function Result() {
       navigate(`/contests/${contestId}`)
     } catch {
       setRetaking(false)
-      alert('Could not reset the attempt.')
+      notify('Could not reset the attempt', 'Please try again in a moment.')
     }
   }
 

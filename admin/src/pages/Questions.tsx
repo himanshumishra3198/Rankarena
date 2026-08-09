@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../components/ConfirmDialog'
 import type { FormEvent } from 'react'
 import api from '../lib/api'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
@@ -152,6 +153,7 @@ function PassagePreview({ passage }: { passage: Passage }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Questions() {
+  const confirm = useConfirm()
   const [questions, setQuestions] = useState<Question[]>([])
   const [passages, setPassages] = useState<Passage[]>([])
   const [loading, setLoading] = useState(true)
@@ -370,11 +372,21 @@ export default function Questions() {
   }
 
   async function deleteQuestion(id: string) {
-    if (!window.confirm('Delete this question?')) return
+    if (!(await confirm({
+      title: 'Delete this question?',
+      message: 'It is removed from the bank and from every contest and mock that uses it.',
+      confirmLabel: 'Delete question',
+      danger: true,
+    }))) return
     await api.delete(`/admin/questions/${id}`); load()
   }
   async function deletePassage(id: string) {
-    if (!window.confirm('Delete this passage? All linked questions will be unlinked.')) return
+    if (!(await confirm({
+      title: 'Delete this passage?',
+      message: 'Any questions still linked to it will lose their passage.',
+      confirmLabel: 'Delete passage',
+      danger: true,
+    }))) return
     await api.delete(`/admin/passages/${id}`); load()
   }
 

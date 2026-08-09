@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../components/ConfirmDialog'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -64,6 +65,7 @@ function defaultSectionLimits(totalMinutes: number): Record<Section, number> {
 }
 
 export default function Contests() {
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [contests, setContests] = useState<Contest[]>([])
   const [loading, setLoading] = useState(true)
@@ -146,7 +148,12 @@ export default function Contests() {
   }
 
   async function deleteContest(id: string) {
-    if (!window.confirm('Delete this contest and all its questions?')) return
+    if (!(await confirm({
+      title: 'Delete this contest?',
+      message: 'The contest and every participation, result and rating entry for it will be removed. This cannot be undone.',
+      confirmLabel: 'Delete contest',
+      danger: true,
+    }))) return
     await api.delete(`/admin/contests/${id}`)
     load()
   }
