@@ -128,6 +128,19 @@ export default function MockRoom() {
     lastTickTime.current = Date.now()
   }, [currentQ, phase, flushTime])
 
+  // Time on a question is wall time between arriving and leaving it, so a tab
+  // left open in the background would bank all of that against whichever
+  // question was on screen. Banking what was already earned and restarting the
+  // clock on return keeps away-time out of the count.
+  useEffect(() => {
+    const handler = () => {
+      if (document.hidden) flushTime()
+      else lastTickTime.current = Date.now()
+    }
+    document.addEventListener('visibilitychange', handler)
+    return () => document.removeEventListener('visibilitychange', handler)
+  }, [flushTime])
+
   // ── Start the test once instructions are acknowledged ───────────────
   function startTest() {
     lastTickQ.current = currentQ?.id ?? ''

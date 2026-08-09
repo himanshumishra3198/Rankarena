@@ -273,6 +273,28 @@ export default function ContestRoom() {
     return () => document.removeEventListener('visibilitychange', handler)
   }, [phase])
 
+  // ── Pause the per-question clock while the tab is in the background ───
+  // The clock is wall time between entering a question and leaving it, so a
+  // tab left open behind another window used to bank every one of those
+  // minutes against whichever question happened to be on screen. One abandoned
+  // tab produced a 170-minute reading in a 60-minute paper, which then owned
+  // the whole time analysis. Away-time now stops counting.
+  useEffect(() => {
+    const handler = () => {
+      const now = Date.now()
+      if (document.hidden) {
+        if (currentQId) {
+          const spent = Math.floor((now - qEnteredAtRef.current) / 1000)
+          if (spent > 0) setTimeSpent(prev => ({ ...prev, [currentQId]: (prev[currentQId] ?? 0) + spent }))
+        }
+      } else {
+        qEnteredAtRef.current = now
+      }
+    }
+    document.addEventListener('visibilitychange', handler)
+    return () => document.removeEventListener('visibilitychange', handler)
+  }, [currentQId])
+
   // ── Feature 6: Fullscreen change detection ────────────────────────────
   useEffect(() => {
     const handler = () => {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -6,6 +7,8 @@ import Navbar from '../components/Navbar'
 import { QuestionContext } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
+import QuestionDetailModal from '../components/QuestionDetailModal'
+import { fmtSecs, timeVerdict as timeEmoji } from '../lib/time'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RichQuestion {
@@ -56,20 +59,16 @@ function optText(q: RichQuestion, opt: string) {
   return ({ A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD } as any)[opt] ?? ''
 }
 
-function fmtSecs(s: number) {
-  if (s < 60) return `${Math.round(s)}s`
-  const m = Math.floor(s / 60); const r = Math.round(s % 60)
-  return r === 0 ? `${m}m` : `${m}m ${r}s`
-}
-
-function timeEmoji(userSecs: number, avgSecs: number): { emoji: string; label: string; color: string } {
-  if (avgSecs === 0) return { emoji: '⏱', label: 'No avg data', color: 'var(--text-muted)' }
-  const ratio = userSecs / avgSecs
-  if (ratio < 0.5)  return { emoji: '🚀', label: 'Much faster than avg', color: '#16a34a' }
-  if (ratio < 0.8)  return { emoji: '⚡', label: 'Faster than avg',      color: '#0ea5e9' }
-  if (ratio < 1.2)  return { emoji: '😊', label: 'About avg time',        color: '#6366f1' }
-  if (ratio < 2.0)  return { emoji: '🐢', label: 'Slower than avg',       color: '#d97706' }
-  return              { emoji: '😰', label: 'Much slower than avg',  color: '#dc2626' }
+// Strips the sanitized rich text down to a plain excerpt for the compact
+// cards. -webkit-line-clamp counts line boxes, so an inline diagram counts as
+// one whole "line" and squeezes the text out; and a half-rendered figure in a
+// two-line preview is just noise.
+function excerpt(html: string): string {
+  // ALLOWED_TAGS: [] returns the text content with every tag removed, without
+  // ever building a live subtree that could fetch or fire anything.
+  const text = DOMPurify.sanitize(html ?? '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
+  const clean = text.replace(/\s+/g, ' ').trim()
+  return /<img/i.test(html ?? '') ? `${clean} 🖼` : clean
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -182,6 +181,7 @@ export default function Result() {
   const [activeSection, setActiveSection] = useState<string>('all')
   const [copied, setCopied] = useState(false)
   const [reportQId, setReportQId] = useState<string | null>(null)
+  const [detailQId, setDetailQId] = useState<string | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
   const [practiceOn, setPracticeOn] = useState<Set<string>>(new Set())
   const [practiceAns, setPracticeAns] = useState<Record<string, string>>({})
@@ -198,7 +198,17 @@ export default function Result() {
         setResult(rRes.data)
         setLeaderboard(lRes.data)
         const saved = localStorage.getItem(`time-spent-${contestId}`)
-        if (saved) setTimeSpent(JSON.parse(saved))
+        if (saved) {
+          // No single question can have taken longer than the whole paper.
+          // Older attempts kept counting while the tab sat in the background,
+          // which produced readings like "170m" in a 60-minute contest and
+          // pushed every genuine result out of the time analysis.
+          const cap = (rRes.data.durationMinutes ?? 0) * 60
+          const raw: Record<string, number> = JSON.parse(saved)
+          setTimeSpent(cap > 0
+            ? Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Math.min(v, cap)]))
+            : raw)
+        }
       })
       .catch(() => setError('Result not available yet.'))
       .finally(() => setLoading(false))
@@ -298,7 +308,10 @@ export default function Result() {
     ? [...questions].filter(q => timeSpent[q.id]).sort((a, b) => (timeSpent[b.id] ?? 0) - (timeSpent[a.id] ?? 0))
     : []
   const slowest = sortedByTime.slice(0, 3)
-  const fastest = [...sortedByTime].reverse().slice(0, 3)
+  // On a short paper the same question can be both slowest and fastest;
+  // listing it twice makes the comparison meaningless.
+  const slowestIds = new Set(slowest.map(q => q.id))
+  const fastest = [...sortedByTime].reverse().filter(q => !slowestIds.has(q.id)).slice(0, 3)
 
   // ── Marked-for-review (flagged in the exam room) ─────────────────────────
   const markedSet = new Set(result.markedForReview ?? [])
@@ -502,6 +515,7 @@ export default function Result() {
         {hasTimeData && (
           <div className="card" style={{ marginBottom: 20 }}>
             <h2 style={{ marginBottom: 20 }}>Time Analysis</h2>
+            <p className="time-analysis-hint">Tap any question to read it in full, with the options and solution.</p>
             <div className="time-analysis-grid">
               {[
                 { label: 'Most time spent — review these', items: slowest },
@@ -510,6 +524,7 @@ export default function Result() {
                 <div key={label}>
                   <div className="time-analysis-sub">{label}</div>
                   <div className="time-q-list">
+                    {items.length === 0 && <p className="time-q-empty">Not enough questions to compare.</p>}
                     {items.map(q => {
                       const isCorr = answers[q.id] === q.correctOption
                       const isWrng = answers[q.id] && answers[q.id] !== q.correctOption
@@ -517,15 +532,24 @@ export default function Result() {
                       const verdict = isCorr ? 'cor' : isWrng ? 'wrg' : 'skp'
                       const verdictIcon = isCorr ? '✓' : isWrng ? '✗' : '—'
                       return (
-                        <div key={q.id} className={`time-q-card tq-${verdict}`}>
+                        <button
+                          key={q.id}
+                          type="button"
+                          className={`time-q-card tq-${verdict}`}
+                          onClick={() => setDetailQId(q.id)}
+                          aria-label={`Open question ${qNum}`}
+                        >
                           <div className="time-q-meta">
                             <span className="time-q-num">Q{qNum}</span>
                             <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
                             <span className={`time-q-verdict tqv-${verdict}`}>{verdictIcon}</span>
                             <span className="time-q-dur">{fmtSecs(timeSpent[q.id] ?? 0)}</span>
                           </div>
-                          <RichText as="div" className="time-q-text" html={q.text} />
-                        </div>
+                          <div className="time-q-body">
+                            <span className="time-q-text">{excerpt(q.text)}</span>
+                          </div>
+                          <span className="time-q-open">View question →</span>
+                        </button>
                       )
                     })}
                   </div>
@@ -804,6 +828,28 @@ export default function Result() {
         </div>
         </>)}
       </div>
+
+      {detailQId && (() => {
+        const q = questions.find(x => x.id === detailQId)
+        if (!q) return null
+        return (
+          <QuestionDetailModal
+            q={q}
+            qNum={questions.indexOf(q) + 1}
+            given={answers[q.id]}
+            marked={markedSet.has(q.id)}
+            timeSpent={timeSpent[q.id]}
+            avgTime={avgTimePerQuestion[q.id]}
+            subjectLabel={SECTION_SHORT[q.subject]}
+            subjectColor={SECTION_COLORS[q.subject]}
+            bookmarked={bookmarks.has(q.id)}
+            onToggleBookmark={() => toggleBookmark(q.id)}
+            onReport={() => { setDetailQId(null); setReportQId(q.id) }}
+            onOpenInReview={() => { setDetailQId(null); setTab('solutions'); jumpToQuestion(q.id) }}
+            onClose={() => setDetailQId(null)}
+          />
+        )
+      })()}
 
       {reportQId && (
         <ReportModal
