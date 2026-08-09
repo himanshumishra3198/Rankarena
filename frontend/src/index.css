@@ -658,12 +658,8 @@ select.input { cursor: pointer; }
 .qdm-footer-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .qdm-report { color: var(--text-muted); }
 
-@media (max-width: 600px) {
-  .qdm-overlay { padding: 0; }
-  .qdm-box { max-height: 100vh; border-radius: 0; }
-  .qdm-time { margin-left: 0; width: 100%; }
-  .qdm-footer-right { width: 100%; }
-}
+/* Mobile rules for this modal live with the other modals', further down, so
+   that source order lets them override the shared .modal-box defaults. */
 
 /* Difficulty badge variants */
 .badge-easy   { background: #dcfce7; color: #166534; }
@@ -1889,7 +1885,10 @@ select.input { cursor: pointer; }
 /* ── Between-sections checkpoint ─────────────────────────────────────────
    Shown when a section locks in a sectionally-timed contest. Centred and
    deliberately without a dismiss, so the only way on is the action. */
-.section-done-modal { max-width: 440px; text-align: center; padding: 30px 28px 26px; }
+.section-done-modal { max-width: 440px; text-align: center; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+.section-done-body { overflow-y: auto; min-height: 0; padding: 30px 28px 6px; }
+/* Outside the scroll area: this button is the only way out of the modal. */
+.section-done-footer { padding: 14px 28px 20px; border-top: 1px solid var(--border); background: var(--surface); }
 .section-done-icon {
   width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -1923,4 +1922,90 @@ select.input { cursor: pointer; }
 @media (max-width: 480px) {
   .confirm-actions { flex-direction: column-reverse; }
   .confirm-actions .btn { width: 100%; justify-content: center; }
+}
+
+/* ── Submit summary ──────────────────────────────────────────────────────── */
+.submit-modal { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.submit-modal-body { overflow-y: auto; min-height: 0; padding: 28px 28px 6px; }
+.submit-modal-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 14px 28px; border-top: 1px solid var(--border); background: var(--surface);
+}
+
+/* ── Report a question ───────────────────────────────────────────────────── */
+.report-modal-body { overflow-y: auto; min-height: 0; padding: 20px; }
+.report-modal-actions {
+  display: flex; gap: 10px; padding: 14px 20px;
+  border-top: 1px solid var(--border); background: var(--surface);
+}
+
+/* ══ Modals on phones ═════════════════════════════════════════════════════
+   Three things go wrong on a small screen: the overlay's desktop padding eats
+   a fifth of the width, a four-column table has nowhere to go, and in
+   landscape the modal is taller than the viewport so the confirm button
+   scrolls out of sight. Every modal that can scroll keeps its actions outside
+   the scrolling area, so the way out is always on screen. */
+@media (max-width: 600px) {
+  .modal-overlay { padding: 12px; }
+  .modal-box { padding: 20px; max-height: calc(100vh - 24px); }
+  .confirm-box { padding: 20px; }
+  .section-done-body { padding: 24px 20px 4px; }
+  .section-done-footer { padding: 12px 20px 16px; }
+  /* Full-bleed: this one is a page of reading, so it takes the whole screen. */
+  .qdm-overlay { padding: 0; }
+  .qdm-box { padding: 0; max-height: 100vh; border-radius: 0; }
+  .qdm-time { margin-left: 0; width: 100%; }
+  .qdm-footer-right { width: 100%; }
+  .qdm-footer-right .btn { flex: 1; justify-content: center; }
+
+  .submit-modal { padding: 0; }
+  .submit-modal-body { padding: 22px 20px 6px; }
+  .submit-modal-actions { padding: 12px 20px; }
+  .submit-modal-actions .btn { flex: 1; justify-content: center; }
+
+  /* Four columns of counts cannot fit; two of them used to be cut clean off
+     the right edge, hiding the unanswered count on the final screen of an
+     exam. One block per section instead. */
+  .submit-summary-table thead { display: none; }
+  .submit-summary-table, .submit-summary-table tbody, .submit-summary-table tfoot,
+  .submit-summary-table tr, .submit-summary-table td { display: block; width: 100%; }
+  .submit-summary-table tr {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 8px;
+  }
+  .submit-summary-table tfoot tr { background: var(--bg); }
+  .submit-summary-table td { border: none; padding: 3px 0; text-align: right; }
+  .submit-summary-table td:first-child {
+    text-align: left; font-size: 14px; font-weight: 700; color: var(--heading);
+    padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+  }
+  .submit-summary-table td:not(:first-child)::before {
+    content: attr(data-label); float: left; font-weight: 500; color: var(--text-muted);
+  }
+}
+
+/* Landscape phones, and portrait ones with the keyboard up. */
+@media (max-height: 560px) {
+  .modal-overlay { padding: 8px; align-items: flex-start; }
+  .modal-box { max-height: calc(100vh - 16px); }
+  .section-done-body { padding-top: 18px; }
+  .section-done-icon { width: 40px; height: 40px; font-size: 20px; margin-bottom: 10px; }
+  .section-done-sub { margin-bottom: 14px; }
+  .section-done-stats { margin-bottom: 14px; }
+  .section-done-note { display: none; }
+  .follow-modal-overlay { padding: 8px; align-items: flex-start; }
+  .follow-modal { max-height: calc(100vh - 16px); }
+  /* Anchored bottom-right, the calculator's top was cut off in landscape. */
+  .calc-widget { bottom: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+}
+
+/* Touch devices: the mouse-sized hit areas are too small for a fingertip. */
+@media (pointer: coarse) {
+  .modal-box .btn, .follow-modal .btn, .confirm-actions .btn, .qdm-footer .btn { min-height: 44px; }
+  .qdm-close, .bookmark-btn, .follow-modal-close, .calc-close {
+    min-width: 40px; min-height: 40px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .report-reason { padding: 12px; min-height: 48px; }
+  .report-reason input { width: 20px; height: 20px; flex-shrink: 0; }
 }

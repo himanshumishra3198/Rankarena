@@ -50,7 +50,7 @@ export default function ReportModal({ questionId, source, questionLabel, onClose
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Our team will review it shortly.</p>
           </div>
         ) : (
-          <div style={{ padding: 20 }}>
+          <div className="report-modal-body">
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
               Spotted a mistake? Let us know and we'll fix the question bank.
             </p>
@@ -71,19 +71,21 @@ export default function ReportModal({ questionId, source, questionLabel, onClose
               value={details}
               maxLength={1000}
               onChange={e => setDetails(e.target.value)}
-              style={{ width: '100%', minHeight: 72, resize: 'vertical', marginBottom: 14 }}
+              style={{ width: '100%', minHeight: 72, resize: 'vertical' }}
             />
 
             {state === 'error' && (
-              <div className="alert alert-error" style={{ marginBottom: 12 }}>Could not send report. Please try again.</div>
+              <div className="alert alert-error" style={{ marginTop: 12 }}>Could not send report. Please try again.</div>
             )}
+          </div>
+        )}
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-ghost btn-full" onClick={onClose}>Cancel</button>
-              <button className="btn btn-primary btn-full" disabled={state === 'sending'} onClick={submit}>
-                {state === 'sending' ? 'Sending…' : 'Submit Report'}
-              </button>
-            </div>
+        {state !== 'done' && (
+          <div className="report-modal-actions">
+            <button className="btn btn-ghost btn-full" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary btn-full" disabled={state === 'sending'} onClick={submit}>
+              {state === 'sending' ? 'Sending…' : 'Submit Report'}
+            </button>
           </div>
         )}
       </div>

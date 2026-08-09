@@ -32,27 +32,30 @@ export default function SectionCompleteModal({
     <div className="modal-overlay">
       <div className="modal-box section-done-modal" role="dialog" aria-modal="true"
         aria-labelledby="section-done-title">
-        <div className={`section-done-icon ${timedOut ? 'timeout' : ''}`}>
-          {timedOut ? '⏱' : '✓'}
-        </div>
+        {/* Body scrolls, footer does not. On a phone held sideways the whole
+            modal is taller than the viewport, and the action is the only way
+            out — it must never be the part that scrolls off. */}
+        <div className="section-done-body">
+          <div className={`section-done-icon ${timedOut ? 'timeout' : ''}`}>
+            {timedOut ? '⏱' : '✓'}
+          </div>
 
-        <h2 id="section-done-title" className="section-done-title">
-          {timedOut ? `Time's up for ${label}` : `${label} submitted`}
-        </h2>
-        <p className="section-done-sub">
-          {timedOut
-            ? 'The section closed automatically when its timer ran out.'
-            : 'Your answers for this section are locked in.'}
-        </p>
+          <h2 id="section-done-title" className="section-done-title">
+            {timedOut ? `Time's up for ${label}` : `${label} submitted`}
+          </h2>
+          <p className="section-done-sub">
+            {timedOut
+              ? 'The section closed automatically when its timer ran out.'
+              : 'Your answers for this section are locked in.'}
+          </p>
 
-        <div className="section-done-stats">
-          <div><strong>{answered}</strong><span>answered</span></div>
-          <div><strong>{skipped}</strong><span>skipped</span></div>
-          <div><strong>{total}</strong><span>questions</span></div>
-        </div>
+          <div className="section-done-stats">
+            <div><strong>{answered}</strong><span>answered</span></div>
+            <div><strong>{skipped}</strong><span>skipped</span></div>
+            <div><strong>{total}</strong><span>questions</span></div>
+          </div>
 
-        {nextSectionLabel ? (
-          <>
+          {nextSectionLabel ? (
             <div className="section-done-next">
               <div className="section-done-next-label">Up next</div>
               <div className="section-done-next-name">{nextSectionLabel}</div>
@@ -60,28 +63,34 @@ export default function SectionCompleteModal({
                 {nextCount} question{nextCount === 1 ? '' : 's'} · {nextMinutes} min
               </div>
             </div>
-            {/* The next section's clock starts on this click, not before. */}
-            <button className="btn btn-primary btn-full section-done-action" onClick={onStartNext}>
-              Start {nextSectionLabel} →
-            </button>
-            <p className="section-done-note">
-              Its timer starts when you press this. You can still reopen finished
-              sections to review, but not to change answers.
-            </p>
-          </>
-        ) : (
-          <>
+          ) : (
             <div className="section-done-next">
               <div className="section-done-next-label">All sections complete</div>
               <div className="section-done-next-meta">
                 Nothing left to attempt — submit whenever you're ready.
               </div>
             </div>
+          )}
+        </div>
+
+        <div className="section-done-footer">
+          {nextSectionLabel ? (
+            <>
+              {/* The next section's clock starts on this click, not before. */}
+              <button className="btn btn-primary btn-full section-done-action" onClick={onStartNext}>
+                Start {nextSectionLabel} →
+              </button>
+              <p className="section-done-note">
+                Its timer starts when you press this. You can still reopen finished
+                sections to review, but not to change answers.
+              </p>
+            </>
+          ) : (
             <button className="btn btn-primary btn-full section-done-action" onClick={onReviewAndSubmit}>
               Review &amp; submit test →
             </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
