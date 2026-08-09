@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar'
 import { QuestionContext } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
+import QuestionDetailModal from '../components/QuestionDetailModal'
 
 interface ResultQuestion {
   id: string; text: string; imageUrl?: string
@@ -34,6 +35,11 @@ interface MockResultData {
 const SECTION_LABELS: Record<string, string> = {
   QUANT: 'Quantitative Aptitude', REASONING: 'General Intelligence & Reasoning',
   ENGLISH: 'English Language', GK: 'General Awareness',
+}
+// The full names are too long for the single-question header, where they push
+// the badges onto extra rows on a phone.
+const SECTION_SHORT: Record<string, string> = {
+  QUANT: 'Quant', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'GK',
 }
 
 type Verdict = 'correct' | 'wrong' | 'skipped'
@@ -131,6 +137,7 @@ export default function MockResult() {
   const [open, setOpen] = useState<Set<string>>(new Set())
   const [solOpen, setSolOpen] = useState<Set<string>>(new Set())
   const [reportQId, setReportQId] = useState<string | null>(null)
+  const [detailQId, setDetailQId] = useState<string | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
   const [practiceOn, setPracticeOn] = useState<Set<string>>(new Set())
   const [practiceAns, setPracticeAns] = useState<Record<string, string>>({})
@@ -299,7 +306,7 @@ export default function MockResult() {
                     borderColor: filled ? VC[v] : 'var(--border)',
                   }}
                   title={marked.has(q.id) ? 'Marked for review' : undefined}
-                  onClick={() => jumpTo(i)}>
+                  onClick={() => setDetailQId(q.id)}>
                   {i + 1}
                   {marked.has(q.id) && <span className="rp-flag">🔖</span>}
                 </button>
@@ -460,6 +467,31 @@ export default function MockResult() {
         </div>
         </>)}
       </div>
+
+      {detailQId && (() => {
+        const idx = data.questions.findIndex(x => x.id === detailQId)
+        if (idx < 0) return null
+        const q = data.questions[idx]
+        return (
+          <QuestionDetailModal
+            q={q}
+            qNum={idx + 1}
+            total={data.questions.length}
+            given={data.answers[q.id]}
+            marked={marked.has(q.id)}
+            timeSpent={data.timeSpent[q.id]}
+            avgTime={data.questionStats[q.id]?.avgTime}
+            subjectLabel={SECTION_SHORT[q.subject] ?? q.subject}
+            bookmarked={bookmarks.has(q.id)}
+            onToggleBookmark={() => toggleBookmark(q.id)}
+            onReport={() => { setDetailQId(null); setReportQId(q.id) }}
+            onOpenInReview={() => { setDetailQId(null); setTab('solutions'); jumpTo(idx) }}
+            onPrev={idx > 0 ? () => setDetailQId(data.questions[idx - 1].id) : undefined}
+            onNext={idx < data.questions.length - 1 ? () => setDetailQId(data.questions[idx + 1].id) : undefined}
+            onClose={() => setDetailQId(null)}
+          />
+        )
+      })()}
 
       {reportQId && (
         <ReportModal

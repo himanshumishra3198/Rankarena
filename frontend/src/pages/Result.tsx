@@ -633,7 +633,7 @@ export default function Result() {
                     borderColor: filled ? bg : 'var(--border)',
                   }}
                   title={markedSet.has(q.id) ? 'Marked for review' : undefined}
-                  onClick={() => jumpToQuestion(q.id)}>
+                  onClick={() => setDetailQId(q.id)}>
                   {i + 1}
                   {markedSet.has(q.id) && <span className="rp-flag">🔖</span>}
                 </button>
@@ -830,12 +830,14 @@ export default function Result() {
       </div>
 
       {detailQId && (() => {
-        const q = questions.find(x => x.id === detailQId)
-        if (!q) return null
+        const idx = questions.findIndex(x => x.id === detailQId)
+        if (idx < 0) return null
+        const q = questions[idx]
         return (
           <QuestionDetailModal
             q={q}
-            qNum={questions.indexOf(q) + 1}
+            qNum={idx + 1}
+            total={questions.length}
             given={answers[q.id]}
             marked={markedSet.has(q.id)}
             timeSpent={timeSpent[q.id]}
@@ -846,6 +848,9 @@ export default function Result() {
             onToggleBookmark={() => toggleBookmark(q.id)}
             onReport={() => { setDetailQId(null); setReportQId(q.id) }}
             onOpenInReview={() => { setDetailQId(null); setTab('solutions'); jumpToQuestion(q.id) }}
+            // Paging follows the paper's order, so it matches the map above.
+            onPrev={idx > 0 ? () => setDetailQId(questions[idx - 1].id) : undefined}
+            onNext={idx < questions.length - 1 ? () => setDetailQId(questions[idx + 1].id) : undefined}
             onClose={() => setDetailQId(null)}
           />
         )

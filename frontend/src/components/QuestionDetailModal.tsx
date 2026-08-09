@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { QuestionContext } from './QuestionContent'
 import { RichText } from './RichText'
 import { fmtSecs, timeVerdict } from '../lib/time'
@@ -21,7 +21,8 @@ export interface ReviewQuestion {
   optionA: string; optionB: string; optionC: string; optionD: string
   correctOption: string
   subject: string
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD'
+  /** EASY | MEDIUM | HARD — lowercased into a badge class. */
+  difficulty: string
   marks: number
   negativeMarks: number
   questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
@@ -42,8 +43,8 @@ function optText(q: ReviewQuestion, opt: string) {
 
 export default function QuestionDetailModal({
   q, qNum, given, marked, timeSpent, avgTime,
-  subjectLabel, subjectColor, bookmarked,
-  onToggleBookmark, onReport, onOpenInReview, onClose,
+  subjectLabel, subjectColor, bookmarked, total,
+  onToggleBookmark, onReport, onOpenInReview, onPrev, onNext, onClose,
 }: {
   q: ReviewQuestion
   qNum: number
@@ -55,24 +56,42 @@ export default function QuestionDetailModal({
   subjectLabel?: string
   subjectColor?: string
   bookmarked?: boolean
+  /** Paper size. Given together with onPrev/onNext, shows the pager. */
+  total?: number
   onToggleBookmark?: () => void
   onReport?: () => void
   /** Jumps to this question in the Solutions tab and closes the modal. */
   onOpenInReview?: () => void
+  /** Undefined at the ends of the paper — the button renders disabled. */
+  onPrev?: () => void
+  onNext?: () => void
   onClose: () => void
 }) {
+  const bodyRef = useRef<HTMLDivElement>(null)
   const isCorrect = given === q.correctOption
   const isWrong = !!given && given !== q.correctOption
   const marksEarned = isCorrect ? q.marks : isWrong ? -q.negativeMarks : 0
   const verdict = timeSpent !== undefined && avgTime !== undefined
     ? timeVerdict(timeSpent, avgTime) : null
+  const paged = total !== undefined
 
-  // Escape closes, matching every other dialog in the app.
+  // Escape closes, and the arrow keys page through the paper — reading one
+  // question after another is the whole point of opening this from the map.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e: KeyboardEvent) => {
+      const typing = (e.target as HTMLElement)?.closest?.('input, textarea, select')
+      if (e.key === 'Escape') { onClose(); return }
+      if (typing) return
+      if (e.key === 'ArrowLeft' && onPrev) { e.preventDefault(); onPrev() }
+      if (e.key === 'ArrowRight' && onNext) { e.preventDefault(); onNext() }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, onPrev, onNext])
+
+  // Paging keeps the modal mounted, so without this the next question opens
+  // scrolled to wherever the previous one was left.
+  useEffect(() => { bodyRef.current?.scrollTo({ top: 0 }) }, [q.id])
 
   return (
     <div
@@ -121,7 +140,7 @@ export default function QuestionDetailModal({
           )}
         </div>
 
-        <div className="qdm-body">
+        <div className="qdm-body" ref={bodyRef}>
           <QuestionContext q={q} />
 
           {q.imageUrl && (
@@ -171,9 +190,22 @@ export default function QuestionDetailModal({
                 Open in full review →
               </button>
             )}
-            <button className="btn btn-primary btn-sm" onClick={onClose}>Close</button>
+            {!paged && <button className="btn btn-primary btn-sm" onClick={onClose}>Close</button>}
           </div>
         </div>
+
+        {/* Pager last, so it is the row nearest the thumb on a phone. */}
+        {paged && (
+          <div className="qdm-pager">
+            <button className="btn btn-ghost qdm-pager-btn" onClick={onPrev} disabled={!onPrev}>
+              ← Previous
+            </button>
+            <span className="qdm-pager-count">{qNum} of {total}</span>
+            <button className="btn btn-ghost qdm-pager-btn" onClick={onNext} disabled={!onNext}>
+              Next →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

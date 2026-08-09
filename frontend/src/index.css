@@ -620,12 +620,15 @@ select.input { cursor: pointer; }
 /* ── Question detail modal ───────────────────────────────────── */
 /* Header and footer stay put while only the question body scrolls. */
 .qdm-box { max-width: 780px; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+/* nowrap on the header itself: the badges may wrap onto a second line, but
+   bookmark and close stay pinned to the top-right corner rather than being
+   pushed below them. */
 .qdm-header {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: nowrap;
 }
-.qdm-header-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.qdm-header-right { display: flex; align-items: center; gap: 4px; }
+.qdm-header-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.qdm-header-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .qdm-qnum { font-size: 16px; font-weight: 800; color: var(--heading); }
 .qdm-subject { font-size: 12px; font-weight: 700; }
 .qdm-close {
@@ -665,6 +668,18 @@ select.input { cursor: pointer; }
 }
 .qdm-footer-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .qdm-report { color: var(--text-muted); }
+
+/* Pager: step through the paper without going back to the map each time. */
+.qdm-pager {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 20px 12px; border-top: 1px solid var(--border); background: var(--bg);
+}
+.qdm-pager-btn { min-width: 108px; justify-content: center; }
+.qdm-pager-btn:disabled { opacity: .4; }
+.qdm-pager-count {
+  font-size: 13px; font-weight: 700; color: var(--text-muted);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
 
 /* Mobile rules for this modal live with the other modals', further down, so
    that source order lets them override the shared .modal-box defaults. */
@@ -1962,9 +1977,12 @@ select.input { cursor: pointer; }
   /* Full-bleed: this one is a page of reading, so it takes the whole screen. */
   .qdm-overlay { padding: 0; }
   .qdm-box { padding: 0; max-height: 100vh; border-radius: 0; }
+  .qdm-header { padding: 14px 14px 12px; }
   .qdm-time { margin-left: 0; width: 100%; }
-  .qdm-footer-right { width: 100%; }
-  .qdm-footer-right .btn { flex: 1; justify-content: center; }
+  .qdm-footer { padding: 10px 14px; gap: 8px; }
+  .qdm-footer-right { margin-left: auto; }
+  .qdm-pager { padding: 10px 12px 12px; }
+  .qdm-pager-btn { min-width: 0; flex: 1; padding-left: 8px; padding-right: 8px; }
 
   .submit-modal { padding: 0; }
   .submit-modal-body { padding: 22px 20px 6px; }
