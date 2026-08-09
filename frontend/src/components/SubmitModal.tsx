@@ -34,6 +34,7 @@ export default function SubmitModal({ sections, submitting, onConfirm, onCancel 
 
           {/* data-label drives the stacked layout on a phone, where four
               columns of counts do not fit and used to be cut off entirely. */}
+          <div className="submit-summary-wrap">
           <table className="submit-summary-table">
             <thead>
               <tr>
@@ -62,6 +63,7 @@ export default function SubmitModal({ sections, submitting, onConfirm, onCancel 
               </tr>
             </tfoot>
           </table>
+          </div>
 
           {totalUnanswered > 0 && (
             <div className="alert alert-error" style={{ marginTop: 16 }}>
