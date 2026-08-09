@@ -167,6 +167,7 @@ export default function Result() {
 
   const [result, setResult] = useState<ResultData | null>(null)
   const [tab, setTab] = useState<'overview' | 'solutions' | 'leaderboard'>('overview')
+  const [retaking, setRetaking] = useState(false)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [lbFilter, setLbFilter] = useState<'all' | 'friends'>('all')
   const [lbLoading, setLbLoading] = useState(false)
@@ -223,6 +224,24 @@ export default function Result() {
       .catch(() => setLeaderboard([]))
       .finally(() => setLbLoading(false))
   }, [lbFilter, result])
+
+  async function retakeAsTest() {
+    if (retaking) return
+    if (!window.confirm('Clear your previous attempt and take this contest again? Only your own test attempt is reset.')) return
+    setRetaking(true)
+    try {
+      await api.post(`/contests/${contestId}/retake`)
+      // The room restores drafts and section locks from localStorage, so the
+      // previous run has to be cleared here or it would come straight back.
+      localStorage.removeItem(`draft-${contestId}`)
+      localStorage.removeItem(`submitted-sections-${contestId}`)
+      localStorage.removeItem(`time-spent-${contestId}`)
+      navigate(`/contests/${contestId}`)
+    } catch {
+      setRetaking(false)
+      alert('Could not reset the attempt.')
+    }
+  }
 
   if (loading) return <><Navbar /><div className="page"><p style={{ color: 'var(--text-muted)' }}>Loading result...</p></div></>
   if (error)   return <><Navbar /><div className="page"><div className="alert alert-error">{error}</div></div></>
@@ -331,6 +350,11 @@ export default function Result() {
           <button className="btn btn-ghost" onClick={copyResult} style={{ flexShrink: 0 }}>
             {copied ? '✓ Copied!' : '📋 Share Result'}
           </button>
+          {isTest && (
+            <button className="btn btn-ghost btn-sm" onClick={retakeAsTest} disabled={retaking}>
+              {retaking ? 'Resetting…' : '↻ Retake as test'}
+            </button>
+          )}
         </div>
 
 

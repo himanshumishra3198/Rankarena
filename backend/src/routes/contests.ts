@@ -124,6 +124,52 @@ router.post("/:id/join", authenticate, async (req: AuthRequest, res: Response) =
   res.status(201).json(participation);
 });
 
+/**
+ * Reset the caller's own attempt so they can take the contest again.
+ *
+ * Admin-only, and only ever touches the caller's row. Contests are
+ * single-attempt by design — a second run would be meaningless against a
+ * leaderboard — so rather than letting a submission be silently overwritten,
+ * a retake is an explicit action that clears the previous attempt first.
+ */
+router.post("/:id/retake", authenticate, async (req: AuthRequest, res: Response) => {
+  if (req.user!.role !== "ADMIN") {
+    res.status(403).json({ error: "Only admins can retake a contest" });
+    return;
+  }
+  const contestId = req.params.id as string;
+
+  const participation = await prisma.participation.findUnique({
+    where: { userId_contestId: { userId: req.user!.id, contestId } },
+    select: { id: true },
+  });
+  if (!participation) {
+    res.status(404).json({ error: "You have not joined this contest" });
+    return;
+  }
+
+  await prisma.participation.update({
+    where: { id: participation.id },
+    data: {
+      answers: Prisma.JsonNull,
+      draftAnswers: Prisma.JsonNull,
+      timeSpent: Prisma.JsonNull,
+      markedForReview: Prisma.JsonNull,
+      score: 0,
+      submittedAt: null,
+      startedAt: new Date(),
+      // Re-assert the flag: whatever happens, a retake is a test run.
+      isTest: true,
+    },
+  });
+
+  // Defensive: a test attempt is never added to the leaderboard, but a user
+  // promoted to admin after submitting would still have an entry there.
+  await redis.zrem(`contest:${contestId}:leaderboard`, req.user!.id);
+
+  res.json({ ok: true });
+});
+
 // Fetch questions (shuffled per user, no correct answers)
 router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
