@@ -499,6 +499,11 @@ export default function ContestRoom() {
   const sectionQs = sectionQuestions[currentSection] ?? []
   const idxInSection = sectionQs.findIndex(q => q.id === currentQ.id)
   const isSectionLocked = submittedSections.has(currentSection)
+  // The section on screen is the only one still open, so submitting it is the
+  // same act as submitting the paper. Also true of a single-section contest,
+  // where "Submit Quant" was never the right label for finishing.
+  const openSections = availableSections.filter(s => !submittedSections.has(s))
+  const isFinalSection = openSections.length === 1 && openSections[0] === currentSection
   const isWarn = timeLeft > 0 && timeLeft < 300
   const currentSectionTimeSecs = getSectionTimeSecs(currentSection)
   const secTimeLeft = getSectionTimeLeft(currentSection)
@@ -767,10 +772,19 @@ export default function ContestRoom() {
                 onClick={() => { const prev = sectionQs[idxInSection - 1]; if (prev) goToQuestion(prev.id, currentSection) }}>
                 ← Previous
               </button>
+              {/* On the last section there is nothing to move on to, so the
+                  button ends the paper instead of locking one more section and
+                  dropping the candidate on a checkpoint with only one way out. */}
               {!isSectionLocked && phase === 'active' && (
-                <button className="btn room-submit-section-btn" onClick={() => submitSection(currentSection)}>
-                  Submit {SECTION_LABELS[currentSection]} ✓
-                </button>
+                isFinalSection ? (
+                  <button className="btn btn-danger" onClick={() => setShowSubmitModal(true)} disabled={submitting}>
+                    Submit Test ✓
+                  </button>
+                ) : (
+                  <button className="btn room-submit-section-btn" onClick={() => submitSection(currentSection)}>
+                    Submit {SECTION_LABELS[currentSection]} ✓
+                  </button>
+                )
               )}
               <button className="btn btn-primary" disabled={isLastInSection} onClick={saveAndNext}>
                 Save &amp; Next →
