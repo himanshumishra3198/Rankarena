@@ -2,7 +2,7 @@ import { Router, Response } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
-import { authenticate, AuthRequest } from "../middleware/auth";
+import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -101,7 +101,7 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
 });
 
 // Submit a mock attempt — scored server-side, retakeable (upsert).
-router.post("/:id/submit", async (req: AuthRequest, res: Response) => {
+router.post("/:id/submit", requireVerifiedEmail, async (req: AuthRequest, res: Response) => {
   const mockTestId = req.params.id as string;
   const answersSchema = z.record(z.string(), z.enum(["A", "B", "C", "D"]));
   const parsed = answersSchema.safeParse(req.body.answers);

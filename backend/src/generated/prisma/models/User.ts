@@ -39,6 +39,9 @@ export type UserMinAggregateOutputType = {
   name: string | null
   email: string | null
   passwordHash: string | null
+  googleId: string | null
+  avatarUrl: string | null
+  emailVerified: boolean | null
   role: $Enums.Role | null
   rating: number | null
   createdAt: Date | null
@@ -49,6 +52,9 @@ export type UserMaxAggregateOutputType = {
   name: string | null
   email: string | null
   passwordHash: string | null
+  googleId: string | null
+  avatarUrl: string | null
+  emailVerified: boolean | null
   role: $Enums.Role | null
   rating: number | null
   createdAt: Date | null
@@ -59,6 +65,9 @@ export type UserCountAggregateOutputType = {
   name: number
   email: number
   passwordHash: number
+  googleId: number
+  avatarUrl: number
+  emailVerified: number
   role: number
   rating: number
   createdAt: number
@@ -79,6 +88,9 @@ export type UserMinAggregateInputType = {
   name?: true
   email?: true
   passwordHash?: true
+  googleId?: true
+  avatarUrl?: true
+  emailVerified?: true
   role?: true
   rating?: true
   createdAt?: true
@@ -89,6 +101,9 @@ export type UserMaxAggregateInputType = {
   name?: true
   email?: true
   passwordHash?: true
+  googleId?: true
+  avatarUrl?: true
+  emailVerified?: true
   role?: true
   rating?: true
   createdAt?: true
@@ -99,6 +114,9 @@ export type UserCountAggregateInputType = {
   name?: true
   email?: true
   passwordHash?: true
+  googleId?: true
+  avatarUrl?: true
+  emailVerified?: true
   role?: true
   rating?: true
   createdAt?: true
@@ -195,7 +213,10 @@ export type UserGroupByOutputType = {
   id: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash: string | null
+  googleId: string | null
+  avatarUrl: string | null
+  emailVerified: boolean
   role: $Enums.Role
   rating: number
   createdAt: Date
@@ -228,7 +249,10 @@ export type UserWhereInput = {
   id?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringFilter<"User"> | string
   email?: Prisma.StringFilter<"User"> | string
-  passwordHash?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
+  googleId?: Prisma.StringNullableFilter<"User"> | string | null
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  emailVerified?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   rating?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -245,13 +269,17 @@ export type UserWhereInput = {
   commentVotes?: Prisma.CommentVoteListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   actedNotifications?: Prisma.NotificationListRelationFilter
+  authTokens?: Prisma.AuthTokenListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  passwordHash?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  emailVerified?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -268,16 +296,20 @@ export type UserOrderByWithRelationInput = {
   commentVotes?: Prisma.CommentVoteOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
   actedNotifications?: Prisma.NotificationOrderByRelationAggregateInput
+  authTokens?: Prisma.AuthTokenOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  googleId?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringFilter<"User"> | string
-  passwordHash?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  emailVerified?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   rating?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -294,13 +326,17 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   commentVotes?: Prisma.CommentVoteListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   actedNotifications?: Prisma.NotificationListRelationFilter
-}, "id" | "email">
+  authTokens?: Prisma.AuthTokenListRelationFilter
+}, "id" | "email" | "googleId">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  passwordHash?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  emailVerified?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -318,7 +354,10 @@ export type UserScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
-  passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  googleId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   rating?: Prisma.IntWithAggregatesFilter<"User"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -328,7 +367,10 @@ export type UserCreateInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -345,13 +387,17 @@ export type UserCreateInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -368,13 +414,17 @@ export type UserUncheckedCreateInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -391,13 +441,17 @@ export type UserUpdateInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -414,13 +468,17 @@ export type UserUncheckedUpdateInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -430,7 +488,10 @@ export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -440,7 +501,10 @@ export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -451,6 +515,9 @@ export type UserCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  googleId?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
+  emailVerified?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -465,6 +532,9 @@ export type UserMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  googleId?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
+  emailVerified?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -475,6 +545,9 @@ export type UserMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  googleId?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
+  emailVerified?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -498,6 +571,14 @@ export type StringFieldUpdateOperationsInput = {
   set?: string
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type EnumRoleFieldUpdateOperationsInput = {
   set?: $Enums.Role
 }
@@ -512,6 +593,20 @@ export type IntFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserCreateNestedOneWithoutAuthTokensInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAuthTokensInput, Prisma.UserUncheckedCreateWithoutAuthTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAuthTokensInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAuthTokensNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAuthTokensInput, Prisma.UserUncheckedCreateWithoutAuthTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAuthTokensInput
+  upsert?: Prisma.UserUpsertWithoutAuthTokensInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAuthTokensInput, Prisma.UserUpdateWithoutAuthTokensInput>, Prisma.UserUncheckedUpdateWithoutAuthTokensInput>
 }
 
 export type UserCreateNestedOneWithoutNotificationsInput = {
@@ -698,60 +793,14 @@ export type UserUpdateOneRequiredWithoutRatingHistoryNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRatingHistoryInput, Prisma.UserUpdateWithoutRatingHistoryInput>, Prisma.UserUncheckedUpdateWithoutRatingHistoryInput>
 }
 
-export type UserCreateWithoutNotificationsInput = {
+export type UserCreateWithoutAuthTokensInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
-  role?: $Enums.Role
-  rating?: number
-  createdAt?: Date | string
-  participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
-  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
-  mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
-  questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
-  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
-  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
-  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
-  articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
-  articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
-  articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
-  commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
-  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
-}
-
-export type UserUncheckedCreateWithoutNotificationsInput = {
-  id?: string
-  name: string
-  email: string
-  passwordHash: string
-  role?: $Enums.Role
-  rating?: number
-  createdAt?: Date | string
-  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
-  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
-  mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
-  questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
-  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
-  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
-  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
-  articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
-  articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
-  articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
-  commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
-  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
-}
-
-export type UserCreateOrConnectWithoutNotificationsInput = {
-  where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
-}
-
-export type UserCreateWithoutActedNotificationsInput = {
-  id?: string
-  name: string
-  email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -767,13 +816,17 @@ export type UserCreateWithoutActedNotificationsInput = {
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
 }
 
-export type UserUncheckedCreateWithoutActedNotificationsInput = {
+export type UserUncheckedCreateWithoutAuthTokensInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -789,6 +842,184 @@ export type UserUncheckedCreateWithoutActedNotificationsInput = {
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutAuthTokensInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAuthTokensInput, Prisma.UserUncheckedCreateWithoutAuthTokensInput>
+}
+
+export type UserUpsertWithoutAuthTokensInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAuthTokensInput, Prisma.UserUncheckedUpdateWithoutAuthTokensInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAuthTokensInput, Prisma.UserUncheckedCreateWithoutAuthTokensInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAuthTokensInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAuthTokensInput, Prisma.UserUncheckedUpdateWithoutAuthTokensInput>
+}
+
+export type UserUpdateWithoutAuthTokensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAuthTokensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutNotificationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+}
+
+export type UserCreateWithoutActedNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutActedNotificationsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutActedNotificationsInput = {
@@ -811,7 +1042,10 @@ export type UserUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -827,13 +1061,17 @@ export type UserUpdateWithoutNotificationsInput = {
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -849,6 +1087,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutActedNotificationsInput = {
@@ -866,7 +1105,10 @@ export type UserUpdateWithoutActedNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -882,13 +1124,17 @@ export type UserUpdateWithoutActedNotificationsInput = {
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -904,13 +1150,17 @@ export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutArticlesInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -926,13 +1176,17 @@ export type UserCreateWithoutArticlesInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutArticlesInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -948,6 +1202,7 @@ export type UserUncheckedCreateWithoutArticlesInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutArticlesInput = {
@@ -970,7 +1225,10 @@ export type UserUpdateWithoutArticlesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -986,13 +1244,17 @@ export type UserUpdateWithoutArticlesInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticlesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1008,13 +1270,17 @@ export type UserUncheckedUpdateWithoutArticlesInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutArticleCommentsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1030,13 +1296,17 @@ export type UserCreateWithoutArticleCommentsInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutArticleCommentsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1052,6 +1322,7 @@ export type UserUncheckedCreateWithoutArticleCommentsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutArticleCommentsInput = {
@@ -1074,7 +1345,10 @@ export type UserUpdateWithoutArticleCommentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1090,13 +1364,17 @@ export type UserUpdateWithoutArticleCommentsInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticleCommentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1112,13 +1390,17 @@ export type UserUncheckedUpdateWithoutArticleCommentsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutArticleVotesInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1134,13 +1416,17 @@ export type UserCreateWithoutArticleVotesInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutArticleVotesInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1156,6 +1442,7 @@ export type UserUncheckedCreateWithoutArticleVotesInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutArticleVotesInput = {
@@ -1178,7 +1465,10 @@ export type UserUpdateWithoutArticleVotesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1194,13 +1484,17 @@ export type UserUpdateWithoutArticleVotesInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticleVotesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1216,13 +1510,17 @@ export type UserUncheckedUpdateWithoutArticleVotesInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCommentVotesInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1238,13 +1536,17 @@ export type UserCreateWithoutCommentVotesInput = {
   articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCommentVotesInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1260,6 +1562,7 @@ export type UserUncheckedCreateWithoutCommentVotesInput = {
   articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCommentVotesInput = {
@@ -1282,7 +1585,10 @@ export type UserUpdateWithoutCommentVotesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1298,13 +1604,17 @@ export type UserUpdateWithoutCommentVotesInput = {
   articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentVotesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1320,13 +1630,17 @@ export type UserUncheckedUpdateWithoutCommentVotesInput = {
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutBookmarksInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1342,13 +1656,17 @@ export type UserCreateWithoutBookmarksInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutBookmarksInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1364,6 +1682,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutBookmarksInput = {
@@ -1386,7 +1705,10 @@ export type UserUpdateWithoutBookmarksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1402,13 +1724,17 @@ export type UserUpdateWithoutBookmarksInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBookmarksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1424,13 +1750,17 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFollowingInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1446,13 +1776,17 @@ export type UserCreateWithoutFollowingInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFollowingInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1468,6 +1802,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFollowingInput = {
@@ -1479,7 +1814,10 @@ export type UserCreateWithoutFollowersInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1495,13 +1833,17 @@ export type UserCreateWithoutFollowersInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFollowersInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1517,6 +1859,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFollowersInput = {
@@ -1539,7 +1882,10 @@ export type UserUpdateWithoutFollowingInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1555,13 +1901,17 @@ export type UserUpdateWithoutFollowingInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowingInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1577,6 +1927,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutFollowersInput = {
@@ -1594,7 +1945,10 @@ export type UserUpdateWithoutFollowersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1610,13 +1964,17 @@ export type UserUpdateWithoutFollowersInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1632,13 +1990,17 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutQuestionReportsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1654,13 +2016,17 @@ export type UserCreateWithoutQuestionReportsInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutQuestionReportsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1676,6 +2042,7 @@ export type UserUncheckedCreateWithoutQuestionReportsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutQuestionReportsInput = {
@@ -1698,7 +2065,10 @@ export type UserUpdateWithoutQuestionReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1714,13 +2084,17 @@ export type UserUpdateWithoutQuestionReportsInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutQuestionReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1736,13 +2110,17 @@ export type UserUncheckedUpdateWithoutQuestionReportsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutMockAttemptsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1758,13 +2136,17 @@ export type UserCreateWithoutMockAttemptsInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutMockAttemptsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1780,6 +2162,7 @@ export type UserUncheckedCreateWithoutMockAttemptsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutMockAttemptsInput = {
@@ -1802,7 +2185,10 @@ export type UserUpdateWithoutMockAttemptsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1818,13 +2204,17 @@ export type UserUpdateWithoutMockAttemptsInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMockAttemptsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1840,13 +2230,17 @@ export type UserUncheckedUpdateWithoutMockAttemptsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutParticipationsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1862,13 +2256,17 @@ export type UserCreateWithoutParticipationsInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutParticipationsInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1884,6 +2282,7 @@ export type UserUncheckedCreateWithoutParticipationsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutParticipationsInput = {
@@ -1906,7 +2305,10 @@ export type UserUpdateWithoutParticipationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1922,13 +2324,17 @@ export type UserUpdateWithoutParticipationsInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutParticipationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1944,13 +2350,17 @@ export type UserUncheckedUpdateWithoutParticipationsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRatingHistoryInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1966,13 +2376,17 @@ export type UserCreateWithoutRatingHistoryInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRatingHistoryInput = {
   id?: string
   name: string
   email: string
-  passwordHash: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1988,6 +2402,7 @@ export type UserUncheckedCreateWithoutRatingHistoryInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRatingHistoryInput = {
@@ -2010,7 +2425,10 @@ export type UserUpdateWithoutRatingHistoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2026,13 +2444,17 @@ export type UserUpdateWithoutRatingHistoryInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRatingHistoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2048,6 +2470,7 @@ export type UserUncheckedUpdateWithoutRatingHistoryInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -2069,6 +2492,7 @@ export type UserCountOutputType = {
   commentVotes: number
   notifications: number
   actedNotifications: number
+  authTokens: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2085,6 +2509,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   commentVotes?: boolean | UserCountOutputTypeCountCommentVotesArgs
   notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
   actedNotifications?: boolean | UserCountOutputTypeCountActedNotificationsArgs
+  authTokens?: boolean | UserCountOutputTypeCountAuthTokensArgs
 }
 
 /**
@@ -2188,12 +2613,22 @@ export type UserCountOutputTypeCountActedNotificationsArgs<ExtArgs extends runti
   where?: Prisma.NotificationWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAuthTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AuthTokenWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   email?: boolean
   passwordHash?: boolean
+  googleId?: boolean
+  avatarUrl?: boolean
+  emailVerified?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
@@ -2210,6 +2645,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   commentVotes?: boolean | Prisma.User$commentVotesArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   actedNotifications?: boolean | Prisma.User$actedNotificationsArgs<ExtArgs>
+  authTokens?: boolean | Prisma.User$authTokensArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -2218,6 +2654,9 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   email?: boolean
   passwordHash?: boolean
+  googleId?: boolean
+  avatarUrl?: boolean
+  emailVerified?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
@@ -2228,6 +2667,9 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   email?: boolean
   passwordHash?: boolean
+  googleId?: boolean
+  avatarUrl?: boolean
+  emailVerified?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
@@ -2238,12 +2680,15 @@ export type UserSelectScalar = {
   name?: boolean
   email?: boolean
   passwordHash?: boolean
+  googleId?: boolean
+  avatarUrl?: boolean
+  emailVerified?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "role" | "rating" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "googleId" | "avatarUrl" | "emailVerified" | "role" | "rating" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   participations?: boolean | Prisma.User$participationsArgs<ExtArgs>
   ratingHistory?: boolean | Prisma.User$ratingHistoryArgs<ExtArgs>
@@ -2258,6 +2703,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   commentVotes?: boolean | Prisma.User$commentVotesArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   actedNotifications?: boolean | Prisma.User$actedNotificationsArgs<ExtArgs>
+  authTokens?: boolean | Prisma.User$authTokensArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2279,12 +2725,16 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     commentVotes: Prisma.$CommentVotePayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
     actedNotifications: Prisma.$NotificationPayload<ExtArgs>[]
+    authTokens: Prisma.$AuthTokenPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
     email: string
-    passwordHash: string
+    passwordHash: string | null
+    googleId: string | null
+    avatarUrl: string | null
+    emailVerified: boolean
     role: $Enums.Role
     rating: number
     createdAt: Date
@@ -2695,6 +3145,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   commentVotes<T extends Prisma.User$commentVotesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commentVotesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommentVotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   actedNotifications<T extends Prisma.User$actedNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$actedNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  authTokens<T extends Prisma.User$authTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$authTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuthTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2728,6 +3179,9 @@ export interface UserFieldRefs {
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
+  readonly googleId: Prisma.FieldRef<"User", 'String'>
+  readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
+  readonly emailVerified: Prisma.FieldRef<"User", 'Boolean'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly rating: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -3433,6 +3887,30 @@ export type User$actedNotificationsArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+}
+
+/**
+ * User.authTokens
+ */
+export type User$authTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AuthToken
+   */
+  select?: Prisma.AuthTokenSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AuthToken
+   */
+  omit?: Prisma.AuthTokenOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AuthTokenInclude<ExtArgs> | null
+  where?: Prisma.AuthTokenWhereInput
+  orderBy?: Prisma.AuthTokenOrderByWithRelationInput | Prisma.AuthTokenOrderByWithRelationInput[]
+  cursor?: Prisma.AuthTokenWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AuthTokenScalarFieldEnum | Prisma.AuthTokenScalarFieldEnum[]
 }
 
 /**

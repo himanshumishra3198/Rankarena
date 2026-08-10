@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toggleTheme, getTheme } from '../lib/theme'
 import NotificationBell from './NotificationBell'
 import Logo from './Logo'
+import VerifyBanner from './VerifyBanner'
 
 // `guest: true` means the link is shown to logged-out visitors too. The rest
 // are hidden rather than shown-and-bounced, so a guest never clicks into a
@@ -52,6 +53,7 @@ export default function Navbar() {
       : location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
+    <>
     <nav className="navbar">
       <div className="navbar-left">
         <button className="navbar-brand" onClick={() => navigate('/')} aria-label="RankArenas home">
@@ -137,5 +139,7 @@ export default function Navbar() {
         </>
       )}
     </nav>
+    <VerifyBanner />
+    </>
   )
 }

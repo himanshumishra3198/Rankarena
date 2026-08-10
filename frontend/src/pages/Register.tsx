@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Logo from '../components/Logo'
+import GoogleButton from '../components/GoogleButton'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
@@ -38,6 +39,7 @@ export default function Register() {
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Create your account</p>
         </div>
         {error && <div className="alert alert-error">{error}</div>}
+        <GoogleButton onError={setError} text="signup_with" />
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Name</label>

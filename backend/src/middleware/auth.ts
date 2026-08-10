@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import prisma from "../lib/prisma";
 
 export interface AuthRequest extends Request {
   user?: { id: string; role: string };
@@ -60,6 +61,45 @@ export function requireAdmin(
 ) {
   if (req.user?.role !== "ADMIN") {
     res.status(403).json({ error: "Admin access required" });
+    return;
+  }
+  next();
+}
+
+/**
+ * Blocks an action until the account's email is confirmed.
+ *
+ * Sitting on top of `authenticate`, not replacing it: an unverified user can
+ * sign in, read, and post in the community. What they cannot do is enter a
+ * contest or a mock, because those write to the leaderboard and to ratings,
+ * and a throwaway address should not be able to move either.
+ *
+ * The flag is read from the database rather than the JWT — tokens live seven
+ * days, and someone who verifies should not have to sign out and back in to
+ * get past this.
+ */
+export async function requireVerifiedEmail(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  if (!req.user) {
+    res.status(401).json({ error: "No token provided" });
+    return;
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { emailVerified: true },
+  });
+  if (!user) {
+    res.status(401).json({ error: "Account no longer exists" });
+    return;
+  }
+  if (!user.emailVerified) {
+    res.status(403).json({
+      error: "Confirm your email address before taking a contest.",
+      code: "EMAIL_NOT_VERIFIED",
+    });
     return;
   }
   next();

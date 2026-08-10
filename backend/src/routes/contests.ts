@@ -3,7 +3,7 @@ import { z } from "zod";
 import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma";
 import redis from "../lib/redis";
-import { authenticate, AuthRequest } from "../middleware/auth";
+import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/auth";
 import { Prisma } from "../generated/prisma/client";
 
 const router = Router();
@@ -99,7 +99,7 @@ router.get("/:id", async (req, res: Response) => {
 });
 
 // Join contest
-router.post("/:id/join", authenticate, async (req: AuthRequest, res: Response) => {
+router.post("/:id/join", authenticate, requireVerifiedEmail, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
   const contest = await prisma.contest.findUnique({ where: { id: contestId } });
   if (!contest) {
@@ -268,7 +268,7 @@ router.get("/:id/draft", authenticate, async (req: AuthRequest, res: Response) =
 });
 
 // Final submit
-router.post("/:id/submit", authenticate, async (req: AuthRequest, res: Response) => {
+router.post("/:id/submit", authenticate, requireVerifiedEmail, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
   const answersSchema = z.record(z.string(), z.enum(["A", "B", "C", "D"]));
   const parsed = answersSchema.safeParse(req.body.answers);

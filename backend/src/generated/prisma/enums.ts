@@ -9,6 +9,14 @@
 * 🟢 You can import this file directly.
 */
 
+export const AuthTokenType = {
+  EMAIL_VERIFY: 'EMAIL_VERIFY',
+  PASSWORD_RESET: 'PASSWORD_RESET'
+} as const
+
+export type AuthTokenType = (typeof AuthTokenType)[keyof typeof AuthTokenType]
+
+
 export const Role = {
   STUDENT: 'STUDENT',
   ADMIN: 'ADMIN'

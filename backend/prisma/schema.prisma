@@ -8,13 +8,22 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  role         Role     @default(STUDENT)
-  rating       Int      @default(1500)
-  createdAt    DateTime @default(now()) @map("created_at")
+  id    String @id @default(uuid())
+  name  String
+  email String @unique
+  // Null for accounts created through Google, which have no password of ours.
+  // Such an account gains one only by going through the reset-password flow.
+  passwordHash String? @map("password_hash")
+  // Google's subject claim. Stable per account, and not the email — Google
+  // lets people change their address, so matching on it would be wrong.
+  googleId  String? @unique @map("google_id")
+  avatarUrl String? @map("avatar_url")
+  // Existing accounts were backfilled true: they predate verification and
+  // locking them out of contests would be a regression, not a fix.
+  emailVerified Boolean  @default(false) @map("email_verified")
+  role          Role     @default(STUDENT)
+  rating        Int      @default(1500)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   participations  Participation[]
   ratingHistory   RatingHistory[]
@@ -29,8 +38,36 @@ model User {
   commentVotes    CommentVote[]
   notifications   Notification[]   @relation("NotificationRecipient")
   actedNotifications Notification[] @relation("NotificationActor")
+  authTokens      AuthToken[]
 
   @@map("users")
+}
+
+// One-shot links mailed to a user: "confirm this address", "reset this
+// password".
+//
+// Only the SHA-256 of the token is stored. The raw value exists in the email
+// and nowhere else, so a dump of this table cannot be replayed into an account
+// takeover. Rows are single-use (usedAt) and expire; superseded ones are
+// cleared when a new token of the same type is issued.
+model AuthToken {
+  id        String        @id @default(uuid())
+  userId    String        @map("user_id")
+  type      AuthTokenType
+  tokenHash String        @unique @map("token_hash")
+  expiresAt DateTime      @map("expires_at")
+  usedAt    DateTime?     @map("used_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("auth_tokens")
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
 }
 
 // One row per thing a user should be told about.

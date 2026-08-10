@@ -2041,3 +2041,46 @@ select.input { cursor: pointer; }
   .report-reason { padding: 12px; min-height: 48px; }
   .report-reason input { width: 20px; height: 20px; flex-shrink: 0; }
 }
+
+/* ── Auth: Google sign-in, verification banner ──────────────────────────── */
+.google-btn-wrap { margin-bottom: 4px; }
+/* GIS renders a fixed-width iframe; centring it keeps it aligned with the
+   full-width form controls underneath at every screen size. */
+.google-btn { display: flex; justify-content: center; min-height: 44px; }
+.google-btn > div { max-width: 100%; }
+.google-btn-skeleton { text-align: center; font-size: 13px; color: var(--text-muted); padding: 10px 0; }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 0; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.auth-inline-link { font-size: 12.5px; font-weight: 500; }
+.linklike {
+  background: none; border: none; padding: 0; font: inherit;
+  color: var(--primary); cursor: pointer; text-decoration: none;
+}
+.linklike:hover { text-decoration: underline; }
+
+.verify-banner {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 24px; font-size: 13.5px; line-height: 1.5;
+  background: var(--warning-light, #fffbeb); color: #92400e;
+  border-bottom: 1px solid #fcd34d;
+}
+[data-theme="dark"] .verify-banner {
+  background: rgba(217, 119, 6, .14); color: #fcd34d; border-bottom-color: rgba(217, 119, 6, .5);
+}
+.verify-banner-text { flex: 1; min-width: 200px; }
+.verify-banner-error { margin-top: 4px; font-size: 12.5px; opacity: .85; }
+.verify-banner-btn {
+  flex-shrink: 0; background: #b45309; color: #fff; border-color: #b45309;
+}
+.verify-banner-btn:hover:not(:disabled) { background: #92400e; }
+@media (max-width: 700px) {
+  .verify-banner { padding: 10px 12px; gap: 8px; }
+}

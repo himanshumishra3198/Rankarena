@@ -13,6 +13,11 @@ env:
   # GA4 measurement id (G-XXXXXXXXXX). Leave empty to disable analytics
   # entirely — the tag is only injected when this has a value.
   VITE_GA_ID: "G-MQ6676CDQX"
+  # Google sign-in client id. Public by design — it identifies the app to
+  # Google and is visible in the page source either way; the client *secret*
+  # is not used by this flow and must never appear here. Leave empty to hide
+  # the Google button entirely.
+  VITE_GOOGLE_CLIENT_ID: ""
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
@@ -64,6 +69,7 @@ jobs:
           build-args: |
             VITE_API_URL=${{ env.VITE_API_URL }}
             VITE_GA_ID=${{ env.VITE_GA_ID }}
+            VITE_GOOGLE_CLIENT_ID=${{ env.VITE_GOOGLE_CLIENT_ID }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/rankarena-frontend:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/rankarena-frontend:latest
