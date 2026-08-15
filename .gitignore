@@ -4,3 +4,6 @@
 
 # Claude Code local config — not part of the app
 .claude/
+
+# Local-only setup notes: one-off runbook, not part of the app.
+docs/auth-setup.md
