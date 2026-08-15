@@ -1311,6 +1311,19 @@ select.input { cursor: pointer; }
 .sol-explain-text sub { vertical-align: sub; font-size: 0.75em; }
 .sol-explain-text sup { vertical-align: super; font-size: 0.75em; }
 
+/* ── Practice recommendations (wrong-answer follow-up questions) ──── */
+.practice-recs-status { font-size: 14px; color: var(--text-muted); }
+.practice-recs-list { display: flex; flex-direction: column; gap: 16px; }
+.practice-rec-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.practice-rec-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--text-muted);
+}
+
 /* Inline images inside question text and options */
 .question-text img, .option-text img, .review-qtext img, .sol-explain-text img, .qc-context img, .time-q-text img {
   max-width: 100%; max-height: 260px; border-radius: 6px; border: 1px solid var(--border); vertical-align: middle; margin: 2px 0;
