@@ -5,13 +5,13 @@ Turning on Google sign-in, email verification and password reset.
 **Contents**
 
 - [Before you start](#before-you-start)
-- [Step 0 — Request SES production access (do this first)](#step-0--request-ses-production-access-do-this-first)
-- [Step 1 — Create the Google client ID](#step-1--create-the-google-client-id)
-- [Step 2 — Verify your domain in SES](#step-2--verify-your-domain-in-ses)
-- [Step 3 — Create SES SMTP credentials](#step-3--create-ses-smtp-credentials)
-- [Step 4 — Put the values in place](#step-4--put-the-values-in-place)
-- [Step 5 — Deploy](#step-5--deploy)
-- [Step 6 — Check it works](#step-6--check-it-works)
+- [Step 1 — Verify your domain in SES](#step-1--verify-your-domain-in-ses)
+- [Step 2 — Request SES production access](#step-2--request-ses-production-access)
+- [Step 3 — Create the Google client ID](#step-3--create-the-google-client-id)
+- [Step 4 — Create SES SMTP credentials](#step-4--create-ses-smtp-credentials)
+- [Step 5 — Put the values in place](#step-5--put-the-values-in-place)
+- [Step 6 — Deploy](#step-6--deploy)
+- [Step 7 — Check it works](#step-7--check-it-works)
 - [Troubleshooting](#troubleshooting)
 - [Reference: how the feature behaves](#reference-how-the-feature-behaves)
 - [Reference: token handling](#reference-token-handling)
@@ -23,7 +23,7 @@ Turning on Google sign-in, email verification and password reset.
 ### What state the site is in right now
 
 The code is live but **switched off**, and stays that way until you finish
-Step 4. Right now:
+step 5. Right now:
 
 | | Behaviour with nothing configured |
 |---|---|
@@ -43,32 +43,87 @@ That last row is why this is worth finishing promptly.
 
 ### Roughly how long
 
+Steps 1 and 2 both involve waiting, and step 2 depends on step 1 — so start
+at the top and do the Google setup (step 3) while they run.
+
 | Step | Your time | Waiting |
 |---|---|---|
-| 0. Request SES production access | 5 min | **up to 24 h** ← start this first |
-| 1. Google client ID | 10 min | — |
-| 2. SES domain verification | 10 min | ~1 h for DNS |
-| 3. SMTP credentials | 2 min | — |
-| 4–6. Configure, deploy, test | 15 min | — |
+| 1. Verify domain in SES | 10 min | ~1 h for DNS |
+| 2. Request production access | 5 min | **up to 24 h** |
+| 3. Google client ID | 10 min | — |
+| 4. SMTP credentials | 2 min | — |
+| 5–7. Configure, deploy, test | 15 min | — |
 
 ---
 
-## Step 0 — Request SES production access (do this first)
+## Step 1 — Verify your domain in SES
+
+Do this first. Production access (step 2) is requested from the same page, and
+AWS approves the request faster when the sending domain is already verified.
+
+1. AWS Console → **SES** → **Identities** → **Create identity**
+2. Choose **Domain**, enter `rankarenas.com`
+3. Tick **Enable DKIM**
+4. SES shows you **three CNAME records**. Add all three to your DNS.
+5. Add an SPF record on the apex if you don't already have one:
+
+   | Type | Name | Value |
+   |---|---|---|
+   | TXT | `@` | `v=spf1 include:amazonses.com ~all` |
+
+Verification usually completes within the hour. The identity flips to
+**Verified** in the SES console when it's done.
+
+- [ ] Domain shows **Verified** in SES
+
+---
+
+## Step 2 — Request SES production access
 
 A new SES account is **sandboxed**: it can only send to addresses you have
-manually verified. That is useless for real signups, and approval takes up to
-a day — so get the request in before you do anything else.
+manually verified, capped at 200 messages a day. That is useless for real
+signups, and approval takes up to 24 hours — so submit this as soon as step 1
+is verified, then carry on with step 3 while you wait.
 
-1. AWS Console → **SES** → **Account dashboard**
-2. Click **Request production access**
-3. Fill in the form:
-   - Mail type: **Transactional**
-   - Website URL: `https://rankarenas.com`
-   - Use case: describe it plainly, e.g. *"Account email verification and
-     password reset for an exam practice site. Recipients are users who have
-     just signed up. No marketing email."*
-   - Expected volume: a realistic number (e.g. a few hundred a day)
-4. Submit, then carry on with Step 1 while it's pending.
+### Where the button actually is
+
+It is **not** on the Account dashboard, despite the sandbox warning appearing
+there. The dashboard only links you onward:
+
+**SES** → **Account dashboard** → in the yellow "your account is in the
+sandbox" banner, click **View Get set up page** → then **Request production
+access** on that page.
+
+> The left-hand nav item **Get set up** takes you to the same place.
+
+### Fill in the form
+
+| Field | What to put |
+|---|---|
+| Mail type | **Transactional** — these are triggered one-to-one by a user action |
+| Website URL | `https://rankarenas.com` |
+| Additional contacts | Your email (up to 4, comma separated) |
+| Preferred contact language | English |
+| Use case description | Say it plainly, e.g. *"Account email verification and password reset for an exam practice site. Recipients are users who have just signed up. No marketing email."* |
+| Acknowledgement | Tick it |
+
+Then **Submit request**. AWS responds within 24 hours. You can't edit the
+details while the review is open.
+
+### Or skip the console
+
+If you have the AWS CLI configured, this does the same thing:
+
+```sh
+aws sesv2 put-account-details \
+  --production-access-enabled \
+  --mail-type TRANSACTIONAL \
+  --website-url https://rankarenas.com \
+  --additional-contact-email-addresses you@example.com \
+  --contact-language EN \
+  --use-case-description "Account email verification and password reset for an exam practice site. Recipients are users who just signed up. No marketing email." \
+  --region us-east-1
+```
 
 > **While you're still in the sandbox**, signup emails to real users silently
 > fail. The account is still created and they can still sign in — they just
@@ -79,9 +134,9 @@ a day — so get the request in before you do anything else.
 
 ---
 
-## Step 1 — Create the Google client ID
+## Step 3 — Create the Google client ID
 
-### 1a. Configure the consent screen
+### 3a. Configure the consent screen
 
 Google Cloud Console → **APIs & Services** → **OAuth consent screen**
 
@@ -101,7 +156,7 @@ When you're ready for the public, click **Publish app**. While it says
 "Testing", only accounts listed under *Test users* can sign in — which is
 handy for trying it out first.
 
-### 1b. Create the credential
+### 3b. Create the credential
 
 **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID**
 
@@ -121,7 +176,7 @@ http://localhost:5173
 **Authorised redirect URIs** — leave **empty**. This flow never redirects; the
 browser receives an ID token in the page.
 
-### 1c. Copy the client ID
+### 3c. Copy the client ID
 
 It ends in `.apps.googleusercontent.com`.
 
@@ -132,26 +187,7 @@ It ends in `.apps.googleusercontent.com`.
 
 ---
 
-## Step 2 — Verify your domain in SES
-
-1. AWS Console → **SES** → **Identities** → **Create identity**
-2. Choose **Domain**, enter `rankarenas.com`
-3. Tick **Enable DKIM**
-4. SES shows you **three CNAME records**. Add all three to your DNS.
-5. Add an SPF record on the apex if you don't already have one:
-
-   | Type | Name | Value |
-   |---|---|---|
-   | TXT | `@` | `v=spf1 include:amazonses.com ~all` |
-
-Verification usually completes within the hour. The identity flips to
-**Verified** in the SES console when it's done.
-
-- [ ] Domain shows **Verified** in SES
-
----
-
-## Step 3 — Create SES SMTP credentials
+## Step 4 — Create SES SMTP credentials
 
 **SES** → **SMTP settings** → **Create SMTP credentials**
 
@@ -172,9 +208,9 @@ Your stack runs in `us-east-1`, so unless you chose otherwise:
 
 ---
 
-## Step 4 — Put the values in place
+## Step 5 — Put the values in place
 
-### 4a. The Google client ID goes in TWO places
+### 5a. The Google client ID goes in TWO places
 
 > **These must be identical.** The frontend sends a token stamped with the
 > client ID; the API rejects it unless the audience matches. A mismatch fails
@@ -195,7 +231,7 @@ GOOGLE_CLIENT_ID=123456789-abcdef.apps.googleusercontent.com
 The client ID is not a secret — it ships in the page source either way, which
 is why it lives in the repo rather than in GitHub Secrets.
 
-### 4b. The email settings go on the server
+### 5b. The email settings go on the server
 
 SSH in, then edit `.env`:
 
@@ -226,7 +262,7 @@ Two things people get wrong here:
 
 ---
 
-## Step 5 — Deploy
+## Step 6 — Deploy
 
 **The frontend** picks up the client ID at build time, so it needs a deploy —
 commit and push `deploy.yml`:
@@ -252,7 +288,7 @@ docker compose -f docker-compose.prod.yml up -d backend
 
 ---
 
-## Step 6 — Check it works
+## Step 7 — Check it works
 
 ### Email
 
@@ -296,13 +332,13 @@ refused entry. Click the link, and the banner disappears and contests open.
 | Symptom | Cause | Fix |
 |---|---|---|
 | Log says `[mailer] SMTP_HOST is not set` | The env never reached the container | Check `.env`, then **recreate** (not restart) the backend |
-| Log says `Email address is not verified` | `MAIL_FROM` isn't on your SES-verified domain, **or** you're still in the sandbox and the recipient isn't verified | Finish Step 0/2 |
-| Emails send to you but not to real users | Still in the SES sandbox | Wait for production access (Step 0) |
+| Log says `Email address is not verified` | `MAIL_FROM` isn't on your SES-verified domain, **or** you're still in the sandbox and the recipient isn't verified | Finish steps 1 and 2 |
+| Emails send to you but not to real users | Still in the SES sandbox | Wait for production access (step 2) |
 | Google button doesn't appear | `VITE_GOOGLE_CLIENT_ID` was empty at build time | Set it in `deploy.yml` and redeploy the frontend |
 | *"Could not verify that Google account."* | `GOOGLE_CLIENT_ID` on the server ≠ `VITE_GOOGLE_CLIENT_ID` in the bundle | Make them identical, recreate the backend |
-| Google popup says `origin_mismatch` | The site's origin isn't in **Authorised JavaScript origins** | Add it in Step 1b — exact scheme and host, no path |
-| *"Google sign-in is not configured on this server."* | `GOOGLE_CLIENT_ID` missing from `.env` | Step 4a |
-| Links in emails 404 | `PUBLIC_SITE_URL` wrong or has a trailing slash | Step 4b |
+| Google popup says `origin_mismatch` | The site's origin isn't in **Authorised JavaScript origins** | Add it in step 3b — exact scheme and host, no path |
+| *"Google sign-in is not configured on this server."* | `GOOGLE_CLIENT_ID` missing from `.env` | Step 5a |
+| Links in emails 404 | `PUBLIC_SITE_URL` wrong or has a trailing slash | Step 5b |
 | A user is stuck unverified and you need them in now | Sandbox, bounced email, etc. | See below |
 
 **Unblocking one user by hand:**
