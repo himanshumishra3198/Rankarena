@@ -65,15 +65,43 @@ AWS approves the request faster when the sending domain is already verified.
 2. Choose **Domain**, enter `rankarenas.com`
 3. Tick **Enable DKIM**
 4. SES shows you **three CNAME records**. Add all three to your DNS.
-5. Add an SPF record on the apex if you don't already have one:
-
-   | Type | Name | Value |
-   |---|---|---|
-   | TXT | `@` | `v=spf1 include:amazonses.com ~all` |
-
 Verification usually completes within the hour. The identity flips to
 **Verified** in the SES console when it's done.
 
+> **DNS for `rankarenas.com` is at Squarespace**, not Route 53. The records
+> have to be added there — nothing in AWS can do it for you.
+
+### The existing DNS actively blocks outbound mail
+
+The domain is currently configured to say "this domain sends no email":
+
+```
+TXT  @        v=spf1 -all
+TXT  _dmarc   v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s
+```
+
+`-all` means *no server is allowed to send as this domain*, and `p=reject`
+tells receivers to bin anything that fails. This is a sensible lockdown for a
+domain that never sends mail — and it is exactly what we are about to change.
+
+**The DKIM CNAMEs are what saves it.** With SES Easy DKIM, messages are signed
+with `d=rankarenas.com`, which satisfies the strict DKIM alignment (`adkim=s`)
+that DMARC is demanding, so mail passes. Get the three CNAMEs wrong and every
+message is rejected outright — not sent to spam, rejected.
+
+**Also fix the SPF record** while you are in there:
+
+| Type | Name | Old | New |
+|---|---|---|---|
+| TXT | `@` | `v=spf1 -all` | `v=spf1 include:amazonses.com -all` |
+
+SPF alone will still not *align* (SES uses its own Return-Path domain), which
+is fine — DMARC passes on DKIM alignment. But leaving a hard-fail SPF in place
+makes some receivers treat the mail more harshly than they need to. If you
+want full alignment later, configure a custom MAIL FROM subdomain in SES.
+
+- [ ] Three DKIM CNAMEs added at Squarespace
+- [ ] SPF changed to `v=spf1 include:amazonses.com -all`
 - [ ] Domain shows **Verified** in SES
 
 ---
@@ -333,6 +361,7 @@ refused entry. Click the link, and the banner disappears and contests open.
 |---|---|---|
 | Log says `[mailer] SMTP_HOST is not set` | The env never reached the container | Check `.env`, then **recreate** (not restart) the backend |
 | Log says `Email address is not verified` | `MAIL_FROM` isn't on your SES-verified domain, **or** you're still in the sandbox and the recipient isn't verified | Finish steps 1 and 2 |
+| Mail is accepted by SES but never arrives, or bounces with a DMARC failure | The DKIM CNAMEs are missing or wrong, so `p=reject` in the DMARC record bins it | Re-check all three CNAMEs at Squarespace (step 1) |
 | Emails send to you but not to real users | Still in the SES sandbox | Wait for production access (step 2) |
 | Google button doesn't appear | `VITE_GOOGLE_CLIENT_ID` was empty at build time | Set it in `deploy.yml` and redeploy the frontend |
 | *"Could not verify that Google account."* | `GOOGLE_CLIENT_ID` on the server ≠ `VITE_GOOGLE_CLIENT_ID` in the bundle | Make them identical, recreate the backend |
