@@ -6,5 +6,5 @@
  * "last updated" has to mean the last time the wording changed, not the last
  * time the site was deployed.
  */
-export const LEGAL_CONTACT = 'himanshumishra.it24@gmail.com'
+export const LEGAL_CONTACT = 'rrankarenas@gmail.com'
 export const LEGAL_UPDATED = '22 August 2026'
