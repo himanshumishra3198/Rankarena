@@ -55,6 +55,10 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+        <p className="auth-legal">
+          By continuing you agree to our <Link to="/terms">Terms</Link> and{' '}
+          <Link to="/privacy">Privacy Policy</Link>.
+        </p>
         <p className="auth-footer">
           No account? <Link to="/register">Register</Link>
         </p>

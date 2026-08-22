@@ -2084,3 +2084,32 @@ select.input { cursor: pointer; }
 @media (max-width: 700px) {
   .verify-banner { padding: 10px 12px; gap: 8px; }
 }
+
+/* ── Legal pages (privacy, terms) ───────────────────────────────────────── */
+/* Narrower than the default page: long-form prose is hard to track across a
+   900px line. Sized in ch so it follows the font rather than the viewport. */
+.legal-page { max-width: 72ch; padding-bottom: 56px; }
+.legal-page h1 { font-size: 28px; margin-bottom: 4px; }
+.legal-page h2 {
+  font-size: 18px; margin: 32px 0 10px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.legal-page h3 { font-size: 15px; margin: 20px 0 6px; color: var(--heading); }
+.legal-page p { margin: 0 0 12px; line-height: 1.75; color: var(--text); }
+.legal-page ul { margin: 0 0 14px; padding-left: 22px; }
+.legal-page li { line-height: 1.75; margin-bottom: 8px; color: var(--text); }
+.legal-page code {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 5px; font-size: 13px;
+}
+.legal-updated { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.legal-lede { font-size: 16px; line-height: 1.7; }
+.legal-footer {
+  margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border);
+  font-size: 14px; color: var(--text-muted);
+}
+
+.auth-legal {
+  margin-top: 16px; font-size: 12px; line-height: 1.6;
+  color: var(--text-muted); text-align: center;
+}
