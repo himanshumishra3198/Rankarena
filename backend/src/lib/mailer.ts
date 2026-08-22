@@ -14,6 +14,12 @@ import nodemailer, { Transporter } from "nodemailer";
  */
 
 const FROM = process.env.MAIL_FROM || "RankArenas <no-reply@rankarenas.com>";
+// Where replies go. The From address has to sit on the SES-verified domain,
+// and no-reply@ has no mailbox behind it — so without this, anyone answering a
+// verification email is talking to nobody. Reply-To can be any address,
+// including a Gmail one, because it is never used to send and so is not
+// subject to SPF, DKIM or SES identity checks.
+const REPLY_TO = process.env.MAIL_REPLY_TO;
 const SITE = process.env.PUBLIC_SITE_URL || "https://rankarenas.com";
 
 let transport: Transporter | null = null;
@@ -47,7 +53,7 @@ export async function sendMail(to: string, subject: string, html: string, text: 
     return;
   }
   try {
-    await t.sendMail({ from: FROM, to, subject, html, text });
+    await t.sendMail({ from: FROM, to, subject, html, text, ...(REPLY_TO ? { replyTo: REPLY_TO } : {}) });
   } catch (err) {
     // Logged and swallowed: the caller's operation already succeeded, and the
     // user can always ask for another link.
