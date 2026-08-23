@@ -39,41 +39,32 @@ function countInPeriod(heatmap: Record<string, number>, days: number): number {
     .reduce((s, [, v]) => s + v, 0)
 }
 
+// Longest run of consecutive active days within the last `days`. Derived from
+// the heatmap because the API only reports the all-time max and current run.
+function longestStreak(heatmap: Record<string, number>, days: number): number {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  const active = new Set(
+    Object.entries(heatmap)
+      .filter(([d, v]) => v > 0 && new Date(d) >= cutoff)
+      .map(([d]) => d),
+  )
+  let best = 0
+  for (const day of active) {
+    // Count only from the start of a run, so each run is measured once.
+    const prev = new Date(day); prev.setDate(prev.getDate() - 1)
+    if (active.has(prev.toISOString().slice(0, 10))) continue
+    let run = 0
+    const cur = new Date(day)
+    while (active.has(cur.toISOString().slice(0, 10))) { run++; cur.setDate(cur.getDate() + 1) }
+    if (run > best) best = run
+  }
+  return best
+}
+
 function pct(n: number, total: number): string {
   if (total === 0) return '0%'
   return `${((n / total) * 100).toFixed(1)}%`
-}
-
-// ── Achievements ──────────────────────────────────────────────────────────────
-
-const SUBJECT_LABELS: Record<string, string> = {
-  QUANT: 'Quantitative', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'General Knowledge',
-}
-const SUBJECT_COLORS: Record<string, string> = {
-  QUANT: '#3b82f6', REASONING: '#8b5cf6', ENGLISH: '#10b981', GK: '#f59e0b',
-}
-
-interface Achievement { icon: string; label: string; desc: string; earned: boolean }
-
-function computeAchievements(
-  stats: ProfileData['stats'],
-  ratingHistory: RatingPoint[],
-  v: ProfileData['verdictTotals'],
-): Achievement[] {
-  const answered = v.correct + v.wrong
-  const accuracy = answered > 0 ? v.correct / answered : 0
-  return [
-    { icon: '🎯', label: 'First Steps',     desc: 'Completed first contest',     earned: stats.totalContests >= 1 },
-    { icon: '🏅', label: 'Getting Started', desc: '5 contests completed',         earned: stats.totalContests >= 5 },
-    { icon: '🏆', label: 'Competitor',      desc: '10 contests completed',        earned: stats.totalContests >= 10 },
-    { icon: '🎖️', label: 'Veteran',         desc: '25 contests completed',        earned: stats.totalContests >= 25 },
-    { icon: '🔥', label: 'On Fire',         desc: '3-day streak achieved',        earned: stats.maxStreak >= 3 },
-    { icon: '⚡', label: 'Streak Master',   desc: '7-day streak achieved',        earned: stats.maxStreak >= 7 },
-    { icon: '🥇', label: 'Top Scorer',      desc: 'Ranked #1 in a contest',       earned: ratingHistory.some(r => r.rank === 1) },
-    { icon: '📈', label: 'Rising Star',     desc: 'Reached rating 1400',          earned: stats.maxRating >= 1400 },
-    { icon: '💎', label: 'Expert',          desc: 'Reached rating 1600',          earned: stats.maxRating >= 1600 },
-    { icon: '🎯', label: 'Sharpshooter',   desc: '75%+ accuracy (20+ answered)', earned: answered >= 20 && accuracy >= 0.75 },
-  ]
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -89,6 +80,13 @@ function VerdictCard({ icon, label, count, total, color }: {
       <div className="verdict-pct">{pct(count, total)}</div>
     </div>
   )
+}
+
+const SUBJECT_LABELS: Record<string, string> = {
+  QUANT: 'Quantitative', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'General Knowledge',
+}
+const SUBJECT_COLORS: Record<string, string> = {
+  QUANT: '#3b82f6', REASONING: '#8b5cf6', ENGLISH: '#10b981', GK: '#f59e0b',
 }
 
 function SubjectBar({ subject, stat }: { subject: string; stat: SubjectStat }) {
@@ -110,16 +108,6 @@ function SubjectBar({ subject, stat }: { subject: string; stat: SubjectStat }) {
         <span style={{ color: '#dc2626' }}>{stat.wrong}✗</span>
         <span style={{ color: 'var(--text-muted)' }}>{stat.skipped}—</span>
       </div>
-    </div>
-  )
-}
-
-function AchievementBadge({ a }: { a: Achievement }) {
-  return (
-    <div className={`achievement-badge ${a.earned ? 'achievement-earned' : 'achievement-locked'}`}
-      title={a.desc}>
-      <span className="achievement-icon">{a.earned ? a.icon : '🔒'}</span>
-      <span className="achievement-label">{a.label}</span>
     </div>
   )
 }
@@ -199,8 +187,8 @@ export default function Profile() {
 
   const solvedThisYear  = countInPeriod(heatmap, 365)
   const solvedThisMonth = countInPeriod(heatmap, 30)
-  const achievements      = computeAchievements(stats, ratingHistory, verdictTotals)
-  const earnedCount       = achievements.filter(a => a.earned).length
+  const streakYear      = longestStreak(heatmap, 365)
+  const streakMonth     = longestStreak(heatmap, 30)
 
   const subjectOrder = ['QUANT', 'REASONING', 'ENGLISH', 'GK']
   const subjectsWithData = subjectOrder.filter(s => subjectStats[s])
@@ -337,51 +325,35 @@ export default function Profile() {
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>More</span>
           </div>
 
-          {/* Stats + streak */}
-          <div className="activity-summary-row">
-            <div className="activity-summary-group">
-              <div className="activity-summary-label">Tests taken</div>
-              <div className="activity-summary-stats">
-                <span><strong>{stats.totalContests}</strong> contests</span>
-                <span><strong>{stats.totalMocks ?? 0}</strong> mocks</span>
-              </div>
+          {/* Activity figures: a plain number with a caption underneath, so the
+              value is what you read and the caption only qualifies it. */}
+          <div className="profile-figures">
+            <div className="profile-figure">
+              <div className="profile-figure-value">{stats.totalSolved ?? 0} problems</div>
+              <div className="profile-figure-label">solved for all time</div>
             </div>
-            <div className="activity-summary-group">
-              <div className="activity-summary-label">Problems solved</div>
-              <div className="activity-summary-stats">
-                <span><strong>{stats.totalSolved ?? 0}</strong> all time</span>
-                <span><strong>{solvedThisYear}</strong> this year</span>
-                <span><strong>{solvedThisMonth}</strong> this month</span>
-              </div>
+            <div className="profile-figure">
+              <div className="profile-figure-value">{solvedThisYear} problems</div>
+              <div className="profile-figure-label">solved for the last year</div>
             </div>
-            <div className="activity-summary-group">
-              <div className="activity-summary-label">Streaks</div>
-              <div className="activity-summary-stats">
-                <span><strong>{stats.maxStreak}</strong> day best</span>
-                <span><strong>{stats.currentStreak}</strong> current</span>
-              </div>
+            <div className="profile-figure">
+              <div className="profile-figure-value">{solvedThisMonth} problems</div>
+              <div className="profile-figure-label">solved for the last month</div>
             </div>
-            {stats.currentStreak >= 1 && (
-              <div className="streak-badge">
-                <span className="streak-fire">🔥</span>
-                <span className="streak-num">{stats.currentStreak}</span>
-                <span className="streak-sub">day streak</span>
-              </div>
-            )}
+            <div className="profile-figure">
+              <div className="profile-figure-value">{stats.maxStreak} {stats.maxStreak === 1 ? 'day' : 'days'}</div>
+              <div className="profile-figure-label">in a row max.</div>
+            </div>
+            <div className="profile-figure">
+              <div className="profile-figure-value">{streakYear} {streakYear === 1 ? 'day' : 'days'}</div>
+              <div className="profile-figure-label">in a row for the last year</div>
+            </div>
+            <div className="profile-figure">
+              <div className="profile-figure-value">{streakMonth} {streakMonth === 1 ? 'day' : 'days'}</div>
+              <div className="profile-figure-label">in a row for the last month</div>
+            </div>
           </div>
         </div>
-
-        {/* ── Achievements ──────────────────────────────────────── */}
-        <div className="card" style={{ marginTop: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h2 style={{ margin: 0 }}>Achievements</h2>
-            <span className="achievements-count">{earnedCount} / {achievements.length} earned</span>
-          </div>
-          <div className="achievements-grid">
-            {achievements.map(a => <AchievementBadge key={a.label} a={a} />)}
-          </div>
-        </div>
-
         {/* ── Contest history table ─────────────────────────────── */}
         {ratingHistory.length > 0 && (
           <div className="card" style={{ marginTop: 16 }}>
