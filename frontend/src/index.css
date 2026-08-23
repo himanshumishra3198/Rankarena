@@ -2047,7 +2047,10 @@ select.input { cursor: pointer; }
 /* GIS renders a fixed-width iframe; centring it keeps it aligned with the
    full-width form controls underneath at every screen size. */
 .google-btn { display: flex; justify-content: center; min-height: 44px; }
-.google-btn > div { max-width: 100%; }
+/* Belt and braces: the width is measured in JS, but if GIS ever renders wider
+   than asked, clip rather than push the card out of shape. */
+.google-btn { max-width: 100%; overflow: hidden; }
+.google-btn > div, .google-btn iframe { max-width: 100% !important; }
 .google-btn-skeleton { text-align: center; font-size: 13px; color: var(--text-muted); padding: 10px 0; }
 
 .auth-divider {
