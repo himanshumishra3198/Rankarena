@@ -8,6 +8,7 @@ import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
 import type { Question, Passage, QuestionType } from '../lib/types'
 import { LANGUAGES } from '../lib/types'
+import type { Language } from '../lib/types'
 
 const SUBJECTS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
@@ -172,6 +173,9 @@ export default function Questions() {
   const [total, setTotal] = useState(0)
   const PER_PAGE = 25
   const [form, setForm] = useState(emptyForm)
+  // Which language tab is showing. Reset to English whenever the form opens,
+  // so a new question always starts on the source language.
+  const [activeLang, setActiveLang] = useState<Language>('EN')
   // Drives the status chip and mirrors the server's completeness rule, so the
   // admin sees "incomplete" before submitting rather than after a 400.
   const hindiFields = [form.hi.text, form.hi.optionA, form.hi.optionB, form.hi.optionC, form.hi.optionD]
@@ -336,11 +340,20 @@ export default function Questions() {
     // has visible text OR an image.
     const filled = (html: string) => stripHtml(html).length > 0 || /<img/i.test(html || '')
     if (form.questionType !== 'SYLLOGISM' && !filled(form.text)) {
-      setError('Question text is required.'); return
+      setActiveLang('EN'); setError('Question text is required.'); return
     }
     if ((['A', 'B', 'C', 'D'] as const).some(o => !filled(form[`option${o}` as keyof typeof emptyForm] as string))) {
       setError('All four options are required (text or image).'); return
     }
+    // Caught here rather than left to the server, so the admin lands on the
+    // tab holding the wrong fields instead of reading a 400 about them.
+    if (hindiStarted && !hindiComplete) {
+      setActiveLang('HI')
+      setError('The Hindi translation is incomplete — the question and all four options are required. Clear every Hindi field to skip it.')
+      return
+    }
+    // A problem with the English content belongs on the English tab.
+    if (activeLang !== 'EN') setActiveLang('EN')
     setSaving(true); setError('')
     try {
       const payload: any = {
@@ -497,262 +510,297 @@ export default function Questions() {
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={saveQuestion}>
 
-              {/* Question type selector */}
-              <div className="form-group">
-                <label>Question Type</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 4 }}>
-                  {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
-                    <label key={t} style={{
-                      border: `2px solid ${form.questionType === t ? 'var(--primary)' : 'var(--border)'}`,
-                      borderRadius: 8, padding: '10px 12px', cursor: 'pointer',
-                      background: form.questionType === t ? 'var(--primary-light)' : 'var(--surface)',
-                      transition: 'all .15s',
-                    }}>
-                      <input type="radio" style={{ display: 'none' }} value={t}
-                        checked={form.questionType === t} onChange={() => set('questionType', t)} />
-                      <div style={{ fontWeight: 600, fontSize: 13, color: form.questionType === t ? 'var(--primary)' : 'var(--heading)' }}>
-                        {TYPE_LABELS[t]}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{TYPE_DESCRIPTIONS[t]}</div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Passage/Table selector */}
-              {(form.questionType === 'PASSAGE' || form.questionType === 'TABLE') && (
+              {/* ── Shared ────────────────────────────────────────────
+                  Everything that is the same in every language. Kept out
+                  of the tabs so it is answered once, not per language —
+                  and so a translator cannot accidentally change the
+                  correct option or the difficulty. */}
+              <div className="q-shared">
+                {/* Question type selector */}
                 <div className="form-group">
-                  <label>Link to Passage / Table</label>
-                  {passages.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                      No passages yet. Create one first using "+ Passage / Table" above.
-                    </p>
-                  ) : (
-                    <select className="input" value={form.passageId}
-                      onChange={e => set('passageId', e.target.value)} required>
-                      <option value="">-- Select a passage --</option>
-                      {passages
-                        .filter(p => form.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT')
-                        .map(p => (
-                          <option key={p.id} value={p.id}>
-                            {p.type === 'TABLE' ? '📊' : '📄'} {p.title || p.content.slice(0, 60)}
-                          </option>
-                        ))}
-                    </select>
-                  )}
-                  {form.passageId && passageMap[form.passageId] && (
-                    <div style={{ marginTop: 8 }}>
-                      <PassagePreview passage={passageMap[form.passageId]} />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Syllogism structured input */}
-              {form.questionType === 'SYLLOGISM' && (
-                <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Statements (bold in exam)</div>
-                  {form.statements.map((s, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                      <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>{i + 1}.</span>
-                      <input className="input" style={{ flex: 1 }} value={s}
-                        placeholder={`Statement ${i + 1}`}
-                        onChange={e => setStatement(i, e.target.value)} />
-                      {form.statements.length > 1 && (
-                        <button type="button" onClick={() => removeStatement(i)}
-                          style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
-                      )}
-                    </div>
-                  ))}
-                  <button type="button" className="btn btn-sm btn-ghost" onClick={addStatement}>+ Statement</button>
-
-                  <div style={{ fontWeight: 600, margin: '16px 0 12px', fontSize: 14 }}>Conclusions (bold in exam)</div>
-                  {form.conclusions.map((c, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                      <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>
-                        {['I.', 'II.', 'III.', 'IV.'][i] ?? `${i + 1}.`}
-                      </span>
-                      <input className="input" style={{ flex: 1 }} value={c}
-                        placeholder={`Conclusion ${i + 1}`}
-                        onChange={e => setConclusion(i, e.target.value)} />
-                      {form.conclusions.length > 1 && (
-                        <button type="button" onClick={() => removeConclusion(i)}
-                          style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
-                      )}
-                    </div>
-                  ))}
-                  <button type="button" className="btn btn-sm btn-ghost" onClick={addConclusion}>+ Conclusion</button>
-                </div>
-              )}
-
-              {/* Question text */}
-              <div className="form-group">
-                <label>
-                  {form.questionType === 'SYLLOGISM'
-                    ? 'Question / Direction Text (appears after statements & conclusions)'
-                    : 'Question Text'}
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
-                    — use the toolbar for bold, italic, color, x² superscript, x₂ subscript
-                  </span>
-                </label>
-                <RichEditor value={form.text} onChange={v => set('text', v)} minHeight={70}
-                  placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
-              </div>
-
-              {/* ── Hindi ────────────────────────────────────────────
-                  A parallel block rather than a language toggle: an admin
-                  translating a question wants both versions on screen at once,
-                  and a toggle would hide the source they are translating from. */}
-              <div className="lang-section">
-                <div className="lang-section-head">
-                  <span className="lang-section-title">हिंदी — Hindi translation</span>
-                  <span className={`lang-chip ${hindiComplete ? 'lang-chip-on' : hindiStarted ? 'lang-chip-partial' : 'lang-chip-off'}`}>
-                    {hindiComplete ? '✓ Complete' : hindiStarted ? '◐ Incomplete' : '✗ Not added'}
-                  </span>
-                </div>
-                <p className="lang-section-note">
-                  Optional. Leave every field blank to skip — the question will show in
-                  English to Hindi candidates with a note explaining why. Fill it in and
-                  all five fields are required, so nobody sees a half-translated question.
-                </p>
-
-                <div className="form-group">
-                  <label>प्रश्न — Question text (Hindi)</label>
-                  <RichEditor value={form.hi.text} minHeight={70}
-                    onChange={v => set('hi', { ...form.hi, text: v } as never)}
-                    placeholder="प्रश्न हिंदी में लिखें…" />
-                </div>
-
-                <div className="options-grid">
-                  {(['A', 'B', 'C', 'D'] as const).map(opt => (
-                    <div className="form-group" key={opt}>
-                      <label>विकल्प {opt} — Option {opt}</label>
-                      <RichEditor minHeight={40}
-                        value={form.hi[`option${opt}` as 'optionA']}
-                        onChange={v => set('hi', { ...form.hi, [`option${opt}`]: v } as never)}
-                        placeholder={`विकल्प ${opt}…`} />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="form-group">
-                  <label>समाधान — Solution (Hindi, optional)</label>
-                  <RichEditor value={form.hi.solution} minHeight={70}
-                    onChange={v => set('hi', { ...form.hi, solution: v } as never)}
-                    placeholder="हल हिंदी में…" />
-                </div>
-              </div>
-
-              {/* Near-duplicate warning */}
-              {similar.length > 0 && (
-                <div style={{
-                  background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8,
-                  padding: '12px 14px', marginBottom: 16,
-                }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
-                    ⚠ {similar.length} similar question{similar.length !== 1 ? 's' : ''} already in the bank — make sure this isn't a duplicate
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {similar.map(s => (
-                      <div key={s.id} style={{ fontSize: 13, color: '#78350f', display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                        <span style={{ fontWeight: 700, fontSize: 11, background: '#fde68a', color: '#92400e', padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>
-                          {s.score}% match
-                        </span>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.text}</span>
-                      </div>
+                  <label>Question Type</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 4 }}>
+                    {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
+                      <label key={t} style={{
+                        border: `2px solid ${form.questionType === t ? 'var(--primary)' : 'var(--border)'}`,
+                        borderRadius: 8, padding: '10px 12px', cursor: 'pointer',
+                        background: form.questionType === t ? 'var(--primary-light)' : 'var(--surface)',
+                        transition: 'all .15s',
+                      }}>
+                        <input type="radio" style={{ display: 'none' }} value={t}
+                          checked={form.questionType === t} onChange={() => set('questionType', t)} />
+                        <div style={{ fontWeight: 600, fontSize: 13, color: form.questionType === t ? 'var(--primary)' : 'var(--heading)' }}>
+                          {TYPE_LABELS[t]}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{TYPE_DESCRIPTIONS[t]}</div>
+                      </label>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {/* Question image (optional) */}
-              <div className="form-group">
-                <label>Question Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — diagrams, figures)</span></label>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                  <label className="btn btn-ghost btn-sm" style={{ cursor: uploading ? 'wait' : 'pointer', margin: 0 }}>
-                    {uploading ? 'Uploading…' : form.imageUrl ? '🖼 Replace Image' : '📷 Upload Image'}
-                    <input type="file" accept="image/png,image/jpeg,image/gif,image/webp"
-                      style={{ display: 'none' }} disabled={uploading}
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = '' }} />
-                  </label>
-                  {form.imageUrl && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <img src={form.imageUrl} alt="Question"
-                        style={{ height: 56, borderRadius: 6, border: '1px solid var(--border)' }} />
-                      <button type="button" className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }}
-                        onClick={() => set('imageUrl', '')}>Remove</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Options */}
-              <div className="form-row">
-                {(['A', 'B', 'C', 'D'] as const).map(opt => (
-                  <div className="form-group" key={opt}>
-                    <label>Option {opt}</label>
-                    <RichEditor minHeight={40}
-                      value={form[`option${opt}` as keyof typeof emptyForm] as string}
-                      onChange={v => set(`option${opt}` as any, v)} placeholder={`Option ${opt}…`} />
+                {/* Passage/Table selector */}
+                {(form.questionType === 'PASSAGE' || form.questionType === 'TABLE') && (
+                  <div className="form-group">
+                    <label>Link to Passage / Table</label>
+                    {passages.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                        No passages yet. Create one first using "+ Passage / Table" above.
+                      </p>
+                    ) : (
+                      <select className="input" value={form.passageId}
+                        onChange={e => set('passageId', e.target.value)} required>
+                        <option value="">-- Select a passage --</option>
+                        {passages
+                          .filter(p => form.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT')
+                          .map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.type === 'TABLE' ? '📊' : '📄'} {p.title || p.content.slice(0, 60)}
+                            </option>
+                          ))}
+                      </select>
+                    )}
+                    {form.passageId && passageMap[form.passageId] && (
+                      <div style={{ marginTop: 8 }}>
+                        <PassagePreview passage={passageMap[form.passageId]} />
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
+
+
+                {/* Question image (optional) */}
+                <div className="form-group">
+                  <label>Question Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — diagrams, figures)</span></label>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                    <label className="btn btn-ghost btn-sm" style={{ cursor: uploading ? 'wait' : 'pointer', margin: 0 }}>
+                      {uploading ? 'Uploading…' : form.imageUrl ? '🖼 Replace Image' : '📷 Upload Image'}
+                      <input type="file" accept="image/png,image/jpeg,image/gif,image/webp"
+                        style={{ display: 'none' }} disabled={uploading}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = '' }} />
+                    </label>
+                    {form.imageUrl && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <img src={form.imageUrl} alt="Question"
+                          style={{ height: 56, borderRadius: 6, border: '1px solid var(--border)' }} />
+                        <button type="button" className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }}
+                          onClick={() => set('imageUrl', '')}>Remove</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Correct Option</label>
+                    <select className="input" value={form.correctOption}
+                      onChange={e => set('correctOption', e.target.value as any)}>
+                      {['A', 'B', 'C', 'D'].map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Subject</label>
+                    <select className="input" value={form.subject}
+                      onChange={e => {
+                        const next = e.target.value as Question['subject']
+                        setForm(f => ({
+                          ...f,
+                          subject: next,
+                          // A topic belongs to one subject, so switching subject
+                          // drops a tag that no longer applies.
+                          topic: TOPICS_BY_SUBJECT[next].includes(f.topic) ? f.topic : '',
+                        }))
+                      }}>
+                      {SUBJECTS.map(s => <option key={s} value={s}>{SUBJECT_LABELS[s]}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Difficulty</label>
+                    <select className="input" value={form.difficulty}
+                      onChange={e => set('difficulty', e.target.value as any)}>
+                      {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+
+                {/* Optional syllabus topic; the options follow the chosen subject. */}
+                <div className="form-group">
+                  <label>
+                    Topic{' '}
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                      (optional — helps filter the bank and build topic-wise practice later)
+                    </span>
+                  </label>
+                  <select className="input" value={form.topic}
+                    onChange={e => set('topic', e.target.value)}>
+                    <option value="">— No topic —</option>
+                    {TOPICS_BY_SUBJECT[form.subject].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Correct Option</label>
-                  <select className="input" value={form.correctOption}
-                    onChange={e => set('correctOption', e.target.value as any)}>
-                    {['A', 'B', 'C', 'D'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Subject</label>
-                  <select className="input" value={form.subject}
-                    onChange={e => {
-                      const next = e.target.value as Question['subject']
-                      setForm(f => ({
-                        ...f,
-                        subject: next,
-                        // A topic belongs to one subject, so switching subject
-                        // drops a tag that no longer applies.
-                        topic: TOPICS_BY_SUBJECT[next].includes(f.topic) ? f.topic : '',
-                      }))
-                    }}>
-                    {SUBJECTS.map(s => <option key={s} value={s}>{SUBJECT_LABELS[s]}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Difficulty</label>
-                  <select className="input" value={form.difficulty}
-                    onChange={e => set('difficulty', e.target.value as any)}>
-                    {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
+              {/* ── Language tabs ──────────────────────────────────── */}
+              <div className="q-lang-tabs" role="tablist">
+                {LANGUAGES.map(l => {
+                  const isHi = l.code === 'HI'
+                  const state = !isHi ? 'on' : hindiComplete ? 'on' : hindiStarted ? 'partial' : 'off'
+                  return (
+                    <button key={l.code} type="button" role="tab"
+                      aria-selected={activeLang === l.code}
+                      className={`q-lang-tab ${activeLang === l.code ? 'active' : ''}`}
+                      onClick={() => setActiveLang(l.code)}>
+                      <span>{l.native}</span>
+                      <span className={`lang-chip lang-chip-${state}`}>
+                        {state === 'on' ? '✓' : state === 'partial' ? '◐' : '✗'}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
 
-              {/* Optional syllabus topic; the options follow the chosen subject. */}
-              <div className="form-group">
-                <label>
-                  Topic{' '}
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                    (optional — helps filter the bank and build topic-wise practice later)
-                  </span>
-                </label>
-                <select className="input" value={form.topic}
-                  onChange={e => set('topic', e.target.value)}>
-                  <option value="">— No topic —</option>
-                  {TOPICS_BY_SUBJECT[form.subject].map(t => (
-                    <option key={t} value={t}>{t}</option>
+              {/* Keyed on the language so the editors remount on a tab switch.
+                  TipTap reads its placeholder once at construction, so a reused
+                  instance would show the other language's prompt. Content is
+                  unaffected — it comes from form state, not the editor. */}
+              <div className="q-lang-panel" key={activeLang}>
+              {activeLang === 'EN' ? (
+                <>
+                {/* Syllogism structured input */}
+                {form.questionType === 'SYLLOGISM' && (
+                  <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Statements (bold in exam)</div>
+                    {form.statements.map((s, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>{i + 1}.</span>
+                        <input className="input" style={{ flex: 1 }} value={s}
+                          placeholder={`Statement ${i + 1}`}
+                          onChange={e => setStatement(i, e.target.value)} />
+                        {form.statements.length > 1 && (
+                          <button type="button" onClick={() => removeStatement(i)}
+                            style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={addStatement}>+ Statement</button>
+
+                    <div style={{ fontWeight: 600, margin: '16px 0 12px', fontSize: 14 }}>Conclusions (bold in exam)</div>
+                    {form.conclusions.map((c, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>
+                          {['I.', 'II.', 'III.', 'IV.'][i] ?? `${i + 1}.`}
+                        </span>
+                        <input className="input" style={{ flex: 1 }} value={c}
+                          placeholder={`Conclusion ${i + 1}`}
+                          onChange={e => setConclusion(i, e.target.value)} />
+                        {form.conclusions.length > 1 && (
+                          <button type="button" onClick={() => removeConclusion(i)}
+                            style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={addConclusion}>+ Conclusion</button>
+                  </div>
+                )}
+
+
+                {/* Question text */}
+                <div className="form-group">
+                  <label>
+                    {form.questionType === 'SYLLOGISM'
+                      ? 'Question / Direction Text (appears after statements & conclusions)'
+                      : 'Question Text'}
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
+                      — use the toolbar for bold, italic, color, x² superscript, x₂ subscript
+                    </span>
+                  </label>
+                  <RichEditor value={form.text} onChange={v => set('text', v)} minHeight={70}
+                    placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
+                </div>
+
+
+                {/* Near-duplicate warning */}
+                {similar.length > 0 && (
+                  <div style={{
+                    background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8,
+                    padding: '12px 14px', marginBottom: 16,
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
+                      ⚠ {similar.length} similar question{similar.length !== 1 ? 's' : ''} already in the bank — make sure this isn't a duplicate
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {similar.map(s => (
+                        <div key={s.id} style={{ fontSize: 13, color: '#78350f', display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                          <span style={{ fontWeight: 700, fontSize: 11, background: '#fde68a', color: '#92400e', padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>
+                            {s.score}% match
+                          </span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+
+                {/* Options */}
+                <div className="form-row">
+                  {(['A', 'B', 'C', 'D'] as const).map(opt => (
+                    <div className="form-group" key={opt}>
+                      <label>Option {opt}</label>
+                      <RichEditor minHeight={40}
+                        value={form[`option${opt}` as keyof typeof emptyForm] as string}
+                        onChange={v => set(`option${opt}` as any, v)} placeholder={`Option ${opt}…`} />
+                    </div>
                   ))}
-                </select>
-              </div>
+                </div>
 
-              {/* Detailed solution */}
-              <div className="form-group">
-                <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — approach &amp; steps shown to students after the test)</span></label>
-                <RichEditor value={form.solution} onChange={v => set('solution', v)} minHeight={90}
-                  placeholder="Explain the approach and steps to solve this question…" />
+                {/* Detailed solution */}
+                <div className="form-group">
+                  <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — approach &amp; steps shown to students after the test)</span></label>
+                  <RichEditor value={form.solution} onChange={v => set('solution', v)} minHeight={90}
+                    placeholder="Explain the approach and steps to solve this question…" />
+                </div>
+
+                </>
+              ) : (
+                <>
+                  <p className="q-lang-note">
+                    Optional. Leave every field blank to skip — Hindi candidates then see the
+                    English version with a note explaining why. Fill it in and the question
+                    and all four options are required, so nobody sees a half-translated question.
+                  </p>
+
+                  <div className="form-group">
+                    <label>प्रश्न — Question text</label>
+                    <RichEditor value={form.hi.text} minHeight={70}
+                      onChange={v => set('hi', { ...form.hi, text: v } as never)}
+                      placeholder="प्रश्न हिंदी में लिखें…" />
+                  </div>
+
+                  <div className="form-row">
+                    {(['A', 'B', 'C', 'D'] as const).map(opt => (
+                      <div className="form-group" key={opt}>
+                        <label>विकल्प {opt} — Option {opt}</label>
+                        <RichEditor minHeight={40}
+                          value={form.hi[`option${opt}` as 'optionA']}
+                          onChange={v => set('hi', { ...form.hi, [`option${opt}`]: v } as never)}
+                          placeholder={`विकल्प ${opt}…`} />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="form-group">
+                    <label>समाधान — Detailed solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                    <RichEditor value={form.hi.solution} minHeight={90}
+                      onChange={v => set('hi', { ...form.hi, solution: v } as never)}
+                      placeholder="हल हिंदी में…" />
+                  </div>
+                </>
+              )}
               </div>
 
               <button className="btn btn-primary" type="submit" disabled={saving}>
