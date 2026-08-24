@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar'
 import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
 import type { Question, Passage, QuestionType } from '../lib/types'
+import { LANGUAGES } from '../lib/types'
 
 const SUBJECTS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
@@ -41,6 +42,10 @@ const emptyForm = {
   // Syllogism fields
   statements: ['', '', ''],
   conclusions: ['', '', ''],
+  // Non-English content, keyed by language. English stays in the fields above
+  // — it is the source, not a translation of anything. Adding a language means
+  // another key here, not another set of form fields.
+  hi: { text: '', optionA: '', optionB: '', optionC: '', optionD: '', solution: '' },
 }
 
 const emptyPassageForm = {
@@ -167,6 +172,11 @@ export default function Questions() {
   const [total, setTotal] = useState(0)
   const PER_PAGE = 25
   const [form, setForm] = useState(emptyForm)
+  // Drives the status chip and mirrors the server's completeness rule, so the
+  // admin sees "incomplete" before submitting rather than after a 400.
+  const hindiFields = [form.hi.text, form.hi.optionA, form.hi.optionB, form.hi.optionC, form.hi.optionD]
+  const hindiStarted = hindiFields.some(v => stripHtml(v).trim())
+  const hindiComplete = hindiFields.every(v => stripHtml(v).trim())
   const [passageForm, setPassageForm] = useState(emptyPassageForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -285,6 +295,13 @@ export default function Questions() {
       difficulty: q.difficulty,
       passageId: q.passageId ?? '',
       solution: q.solution ?? '',
+      hi: (() => {
+        const t = q.translations?.find(x => x.language === 'HI')
+        return {
+          text: t?.text ?? '', optionA: t?.optionA ?? '', optionB: t?.optionB ?? '',
+          optionC: t?.optionC ?? '', optionD: t?.optionD ?? '', solution: t?.solution ?? '',
+        }
+      })(),
       statements: q.structuredData?.statements?.length ? q.structuredData.statements : ['', '', ''],
       conclusions: q.structuredData?.conclusions?.length ? q.structuredData.conclusions : ['', '', ''],
     })
@@ -342,6 +359,16 @@ export default function Questions() {
           ? { statements: form.statements.filter(Boolean), conclusions: form.conclusions.filter(Boolean) }
           : null,
         solution: filled(form.solution) ? form.solution : null,
+        // Sent even when blank: an empty translation is how the server is told
+        // to remove one, so clearing the fields deletes the Hindi version.
+        translations: {
+          HI: {
+            text: form.hi.text.trim(),
+            optionA: form.hi.optionA.trim(), optionB: form.hi.optionB.trim(),
+            optionC: form.hi.optionC.trim(), optionD: form.hi.optionD.trim(),
+            solution: form.hi.solution.trim() || null,
+          },
+        },
       }
       if (editingId) await api.put(`/admin/questions/${editingId}`, payload)
       else await api.post('/admin/questions', payload)
@@ -572,6 +599,50 @@ export default function Questions() {
                   placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
               </div>
 
+              {/* ── Hindi ────────────────────────────────────────────
+                  A parallel block rather than a language toggle: an admin
+                  translating a question wants both versions on screen at once,
+                  and a toggle would hide the source they are translating from. */}
+              <div className="lang-section">
+                <div className="lang-section-head">
+                  <span className="lang-section-title">हिंदी — Hindi translation</span>
+                  <span className={`lang-chip ${hindiComplete ? 'lang-chip-on' : hindiStarted ? 'lang-chip-partial' : 'lang-chip-off'}`}>
+                    {hindiComplete ? '✓ Complete' : hindiStarted ? '◐ Incomplete' : '✗ Not added'}
+                  </span>
+                </div>
+                <p className="lang-section-note">
+                  Optional. Leave every field blank to skip — the question will show in
+                  English to Hindi candidates with a note explaining why. Fill it in and
+                  all five fields are required, so nobody sees a half-translated question.
+                </p>
+
+                <div className="form-group">
+                  <label>प्रश्न — Question text (Hindi)</label>
+                  <RichEditor value={form.hi.text} minHeight={70}
+                    onChange={v => set('hi', { ...form.hi, text: v } as never)}
+                    placeholder="प्रश्न हिंदी में लिखें…" />
+                </div>
+
+                <div className="options-grid">
+                  {(['A', 'B', 'C', 'D'] as const).map(opt => (
+                    <div className="form-group" key={opt}>
+                      <label>विकल्प {opt} — Option {opt}</label>
+                      <RichEditor minHeight={40}
+                        value={form.hi[`option${opt}` as 'optionA']}
+                        onChange={v => set('hi', { ...form.hi, [`option${opt}`]: v } as never)}
+                        placeholder={`विकल्प ${opt}…`} />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="form-group">
+                  <label>समाधान — Solution (Hindi, optional)</label>
+                  <RichEditor value={form.hi.solution} minHeight={70}
+                    onChange={v => set('hi', { ...form.hi, solution: v } as never)}
+                    placeholder="हल हिंदी में…" />
+                </div>
+              </div>
+
               {/* Near-duplicate warning */}
               {similar.length > 0 && (
                 <div style={{
@@ -765,7 +836,7 @@ export default function Questions() {
             {questions.length > 0 && (
               <table>
                 <thead>
-                  <tr><th>#</th><th>Question</th><th>Type</th><th>Subject</th><th>Topic</th><th>Diff</th><th>Ans</th><th></th></tr>
+                  <tr><th>#</th><th>Question</th><th>Type</th><th>Subject</th><th>Topic</th><th>Diff</th><th>Ans</th><th>Languages</th><th></th></tr>
                 </thead>
                 <tbody>
                   {questions.map((q, i) => (
@@ -808,6 +879,22 @@ export default function Questions() {
                       </td>
                       <td><span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span></td>
                       <td style={{ fontWeight: 700, color: 'var(--success)' }}>{q.correctOption}</td>
+                      {/* At a glance: which languages this question exists in,
+                          so untranslated ones are easy to pick out. */}
+                      <td>
+                        <span className="lang-chips">
+                          {LANGUAGES.map(l => {
+                            const has = (q.languages ?? ['EN']).includes(l.code)
+                            return (
+                              <span key={l.code}
+                                className={`lang-chip ${has ? 'lang-chip-on' : 'lang-chip-off'}`}
+                                title={`${l.label}: ${has ? 'available' : 'not available'}`}>
+                                {has ? '✓' : '✗'} {l.code}
+                              </span>
+                            )
+                          })}
+                        </span>
+                      </td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="btn btn-sm btn-ghost" onClick={() => editQuestion(q)}>Edit</button>

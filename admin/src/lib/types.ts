@@ -67,6 +67,9 @@ export interface Question {
   passage?: Passage | null
   structuredData?: { statements: string[]; conclusions: string[] } | null
   solution?: string | null
+  /** Every language this question exists in, English always included. */
+  languages?: Language[]
+  translations?: QuestionTranslation[]
 }
 
 export interface ContestQuestion {
@@ -127,4 +130,25 @@ export interface ArticleComment {
   author: ArticleAuthor | null
   myVote: number
   canModify: boolean
+}
+
+// ── Multilingual questions ─────────────────────────────────────────────────
+// English lives in the base Question fields; every other language is a row
+// here. Adding a language means extending this union, not the Question type.
+export type Language = 'EN' | 'HI'
+
+export const LANGUAGES: { code: Language; label: string; native: string }[] = [
+  { code: 'EN', label: 'English', native: 'English' },
+  { code: 'HI', label: 'Hindi', native: 'हिंदी' },
+]
+
+export interface QuestionTranslation {
+  language: Language
+  text: string
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  solution?: string | null
+  structuredData?: { statements: string[]; conclusions: string[] } | null
 }

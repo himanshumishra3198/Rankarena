@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
+import { LANGUAGES, DEFAULT_LANGUAGE } from "../lib/i18n";
 import redis from "../lib/redis";
 import { computeFingerprint } from "../lib/fingerprint";
 import { isValidTopic } from "../lib/topics";
@@ -290,7 +291,64 @@ const questionSchema = z.object({
   passageId: z.string().uuid().optional().nullable(),
   structuredData: z.record(z.string(), z.any()).optional().nullable(),
   solution: z.string().max(20000).optional().nullable(),
+  // Non-default languages, keyed by language code. English stays in the base
+  // fields above — it is the source, not a translation of anything.
+  //
+  // A language present but blank means "remove this translation", so an admin
+  // can clear a bad one without a separate endpoint. Partial entries are
+  // rejected: half a translated question is worse than none, because the
+  // candidate gets Hindi stem with English options and no way to tell why.
+  translations: z
+    .record(
+      z.enum(["HI"]),
+      z.object({
+        text: z.string().default(""),
+        optionA: z.string().default(""),
+        optionB: z.string().default(""),
+        optionC: z.string().default(""),
+        optionD: z.string().default(""),
+        solution: z.string().max(20000).optional().nullable(),
+        structuredData: z.record(z.string(), z.any()).optional().nullable(),
+      }),
+    )
+    .optional(),
 });
+
+
+/**
+ * Turns the admin's translations map into rows to write and languages to drop.
+ *
+ * Validation lives here rather than in the zod schema because "complete or
+ * absent" is a rule about the group of fields, not any one of them: a Hindi
+ * stem with English options would render as a broken hybrid mid-exam, so a
+ * partial entry is refused outright.
+ */
+function splitTranslations(
+  input: Record<string, { text: string; optionA: string; optionB: string; optionC: string; optionD: string; solution?: string | null; structuredData?: unknown }> | undefined,
+): { writes: Array<{ language: string; data: Record<string, unknown> }>; deletes: string[]; error?: string } {
+  const writes: Array<{ language: string; data: Record<string, unknown> }> = [];
+  const deletes: string[] = [];
+  if (!input) return { writes, deletes };
+
+  for (const [language, t] of Object.entries(input)) {
+    const required = [t.text, t.optionA, t.optionB, t.optionC, t.optionD].map((v) => (v ?? "").trim());
+    const filled = required.filter(Boolean).length;
+    if (filled === 0) { deletes.push(language); continue; }
+    if (filled < required.length) {
+      return { writes, deletes, error: `The ${language} translation is incomplete — the question text and all four options are required.` };
+    }
+    writes.push({
+      language,
+      data: {
+        text: required[0], optionA: required[1], optionB: required[2],
+        optionC: required[3], optionD: required[4],
+        solution: t.solution?.trim() || null,
+        structuredData: (t.structuredData ?? null) as Prisma.InputJsonValue | null,
+      },
+    });
+  }
+  return { writes, deletes };
+}
 
 router.post("/questions", async (req: AuthRequest, res: Response) => {
   const parsed = questionSchema.safeParse(req.body);
@@ -317,8 +375,20 @@ router.post("/questions", async (req: AuthRequest, res: Response) => {
     return;
   }
 
+  const { writes, error } = splitTranslations(parsed.data.translations);
+  if (error) { res.status(400).json({ error }); return; }
+
   const question = await prisma.question.create({
-    data: { ...toQuestionData(parsed.data), fingerprint } as Prisma.QuestionUncheckedCreateInput,
+    data: {
+      ...toQuestionData(parsed.data),
+      fingerprint,
+      // The fingerprint is computed from the English text only, so a
+      // translation can never make two distinct questions look identical.
+      translations: writes.length
+        ? { create: writes.map((w) => ({ ...w.data, language: w.language as never })) }
+        : undefined,
+    } as Prisma.QuestionUncheckedCreateInput,
+    include: { translations: { select: { language: true } } },
   });
   res.status(201).json(question);
 });
@@ -382,13 +452,26 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
     prisma.question.count({ where }),
     prisma.question.findMany({
       where,
-      include: { passage: true },
+      // Full translations, because the same rows populate the editor when a
+      // question is opened — one round trip rather than a fetch per edit.
+      include: { passage: true, translations: true },
       orderBy: { subject: "asc" },
       ...(paged ? { skip: (page - 1) * perPage, take: perPage } : {}),
     }),
   ]);
 
-  res.json({ questions, total, page: paged ? page : 1, perPage: paged ? perPage : total });
+  res.json({
+    questions: questions.map((q) => ({
+      ...q,
+      // English is always present — it is the base row, not a translation.
+      // Precomputed so the list can render a status column without the client
+      // having to know that the base row counts as a language.
+      languages: [DEFAULT_LANGUAGE, ...q.translations.map((t) => t.language)],
+    })),
+    total,
+    page: paged ? page : 1,
+    perPage: paged ? perPage : total,
+  });
 });
 
 router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
@@ -449,7 +532,32 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
     }
   }
 
-  const question = await prisma.question.update({ where: { id }, data });
+  const { writes, deletes, error } = splitTranslations(p.translations);
+  if (error) { res.status(400).json({ error }); return; }
+  // `translations` is not a column, so it must not reach the update payload.
+  delete (data as Record<string, unknown>).translations;
+
+  // One transaction: a half-applied edit would leave a question whose Hindi
+  // text no longer matches its English one.
+  const question = await prisma.$transaction(async (tx) => {
+    const updated = await tx.question.update({ where: { id }, data });
+    if (deletes.length) {
+      await tx.questionTranslation.deleteMany({
+        where: { questionId: id, language: { in: deletes as never[] } },
+      });
+    }
+    for (const w of writes) {
+      await tx.questionTranslation.upsert({
+        where: { questionId_language: { questionId: id, language: w.language as never } },
+        create: { questionId: id, language: w.language as never, ...(w.data as object) } as never,
+        update: w.data as never,
+      });
+    }
+    return tx.question.findUnique({
+      where: { id },
+      include: { translations: { select: { language: true } } },
+    });
+  });
   res.json(question);
 });
 

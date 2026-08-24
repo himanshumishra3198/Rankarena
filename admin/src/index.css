@@ -371,3 +371,26 @@ tr:hover td { background: var(--surface-raised); }
   .confirm-actions { flex-direction: column-reverse; }
   .confirm-actions .btn { width: 100%; justify-content: center; }
 }
+
+/* ── Multilingual question editing ───────────────────────────────────────── */
+/* A bordered aside rather than a tab: an admin translating a question wants
+   the English source visible while they type the Hindi. */
+.lang-section {
+  border: 1px solid var(--border); border-left: 3px solid var(--primary);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 16px; background: var(--surface-raised);
+}
+.lang-section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 4px;
+}
+.lang-section-title { font-size: 14px; font-weight: 700; color: var(--heading); }
+.lang-section-note { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin: 0 0 14px; }
+
+.lang-chips { display: inline-flex; gap: 4px; }
+.lang-chip {
+  display: inline-block; padding: 2px 7px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.lang-chip-on      { background: var(--success-light); color: var(--success); }
+.lang-chip-off     { background: var(--bg); color: var(--text-muted); }
+.lang-chip-partial { background: rgba(234,179,8,.15); color: #ca8a04; }

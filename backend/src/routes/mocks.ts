@@ -2,6 +2,9 @@ import { Router, Response } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
+import {
+  parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion, DEFAULT_LANGUAGE,
+} from "../lib/i18n";
 import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -64,6 +67,14 @@ router.get("/", async (req: AuthRequest, res: Response) => {
 router.get("/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const mock = await prisma.mockTest.findUnique({ where: { id } });
+
+  // The attempt records the language when the paper is started. Until then
+  // (the instructions screen) fall back to whatever the client asks for.
+  const existing = await prisma.mockAttempt.findUnique({
+    where: { userId_mockTestId: { userId: req.user!.id, mockTestId: id } },
+    select: { language: true, submittedAt: true },
+  });
+  const language = existing?.language ?? parseLanguage(req.query.language);
   if (!mock || !mock.isPublished) {
     res.status(404).json({ error: "Mock test not found" });
     return;
@@ -77,18 +88,24 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
           id: true, text: true, questionType: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
           subject: true, difficulty: true, imageUrl: true, structuredData: true,
-          passage: { select: { id: true, title: true, content: true, type: true, tableData: true } },
+          translations: translationSelect(language),
+          passage: {
+            select: {
+              id: true, title: true, content: true, type: true, tableData: true,
+              translations: passageTranslationSelect(language),
+            },
+          },
         },
       },
     },
     orderBy: { displayOrder: "asc" },
   });
 
-  const questions = mtqs.map((mtq) => ({
+  const questions = mtqs.map((mtq) => localizeQuestion({
     ...mtq.question,
     marks: Number(mtq.marks),
     negativeMarks: Number(mtq.negativeMarks),
-  }));
+  }, language));
 
   res.json({
     id: mock.id,
@@ -152,10 +169,14 @@ router.post("/:id/submit", requireVerifiedEmail, async (req: AuthRequest, res: R
   // from rank, percentile, the mock leaderboard and the public counters.
   const isTest = req.user!.role === "ADMIN";
 
+  const submitLanguage = parseLanguage(req.body?.language);
+
   await prisma.mockAttempt.upsert({
     where: { userId_mockTestId: { userId: req.user!.id, mockTestId } },
-    create: { userId: req.user!.id, mockTestId, isTest, ...data },
-    update: { ...data, isTest, startedAt: new Date() },
+    // Recorded on submit so the review renders in the language the paper was
+    // actually sat in, even though a mock has no separate "join" step.
+    create: { userId: req.user!.id, mockTestId, isTest, language: submitLanguage, ...data },
+    update: { ...data, isTest, language: submitLanguage, startedAt: new Date() },
   });
 
   res.json({ score, totalMarks, correct, wrong, skipped });
@@ -167,6 +188,9 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
   const attempt = await prisma.mockAttempt.findUnique({
     where: { userId_mockTestId: { userId: req.user!.id, mockTestId } },
   });
+  // Review reads in the language the paper was sat in.
+  const resultLanguage = attempt?.language ?? DEFAULT_LANGUAGE;
+
   if (!attempt || !attempt.submittedAt) {
     res.status(404).json({ error: "No submission found" });
     return;
@@ -182,18 +206,24 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
           optionA: true, optionB: true, optionC: true, optionD: true,
           correctOption: true, subject: true, difficulty: true, structuredData: true,
           solution: true,
-          passage: { select: { id: true, title: true, content: true, type: true, tableData: true } },
+          translations: translationSelect(resultLanguage),
+          passage: {
+            select: {
+              id: true, title: true, content: true, type: true, tableData: true,
+              translations: passageTranslationSelect(resultLanguage),
+            },
+          },
         },
       },
     },
     orderBy: { displayOrder: "asc" },
   });
 
-  const questions = mtqs.map((mtq) => ({
+  const questions = mtqs.map((mtq) => localizeQuestion({
     ...mtq.question,
     marks: Number(mtq.marks),
     negativeMarks: Number(mtq.negativeMarks),
-  }));
+  }, resultLanguage));
 
   // ── Rank / percentile + per-question aggregates across all submitted attempts ──
   const allAttempts = await prisma.mockAttempt.findMany({

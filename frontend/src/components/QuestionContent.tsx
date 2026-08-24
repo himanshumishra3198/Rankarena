@@ -12,6 +12,9 @@ interface PassageLike {
 }
 
 interface QuestionLike {
+  /** False when the chosen language has no translation and English is shown. */
+  translated?: boolean
+  language?: string
   text: string
   imageUrl?: string | null
   questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
@@ -66,6 +69,15 @@ export function QuestionContext({ q }: { q: QuestionLike }) {
 
   return (
     <>
+      {/* Shown rather than blanking the question: a candidate mid-exam is far
+          better served by text they may still be able to read, plus an honest
+          note about why it is not in their language. */}
+      {q.translated === false && (
+        <div className="lang-fallback" role="note">
+          <span aria-hidden="true">🌐</span>
+          <span>This question is currently available only in English.</span>
+        </div>
+      )}
       {/* Passage / Table context block */}
       {q.passage && (
         <section className="qc-context" aria-label="Passage for this question">

@@ -5,6 +5,9 @@ import prisma from "../lib/prisma";
 import redis from "../lib/redis";
 import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/auth";
 import { Prisma } from "../generated/prisma/client";
+import {
+  parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion, DEFAULT_LANGUAGE,
+} from "../lib/i18n";
 
 const router = Router();
 
@@ -115,9 +118,14 @@ router.post("/:id/join", authenticate, requireVerifiedEmail, async (req: AuthReq
   // review, but excluded from every leaderboard, rating and public count.
   const isTest = req.user!.role === "ADMIN";
 
+  const language = parseLanguage(req.body?.language);
+
   const participation = await prisma.participation.upsert({
     where: { userId_contestId: { userId: req.user!.id, contestId } },
-    create: { userId: req.user!.id, contestId, isTest },
+    // Language is set on the way in and deliberately not updated on re-join:
+    // a paper already in progress must not change language underneath the
+    // candidate. Retaking (which clears the attempt) picks it up afresh.
+    create: { userId: req.user!.id, contestId, isTest, language },
     update: { isTest },
   });
 
@@ -181,6 +189,14 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
     return;
   }
 
+  // Served in whatever language the attempt was opened in, so a reload
+  // mid-exam cannot silently switch the paper under the candidate.
+  const attempt = await prisma.participation.findUnique({
+    where: { userId_contestId: { userId: req.user!.id, contestId } },
+    select: { language: true },
+  });
+  const language = attempt?.language ?? DEFAULT_LANGUAGE;
+
   const cqs = await prisma.contestQuestion.findMany({
     where: { contestId },
     include: {
@@ -190,8 +206,12 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
           optionA: true, optionB: true, optionC: true, optionD: true,
           subject: true, difficulty: true, imageUrl: true,
           structuredData: true,
+          translations: translationSelect(language),
           passage: {
-            select: { id: true, title: true, content: true, type: true, tableData: true },
+            select: {
+              id: true, title: true, content: true, type: true, tableData: true,
+              translations: passageTranslationSelect(language),
+            },
           },
         },
       },
@@ -201,7 +221,7 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
 
   const seed = req.user!.id;
   const questions = cqs
-    .map((cq) => ({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }))
+    .map((cq) => localizeQuestion({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }, language))
     .sort((a, b) => simpleHash(seed + a.id) - simpleHash(seed + b.id));
 
   res.json(questions);
@@ -422,13 +442,36 @@ router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Respo
   );
 });
 
+// Set the language for an attempt that has not been submitted yet.
+//
+// Separate from join because join happens on the contest list, while the
+// choice is made on the instructions screen a moment later. Refused once the
+// paper is submitted: the review has to read as the exam did.
+router.post("/:id/language", authenticate, async (req: AuthRequest, res: Response) => {
+  const contestId = req.params.id as string;
+  const language = parseLanguage(req.body?.language);
+
+  const attempt = await prisma.participation.findUnique({
+    where: { userId_contestId: { userId: req.user!.id, contestId } },
+    select: { submittedAt: true },
+  });
+  if (!attempt) { res.status(403).json({ error: "Join the contest first" }); return; }
+  if (attempt.submittedAt) { res.status(400).json({ error: "Already submitted" }); return; }
+
+  await prisma.participation.update({
+    where: { userId_contestId: { userId: req.user!.id, contestId } },
+    data: { language },
+  });
+  res.json({ language });
+});
+
 // Result + answer key (after contest ends)
 router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
   const [participation, contest] = await Promise.all([
     prisma.participation.findUnique({
       where: { userId_contestId: { userId: req.user!.id, contestId } },
-      select: { answers: true, score: true, submittedAt: true, markedForReview: true, isTest: true },
+      select: { answers: true, score: true, submittedAt: true, markedForReview: true, isTest: true, language: true },
     }),
     prisma.contest.findUnique({
       where: { id: contestId },
@@ -456,6 +499,9 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     return;
   }
 
+  // Review reads in the same language the paper was sat in.
+  const resultLanguage = participation.language ?? DEFAULT_LANGUAGE;
+
   const cqs = await prisma.contestQuestion.findMany({
     where: { contestId },
     include: {
@@ -465,8 +511,12 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
           optionA: true, optionB: true, optionC: true, optionD: true,
           correctOption: true, subject: true, difficulty: true,
           structuredData: true, solution: true,
+          translations: translationSelect(resultLanguage),
           passage: {
-            select: { id: true, title: true, content: true, type: true, tableData: true },
+            select: {
+              id: true, title: true, content: true, type: true, tableData: true,
+              translations: passageTranslationSelect(resultLanguage),
+            },
           },
         },
       },
@@ -503,11 +553,11 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     avgTimePerQuestion[qId] = Math.round(sum / count);
   }
 
-  const questions = cqs.map((cq) => ({
+  const questions = cqs.map((cq) => localizeQuestion({
     ...cq.question,
     marks: Number(cq.marks),
     negativeMarks: Number(cq.negativeMarks),
-  }));
+  }, resultLanguage));
 
   const totalMaxMarks = cqs.reduce((sum, cq) => sum + Number(cq.marks), 0);
 

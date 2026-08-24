@@ -237,7 +237,8 @@ model Passage {
   tableData Json?       @map("table_data") // { headers: string[], rows: string[][] }
   createdAt DateTime    @default(now()) @map("created_at")
 
-  questions Question[]
+  questions    Question[]
+  translations PassageTranslation[]
 
   @@map("passages")
 }
@@ -261,6 +262,8 @@ model Question {
   structuredData Json?        @map("structured_data") // for SYLLOGISM: { statements: string[], conclusions: string[] }
   solution       String?      // rich-text detailed solution / explanation (HTML)
   fingerprint    String?      // normalized hash of text + options, for exact-duplicate detection
+
+  translations      QuestionTranslation[]
 
   passage           Passage?            @relation(fields: [passageId], references: [id])
   contestQuestions  ContestQuestion[]
@@ -336,6 +339,7 @@ model MockAttempt {
   answers      Json?
   timeSpent    Json?     @map("time_spent")
   markedForReview Json?  @map("marked_for_review") // array of question IDs flagged in the room
+  language     Language  @default(EN)
   startedAt    DateTime  @default(now()) @map("started_at")
   submittedAt  DateTime? @map("submitted_at")
 
@@ -376,6 +380,9 @@ model Participation {
   answers      Json?
   timeSpent    Json?     @map("time_spent")
   markedForReview Json?  @map("marked_for_review") // array of question IDs flagged in the room
+  // Chosen when the paper is opened and fixed for the attempt, so the review
+  // afterwards reads the same as the exam did.
+  language     Language  @default(EN)
   startedAt    DateTime  @default(now()) @map("started_at")
   submittedAt  DateTime? @map("submitted_at")
 
@@ -466,4 +473,61 @@ enum ArticleType {
 enum PassageType {
   TEXT
   TABLE
+}
+
+// Language a question or passage can be presented in.
+//
+// EN is the default and lives in the base columns on Question/Passage, which
+// is why no existing row had to be migrated. Every other language is a row in
+// the tables below, so adding one is a new enum member — not a column per
+// language on a table with hundreds of rows.
+enum Language {
+  EN
+  HI
+}
+
+// One row per (question, non-default language).
+//
+// Deliberately holds only what a reader sees. correctOption, subject,
+// difficulty, marks and the fingerprint stay on Question, so a translation
+// cannot change what is being asked, only how it reads — which is what keeps a
+// Hindi and an English candidate on the same paper.
+model QuestionTranslation {
+  id             String   @id @default(uuid())
+  questionId     String   @map("question_id")
+  language       Language
+  text           String
+  optionA        String   @map("option_a")
+  optionB        String   @map("option_b")
+  optionC        String   @map("option_c")
+  optionD        String   @map("option_d")
+  solution       String?
+  // Syllogism statements/conclusions, same shape as Question.structuredData.
+  structuredData Json?    @map("structured_data")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, language])
+  @@index([language])
+  @@map("question_translations")
+}
+
+// Reading passages and data tables translate independently of the questions
+// that hang off them — one passage typically serves several.
+model PassageTranslation {
+  id        String   @id @default(uuid())
+  passageId String   @map("passage_id")
+  language  Language
+  title     String   @default("")
+  content   String
+  tableData Json?    @map("table_data")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  passage Passage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+
+  @@unique([passageId, language])
+  @@map("passage_translations")
 }

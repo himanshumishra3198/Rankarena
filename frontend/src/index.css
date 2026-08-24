@@ -2105,3 +2105,35 @@ select.input { cursor: pointer; }
   .profile-figures { gap: 16px 18px; }
   .profile-figure-value { font-size: 22px; }
 }
+
+/* ── Language selection and fallback ─────────────────────────────────────── */
+.lang-picker { border: none; margin: 18px 0 4px; padding: 0; }
+.lang-picker-legend {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--text-muted); padding: 0; margin-bottom: 8px;
+}
+.lang-picker-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lang-option {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 10px 12px; font-size: 14px; transition: border-color .12s, background .12s;
+}
+.lang-option:hover { border-color: var(--primary); }
+.lang-option-active { border-color: var(--primary); background: var(--primary-light); }
+.lang-option input { accent-color: var(--primary); margin: 0; flex-shrink: 0; }
+.lang-option-flag { font-size: 16px; line-height: 1; }
+.lang-option-native { font-weight: 600; color: var(--heading); }
+.lang-option-label { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+.lang-picker-note { font-size: 12px; color: var(--text-muted); line-height: 1.55; margin: 8px 0 0; }
+
+/* Missing-translation notice, shown above the question it applies to. */
+.lang-fallback {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--warning-light, #fffbeb); color: #92400e;
+  border: 1px solid #fcd34d; border-radius: var(--radius);
+  padding: 8px 12px; font-size: 13px; line-height: 1.5; margin-bottom: 12px;
+}
+[data-theme="dark"] .lang-fallback {
+  background: rgba(217,119,6,.14); color: #fcd34d; border-color: rgba(217,119,6,.5);
+}
+@media (max-width: 480px) { .lang-picker-options { grid-template-columns: 1fr; } }

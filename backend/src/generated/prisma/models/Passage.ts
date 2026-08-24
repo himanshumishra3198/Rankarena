@@ -187,6 +187,7 @@ export type PassageWhereInput = {
   tableData?: Prisma.JsonNullableFilter<"Passage">
   createdAt?: Prisma.DateTimeFilter<"Passage"> | Date | string
   questions?: Prisma.QuestionListRelationFilter
+  translations?: Prisma.PassageTranslationListRelationFilter
 }
 
 export type PassageOrderByWithRelationInput = {
@@ -197,6 +198,7 @@ export type PassageOrderByWithRelationInput = {
   tableData?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   questions?: Prisma.QuestionOrderByRelationAggregateInput
+  translations?: Prisma.PassageTranslationOrderByRelationAggregateInput
 }
 
 export type PassageWhereUniqueInput = Prisma.AtLeast<{
@@ -210,6 +212,7 @@ export type PassageWhereUniqueInput = Prisma.AtLeast<{
   tableData?: Prisma.JsonNullableFilter<"Passage">
   createdAt?: Prisma.DateTimeFilter<"Passage"> | Date | string
   questions?: Prisma.QuestionListRelationFilter
+  translations?: Prisma.PassageTranslationListRelationFilter
 }, "id">
 
 export type PassageOrderByWithAggregationInput = {
@@ -244,6 +247,7 @@ export type PassageCreateInput = {
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   questions?: Prisma.QuestionCreateNestedManyWithoutPassageInput
+  translations?: Prisma.PassageTranslationCreateNestedManyWithoutPassageInput
 }
 
 export type PassageUncheckedCreateInput = {
@@ -254,6 +258,7 @@ export type PassageUncheckedCreateInput = {
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutPassageInput
+  translations?: Prisma.PassageTranslationUncheckedCreateNestedManyWithoutPassageInput
 }
 
 export type PassageUpdateInput = {
@@ -264,6 +269,7 @@ export type PassageUpdateInput = {
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUpdateManyWithoutPassageNestedInput
+  translations?: Prisma.PassageTranslationUpdateManyWithoutPassageNestedInput
 }
 
 export type PassageUncheckedUpdateInput = {
@@ -274,6 +280,7 @@ export type PassageUncheckedUpdateInput = {
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutPassageNestedInput
+  translations?: Prisma.PassageTranslationUncheckedUpdateManyWithoutPassageNestedInput
 }
 
 export type PassageCreateManyInput = {
@@ -333,6 +340,11 @@ export type PassageNullableScalarRelationFilter = {
   isNot?: Prisma.PassageWhereInput | null
 }
 
+export type PassageScalarRelationFilter = {
+  is?: Prisma.PassageWhereInput
+  isNot?: Prisma.PassageWhereInput
+}
+
 export type EnumPassageTypeFieldUpdateOperationsInput = {
   set?: $Enums.PassageType
 }
@@ -353,6 +365,20 @@ export type PassageUpdateOneWithoutQuestionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PassageUpdateToOneWithWhereWithoutQuestionsInput, Prisma.PassageUpdateWithoutQuestionsInput>, Prisma.PassageUncheckedUpdateWithoutQuestionsInput>
 }
 
+export type PassageCreateNestedOneWithoutTranslationsInput = {
+  create?: Prisma.XOR<Prisma.PassageCreateWithoutTranslationsInput, Prisma.PassageUncheckedCreateWithoutTranslationsInput>
+  connectOrCreate?: Prisma.PassageCreateOrConnectWithoutTranslationsInput
+  connect?: Prisma.PassageWhereUniqueInput
+}
+
+export type PassageUpdateOneRequiredWithoutTranslationsNestedInput = {
+  create?: Prisma.XOR<Prisma.PassageCreateWithoutTranslationsInput, Prisma.PassageUncheckedCreateWithoutTranslationsInput>
+  connectOrCreate?: Prisma.PassageCreateOrConnectWithoutTranslationsInput
+  upsert?: Prisma.PassageUpsertWithoutTranslationsInput
+  connect?: Prisma.PassageWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PassageUpdateToOneWithWhereWithoutTranslationsInput, Prisma.PassageUpdateWithoutTranslationsInput>, Prisma.PassageUncheckedUpdateWithoutTranslationsInput>
+}
+
 export type PassageCreateWithoutQuestionsInput = {
   id?: string
   title?: string
@@ -360,6 +386,7 @@ export type PassageCreateWithoutQuestionsInput = {
   type?: $Enums.PassageType
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  translations?: Prisma.PassageTranslationCreateNestedManyWithoutPassageInput
 }
 
 export type PassageUncheckedCreateWithoutQuestionsInput = {
@@ -369,6 +396,7 @@ export type PassageUncheckedCreateWithoutQuestionsInput = {
   type?: $Enums.PassageType
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  translations?: Prisma.PassageTranslationUncheckedCreateNestedManyWithoutPassageInput
 }
 
 export type PassageCreateOrConnectWithoutQuestionsInput = {
@@ -394,6 +422,7 @@ export type PassageUpdateWithoutQuestionsInput = {
   type?: Prisma.EnumPassageTypeFieldUpdateOperationsInput | $Enums.PassageType
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  translations?: Prisma.PassageTranslationUpdateManyWithoutPassageNestedInput
 }
 
 export type PassageUncheckedUpdateWithoutQuestionsInput = {
@@ -403,6 +432,63 @@ export type PassageUncheckedUpdateWithoutQuestionsInput = {
   type?: Prisma.EnumPassageTypeFieldUpdateOperationsInput | $Enums.PassageType
   tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  translations?: Prisma.PassageTranslationUncheckedUpdateManyWithoutPassageNestedInput
+}
+
+export type PassageCreateWithoutTranslationsInput = {
+  id?: string
+  title?: string
+  content: string
+  type?: $Enums.PassageType
+  tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  questions?: Prisma.QuestionCreateNestedManyWithoutPassageInput
+}
+
+export type PassageUncheckedCreateWithoutTranslationsInput = {
+  id?: string
+  title?: string
+  content: string
+  type?: $Enums.PassageType
+  tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutPassageInput
+}
+
+export type PassageCreateOrConnectWithoutTranslationsInput = {
+  where: Prisma.PassageWhereUniqueInput
+  create: Prisma.XOR<Prisma.PassageCreateWithoutTranslationsInput, Prisma.PassageUncheckedCreateWithoutTranslationsInput>
+}
+
+export type PassageUpsertWithoutTranslationsInput = {
+  update: Prisma.XOR<Prisma.PassageUpdateWithoutTranslationsInput, Prisma.PassageUncheckedUpdateWithoutTranslationsInput>
+  create: Prisma.XOR<Prisma.PassageCreateWithoutTranslationsInput, Prisma.PassageUncheckedCreateWithoutTranslationsInput>
+  where?: Prisma.PassageWhereInput
+}
+
+export type PassageUpdateToOneWithWhereWithoutTranslationsInput = {
+  where?: Prisma.PassageWhereInput
+  data: Prisma.XOR<Prisma.PassageUpdateWithoutTranslationsInput, Prisma.PassageUncheckedUpdateWithoutTranslationsInput>
+}
+
+export type PassageUpdateWithoutTranslationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumPassageTypeFieldUpdateOperationsInput | $Enums.PassageType
+  tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  questions?: Prisma.QuestionUpdateManyWithoutPassageNestedInput
+}
+
+export type PassageUncheckedUpdateWithoutTranslationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumPassageTypeFieldUpdateOperationsInput | $Enums.PassageType
+  tableData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  questions?: Prisma.QuestionUncheckedUpdateManyWithoutPassageNestedInput
 }
 
 
@@ -412,10 +498,12 @@ export type PassageUncheckedUpdateWithoutQuestionsInput = {
 
 export type PassageCountOutputType = {
   questions: number
+  translations: number
 }
 
 export type PassageCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | PassageCountOutputTypeCountQuestionsArgs
+  translations?: boolean | PassageCountOutputTypeCountTranslationsArgs
 }
 
 /**
@@ -435,6 +523,13 @@ export type PassageCountOutputTypeCountQuestionsArgs<ExtArgs extends runtime.Typ
   where?: Prisma.QuestionWhereInput
 }
 
+/**
+ * PassageCountOutputType without action
+ */
+export type PassageCountOutputTypeCountTranslationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PassageTranslationWhereInput
+}
+
 
 export type PassageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -444,6 +539,7 @@ export type PassageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   tableData?: boolean
   createdAt?: boolean
   questions?: boolean | Prisma.Passage$questionsArgs<ExtArgs>
+  translations?: boolean | Prisma.Passage$translationsArgs<ExtArgs>
   _count?: boolean | Prisma.PassageCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["passage"]>
 
@@ -477,6 +573,7 @@ export type PassageSelectScalar = {
 export type PassageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "type" | "tableData" | "createdAt", ExtArgs["result"]["passage"]>
 export type PassageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | Prisma.Passage$questionsArgs<ExtArgs>
+  translations?: boolean | Prisma.Passage$translationsArgs<ExtArgs>
   _count?: boolean | Prisma.PassageCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PassageIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -486,6 +583,7 @@ export type $PassagePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Passage"
   objects: {
     questions: Prisma.$QuestionPayload<ExtArgs>[]
+    translations: Prisma.$PassageTranslationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -889,6 +987,7 @@ readonly fields: PassageFieldRefs;
 export interface Prisma__PassageClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   questions<T extends Prisma.Passage$questionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Passage$questionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  translations<T extends Prisma.Passage$translationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Passage$translationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PassageTranslationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1338,6 +1437,30 @@ export type Passage$questionsArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.QuestionScalarFieldEnum | Prisma.QuestionScalarFieldEnum[]
+}
+
+/**
+ * Passage.translations
+ */
+export type Passage$translationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PassageTranslation
+   */
+  select?: Prisma.PassageTranslationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PassageTranslation
+   */
+  omit?: Prisma.PassageTranslationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PassageTranslationInclude<ExtArgs> | null
+  where?: Prisma.PassageTranslationWhereInput
+  orderBy?: Prisma.PassageTranslationOrderByWithRelationInput | Prisma.PassageTranslationOrderByWithRelationInput[]
+  cursor?: Prisma.PassageTranslationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PassageTranslationScalarFieldEnum | Prisma.PassageTranslationScalarFieldEnum[]
 }
 
 /**
