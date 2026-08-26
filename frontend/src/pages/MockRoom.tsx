@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import LanguagePicker from '../components/LanguagePicker'
+import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
 import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import type { MockTestData, Question } from '../lib/types'
 import { QuestionContent } from '../components/QuestionContent'
@@ -50,6 +52,9 @@ export default function MockRoom() {
 
   const [mock, setMock] = useState<MockTestData | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
+  // Fixed when the paper starts; submitted with the attempt so the review
+  // afterwards reads in the same language.
+  const [language, setLanguage] = useState<Language>(getPreferredLanguage())
   const [phase, setPhase] = useState<Phase>('loading')
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<string, Option>>({})
@@ -142,7 +147,12 @@ export default function MockRoom() {
   }, [flushTime])
 
   // ── Start the test once instructions are acknowledged ───────────────
-  function startTest() {
+  async function startTest() {
+    // Re-read the paper in the chosen language before the clock starts.
+    try {
+      const res = await api.get(`/mocks/${id}`, { params: { language } })
+      if (res.data?.questions) setQuestions(res.data.questions)
+    } catch { /* keep whatever was already loaded */ }
     lastTickQ.current = currentQ?.id ?? ''
     lastTickTime.current = Date.now()
     unlockAudio()
@@ -156,7 +166,7 @@ export default function MockRoom() {
     flushTime()
     setPhase('submitting')
     try {
-      await api.post(`/mocks/${id}/submit`, { answers, timeSpent: timeSpent.current, markedForReview: Array.from(marked) })
+      await api.post(`/mocks/${id}/submit`, { answers, timeSpent: timeSpent.current, markedForReview: Array.from(marked), language })
       try { localStorage.removeItem(draftKey) } catch { /* noop */ }
       navigate(`/mocks/${id}/result`, { replace: true })
     } catch {
@@ -331,6 +341,11 @@ export default function MockRoom() {
 
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button className="btn btn-ghost" onClick={() => navigate('/mocks')}>Cancel</button>
+            <LanguagePicker
+              value={language}
+              onChange={l => { setLanguage(l); setPreferredLanguage(l) }}
+            />
+
             <button className="btn btn-primary btn-full" onClick={startTest}>
               I'm Ready — Start Test →
             </button>

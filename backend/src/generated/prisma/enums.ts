@@ -109,3 +109,11 @@ export const PassageType = {
 } as const
 
 export type PassageType = (typeof PassageType)[keyof typeof PassageType]
+
+
+export const Language = {
+  EN: 'EN',
+  HI: 'HI'
+} as const
+
+export type Language = (typeof Language)[keyof typeof Language]

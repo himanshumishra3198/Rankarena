@@ -68,6 +68,7 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       MAIL_FROM: ${MAIL_FROM}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO}
       # ── Google sign-in ──
       # Must be the same client id the frontend bundle was built with, or
       # token verification fails on the audience check.

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import type { Contest, Question } from '../lib/types'
 import InstructionsModal from '../components/InstructionsModal'
+import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
 import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import SectionCompleteModal from '../components/SectionCompleteModal'
@@ -70,6 +71,9 @@ export default function ContestRoom() {
 
   // ── Feature 1: Instructions modal ─────────────────────────────────────
   const [showInstructions, setShowInstructions] = useState(false)
+  // Chosen on the instructions screen and fixed on the attempt when the paper
+  // starts, so a reload cannot switch it mid-exam.
+  const [language, setLanguage] = useState<Language>(getPreferredLanguage())
   const [examStarted, setExamStarted] = useState(false)
 
   // ── Feature 2: Section timers ─────────────────────────────────────────
@@ -328,7 +332,17 @@ export default function ContestRoom() {
   }
 
   // ── Start exam ("I'm Ready" clicked) ─────────────────────────────────
-  function startExam() {
+  async function startExam() {
+    // Fix the language on the attempt and re-read the paper in it before the
+    // clock starts — after this point the choice cannot change.
+    try {
+      await api.post(`/contests/${contestId}/language`, { language })
+      const res = await api.get(`/contests/${contestId}/questions`)
+      setQuestions(res.data)
+    } catch {
+      // A failure here is not worth blocking the exam over; the paper simply
+      // stays in whatever language it was already fetched in.
+    }
     setShowInstructions(false)
     setExamStarted(true)
 
@@ -537,6 +551,8 @@ export default function ContestRoom() {
       {/* ── Instructions modal (feature 1) ───────────────────────── */}
       {showInstructions && (
         <InstructionsModal
+          language={language}
+          onLanguageChange={l => { setLanguage(l); setPreferredLanguage(l) }}
           contest={contest}
           sections={availableSections}
           sectionTimeMinutes={Math.floor(getSectionTimeSecs(availableSections[0] ?? 'QUANT') / 60)}

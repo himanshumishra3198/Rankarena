@@ -17,7 +17,7 @@ env:
   # Google and is visible in the page source either way; the client *secret*
   # is not used by this flow and must never appear here. Leave empty to hide
   # the Google button entirely.
-  VITE_GOOGLE_CLIENT_ID: ""
+  VITE_GOOGLE_CLIENT_ID: "426817550063-g6d51g9aj14b358u1b9914a10er49nmq.apps.googleusercontent.com"
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────

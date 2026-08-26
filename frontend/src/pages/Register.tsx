@@ -57,6 +57,10 @@ export default function Register() {
             {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
+        <p className="auth-legal">
+          By continuing you agree to our <Link to="/terms">Terms</Link> and{' '}
+          <Link to="/privacy">Privacy Policy</Link>.
+        </p>
         <p className="auth-footer">
           Already have an account? <Link to="/login">Sign in</Link>
         </p>

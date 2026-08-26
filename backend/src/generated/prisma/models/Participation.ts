@@ -40,6 +40,7 @@ export type ParticipationMinAggregateOutputType = {
   userId: string | null
   contestId: string | null
   score: runtime.Decimal | null
+  language: $Enums.Language | null
   startedAt: Date | null
   submittedAt: Date | null
 }
@@ -50,6 +51,7 @@ export type ParticipationMaxAggregateOutputType = {
   userId: string | null
   contestId: string | null
   score: runtime.Decimal | null
+  language: $Enums.Language | null
   startedAt: Date | null
   submittedAt: Date | null
 }
@@ -64,6 +66,7 @@ export type ParticipationCountAggregateOutputType = {
   answers: number
   timeSpent: number
   markedForReview: number
+  language: number
   startedAt: number
   submittedAt: number
   _all: number
@@ -84,6 +87,7 @@ export type ParticipationMinAggregateInputType = {
   userId?: true
   contestId?: true
   score?: true
+  language?: true
   startedAt?: true
   submittedAt?: true
 }
@@ -94,6 +98,7 @@ export type ParticipationMaxAggregateInputType = {
   userId?: true
   contestId?: true
   score?: true
+  language?: true
   startedAt?: true
   submittedAt?: true
 }
@@ -108,6 +113,7 @@ export type ParticipationCountAggregateInputType = {
   answers?: true
   timeSpent?: true
   markedForReview?: true
+  language?: true
   startedAt?: true
   submittedAt?: true
   _all?: true
@@ -209,6 +215,7 @@ export type ParticipationGroupByOutputType = {
   answers: runtime.JsonValue | null
   timeSpent: runtime.JsonValue | null
   markedForReview: runtime.JsonValue | null
+  language: $Enums.Language
   startedAt: Date
   submittedAt: Date | null
   _count: ParticipationCountAggregateOutputType | null
@@ -246,6 +253,7 @@ export type ParticipationWhereInput = {
   answers?: Prisma.JsonNullableFilter<"Participation">
   timeSpent?: Prisma.JsonNullableFilter<"Participation">
   markedForReview?: Prisma.JsonNullableFilter<"Participation">
+  language?: Prisma.EnumLanguageFilter<"Participation"> | $Enums.Language
   startedAt?: Prisma.DateTimeFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"Participation"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -262,6 +270,7 @@ export type ParticipationOrderByWithRelationInput = {
   answers?: Prisma.SortOrderInput | Prisma.SortOrder
   timeSpent?: Prisma.SortOrderInput | Prisma.SortOrder
   markedForReview?: Prisma.SortOrderInput | Prisma.SortOrder
+  language?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -282,6 +291,7 @@ export type ParticipationWhereUniqueInput = Prisma.AtLeast<{
   answers?: Prisma.JsonNullableFilter<"Participation">
   timeSpent?: Prisma.JsonNullableFilter<"Participation">
   markedForReview?: Prisma.JsonNullableFilter<"Participation">
+  language?: Prisma.EnumLanguageFilter<"Participation"> | $Enums.Language
   startedAt?: Prisma.DateTimeFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"Participation"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -298,6 +308,7 @@ export type ParticipationOrderByWithAggregationInput = {
   answers?: Prisma.SortOrderInput | Prisma.SortOrder
   timeSpent?: Prisma.SortOrderInput | Prisma.SortOrder
   markedForReview?: Prisma.SortOrderInput | Prisma.SortOrder
+  language?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ParticipationCountOrderByAggregateInput
@@ -320,6 +331,7 @@ export type ParticipationScalarWhereWithAggregatesInput = {
   answers?: Prisma.JsonNullableWithAggregatesFilter<"Participation">
   timeSpent?: Prisma.JsonNullableWithAggregatesFilter<"Participation">
   markedForReview?: Prisma.JsonNullableWithAggregatesFilter<"Participation">
+  language?: Prisma.EnumLanguageWithAggregatesFilter<"Participation"> | $Enums.Language
   startedAt?: Prisma.DateTimeWithAggregatesFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Participation"> | Date | string | null
 }
@@ -332,6 +344,7 @@ export type ParticipationCreateInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutParticipationsInput
@@ -348,6 +361,7 @@ export type ParticipationUncheckedCreateInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -360,6 +374,7 @@ export type ParticipationUpdateInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutParticipationsNestedInput
@@ -376,6 +391,7 @@ export type ParticipationUncheckedUpdateInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -390,6 +406,7 @@ export type ParticipationCreateManyInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -402,6 +419,7 @@ export type ParticipationUpdateManyMutationInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -416,6 +434,7 @@ export type ParticipationUncheckedUpdateManyInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -445,6 +464,7 @@ export type ParticipationCountOrderByAggregateInput = {
   answers?: Prisma.SortOrder
   timeSpent?: Prisma.SortOrder
   markedForReview?: Prisma.SortOrder
+  language?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
 }
@@ -459,6 +479,7 @@ export type ParticipationMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   contestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
+  language?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
 }
@@ -469,6 +490,7 @@ export type ParticipationMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   contestId?: Prisma.SortOrder
   score?: Prisma.SortOrder
+  language?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
 }
@@ -569,6 +591,7 @@ export type ParticipationCreateWithoutUserInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
   contest: Prisma.ContestCreateNestedOneWithoutParticipationsInput
@@ -583,6 +606,7 @@ export type ParticipationUncheckedCreateWithoutUserInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -626,6 +650,7 @@ export type ParticipationScalarWhereInput = {
   answers?: Prisma.JsonNullableFilter<"Participation">
   timeSpent?: Prisma.JsonNullableFilter<"Participation">
   markedForReview?: Prisma.JsonNullableFilter<"Participation">
+  language?: Prisma.EnumLanguageFilter<"Participation"> | $Enums.Language
   startedAt?: Prisma.DateTimeFilter<"Participation"> | Date | string
   submittedAt?: Prisma.DateTimeNullableFilter<"Participation"> | Date | string | null
 }
@@ -638,6 +663,7 @@ export type ParticipationCreateWithoutContestInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutParticipationsInput
@@ -652,6 +678,7 @@ export type ParticipationUncheckedCreateWithoutContestInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -691,6 +718,7 @@ export type ParticipationCreateManyUserInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -703,6 +731,7 @@ export type ParticipationUpdateWithoutUserInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   contest?: Prisma.ContestUpdateOneRequiredWithoutParticipationsNestedInput
@@ -717,6 +746,7 @@ export type ParticipationUncheckedUpdateWithoutUserInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -730,6 +760,7 @@ export type ParticipationUncheckedUpdateManyWithoutUserInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -743,6 +774,7 @@ export type ParticipationCreateManyContestInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: $Enums.Language
   startedAt?: Date | string
   submittedAt?: Date | string | null
 }
@@ -755,6 +787,7 @@ export type ParticipationUpdateWithoutContestInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutParticipationsNestedInput
@@ -769,6 +802,7 @@ export type ParticipationUncheckedUpdateWithoutContestInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -782,6 +816,7 @@ export type ParticipationUncheckedUpdateManyWithoutContestInput = {
   answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   timeSpent?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   markedForReview?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -798,6 +833,7 @@ export type ParticipationSelect<ExtArgs extends runtime.Types.Extensions.Interna
   answers?: boolean
   timeSpent?: boolean
   markedForReview?: boolean
+  language?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -814,6 +850,7 @@ export type ParticipationSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   answers?: boolean
   timeSpent?: boolean
   markedForReview?: boolean
+  language?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -830,6 +867,7 @@ export type ParticipationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   answers?: boolean
   timeSpent?: boolean
   markedForReview?: boolean
+  language?: boolean
   startedAt?: boolean
   submittedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -846,11 +884,12 @@ export type ParticipationSelectScalar = {
   answers?: boolean
   timeSpent?: boolean
   markedForReview?: boolean
+  language?: boolean
   startedAt?: boolean
   submittedAt?: boolean
 }
 
-export type ParticipationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "isTest" | "userId" | "contestId" | "score" | "draftAnswers" | "answers" | "timeSpent" | "markedForReview" | "startedAt" | "submittedAt", ExtArgs["result"]["participation"]>
+export type ParticipationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "isTest" | "userId" | "contestId" | "score" | "draftAnswers" | "answers" | "timeSpent" | "markedForReview" | "language" | "startedAt" | "submittedAt", ExtArgs["result"]["participation"]>
 export type ParticipationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   contest?: boolean | Prisma.ContestDefaultArgs<ExtArgs>
@@ -880,6 +919,7 @@ export type $ParticipationPayload<ExtArgs extends runtime.Types.Extensions.Inter
     answers: runtime.JsonValue | null
     timeSpent: runtime.JsonValue | null
     markedForReview: runtime.JsonValue | null
+    language: $Enums.Language
     startedAt: Date
     submittedAt: Date | null
   }, ExtArgs["result"]["participation"]>
@@ -1316,6 +1356,7 @@ export interface ParticipationFieldRefs {
   readonly answers: Prisma.FieldRef<"Participation", 'Json'>
   readonly timeSpent: Prisma.FieldRef<"Participation", 'Json'>
   readonly markedForReview: Prisma.FieldRef<"Participation", 'Json'>
+  readonly language: Prisma.FieldRef<"Participation", 'Language'>
   readonly startedAt: Prisma.FieldRef<"Participation", 'DateTime'>
   readonly submittedAt: Prisma.FieldRef<"Participation", 'DateTime'>
 }

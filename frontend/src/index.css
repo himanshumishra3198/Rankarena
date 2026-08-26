@@ -893,40 +893,6 @@ select.input { cursor: pointer; }
    4th child has to be hidden or it wraps onto a second row. */
 @media (max-width: 600px) { .subject-bar-counts { display: none; } }
 
-/* ── Activity summary row ────────────────────────────────────── */
-.activity-summary-row { display: flex; align-items: flex-start; gap: 32px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
-.activity-summary-group { display: flex; flex-direction: column; gap: 6px; }
-.activity-summary-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 2px; }
-.activity-summary-stats { display: flex; flex-direction: column; gap: 3px; font-size: 14px; color: var(--text); }
-.activity-summary-stats strong { color: var(--heading); }
-
-/* ── Streak badge ────────────────────────────────────────────── */
-.streak-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-left: auto; padding: 12px 20px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius); min-width: 90px; }
-[data-theme="dark"] .streak-badge { background: #2d1a07; border-color: #92400e; }
-.streak-fire { font-size: 28px; line-height: 1; }
-.streak-num  { font-size: 32px; font-weight: 900; color: #ea580c; line-height: 1; }
-.streak-sub  { font-size: 11px; color: #ea580c; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
-
-/* ── Achievements ────────────────────────────────────────────── */
-.achievements-count { font-size: 13px; font-weight: 600; color: var(--text-muted); background: var(--bg); padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border); }
-.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-.achievement-badge { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; transition: transform .15s; cursor: default; }
-.achievement-badge:hover { transform: translateY(-2px); }
-
-/* Activity + achievements on small screens. The streak badge's margin-left:auto
-   pins it to the right once the summary row wraps, so let it go full width. */
-@media (max-width: 600px) {
-  .activity-summary-row { gap: 18px; }
-  .streak-badge { margin-left: 0; width: 100%; flex-direction: row; gap: 10px; padding: 10px 16px; }
-  .streak-fire { font-size: 22px; }
-  .streak-num { font-size: 24px; }
-  .achievements-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
-  .achievement-badge { padding: 12px 8px; }
-}
-.achievement-earned { background: var(--surface-raised); border-color: var(--border); }
-.achievement-locked { background: var(--bg); opacity: .45; }
-.achievement-icon  { font-size: 26px; line-height: 1; }
-.achievement-label { font-size: 11px; font-weight: 700; color: var(--heading); }
 
 /* ── Landing: feature grid ──────────────────────────── */
 
@@ -2060,7 +2026,10 @@ select.input { cursor: pointer; }
 /* GIS renders a fixed-width iframe; centring it keeps it aligned with the
    full-width form controls underneath at every screen size. */
 .google-btn { display: flex; justify-content: center; min-height: 44px; }
-.google-btn > div { max-width: 100%; }
+/* Belt and braces: the width is measured in JS, but if GIS ever renders wider
+   than asked, clip rather than push the card out of shape. */
+.google-btn { max-width: 100%; overflow: hidden; }
+.google-btn > div, .google-btn iframe { max-width: 100% !important; }
 .google-btn-skeleton { text-align: center; font-size: 13px; color: var(--text-muted); padding: 10px 0; }
 
 .auth-divider {
@@ -2097,3 +2066,87 @@ select.input { cursor: pointer; }
 @media (max-width: 700px) {
   .verify-banner { padding: 10px 12px; gap: 8px; }
 }
+
+/* ── Legal pages (privacy, terms) ───────────────────────────────────────── */
+/* Narrower than the default page: long-form prose is hard to track across a
+   900px line. Sized in ch so it follows the font rather than the viewport. */
+.legal-page { max-width: 72ch; padding-bottom: 56px; }
+.legal-page h1 { font-size: 28px; margin-bottom: 4px; }
+.legal-page h2 {
+  font-size: 18px; margin: 32px 0 10px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.legal-page h3 { font-size: 15px; margin: 20px 0 6px; color: var(--heading); }
+.legal-page p { margin: 0 0 12px; line-height: 1.75; color: var(--text); }
+.legal-page ul { margin: 0 0 14px; padding-left: 22px; }
+.legal-page li { line-height: 1.75; margin-bottom: 8px; color: var(--text); }
+.legal-page code {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 5px; font-size: 13px;
+}
+.legal-updated { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.legal-lede { font-size: 16px; line-height: 1.7; }
+.legal-footer {
+  margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border);
+  font-size: 14px; color: var(--text-muted);
+}
+
+.auth-legal {
+  margin-top: 16px; font-size: 12px; line-height: 1.6;
+  color: var(--text-muted); text-align: center;
+}
+
+/* ── Profile activity figures ────────────────────────────────────────────
+   A number you can read at a glance with the qualifier demoted underneath,
+   rather than a label above a row of cramped values. Auto-fit rather than a
+   fixed three columns so it reflows to two, then one, on narrow screens. */
+.profile-figures {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 20px 24px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border);
+}
+/* Three columns exactly, not auto-fit: the six figures are two groups of
+   three, and at four columns the streaks wrap up beside the problem counts
+   and the grouping stops reading. */
+@media (max-width: 720px) { .profile-figures { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 430px) { .profile-figures { grid-template-columns: 1fr; } }
+.profile-figure-value {
+  font-size: 26px; font-weight: 600; color: var(--heading);
+  line-height: 1.2; font-variant-numeric: tabular-nums;
+}
+.profile-figure-label { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+@media (max-width: 600px) {
+  .profile-figures { gap: 16px 18px; }
+  .profile-figure-value { font-size: 22px; }
+}
+
+/* ── Language selection and fallback ─────────────────────────────────────── */
+.lang-picker { border: none; margin: 18px 0 4px; padding: 0; }
+.lang-picker-legend {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--text-muted); padding: 0; margin-bottom: 8px;
+}
+.lang-picker-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lang-option {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 10px 12px; font-size: 14px; transition: border-color .12s, background .12s;
+}
+.lang-option:hover { border-color: var(--primary); }
+.lang-option-active { border-color: var(--primary); background: var(--primary-light); }
+.lang-option input { accent-color: var(--primary); margin: 0; flex-shrink: 0; }
+.lang-option-flag { font-size: 16px; line-height: 1; }
+.lang-option-native { font-weight: 600; color: var(--heading); }
+.lang-option-label { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+.lang-picker-note { font-size: 12px; color: var(--text-muted); line-height: 1.55; margin: 8px 0 0; }
+
+/* Missing-translation notice, shown above the question it applies to. */
+.lang-fallback {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--warning-light, #fffbeb); color: #92400e;
+  border: 1px solid #fcd34d; border-radius: var(--radius);
+  padding: 8px 12px; font-size: 13px; line-height: 1.5; margin-bottom: 12px;
+}
+[data-theme="dark"] .lang-fallback {
+  background: rgba(217,119,6,.14); color: #fcd34d; border-color: rgba(217,119,6,.5);
+}
+@media (max-width: 480px) { .lang-picker-options { grid-template-columns: 1fr; } }

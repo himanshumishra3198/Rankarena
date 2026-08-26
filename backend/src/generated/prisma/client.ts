@@ -134,3 +134,13 @@ export type Participation = Prisma.ParticipationModel
  * 
  */
 export type RatingHistory = Prisma.RatingHistoryModel
+/**
+ * Model QuestionTranslation
+ * 
+ */
+export type QuestionTranslation = Prisma.QuestionTranslationModel
+/**
+ * Model PassageTranslation
+ * 
+ */
+export type PassageTranslation = Prisma.PassageTranslationModel

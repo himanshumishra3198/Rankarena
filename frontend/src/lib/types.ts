@@ -49,6 +49,9 @@ export interface Passage {
 }
 
 export interface Question {
+  /** Language this copy is presented in, and whether it is a real translation. */
+  language?: 'EN' | 'HI'
+  translated?: boolean
   id: string
   questionType: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   text: string

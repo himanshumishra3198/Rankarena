@@ -4,6 +4,8 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import Home from './pages/Home'
 import ContestList from './pages/ContestList'
 import ContestRoom from './pages/ContestRoom'
@@ -36,6 +38,9 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        {/* Public and unauthenticated: Google's reviewer has to reach these. */}
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         {/* One home page for everyone, Codeforces-style: the same feed and
             sidebar whether or not you're signed in. */}
         <Route path="/" element={<Home />} />

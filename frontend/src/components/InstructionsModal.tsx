@@ -1,10 +1,15 @@
 import type { Contest } from '../lib/types'
 
+import LanguagePicker from './LanguagePicker'
+import type { Language } from '../lib/language'
+
 interface Props {
   contest: Contest
   sections: string[]
   sectionTimeMinutes: number
   onStart: () => void
+  language: Language
+  onLanguageChange: (l: Language) => void
 }
 
 const SECTION_LABELS: Record<string, string> = {
@@ -14,7 +19,7 @@ const SECTION_LABELS: Record<string, string> = {
   GK: 'General Knowledge',
 }
 
-export default function InstructionsModal({ contest, sections, sectionTimeMinutes, onStart }: Props) {
+export default function InstructionsModal({ contest, sections, sectionTimeMinutes, onStart, language, onLanguageChange }: Props) {
   return (
     <div className="modal-overlay">
       <div className="modal-box instructions-modal">
@@ -84,6 +89,8 @@ export default function InstructionsModal({ contest, sections, sectionTimeMinute
             ))}
           </div>
         </div>
+
+        <LanguagePicker value={language} onChange={onLanguageChange} />
 
         <button className="btn btn-primary btn-full" style={{ marginTop: 4 }} onClick={onStart}>
           I understand — Start Exam →

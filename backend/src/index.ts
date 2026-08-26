@@ -47,6 +47,16 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http:/
 app.use(cors({ origin: (origin, cb) => cb(null, !origin || allowedOrigins.includes(origin)) }));
 app.use(express.json());
 
+// nginx is the only thing in front of us, and it sets X-Forwarded-For. Without
+// this, Express ignores that header and req.ip is the proxy's own address —
+// identical for every visitor — so the rate limiters below share ONE bucket
+// across the entire site and a handful of sign-ins locks everybody out.
+//
+// The value is 1, not `true`: trust exactly one hop. Trusting all hops would
+// let a client prepend its own X-Forwarded-For and pick a fresh bucket per
+// request, which is worse than no limiter at all.
+app.set("trust proxy", 1);
+
 // Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -54,6 +64,10 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many attempts, please try again later." },
+  // GET /auth/me is a session read, not an attempt: the verification banner
+  // fires it on every page that renders the navbar. Counting it meant a user
+  // could exhaust their own login budget just by browsing ~20 pages.
+  skip: (req) => req.method === "GET" && req.path === "/me",
 });
 
 const submitLimiter = rateLimit({

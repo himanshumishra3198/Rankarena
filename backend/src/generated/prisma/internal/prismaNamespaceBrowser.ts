@@ -69,7 +69,9 @@ export const ModelName = {
   MockAttempt: 'MockAttempt',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
-  RatingHistory: 'RatingHistory'
+  RatingHistory: 'RatingHistory',
+  QuestionTranslation: 'QuestionTranslation',
+  PassageTranslation: 'PassageTranslation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -305,6 +307,7 @@ export const MockAttemptScalarFieldEnum = {
   answers: 'answers',
   timeSpent: 'timeSpent',
   markedForReview: 'markedForReview',
+  language: 'language',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const
@@ -333,6 +336,7 @@ export const ParticipationScalarFieldEnum = {
   answers: 'answers',
   timeSpent: 'timeSpent',
   markedForReview: 'markedForReview',
+  language: 'language',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const
@@ -352,6 +356,38 @@ export const RatingHistoryScalarFieldEnum = {
 } as const
 
 export type RatingHistoryScalarFieldEnum = (typeof RatingHistoryScalarFieldEnum)[keyof typeof RatingHistoryScalarFieldEnum]
+
+
+export const QuestionTranslationScalarFieldEnum = {
+  id: 'id',
+  questionId: 'questionId',
+  language: 'language',
+  text: 'text',
+  optionA: 'optionA',
+  optionB: 'optionB',
+  optionC: 'optionC',
+  optionD: 'optionD',
+  solution: 'solution',
+  structuredData: 'structuredData',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QuestionTranslationScalarFieldEnum = (typeof QuestionTranslationScalarFieldEnum)[keyof typeof QuestionTranslationScalarFieldEnum]
+
+
+export const PassageTranslationScalarFieldEnum = {
+  id: 'id',
+  passageId: 'passageId',
+  language: 'language',
+  title: 'title',
+  content: 'content',
+  tableData: 'tableData',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PassageTranslationScalarFieldEnum = (typeof PassageTranslationScalarFieldEnum)[keyof typeof PassageTranslationScalarFieldEnum]
 
 
 export const SortOrder = {

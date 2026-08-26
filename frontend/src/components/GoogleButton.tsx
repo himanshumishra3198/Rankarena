@@ -62,6 +62,7 @@ export default function GoogleButton({
   useEffect(() => {
     if (!CLIENT_ID) return
     let cancelled = false
+    let ro: ResizeObserver | null = null
 
     loadGis()
       .then(() => {
@@ -85,19 +86,40 @@ export default function GoogleButton({
             }
           },
         })
-        window.google.accounts.id.renderButton(holder.current, {
-          theme: 'outline',
-          size: 'large',
-          width: 320,
-          text,
-          shape: 'rectangular',
-          logo_alignment: 'center',
-        })
+        // GIS renders at a fixed pixel width and ignores its container, so a
+        // hardcoded value overflows the card on a narrow phone. Measure
+        // instead, and clamp to the range GIS accepts.
+        const draw = () => {
+          if (!holder.current || !window.google) return
+          const w = Math.round(holder.current.getBoundingClientRect().width)
+          if (!w) return
+          holder.current.innerHTML = ''
+          window.google.accounts.id.renderButton(holder.current, {
+            theme: 'outline',
+            size: 'large',
+            width: Math.max(200, Math.min(400, w)),
+            text,
+            shape: 'rectangular',
+            logo_alignment: 'center',
+          })
+        }
+        draw()
         setReady(true)
+
+        // Rotating the phone changes the card width; without this the button
+        // keeps whatever size it had at first paint. Only redraw on a real
+        // change — GIS tears down and rebuilds an iframe each time.
+        let last = Math.round(holder.current.getBoundingClientRect().width)
+        ro = new ResizeObserver(() => {
+          if (!holder.current) return
+          const w = Math.round(holder.current.getBoundingClientRect().width)
+          if (Math.abs(w - last) > 8) { last = w; draw() }
+        })
+        ro.observe(holder.current)
       })
       .catch(() => errRef.current('Could not reach Google sign-in.'))
 
-    return () => { cancelled = true }
+    return () => { cancelled = true; ro?.disconnect() }
   }, [text])
 
   if (!CLIENT_ID) return null

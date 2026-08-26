@@ -371,3 +371,45 @@ tr:hover td { background: var(--surface-raised); }
   .confirm-actions { flex-direction: column-reverse; }
   .confirm-actions .btn { width: 100%; justify-content: center; }
 }
+
+
+/* ── Question editor: shared fields, then one tab per language ───────────── */
+/* Everything language-independent sits above the tabs, so it is answered once
+   and a translator cannot reach the correct option or the difficulty. */
+.q-shared {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 16px 2px; margin-bottom: 18px; background: var(--surface-raised);
+}
+
+.q-lang-tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 0; }
+.q-lang-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  margin-bottom: -2px; padding: 10px 16px; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--text-muted); font-family: inherit;
+  transition: color .15s, border-color .15s;
+}
+.q-lang-tab:hover { color: var(--heading); }
+.q-lang-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Bordered on three sides so the panel reads as hanging off the active tab. */
+.q-lang-panel {
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 18px 16px 2px; margin-bottom: 18px;
+}
+.q-lang-note {
+  font-size: 12.5px; color: var(--text-muted); line-height: 1.6;
+  background: var(--bg); border-radius: var(--radius);
+  padding: 10px 12px; margin: 0 0 16px;
+}
+
+/* Translation status — on the tab, and in the list's Languages column. */
+.lang-chips { display: inline-flex; gap: 4px; }
+.lang-chip {
+  display: inline-block; padding: 1px 7px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; white-space: nowrap; line-height: 1.6;
+}
+.lang-chip-on      { background: var(--success-light); color: var(--success); }
+.lang-chip-off     { background: var(--bg); color: var(--text-muted); }
+.lang-chip-partial { background: rgba(234,179,8,.15); color: #ca8a04; }

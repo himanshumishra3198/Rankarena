@@ -402,7 +402,9 @@ export const ModelName = {
   MockAttempt: 'MockAttempt',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
-  RatingHistory: 'RatingHistory'
+  RatingHistory: 'RatingHistory',
+  QuestionTranslation: 'QuestionTranslation',
+  PassageTranslation: 'PassageTranslation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -418,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "authToken" | "notification" | "article" | "articleComment" | "articleVote" | "commentVote" | "bookmark" | "follow" | "contest" | "passage" | "question" | "questionReport" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory"
+    modelProps: "user" | "authToken" | "notification" | "article" | "articleComment" | "articleVote" | "commentVote" | "bookmark" | "follow" | "contest" | "passage" | "question" | "questionReport" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory" | "questionTranslation" | "passageTranslation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1828,6 +1830,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    QuestionTranslation: {
+      payload: Prisma.$QuestionTranslationPayload<ExtArgs>
+      fields: Prisma.QuestionTranslationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.QuestionTranslationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.QuestionTranslationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>
+        }
+        findFirst: {
+          args: Prisma.QuestionTranslationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.QuestionTranslationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>
+        }
+        findMany: {
+          args: Prisma.QuestionTranslationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>[]
+        }
+        create: {
+          args: Prisma.QuestionTranslationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>
+        }
+        createMany: {
+          args: Prisma.QuestionTranslationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.QuestionTranslationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>[]
+        }
+        delete: {
+          args: Prisma.QuestionTranslationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>
+        }
+        update: {
+          args: Prisma.QuestionTranslationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>
+        }
+        deleteMany: {
+          args: Prisma.QuestionTranslationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.QuestionTranslationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.QuestionTranslationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>[]
+        }
+        upsert: {
+          args: Prisma.QuestionTranslationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTranslationPayload>
+        }
+        aggregate: {
+          args: Prisma.QuestionTranslationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateQuestionTranslation>
+        }
+        groupBy: {
+          args: Prisma.QuestionTranslationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionTranslationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.QuestionTranslationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionTranslationCountAggregateOutputType> | number
+        }
+      }
+    }
+    PassageTranslation: {
+      payload: Prisma.$PassageTranslationPayload<ExtArgs>
+      fields: Prisma.PassageTranslationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PassageTranslationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PassageTranslationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>
+        }
+        findFirst: {
+          args: Prisma.PassageTranslationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PassageTranslationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>
+        }
+        findMany: {
+          args: Prisma.PassageTranslationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>[]
+        }
+        create: {
+          args: Prisma.PassageTranslationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>
+        }
+        createMany: {
+          args: Prisma.PassageTranslationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PassageTranslationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>[]
+        }
+        delete: {
+          args: Prisma.PassageTranslationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>
+        }
+        update: {
+          args: Prisma.PassageTranslationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>
+        }
+        deleteMany: {
+          args: Prisma.PassageTranslationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PassageTranslationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PassageTranslationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>[]
+        }
+        upsert: {
+          args: Prisma.PassageTranslationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PassageTranslationPayload>
+        }
+        aggregate: {
+          args: Prisma.PassageTranslationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePassageTranslation>
+        }
+        groupBy: {
+          args: Prisma.PassageTranslationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PassageTranslationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PassageTranslationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PassageTranslationCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2084,6 +2234,7 @@ export const MockAttemptScalarFieldEnum = {
   answers: 'answers',
   timeSpent: 'timeSpent',
   markedForReview: 'markedForReview',
+  language: 'language',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const
@@ -2112,6 +2263,7 @@ export const ParticipationScalarFieldEnum = {
   answers: 'answers',
   timeSpent: 'timeSpent',
   markedForReview: 'markedForReview',
+  language: 'language',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
 } as const
@@ -2131,6 +2283,38 @@ export const RatingHistoryScalarFieldEnum = {
 } as const
 
 export type RatingHistoryScalarFieldEnum = (typeof RatingHistoryScalarFieldEnum)[keyof typeof RatingHistoryScalarFieldEnum]
+
+
+export const QuestionTranslationScalarFieldEnum = {
+  id: 'id',
+  questionId: 'questionId',
+  language: 'language',
+  text: 'text',
+  optionA: 'optionA',
+  optionB: 'optionB',
+  optionC: 'optionC',
+  optionD: 'optionD',
+  solution: 'solution',
+  structuredData: 'structuredData',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QuestionTranslationScalarFieldEnum = (typeof QuestionTranslationScalarFieldEnum)[keyof typeof QuestionTranslationScalarFieldEnum]
+
+
+export const PassageTranslationScalarFieldEnum = {
+  id: 'id',
+  passageId: 'passageId',
+  language: 'language',
+  title: 'title',
+  content: 'content',
+  tableData: 'tableData',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PassageTranslationScalarFieldEnum = (typeof PassageTranslationScalarFieldEnum)[keyof typeof PassageTranslationScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2412,6 +2596,20 @@ export type ListEnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
+ * Reference to a field of type 'Language'
+ */
+export type EnumLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Language'>
+    
+
+
+/**
+ * Reference to a field of type 'Language[]'
+ */
+export type ListEnumLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Language[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -2553,6 +2751,8 @@ export type GlobalOmitConfig = {
   contestQuestion?: Prisma.ContestQuestionOmit
   participation?: Prisma.ParticipationOmit
   ratingHistory?: Prisma.RatingHistoryOmit
+  questionTranslation?: Prisma.QuestionTranslationOmit
+  passageTranslation?: Prisma.PassageTranslationOmit
 }
 
 /* Types for Logging */
