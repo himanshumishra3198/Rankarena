@@ -50,6 +50,9 @@ interface PracticeRecommendation {
   passage?: ReviewQuestion['passage']
   solution?: string | null
   bookmarked: boolean
+  /** The language actually rendered, and whether it matched what was asked for. */
+  language: string
+  translated: boolean
 }
 
 interface PracticeRecsResponse {
@@ -98,10 +101,24 @@ export default function QuestionDetail({
   const [recs, setRecs] = useState<PracticeRecsResponse | null>(null)
   const [recsLoading, setRecsLoading] = useState(false)
   const [recBookmarks, setRecBookmarks] = useState<Set<string>>(new Set())
+  const [recPicks, setRecPicks] = useState<Record<string, string>>({})
   useEffect(() => {
     setPractice(false); setPicked(null)
     setRecsOpen(false); setRecs(null); setRecsLoading(false); setRecBookmarks(new Set())
+    setRecPicks({})
   }, [q.id])
+
+  function pickRecOption(recId: string, opt: string) {
+    setRecPicks(p => (p[recId] ? p : { ...p, [recId]: opt }))
+  }
+
+  function retryRec(recId: string) {
+    setRecPicks(p => {
+      const n = { ...p }
+      delete n[recId]
+      return n
+    })
+  }
 
   async function openRecs() {
     setRecsOpen(o => !o)
@@ -294,45 +311,66 @@ export default function QuestionDetail({
                 )}
                 {!recsLoading && recs && recs.questions.length > 0 && (
                   <div className="practice-recs-list">
-                    {recs.questions.map((rec, i) => (
-                      <div key={rec.id} className="practice-rec-card">
-                        <div className="practice-rec-head">
-                          <span className="practice-rec-num">Practice {i + 1}</span>
-                          <button
-                            className="bookmark-btn"
-                            title={recBookmarks.has(rec.id) ? 'Remove bookmark' : 'Bookmark for revision'}
-                            onClick={() => toggleRecBookmark(rec.id)}
-                          >
-                            {recBookmarks.has(rec.id) ? '⭐' : '☆'}
-                          </button>
-                        </div>
-                        <QuestionContext q={rec} />
-                        {rec.imageUrl && (
-                          <div className="qd-image">
-                            <img src={rec.imageUrl} alt="Question diagram" />
+                    {recs.questions.map((rec, i) => {
+                      const recPicked = recPicks[rec.id]
+                      return (
+                        <div key={rec.id} className="practice-rec-card">
+                          <div className="practice-rec-head">
+                            <span className="practice-rec-num">Practice {i + 1}</span>
+                            <button
+                              className="bookmark-btn"
+                              title={recBookmarks.has(rec.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                              onClick={() => toggleRecBookmark(rec.id)}
+                            >
+                              {recBookmarks.has(rec.id) ? '⭐' : '☆'}
+                            </button>
                           </div>
-                        )}
-                        {rec.text && <RichText as="div" className="qd-qtext" html={rec.text} />}
-                        <div className="review-options qd-options">
-                          {OPTIONS.map(opt => {
-                            const isCorrectOpt = opt === rec.correctOption
-                            return (
-                              <div key={opt} className={`review-option ${isCorrectOpt ? 'correct-opt' : ''}`}>
-                                <span className="option-label">{opt}</span>
-                                <span><RichText html={optText(rec, opt)} /></span>
-                                {isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
-                              </div>
-                            )
-                          })}
-                        </div>
-                        {rec.solution && (
-                          <div className="qd-solution">
-                            <div className="qd-solution-title">💡 Solution</div>
-                            <RichText as="div" className="sol-explain-text" html={rec.solution} />
+                          <QuestionContext q={rec} />
+                          {rec.imageUrl && (
+                            <div className="qd-image">
+                              <img src={rec.imageUrl} alt="Question diagram" />
+                            </div>
+                          )}
+                          {rec.text && <RichText as="div" className="qd-qtext" html={rec.text} />}
+                          {!recPicked && (
+                            <div className="practice-banner">🔄 Pick an answer to check yourself</div>
+                          )}
+                          <div className="review-options qd-options">
+                            {OPTIONS.map(opt => {
+                              const isCorrectOpt = opt === rec.correctOption
+                              const isPickedOpt = opt === recPicked
+                              const cls = recPicked && isCorrectOpt ? 'correct-opt' : recPicked && isPickedOpt ? 'wrong-opt' : ''
+                              return (
+                                <div key={opt} className={`review-option ${cls}`}
+                                  style={{ cursor: recPicked ? 'default' : 'pointer' }}
+                                  onClick={() => pickRecOption(rec.id, opt)}>
+                                  <span className="option-label">{opt}</span>
+                                  <span><RichText html={optText(rec, opt)} /></span>
+                                  {recPicked && isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
+                                  {recPicked && isPickedOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your pick</span>}
+                                </div>
+                              )
+                            })}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          {recPicked && (
+                            <div className="qd-practice-verdict" style={{ color: recPicked === rec.correctOption ? '#16a34a' : '#dc2626' }}>
+                              {recPicked === rec.correctOption ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
+                            </div>
+                          )}
+                          {recPicked && (
+                            <div className="qd-practice-actions">
+                              <button className="btn btn-ghost btn-sm" onClick={() => retryRec(rec.id)}>Try again</button>
+                            </div>
+                          )}
+                          {recPicked && rec.solution && (
+                            <div className="qd-solution">
+                              <div className="qd-solution-title">💡 Solution</div>
+                              <RichText as="div" className="sol-explain-text" html={rec.solution} />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>
