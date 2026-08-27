@@ -6,6 +6,8 @@ import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import ReportModal from '../components/ReportModal'
 import QuestionDetail from '../components/QuestionDetail'
+import LanguageToggle from '../components/LanguageToggle'
+import { DEFAULT_LANGUAGE, type Language } from '../lib/language'
 import { fmtSecs } from '../lib/time'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -173,6 +175,10 @@ export default function Result() {
   // Which question the panel below the map is showing. Null means "the first
   // one in whatever the map is currently showing".
   const [selectedQId, setSelectedQId] = useState<string | null>(null)
+  // Review language. Starts as whatever the paper was sat in — the API tells
+  // us via the questions it returns — and can be switched freely afterwards.
+  const [reviewLang, setReviewLang] = useState<Language>(DEFAULT_LANGUAGE)
+  const [langBusy, setLangBusy] = useState(false)
   const [activeSection, setActiveSection] = useState<string>('all')
   const [copied, setCopied] = useState(false)
   const [reportQId, setReportQId] = useState<string | null>(null)
@@ -189,6 +195,8 @@ export default function Result() {
       .then(([rRes, lRes]) => {
         setResult(rRes.data)
         setLeaderboard(lRes.data)
+        const served = rRes.data?.questions?.[0]?.language
+        if (served) setReviewLang(served)
         const saved = localStorage.getItem(`time-spent-${contestId}`)
         if (saved) {
           // No single question can have taken longer than the whole paper.
@@ -206,6 +214,17 @@ export default function Result() {
       .finally(() => setLoading(false))
     api.get('/bookmarks/ids').then(r => setBookmarks(new Set(r.data))).catch(() => {})
   }, [contestId])
+
+  async function switchLanguage(l: Language) {
+    setLangBusy(true)
+    try {
+      const { data } = await api.get(`/contests/${contestId}/result`, { params: { language: l } })
+      setResult(data)
+      setReviewLang(l)
+    } catch {
+      // Leave the review as it was; the toggle simply does not move.
+    } finally { setLangBusy(false) }
+  }
 
   async function toggleBookmark(qid: string) {
     setBookmarks(b => { const n = new Set(b); n.has(qid) ? n.delete(qid) : n.add(qid); return n })
@@ -623,6 +642,7 @@ export default function Result() {
           <div className="qmap-head">
             <h2 style={{ margin: 0 }}>Question Map</h2>
             <div className="qmap-filters">
+              <LanguageToggle value={reviewLang} onChange={switchLanguage} busy={langBusy} />
               <select className="input" style={{ width: 'auto', fontSize: 13, padding: '4px 10px' }} value={activeSection} onChange={e => setActiveSection(e.target.value)}>
                 <option value="all">All Sections</option>
                 {SECTIONS.map(s => <option key={s} value={s}>{SECTION_SHORT[s]}</option>)}

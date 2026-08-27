@@ -188,8 +188,10 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
   const attempt = await prisma.mockAttempt.findUnique({
     where: { userId_mockTestId: { userId: req.user!.id, mockTestId } },
   });
-  // Review reads in the language the paper was sat in.
-  const resultLanguage = attempt?.language ?? DEFAULT_LANGUAGE;
+  // Defaults to the language the paper was sat in; the reader may switch.
+  const resultLanguage = req.query.language
+    ? parseLanguage(req.query.language)
+    : attempt?.language ?? DEFAULT_LANGUAGE;
 
   if (!attempt || !attempt.submittedAt) {
     res.status(404).json({ error: "No submission found" });

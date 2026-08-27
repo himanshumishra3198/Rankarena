@@ -499,8 +499,11 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     return;
   }
 
-  // Review reads in the same language the paper was sat in.
-  const resultLanguage = participation.language ?? DEFAULT_LANGUAGE;
+  // Defaults to the language the paper was sat in, but the review — unlike the
+  // exam — may be read in either. Nothing about scoring depends on it.
+  const resultLanguage = req.query.language
+    ? parseLanguage(req.query.language)
+    : participation.language ?? DEFAULT_LANGUAGE;
 
   const cqs = await prisma.contestQuestion.findMany({
     where: { contestId },

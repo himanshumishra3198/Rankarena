@@ -2137,3 +2137,14 @@ select.input { cursor: pointer; }
   background: rgba(217,119,6,.14); color: #fcd34d; border-color: rgba(217,119,6,.5);
 }
 @media (max-width: 480px) { .lang-picker-options { grid-template-columns: 1fr; } }
+
+/* Review-language switch. Result pages only — never the exam room. */
+.lang-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.lang-toggle-btn {
+  background: var(--surface); border: none; cursor: pointer; font: inherit;
+  padding: 4px 12px; font-size: 12.5px; font-weight: 600; color: var(--text-muted);
+  transition: background .12s, color .12s;
+}
+.lang-toggle-btn + .lang-toggle-btn { border-left: 1px solid var(--border); }
+.lang-toggle-btn.active { background: var(--primary); color: #fff; }
+.lang-toggle-btn:disabled { opacity: .6; cursor: wait; }
