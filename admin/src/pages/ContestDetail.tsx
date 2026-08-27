@@ -4,7 +4,7 @@ import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import { RichEditor } from '../components/RichEditor'
+import QuestionContentTabs, { translationsPayload } from '../components/QuestionContentTabs'
 import { RichText, stripHtml } from '../components/RichText'
 import { SegmentedRadio } from '../components/SegmentedRadio'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
@@ -22,6 +22,7 @@ const emptyQ = {
   optionA: '', optionB: '', optionC: '', optionD: '',
   correctOption: '', subject: 'QUANT', topic: '', difficulty: 'MEDIUM',
   solution: '', passageId: '',
+  hi: { text: '', optionA: '', optionB: '', optionC: '', optionD: '', solution: '' },
   statements: ['', '', ''] as string[],
   conclusions: ['', '', ''] as string[],
 }
@@ -317,6 +318,13 @@ export default function ContestDetail() {
       topic: q.topic ?? '',
       difficulty: q.difficulty,
       solution: q.solution ?? '',
+      hi: (() => {
+        const t = q.translations?.find(x => x.language === 'HI')
+        return {
+          text: t?.text ?? '', optionA: t?.optionA ?? '', optionB: t?.optionB ?? '',
+          optionC: t?.optionC ?? '', optionD: t?.optionD ?? '', solution: t?.solution ?? '',
+        }
+      })(),
       passageId: q.passageId ?? '',
       statements: q.structuredData?.statements?.length ? q.structuredData.statements : ['', '', ''],
       conclusions: q.structuredData?.conclusions?.length ? q.structuredData.conclusions : ['', '', ''],
@@ -349,6 +357,7 @@ export default function ContestDetail() {
       topic: newQ.topic || null,
       difficulty: newQ.difficulty,
       solution: hasContent(newQ.solution) ? newQ.solution : null,
+      translations: translationsPayload(newQ.hi),
       passageId: needsPassage ? newQ.passageId : null,
       structuredData: isSyll
         ? { statements: newQ.statements.filter(s => stripHtml(s)), conclusions: newQ.conclusions.filter(c => stripHtml(c)) }
@@ -808,15 +817,14 @@ export default function ContestDetail() {
                   </div>
                 )}
 
-                <div className="form-group">
-                  <label>{newQ.questionType === 'SYLLOGISM' ? 'Question / Direction Text' : 'Question Text'}
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
-                      — toolbar for bold, color, x² super/subscript, 🖼 image (or drag &amp; drop)
-                    </span>
-                  </label>
-                  <RichEditor value={newQ.text} onChange={v => setNewQ(f => ({ ...f, text: v }))}
-                    minHeight={64} placeholder={newQ.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
-                </div>
+                {/* Shared with the question bank and the mock form, so a
+                    question can be written in Hindi from anywhere it can be
+                    written at all. */}
+                <QuestionContentTabs
+                  value={newQ}
+                  onChange={patch => setNewQ(f => ({ ...f, ...patch }))}
+                  textLabel={newQ.questionType === 'SYLLOGISM' ? 'Question / Direction Text' : 'Question Text'}
+                />
 
                 {/* Near-duplicate warning */}
                 {!editingQid && similar.length > 0 && (
@@ -853,16 +861,6 @@ export default function ContestDetail() {
                   </div>
                 </div>
 
-                <div className="form-row">
-                  {(['A', 'B', 'C', 'D'] as const).map(opt => (
-                    <div className="form-group" key={opt}>
-                      <label>Option {opt}</label>
-                      <RichEditor minHeight={40}
-                        value={newQ[`option${opt}` as keyof typeof emptyQ] as string}
-                        onChange={v => setNewQ(f => ({ ...f, [`option${opt}`]: v }))} placeholder={`Option ${opt}…`} />
-                    </div>
-                  ))}
-                </div>
 
                 <div className="form-group">
                   <label>Correct Option <span style={{ color: 'var(--danger)' }}>*</span></label>
@@ -899,11 +897,6 @@ export default function ContestDetail() {
                   </select>
                 </div>
 
-                <div className="form-group">
-                  <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                  <RichEditor value={newQ.solution} onChange={v => setNewQ(f => ({ ...f, solution: v }))}
-                    minHeight={80} placeholder="Explain the approach and steps…" />
-                </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-primary" type="submit" disabled={creating}>

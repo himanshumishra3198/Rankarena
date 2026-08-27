@@ -4,7 +4,7 @@ import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import { RichEditor } from '../components/RichEditor'
+import QuestionContentTabs, { translationsPayload } from '../components/QuestionContentTabs'
 import { RichText, stripHtml } from '../components/RichText'
 import { SegmentedRadio } from '../components/SegmentedRadio'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
@@ -24,6 +24,7 @@ const emptyCreate = {
   topic: '',
   difficulty: 'MEDIUM',
   solution: '',
+  hi: { text: '', optionA: '', optionB: '', optionC: '', optionD: '', solution: '' },
   passageId: '',
   statements: ['', '', ''] as string[],
   conclusions: ['', '', ''] as string[],
@@ -125,6 +126,13 @@ export default function MockTestDetail() {
       topic: q.topic ?? '',
       difficulty: q.difficulty,
       solution: q.solution ?? '',
+      hi: (() => {
+        const t = q.translations?.find(x => x.language === 'HI')
+        return {
+          text: t?.text ?? '', optionA: t?.optionA ?? '', optionB: t?.optionB ?? '',
+          optionC: t?.optionC ?? '', optionD: t?.optionD ?? '', solution: t?.solution ?? '',
+        }
+      })(),
       passageId: q.passageId ?? '',
       statements: q.structuredData?.statements?.length ? q.structuredData.statements : ['', '', ''],
       conclusions: q.structuredData?.conclusions?.length ? q.structuredData.conclusions : ['', '', ''],
@@ -158,6 +166,7 @@ export default function MockTestDetail() {
       topic: cForm.topic || null,
       difficulty: cForm.difficulty,
       solution: hasContent(cForm.solution) ? cForm.solution : null,
+      translations: translationsPayload(cForm.hi),
       passageId: needsPassage ? cForm.passageId : null,
       structuredData: isSyll
         ? { statements: cForm.statements.filter(s => stripHtml(s)), conclusions: cForm.conclusions.filter(c => stripHtml(c)) }
@@ -449,15 +458,12 @@ export default function MockTestDetail() {
                 </div>
               )}
 
-              <div className="form-group">
-                <label>{cForm.questionType === 'SYLLOGISM' ? 'Question / Direction Text' : 'Question Text'}
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
-                    — toolbar for bold, color, x² super/subscript, 🖼 image (or drag &amp; drop)
-                  </span>
-                </label>
-                <RichEditor value={cForm.text} onChange={v => setCForm(f => ({ ...f, text: v }))}
-                  minHeight={64} placeholder={cForm.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
-              </div>
+              {/* Shared with the question bank and the contest form. */}
+              <QuestionContentTabs
+                value={cForm}
+                onChange={patch => setCForm(f => ({ ...f, ...patch }))}
+                textLabel={cForm.questionType === 'SYLLOGISM' ? 'Question / Direction Text' : 'Question Text'}
+              />
 
               {/* Near-duplicate warning */}
               {!editingQid && similar.length > 0 && (
@@ -494,16 +500,6 @@ export default function MockTestDetail() {
                 </div>
               </div>
 
-              <div className="form-row">
-                {(['A', 'B', 'C', 'D'] as const).map(opt => (
-                  <div className="form-group" key={opt}>
-                    <label>Option {opt}</label>
-                    <RichEditor minHeight={40}
-                      value={cForm[`option${opt}` as keyof typeof emptyCreate] as string}
-                      onChange={v => setCForm(f => ({ ...f, [`option${opt}`]: v }))} placeholder={`Option ${opt}…`} />
-                  </div>
-                ))}
-              </div>
 
               <div className="form-row">
                 <div className="form-group">
@@ -531,11 +527,6 @@ export default function MockTestDetail() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                <RichEditor value={cForm.solution} onChange={v => setCForm(f => ({ ...f, solution: v }))}
-                  minHeight={80} placeholder="Explain the approach and steps…" />
-              </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button className="btn btn-primary" type="submit" disabled={creating}>
