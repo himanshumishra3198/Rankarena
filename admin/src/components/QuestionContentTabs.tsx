@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { RichEditor } from './RichEditor'
 import { stripHtml } from './RichText'
 import { LANGUAGES, type Language } from '../lib/types'
+import { convertHtml, looksLikeKrutiDev } from '../lib/krutidev'
 
 /**
  * The per-language half of a question: text, four options, solution.
@@ -74,6 +75,16 @@ export default function QuestionContentTabs({
   const complete = hindiCompleteOf(value.hi)
   const patchHi = (p: Partial<QuestionContentValue['hi']>) => onChange({ hi: { ...value.hi, ...p } })
 
+  // Offered, never automatic. Detection is a heuristic, and silently rewriting
+  // a genuine English question would be far worse than a button not pressed.
+  const kdFields = ['text', 'optionA', 'optionB', 'optionC', 'optionD', 'solution'] as const
+  const kdDetected = kdFields.some(f => looksLikeKrutiDev(value.hi[f]))
+  function convertKrutiDev() {
+    const patch: Partial<QuestionContentValue['hi']> = {}
+    for (const f of kdFields) if (value.hi[f]) patch[f] = convertHtml(value.hi[f])
+    patchHi(patch)
+  }
+
   return (
     <>
       <div className="q-lang-tabs" role="tablist">
@@ -126,6 +137,19 @@ export default function QuestionContentTabs({
           </>
         ) : (
           <>
+            {kdDetected && (
+              <div className="kd-banner">
+                <span aria-hidden="true">⚠️</span>
+                <div>
+                  <strong>This looks like Kruti Dev text.</strong> It is stored as Latin
+                  characters and will not display as Hindi anywhere. Convert it to Unicode
+                  so it renders on every device, and stays searchable and copyable.
+                </div>
+                <button type="button" className="btn btn-sm btn-primary" onClick={convertKrutiDev}>
+                  Convert to Unicode
+                </button>
+              </div>
+            )}
             <p className="q-lang-note">
               Optional. Leave every field blank to skip — Hindi candidates then see the
               English version with a note explaining why. Fill it in and the question and

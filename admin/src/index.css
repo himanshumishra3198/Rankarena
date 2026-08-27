@@ -413,3 +413,13 @@ tr:hover td { background: var(--surface-raised); }
 .lang-chip-on      { background: var(--success-light); color: var(--success); }
 .lang-chip-off     { background: var(--bg); color: var(--text-muted); }
 .lang-chip-partial { background: rgba(234,179,8,.15); color: #ca8a04; }
+
+/* Kruti Dev detection banner, inside the Hindi tab. */
+.kd-banner {
+  display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
+  background: rgba(234,179,8,.12); border: 1px solid #fcd34d;
+  border-radius: var(--radius); padding: 10px 12px; margin-bottom: 14px;
+  font-size: 13px; line-height: 1.55; color: #92400e;
+}
+[data-theme="dark"] .kd-banner { color: #fcd34d; border-color: rgba(217,119,6,.5); }
+.kd-banner > div { flex: 1; min-width: 200px; }
