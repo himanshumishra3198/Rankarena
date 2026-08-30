@@ -1,0 +1,25 @@
+{
+  "rules": [
+    {
+      "rulePriority": 1,
+      "description": "Expire untagged images after 1 day. These are digests orphaned when a tag was re-pushed; nothing can pull them and no rollback targets them.",
+      "selection": {
+        "tagStatus": "untagged",
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": 1
+      },
+      "action": { "type": "expire" }
+    },
+    {
+      "rulePriority": 2,
+      "description": "Keep the 20 most recent images. Deploys push one tag per commit and never reuse it, so without this the repo grows forever. Twenty covers the last few days of deploys, which is the window a rollback would realistically target.",
+      "selection": {
+        "tagStatus": "any",
+        "countType": "imageCountMoreThan",
+        "countNumber": 20
+      },
+      "action": { "type": "expire" }
+    }
+  ]
+}
