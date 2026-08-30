@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { QuestionContext } from './QuestionContent'
 import { RichText } from './RichText'
 import { fmtSecs, timeVerdict } from '../lib/time'
+import api from '../lib/api'
 
 /**
  * One attempted question, in full, rendered inline under the question map.
@@ -35,9 +36,34 @@ export interface ReviewQuestion {
   solution?: string | null
 }
 
+interface PracticeRecommendation {
+  id: string
+  text: string
+  imageUrl?: string | null
+  optionA: string; optionB: string; optionC: string; optionD: string
+  correctOption: string
+  subject: string
+  topic: string | null
+  difficulty: string
+  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+  structuredData?: { statements: string[]; conclusions: string[] } | null
+  passage?: ReviewQuestion['passage']
+  solution?: string | null
+  bookmarked: boolean
+  /** The language actually rendered, and whether it matched what was asked for. */
+  language: string
+  translated: boolean
+}
+
+interface PracticeRecsResponse {
+  subject: string
+  topic: string | null
+  questions: PracticeRecommendation[]
+}
+
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 
-function optText(q: ReviewQuestion, opt: string) {
+function optText(q: { optionA: string; optionB: string; optionC: string; optionD: string }, opt: string) {
   return ({ A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD } as Record<string, string>)[opt] ?? ''
 }
 
@@ -71,7 +97,61 @@ export default function QuestionDetail({
   // lives here and clears when you move on.
   const [practice, setPractice] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
-  useEffect(() => { setPractice(false); setPicked(null) }, [q.id])
+  const [recsOpen, setRecsOpen] = useState(false)
+  const [recs, setRecs] = useState<PracticeRecsResponse | null>(null)
+  const [recsLoading, setRecsLoading] = useState(false)
+  const [recBookmarks, setRecBookmarks] = useState<Set<string>>(new Set())
+  const [recPicks, setRecPicks] = useState<Record<string, string>>({})
+  useEffect(() => {
+    setPractice(false); setPicked(null)
+    setRecsOpen(false); setRecs(null); setRecsLoading(false); setRecBookmarks(new Set())
+    setRecPicks({})
+  }, [q.id])
+
+  function pickRecOption(recId: string, opt: string) {
+    setRecPicks(p => (p[recId] ? p : { ...p, [recId]: opt }))
+  }
+
+  function retryRec(recId: string) {
+    setRecPicks(p => {
+      const n = { ...p }
+      delete n[recId]
+      return n
+    })
+  }
+
+  async function openRecs() {
+    setRecsOpen(o => !o)
+    if (recs || recsLoading) return
+    setRecsLoading(true)
+    try {
+      const res = await api.get('/practice/recommendations', { params: { questionId: q.id, limit: 5 } })
+      const data: PracticeRecsResponse = res.data
+      setRecs(data)
+      setRecBookmarks(new Set(data.questions.filter(r => r.bookmarked).map(r => r.id)))
+    } catch {
+      // leave recs null — the panel renders a retry state
+    } finally {
+      setRecsLoading(false)
+    }
+  }
+
+  function flipRecBookmark(id: string) {
+    setRecBookmarks(b => {
+      const n = new Set(b)
+      if (n.has(id)) n.delete(id); else n.add(id)
+      return n
+    })
+  }
+
+  async function toggleRecBookmark(id: string) {
+    flipRecBookmark(id)
+    try {
+      await api.post(`/bookmarks/${id}`)
+    } catch {
+      flipRecBookmark(id)
+    }
+  }
 
   const isCorrect = given === q.correctOption
   const isWrong = !!given && given !== q.correctOption
@@ -205,6 +285,97 @@ export default function QuestionDetail({
           </div>
         ) : (
           <p className="qd-no-solution">No written solution has been added for this question yet.</p>
+        )}
+
+        {isWrong && (
+          <div className="sol-explain practice-recs">
+            <button
+              className="sol-explain-toggle"
+              aria-expanded={recsOpen}
+              onClick={openRecs}
+            >
+              <span style={{ fontSize: 16 }}>📚</span>
+              {recsOpen ? 'Hide practice questions' : recs?.topic ? `Practise: ${recs.topic}` : recs ? `More practice in ${subjectLabel ?? recs.subject}` : 'Practise this topic'}
+            </button>
+            {recsOpen && (
+              <div className="sol-explain-body practice-recs-body">
+                {recsLoading && <p className="practice-recs-status">Loading recommendations…</p>}
+                {!recsLoading && !recs && (
+                  <p className="practice-recs-status">
+                    Couldn't load recommendations.{' '}
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setRecs(null); openRecs() }}>Retry</button>
+                  </p>
+                )}
+                {!recsLoading && recs && recs.questions.length === 0 && (
+                  <p className="practice-recs-status">No other practice questions available yet.</p>
+                )}
+                {!recsLoading && recs && recs.questions.length > 0 && (
+                  <div className="practice-recs-list">
+                    {recs.questions.map((rec, i) => {
+                      const recPicked = recPicks[rec.id]
+                      return (
+                        <div key={rec.id} className="practice-rec-card">
+                          <div className="practice-rec-head">
+                            <span className="practice-rec-num">Practice {i + 1}</span>
+                            <button
+                              className="bookmark-btn"
+                              title={recBookmarks.has(rec.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                              onClick={() => toggleRecBookmark(rec.id)}
+                            >
+                              {recBookmarks.has(rec.id) ? '⭐' : '☆'}
+                            </button>
+                          </div>
+                          <QuestionContext q={rec} />
+                          {rec.imageUrl && (
+                            <div className="qd-image">
+                              <img src={rec.imageUrl} alt="Question diagram" />
+                            </div>
+                          )}
+                          {rec.text && <RichText as="div" className="qd-qtext" html={rec.text} />}
+                          {!recPicked && (
+                            <div className="practice-banner">🔄 Pick an answer to check yourself</div>
+                          )}
+                          <div className="review-options qd-options">
+                            {OPTIONS.map(opt => {
+                              const isCorrectOpt = opt === rec.correctOption
+                              const isPickedOpt = opt === recPicked
+                              const cls = recPicked && isCorrectOpt ? 'correct-opt' : recPicked && isPickedOpt ? 'wrong-opt' : ''
+                              return (
+                                <div key={opt} className={`review-option ${cls}`}
+                                  style={{ cursor: recPicked ? 'default' : 'pointer' }}
+                                  onClick={() => pickRecOption(rec.id, opt)}>
+                                  <span className="option-label">{opt}</span>
+                                  <span><RichText html={optText(rec, opt)} /></span>
+                                  {recPicked && isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
+                                  {recPicked && isPickedOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your pick</span>}
+                                </div>
+                              )
+                            })}
+                          </div>
+                          {recPicked && (
+                            <div className="qd-practice-verdict" style={{ color: recPicked === rec.correctOption ? '#16a34a' : '#dc2626' }}>
+                              {recPicked === rec.correctOption ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
+                            </div>
+                          )}
+                          {recPicked && (
+                            <div className="qd-practice-actions">
+                              <button className="btn btn-ghost btn-sm" onClick={() => retryRec(rec.id)}>Try again</button>
+                            </div>
+                          )}
+                          {recPicked && rec.solution && (
+                            <div className="qd-solution">
+                              <div className="qd-solution-title">💡 Solution</div>
+                              <RichText as="div" className="sol-explain-text" html={rec.solution} />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {onReport && (
