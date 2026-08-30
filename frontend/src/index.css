@@ -2169,6 +2169,18 @@ select.input { cursor: pointer; }
    the real thing does not have a dark mode, and a contest should look the
    same to everyone. */
 
+/* Shared components rendered inside a room — passages, data tables, rich text —
+   style themselves from the theme variables. The rooms are deliberately fixed
+   light, so the light values are pinned here; without this a candidate on the
+   dark theme gets light-grey text on the room's white paper. */
+.xr, .xs {
+  --bg: #f1f5f9; --surface: #ffffff; --surface-raised: #f8fafc; --border: #e2e8f0;
+  --text: #334155; --text-muted: #64748b; --heading: #0f172a;
+  --primary: #2563eb; --primary-hover: #1d4ed8; --primary-light: #eff6ff;
+  --danger: #dc2626; --danger-light: #fef2f2;
+  --success: #16a34a; --success-light: #f0fdf4; --warning: #d97706;
+}
+
 .xr { min-height: 100vh; background: #fff; display: flex; flex-direction: column; }
 
 /* ── Top bar: identity and clock ─────────────────────────────────────── */
@@ -2194,6 +2206,7 @@ select.input { cursor: pointer; }
   width: 34px; height: 30px; border-radius: 4px; font-size: 14px; line-height: 1;
 }
 .xr-iconbtn:hover { background: #eff6ff; }
+.xr-tools { display: flex; gap: 4px; }
 .xr-clock { text-align: center; }
 .xr-clock-label { font-size: 12px; color: #334155; }
 .xr-clock-value {
@@ -2242,7 +2255,11 @@ select.input { cursor: pointer; }
 /* ── Body: question pane + palette ───────────────────────────────────── */
 .xr-body { flex: 1; display: grid; grid-template-columns: 1fr 300px; align-items: start; }
 .xr-main { padding: 14px 18px 40px; min-width: 0; }
-.xr-qno { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+.xr-qno {
+  font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.xr-qmeta { font-size: 12px; font-weight: 400; color: #64748b; font-variant-numeric: tabular-nums; }
 .xr-card { border: 1px solid #cbd5e1; border-radius: 2px; }
 .xr-card-head {
   display: flex; align-items: center; justify-content: flex-end; gap: 14px;
@@ -2311,8 +2328,11 @@ select.input { cursor: pointer; }
 
 /* ── Phones: same interface, stacked ─────────────────────────────────── */
 @media (max-width: 860px) {
-  .xr-top { grid-template-columns: 1fr auto; row-gap: 6px; }
+  .xr-top { grid-template-columns: auto 1fr; row-gap: 6px; }
   .xr-title { grid-column: 1 / -1; order: 3; text-align: left; }
+  /* The centre title already carries the paper name on a phone, so the brand
+     line repeating it only steals room from the clock. */
+  .xr-brand-sub { display: none; }
   .xr-photos { display: none; }
   .xr-actions { grid-template-columns: 1fr; row-gap: 8px; }
   .xr-actions-mid { justify-content: flex-start; }
@@ -2332,3 +2352,229 @@ select.input { cursor: pointer; }
    colouring it, because a candidate heads-down on a question will not glance up. */
 .xr-clock-value.warn { background: #fee2e2; animation: xr-pulse 1s steps(2, end) infinite; }
 @keyframes xr-pulse { 50% { background: #fecaca; } }
+
+/* ── Section tabs, section clock and banners (contest only) ──────────── */
+.xr-sections {
+  display: flex; gap: 6px; padding: 6px 16px; overflow-x: auto;
+  border-bottom: 1px solid #cbd5e1; background: #f8fafc;
+}
+.xr-sec {
+  border: 1px solid #cbd5e1; background: #fff; color: #334155; cursor: pointer;
+  padding: 5px 14px; border-radius: 3px 3px 0 0; font-size: 12.5px; font-weight: 600;
+  font-family: inherit; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+}
+.xr-sec.active { background: #2563eb; border-color: #1d4ed8; color: #fff; }
+.xr-sec.submitted { background: #dcfce7; border-color: #86efac; color: #166534; }
+.xr-sec.submitted.active { background: #15803d; border-color: #166534; color: #fff; }
+.xr-sec:disabled { opacity: .6; cursor: not-allowed; }
+.xr-secclock { text-align: center; }
+.xr-secclock-label { font-size: 11px; color: #475569; }
+.xr-secclock-value {
+  font-size: 15px; font-weight: 700; color: #0f172a;
+  font-variant-numeric: tabular-nums; letter-spacing: .5px;
+}
+.xr-secclock-value.warn { color: #b91c1c; }
+.xr-banner {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 16px; font-size: 12.5px; border-bottom: 1px solid #cbd5e1;
+  background: #fef9c3; color: #713f12;
+}
+.xr-banner-warn { background: #fee2e2; color: #7f1d1d; }
+.xr-banner button {
+  border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer;
+  font: inherit; font-weight: 700; padding: 2px 10px; border-radius: 3px;
+}
+
+/* ══ Mock room ═══════════════════════════════════════════════════════════
+   The SSC practice interface: zoom controls, a pausable clock and an
+   analytics panel. A separate look from the contest room above because the
+   two imitate two different real screens. Fixed light colours for the same
+   reason — the real thing has one appearance. */
+
+.xs { min-height: 100vh; background: #fff; display: flex; flex-direction: column; color: #1a1a1a; }
+
+/* ── Top bar ─────────────────────────────────────────────────────────── */
+.xs-top {
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center;
+  gap: 14px; padding: 6px 14px; border-bottom: 2px solid #d0d0d0; background: #fff;
+}
+.xs-tools { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.xs-tools-row { display: flex; gap: 6px; }
+.xs-tool {
+  background: #2f4bc7; color: #fff; border: 1px solid #24399c; cursor: pointer;
+  padding: 4px 14px; border-radius: 4px; font-size: 13px; font-weight: 700; font-family: inherit;
+  white-space: nowrap;
+}
+.xs-tool:hover:not(:disabled) { background: #24399c; }
+.xs-tool:disabled { opacity: .45; cursor: not-allowed; }
+.xs-tool-wide { background: #fff; color: #24399c; border-color: #9aa8de; padding: 2px 12px; font-weight: 600; }
+.xs-tool-wide:hover:not(:disabled) { background: #eef1fc; }
+.xs-title {
+  text-align: center; font-size: 19px; font-weight: 700; color: #111;
+  line-height: 1.25; min-width: 0;
+}
+.xs-topright { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.xs-clock { font-size: 16px; white-space: nowrap; }
+.xs-clock-label { font-weight: 700; color: #111; }
+.xs-clock-value {
+  font-weight: 700; color: #d32f2f; font-variant-numeric: tabular-nums; letter-spacing: .5px;
+}
+.xs-clock-value.warn { animation: xs-pulse 1s steps(2, end) infinite; }
+@keyframes xs-pulse { 50% { opacity: .25; } }
+.xs-pause {
+  background: none; border: none; cursor: pointer; font: inherit; font-size: 14px;
+  color: #333; display: inline-flex; align-items: center; gap: 6px; padding: 0;
+}
+.xs-pause-icon {
+  width: 20px; height: 20px; border: 2px solid #666; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 8px; color: #666; letter-spacing: -1px;
+}
+.xs-pause:hover .xs-pause-icon { border-color: #2f4bc7; color: #2f4bc7; }
+.xs-avatar {
+  width: 74px; height: 62px; background: #b9b9b9;
+  display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+}
+.xs-avatar svg { width: 56px; height: 56px; fill: #6b6b6b; }
+
+/* ── Action strip ────────────────────────────────────────────────────── */
+.xs-actions {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; padding: 6px 14px 10px; flex-wrap: wrap;
+}
+.xs-actions-left { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.xs-link {
+  background: none; border: none; padding: 0; cursor: pointer; font: inherit;
+  font-size: 15px; font-weight: 700; color: #c62828; text-decoration: underline;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.xs-section-tag {
+  background: #43a047; color: #fff; font-size: 14px; font-weight: 700;
+  padding: 6px 16px; border-radius: 3px;
+}
+.xs-actions-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.xs-answered { font-size: 14px; font-weight: 700; color: #111; }
+.xs-answered b { color: #ef6c00; }
+.xs-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.xs-btn {
+  background: #2f4bc7; color: #fff; border: 1px solid #24399c; cursor: pointer;
+  padding: 6px 16px; border-radius: 4px; font-size: 14px; font-weight: 700; font-family: inherit;
+}
+.xs-btn:hover:not(:disabled) { background: #24399c; }
+.xs-btn:disabled { opacity: .45; cursor: not-allowed; }
+.xs-btn-danger { background: #c62828; border-color: #9c1f1f; }
+.xs-btn-danger:hover:not(:disabled) { background: #9c1f1f; }
+
+/* ── Body ────────────────────────────────────────────────────────────── */
+.xs-body { flex: 1; display: grid; grid-template-columns: 1fr 300px; align-items: start; }
+.xs-main { padding: 4px 14px 40px; min-width: 0; }
+.xs-card { border: 1px solid #b8b8b8; background: #fff; min-height: 60vh; }
+.xs-card-head {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 14px; border-bottom: 1px solid #b8b8b8;
+}
+.xs-qno { font-size: 17px; font-weight: 700; color: #111; }
+.xs-qmeta { font-size: 12px; color: #666; font-variant-numeric: tabular-nums; }
+.xs-langsel {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 700; color: #111;
+}
+.xs-langsel select {
+  border: 1px solid #b8b8b8; border-radius: 3px; padding: 3px 8px;
+  font-size: 14px; font-weight: 400; font-family: inherit; background: #fff; color: #111;
+}
+.xs-report {
+  background: none; border: none; cursor: pointer; font: inherit;
+  font-size: 13px; color: #666;
+}
+.xs-report:hover { color: #c62828; }
+.xs-qbody { padding: 16px 18px 24px; }
+.xs-qtext { font-size: 16px; line-height: 1.7; color: #111; margin-bottom: 18px; }
+.xs-opts { display: flex; flex-direction: column; gap: 4px; }
+.xs-opt {
+  display: flex; align-items: flex-start; gap: 8px; cursor: pointer;
+  font-size: 16px; line-height: 1.6; color: #111; padding: 3px 4px; border-radius: 3px;
+}
+.xs-opt:hover { background: #f4f6fd; }
+.xs-opt.sel { background: #e8ecfb; }
+.xs-opt.locked { cursor: default; }
+.xs-opt input { margin: 5px 0 0; accent-color: #2f4bc7; flex-shrink: 0; }
+.xs-opt-letter { flex-shrink: 0; }
+.xs-hint { margin-top: 14px; font-size: 11.5px; color: #888; display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* ── Palette and analytics ───────────────────────────────────────────── */
+.xs-side { padding: 4px 14px 40px; background: #fff; }
+.xs-side-head {
+  font-size: 15px; font-weight: 700; color: #111; text-align: center; margin-bottom: 12px;
+}
+.xs-side::before {
+  content: '▶'; display: block; color: #2f4bc7; font-size: 26px; line-height: 1; margin-bottom: 6px;
+}
+.xs-palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px 8px; margin-bottom: 22px; }
+.xs-cell {
+  height: 26px; border: 1px solid #24399c; background: #2f4bc7; color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; font-family: inherit;
+}
+.xs-cell.answered { background: #2e7d32; border-color: #1b5e20; }
+.xs-cell.marked { background: #6a1b9a; border-color: #4a148c; }
+.xs-cell.answered-marked { background: #6a1b9a; border-color: #1b5e20; box-shadow: inset 0 -4px 0 #2e7d32; }
+.xs-cell.not-answered { background: #c62828; border-color: #9c1f1f; }
+.xs-cell.current { outline: 2px solid #111; outline-offset: 1px; }
+.xs-cell:disabled { opacity: .5; cursor: not-allowed; }
+
+.xs-analytics { border: 1px solid #b8b8b8; }
+.xs-analytics-head {
+  background: #8e8e8e; color: #fff; text-align: center;
+  font-size: 14px; font-weight: 700; padding: 4px;
+}
+.xs-analytics-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 13.5px; color: #111; border-top: 1px solid #b8b8b8;
+}
+.xs-analytics-row span { padding: 7px 10px; flex: 1; }
+.xs-analytics-row b {
+  color: #ef6c00; padding: 7px 0; width: 46px; text-align: center;
+  border-left: 1px solid #b8b8b8; align-self: stretch;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Paused ──────────────────────────────────────────────────────────── */
+/* The scrim alone left the question legible underneath, which made "the paper
+   is hidden" untrue and turned pause into free reading time. Blurring the
+   paper is what actually enforces it; the scrim is only there to darken. */
+.xs.paused .xs-body { filter: blur(14px); user-select: none; pointer-events: none; }
+.xs-paused {
+  position: fixed; inset: 0; z-index: 1000; background: rgba(17, 17, 17, .88);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.xs-paused-box {
+  background: #fff; padding: 28px 30px; border-radius: 6px; max-width: 380px;
+  text-align: center; display: flex; flex-direction: column; gap: 12px;
+}
+.xs-paused-title { font-size: 20px; font-weight: 700; color: #111; }
+.xs-paused-box p { font-size: 14px; color: #555; line-height: 1.6; margin: 0; }
+
+/* ── Phones: same interface, stacked ─────────────────────────────────── */
+@media (max-width: 860px) {
+  .xs-top { grid-template-columns: 1fr auto auto; row-gap: 8px; padding: 8px 12px; }
+  .xs-title { grid-column: 1 / -1; order: 4; text-align: left; font-size: 16px; }
+  .xs-tools { align-items: flex-start; }
+  .xs-avatar { display: none; }
+  .xs-actions { flex-direction: column; align-items: stretch; padding: 8px 12px; }
+  .xs-actions-right { align-items: stretch; }
+  .xs-answered { text-align: left; }
+  .xs-btns { justify-content: flex-start; }
+  /* Palette above the question on a phone: it is how you navigate, and burying
+     it below a long question would hide the only way around. */
+  .xs-body { grid-template-columns: 1fr; }
+  .xs-side { order: -1; border-bottom: 1px solid #b8b8b8; padding: 4px 12px 14px; }
+  .xs-palette { grid-template-columns: repeat(8, 1fr); margin-bottom: 14px; }
+  .xs-main { padding: 10px 12px 40px; }
+  .xs-card { min-height: 0; }
+}
+@media (max-width: 420px) {
+  .xs-palette { grid-template-columns: repeat(6, 1fr); }
+  .xs-title { font-size: 15px; }
+  .xs-clock { font-size: 14px; }
+}

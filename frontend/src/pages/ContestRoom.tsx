@@ -4,7 +4,8 @@ import api from '../lib/api'
 import type { Contest, Question } from '../lib/types'
 import InstructionsModal from '../components/InstructionsModal'
 import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
-import LanguageToggle from '../components/LanguageToggle'
+import ExamShell, { type SectionTab } from '../components/ExamShell'
+import { rollNumber } from '../lib/rollNumber'
 import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import SectionCompleteModal from '../components/SectionCompleteModal'
@@ -63,7 +64,9 @@ export default function ContestRoom() {
   const [currentSection, setCurrentSection] = useState<string>('QUANT')
   const [currentQId, setCurrentQId] = useState<string>('')
   const confirm = useConfirm()
-  const isAdmin = JSON.parse(localStorage.getItem('user') || '{}').role === 'ADMIN'
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+  const isAdmin = storedUser.role === 'ADMIN'
+  const userId: string = storedUser.id ?? ''
   const [phase, setPhase] = useState<Phase>('loading')
   const [timeLeft, setTimeLeft] = useState(0)
   const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
@@ -548,10 +551,24 @@ export default function ContestRoom() {
   const secTimeLeft = getSectionTimeLeft(currentSection)
   const secTimeWarn = secTimeLeft > 0 && secTimeLeft < 120
 
-  const sectionStats = {
-    answered: sectionQs.filter(q => answers[q.id]).length,
-    marked: sectionQs.filter(q => markedForReview.has(q.id)).length,
+  // The analysis panel's four counts are disjoint, one per palette colour, so
+  // they add up to the visited questions rather than double-counting anything
+  // that is both answered and marked.
+  const sectionStates = sectionQs.map(q => getQState(q.id, answers, markedForReview, visited))
+  const analysisStats = {
+    answered: sectionStates.filter(s => s === 'answered').length,
+    notAnswered: sectionStates.filter(s => s === 'not-answered').length,
+    marked: sectionStates.filter(s => s === 'marked').length,
+    answeredMarked: sectionStates.filter(s => s === 'answered-marked').length,
   }
+
+  // A section is reachable once every earlier one is closed; already-submitted
+  // sections stay reachable, read-only, so a candidate can look back.
+  const sectionTabs: SectionTab[] = availableSections.map(s => ({
+    key: s,
+    label: SECTION_LABELS[s] ?? s,
+    state: submittedSections.has(s) ? 'submitted' : canAccessSection(s) ? 'open' : 'locked',
+  }))
 
   // Avg time tracking (feature 7)
   const visitedWithTime = Object.keys(timeSpent)
@@ -572,8 +589,146 @@ export default function ContestRoom() {
   }
 
   return (
-    <div className="room-layout">
+    <>
+      <ExamShell
+        title={contest.title}
+        rollNumber={rollNumber(userId, contestId ?? '')}
+        timeLeft={phase === 'ended' ? 'Time Up' : formatTime(timeLeft)}
+        timeWarn={isWarn}
+        partLabel={SECTION_LABELS[currentSection] ?? currentSection}
+        sectionTimeLeft={!isSectionLocked && currentSectionTimeSecs > 0 ? formatTime(secTimeLeft) : undefined}
+        sectionTimeWarn={secTimeWarn}
+        sections={sectionTabs}
+        currentSection={currentSection}
+        onSectionSelect={sec => {
+          const firstQ = sectionQuestions[sec]?.[0]
+          if (firstQ) goToQuestion(firstQ.id, sec)
+        }}
+        language={language}
+        onLanguageChange={switchLanguage}
+        langBusy={langBusy}
+        onInstructions={() => setShowInstructions(true)}
+        onReport={() => setReportQId(currentQ.id)}
+        onSubmit={() => setShowSubmitModal(true)}
+        submitLabel={submitting ? 'Submitting…' : 'Submit Test'}
+        answeredCount={Object.keys(answers).length}
+        stats={analysisStats}
+        extraStats={avgTimeSecs > 0 ? [{ label: 'Avg / Question', value: `${avgTimeSecs}s` }] : undefined}
+        analysisLabel={SECTION_LABELS[currentSection] ?? currentSection}
+        palette={sectionQs.map((q, i) => ({ id: q.id, label: i + 1, state: sectionStates[i] }))}
+        currentId={currentQ.id}
+        onSelect={qid => goToQuestion(qid, currentSection)}
+        questionNo={idxInSection + 1}
+        questionMeta={<>of {sectionQs.length} · +{currentQ.marks} / −{currentQ.negativeMarks}</>}
+        topRightExtra={
+          <div className="xr-tools">
+            <button className="xr-iconbtn" onClick={() => setShowCalc(c => !c)} title="Calculator">🧮</button>
+            <button className="xr-iconbtn" title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              onClick={() => {
+                if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+                else document.documentElement.requestFullscreen().catch(() => {})
+              }}>
+              {isFullscreen ? '⊡' : '⛶'}
+            </button>
+            <button className="xr-iconbtn" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
+              onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>
+              {muted ? '🔇' : '🔊'}
+            </button>
+          </div>
+        }
+        banner={
+          <>
+            {/* Both anti-cheat signals stay visible rather than living in a
+                toast: a candidate who has drifted out of fullscreen needs to
+                see that fact for as long as it is true. */}
+            {showFsWarning && (
+              <div className="xr-banner xr-banner-warn">
+                <span>You have left fullscreen. The exam is meant to be taken in fullscreen.</span>
+                <button onClick={() => { document.documentElement.requestFullscreen().catch(() => {}); setShowFsWarning(false) }}>
+                  Return to fullscreen
+                </button>
+              </div>
+            )}
+            {tabSwitches > 0 && (
+              <div className="xr-banner">
+                ⚠️ {tabSwitches} tab switch{tabSwitches > 1 ? 'es' : ''} recorded.
+              </div>
+            )}
+            {isSectionLocked && (() => {
+              const nextSec = availableSections.find(s => !submittedSections.has(s))
+              return (
+                <div className="xr-banner">
+                  <span>✓ {SECTION_LABELS[currentSection]} submitted — answers are locked.</span>
+                  {nextSec && (
+                    <button onClick={() => {
+                      const firstQ = sectionQuestions[nextSec]?.[0]
+                      if (firstQ) goToQuestion(firstQ.id, nextSec)
+                    }}>
+                      Go to {SECTION_LABELS[nextSec]}
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
+          </>
+        }
+        actions={
+          <>
+            <button className="xr-btn xr-btn-plain" disabled={idxInSection === 0}
+              onClick={() => { const prev = sectionQs[idxInSection - 1]; if (prev) goToQuestion(prev.id, currentSection) }}>
+              Previous
+            </button>
+            {!isSectionLocked && phase === 'active' && (
+              <>
+                <button className="xr-btn xr-btn-plain" onClick={markReviewNext}
+                  title="Mark this question for review and move to the next">
+                  Mark for Review
+                </button>
+                <button className="xr-btn xr-btn-plain" disabled={!answers[currentQ.id]}
+                  onClick={() => clearAnswer(currentQ.id)}>
+                  Clear Response
+                </button>
+              </>
+            )}
+            <button className="xr-btn" disabled={isLastInSection} onClick={saveAndNext}>
+              Save &amp; Next
+            </button>
+            {/* On the last open section there is nothing to move on to, so the
+                shell's Submit Test is the only button that ends the paper —
+                locking one more section would drop the candidate on a
+                checkpoint with only one way out. */}
+            {!isSectionLocked && phase === 'active' && !isFinalSection && (
+              <button className="xr-btn xr-btn-plain" onClick={() => submitSection(currentSection)}>
+                Submit {SECTION_LABELS[currentSection]} ✓
+              </button>
+            )}
+          </>
+        }
+      >
+        <div className="xr-qtext">
+          <QuestionContent q={currentQ} />
+        </div>
+
+        <div className="xr-opts">
+          {OPTIONS.map(opt => (
+            <label key={opt} className={`xr-opt ${answers[currentQ.id] === opt ? 'sel' : ''} ${isSectionLocked ? 'locked' : ''}`}>
+              <input
+                type="radio"
+                name={`q-${currentQ.id}`}
+                checked={answers[currentQ.id] === opt}
+                disabled={isSectionLocked || phase !== 'active'}
+                onChange={() => selectAnswer(currentQ.id, opt)}
+              />
+              <span>{opt}.</span>
+              <span><RichText html={optionText(currentQ, opt)} /></span>
+            </label>
+          ))}
+        </div>
+      </ExamShell>
+
       {/* ── Instructions modal (feature 1) ───────────────────────── */}
+      {/* Also reachable from the INSTRUCTIONS link mid-exam, where it has no
+          Start button and only closes. */}
       {showInstructions && (
         <InstructionsModal
           language={language}
@@ -581,11 +736,11 @@ export default function ContestRoom() {
           contest={contest}
           sections={availableSections}
           sectionTimeMinutes={Math.floor(getSectionTimeSecs(availableSections[0] ?? 'QUANT') / 60)}
-          onStart={startExam}
+          onStart={examStarted ? undefined : startExam}
+          onClose={() => setShowInstructions(false)}
         />
       )}
 
-      {/* ── Submit confirmation modal (feature 4) ────────────────── */}
       {/* Between-sections checkpoint. Sits above the room but below the final
           submit modal, which supersedes it once the candidate is finishing. */}
       {sectionDone && !showSubmitModal && (() => {
@@ -608,6 +763,7 @@ export default function ContestRoom() {
         )
       })()}
 
+      {/* ── Submit confirmation modal (feature 4) ────────────────── */}
       {showSubmitModal && (
         <SubmitModal
           sections={getSectionSummaries()}
@@ -629,228 +785,6 @@ export default function ContestRoom() {
           onClose={() => setReportQId(null)}
         />
       )}
-
-      {/* ── Header ───────────────────────────────────────────────── */}
-      <div className="room-header">
-        <span className="room-title">{contest.title}</span>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {/* Tab-switch count (feature 5) */}
-          {tabSwitches > 0 && (
-            <span className="tab-switch-badge" title="Number of times you left this tab">
-              ⚠️ {tabSwitches} tab switch{tabSwitches > 1 ? 'es' : ''}
-            </span>
-          )}
-
-          {/* Fullscreen warning (feature 6) */}
-          {showFsWarning && (
-            <span className="fs-warning">
-              Exited fullscreen —{' '}
-              <button onClick={() => { document.documentElement.requestFullscreen().catch(() => {}); setShowFsWarning(false) }}>
-                Return
-              </button>
-            </span>
-          )}
-
-          {/* Calculator toggle */}
-          <button className="btn btn-ghost btn-sm" onClick={() => setShowCalc(c => !c)} title="Calculator">
-            🧮
-          </button>
-
-          {/* Fullscreen toggle (feature 6) */}
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => {
-              if (document.fullscreenElement) document.exitFullscreen()
-              else document.documentElement.requestFullscreen().catch(() => {})
-            }}
-            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          >
-            {isFullscreen ? '⊡' : '⛶'}
-          </button>
-        </div>
-
-        <LanguageToggle value={language} onChange={switchLanguage} busy={langBusy} />
-
-        <button className="mock-mute-btn" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
-          onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>
-          {muted ? '🔇' : '🔊'}
-        </button>
-
-        <span className={`timer ${isWarn ? 'timer-warn' : 'timer-ok'}`}>
-          {phase === 'ended' ? 'Time Up' : formatTime(timeLeft)}
-        </span>
-
-        <button className="btn btn-danger btn-sm" onClick={() => setShowSubmitModal(true)} disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit Test'}
-        </button>
-      </div>
-
-      <div className="room-body">
-        {/* ── Sidebar ──────────────────────────────────────────────── */}
-        <div className="room-sidebar">
-          {/* Section tabs */}
-          <div className="sidebar-sections">
-            {availableSections.map(sec => {
-              const accessible = canAccessSection(sec)
-              const isSubmitted = submittedSections.has(sec)
-              return (
-                <button
-                  key={sec}
-                  className={`sidebar-sec-btn ${currentSection === sec ? 'active' : ''} ${isSubmitted ? 'submitted' : ''}`}
-                  disabled={!accessible}
-                  title={!accessible ? 'Submit the current section to unlock this one' : undefined}
-                  onClick={() => {
-                    const firstQ = sectionQuestions[sec]?.[0]
-                    if (firstQ) goToQuestion(firstQ.id, sec)
-                  }}
-                >
-                  {SECTION_LABELS[sec]}
-                  {isSubmitted && <span className="sec-tick">✓</span>}
-                  {!accessible && <span className="sec-lock">🔒</span>}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Section timer (feature 2) */}
-          {!isSectionLocked && currentSectionTimeSecs > 0 && (
-            <div className={`section-timer ${secTimeWarn ? 'section-timer-warn' : ''}`}>
-              <span>Section time</span>
-              <span className="section-timer-val">{formatTime(secTimeLeft)}</span>
-            </div>
-          )}
-
-          {/* Stats chips */}
-          <div className="sidebar-stats">
-            <span className="stat-chip chip-answered">{sectionStats.answered}/{sectionQs.length} answered</span>
-            {sectionStats.marked > 0 && <span className="stat-chip chip-marked">{sectionStats.marked} marked</span>}
-          </div>
-
-          {/* Question grid */}
-          <div className="q-grid">
-            {sectionQs.map((q, i) => {
-              const state = getQState(q.id, answers, markedForReview, visited)
-              return (
-                <button
-                  key={q.id}
-                  className={`q-btn qs-${state} ${q.id === currentQ.id ? 'current' : ''}`}
-                  onClick={() => goToQuestion(q.id, currentSection)}
-                  title={state.replace(/-/g, ' ')}
-                >
-                  {i + 1}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="sidebar-legend">
-            <div className="legend-item"><span className="legend-dot qs-answered" /> Answered</div>
-            <div className="legend-item"><span className="legend-dot qs-not-answered" /> Not answered</div>
-            <div className="legend-item"><span className="legend-dot qs-marked" /> Marked for review</div>
-            <div className="legend-item"><span className="legend-dot qs-answered-marked" /> Answered + Marked</div>
-            <div className="legend-item"><span className="legend-dot qs-not-visited" /> Not visited</div>
-          </div>
-
-          {/* Avg time per question (feature 7) */}
-          {avgTimeSecs > 0 && (
-            <div className="avg-time">
-              ⏱ Avg {avgTimeSecs}s / question
-            </div>
-          )}
-        </div>
-
-        {/* ── Question content ─────────────────────────────────────── */}
-        <div className="room-content">
-          {isSectionLocked && (() => {
-            const nextSec = availableSections.find(s => !submittedSections.has(s))
-            return (
-              <div className="section-locked-banner">
-                <span>✓ {SECTION_LABELS[currentSection]} submitted — answers locked</span>
-                {nextSec && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    style={{ marginLeft: 'auto' }}
-                    onClick={() => {
-                      const firstQ = sectionQuestions[nextSec]?.[0]
-                      if (firstQ) goToQuestion(firstQ.id, nextSec)
-                    }}
-                  >
-                    Next: {SECTION_LABELS[nextSec]} →
-                  </button>
-                )}
-              </div>
-            )
-          })()}
-
-          <p className="question-num">
-            Question {idxInSection + 1} of {sectionQs.length}
-            &nbsp;·&nbsp; {currentSection}
-            &nbsp;·&nbsp; +{currentQ.marks} / −{currentQ.negativeMarks}
-          </p>
-
-          {/* Exam-style action bar (above the question, like the mock room) */}
-          <div className="room-exam-bar room-exam-bar-top">
-            <div className="room-exam-left">
-              {!isSectionLocked && phase === 'active' && (
-                <>
-                  <button className={`btn btn-ghost mark-btn ${markedForReview.has(currentQ.id) ? 'mark-active' : ''}`}
-                    onClick={markReviewNext}>
-                    🔖 Mark for Review &amp; Next
-                  </button>
-                  <button className="btn btn-ghost" style={{ color: 'var(--danger)' }}
-                    disabled={!answers[currentQ.id]} onClick={() => clearAnswer(currentQ.id)}>
-                    Clear Response
-                  </button>
-                </>
-              )}
-              <button className="btn btn-ghost" style={{ fontSize: 13, color: 'var(--text-muted)' }}
-                onClick={() => setReportQId(currentQ.id)} title="Report a problem with this question">
-                ⚑ Report
-              </button>
-            </div>
-            <div className="room-exam-right">
-              <button className="btn btn-ghost" disabled={idxInSection === 0}
-                onClick={() => { const prev = sectionQs[idxInSection - 1]; if (prev) goToQuestion(prev.id, currentSection) }}>
-                ← Previous
-              </button>
-              {/* On the last section there is nothing to move on to, so the
-                  button ends the paper instead of locking one more section and
-                  dropping the candidate on a checkpoint with only one way out. */}
-              {!isSectionLocked && phase === 'active' && (
-                isFinalSection ? (
-                  <button className="btn btn-danger" onClick={() => setShowSubmitModal(true)} disabled={submitting}>
-                    Submit Test ✓
-                  </button>
-                ) : (
-                  <button className="btn room-submit-section-btn" onClick={() => submitSection(currentSection)}>
-                    Submit {SECTION_LABELS[currentSection]} ✓
-                  </button>
-                )
-              )}
-              <button className="btn btn-primary" disabled={isLastInSection} onClick={saveAndNext}>
-                Save &amp; Next →
-              </button>
-            </div>
-          </div>
-
-          <QuestionContent q={currentQ} />
-
-          <div className="options">
-            {OPTIONS.map(opt => (
-              <div
-                key={opt}
-                className={`option ${answers[currentQ.id] === opt ? 'selected' : ''} ${isSectionLocked ? 'locked' : ''}`}
-                onClick={() => !isSectionLocked && phase === 'active' && selectAnswer(currentQ.id, opt)}
-              >
-                <span className="option-label">{opt}</span>
-                <span className="option-text"><RichText html={optionText(currentQ, opt)} /></span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   )
 }

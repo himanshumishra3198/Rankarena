@@ -2,15 +2,15 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import LanguagePicker from '../components/LanguagePicker'
-import LanguageToggle from '../components/LanguageToggle'
 import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
 import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import type { MockTestData, Question } from '../lib/types'
 import { QuestionContent } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
+import ExamShellSSC from '../components/ExamShellSSC'
+import type { PaletteCell } from '../components/ExamShell'
 import { unlockAudio, playLowTimeAlert, playTick, playTimeUp } from '../lib/sound'
-import { getTheme, toggleTheme } from '../lib/theme'
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
@@ -20,6 +20,11 @@ const SUBJECT_LABELS: Record<string, string> = {
   QUANT: 'Quantitative Aptitude', REASONING: 'General Intelligence & Reasoning',
   ENGLISH: 'English Language', GK: 'General Awareness',
 }
+
+const ZOOM_MIN = 80
+const ZOOM_MAX = 150
+const ZOOM_STEP = 10
+const ZOOM_KEY = 'examZoom'
 
 type QState = 'not-visited' | 'not-answered' | 'answered' | 'marked' | 'answered-marked'
 
@@ -45,6 +50,105 @@ function formatTime(secs: number) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+/**
+ * The instructions sheet.
+ *
+ * Shown as a gate before the clock starts, and again from the INSTRUCTIONS
+ * link during the paper — the same screen either way, so nothing a candidate
+ * read at the start is unavailable once they are mid-test. `onStart` is what
+ * distinguishes the two: with it the sheet begins the paper, without it it
+ * simply closes.
+ */
+function MockInstructions({
+  mock, questionCount, totalMarks, language, onLanguageChange, onStart, onClose,
+}: {
+  mock: MockTestData
+  questionCount: number
+  totalMarks: number
+  language: Language
+  onLanguageChange: (l: Language) => void
+  onStart?: () => void
+  onClose?: () => void
+}) {
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box instructions-modal">
+        <div className="instructions-header">
+          <h2>{mock.title}</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>
+            {SUBJECT_LABELS[mock.subject] ?? mock.subject} · Read the instructions before you begin
+          </p>
+        </div>
+
+        <div className="instructions-meta-grid">
+          <div className="instructions-meta-item">
+            <span className="meta-label">Duration</span>
+            <span className="meta-value">{mock.durationMinutes} minutes</span>
+          </div>
+          <div className="instructions-meta-item">
+            <span className="meta-label">Questions</span>
+            <span className="meta-value">{questionCount}</span>
+          </div>
+          <div className="instructions-meta-item">
+            <span className="meta-label">Total Marks</span>
+            <span className="meta-value">{totalMarks}</span>
+          </div>
+          <div className="instructions-meta-item">
+            <span className="meta-label">Negative Marking</span>
+            <span className="meta-value" style={{ color: 'var(--danger)' }}>−{mock.negativeMarks} per wrong</span>
+          </div>
+        </div>
+
+        <div className="instructions-rules">
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>Rules &amp; Marking Scheme</h3>
+          <ol className="rules-list">
+            <li>You have <strong>{mock.durationMinutes} minutes</strong> to attempt <strong>{questionCount} questions</strong>. The test <strong>auto-submits</strong> when the timer hits zero.</li>
+            <li>Each correct answer earns its marks; every wrong answer deducts <strong>−{mock.negativeMarks}</strong>. Unanswered questions score <strong>0</strong>.</li>
+            <li>Use <strong>Mark for Review</strong> to flag tricky questions — they'll be highlighted in your result so you can revisit them.</li>
+            <li>You can navigate freely between questions and change answers any time before submitting.</li>
+            <li>Use <strong>Pause Test</strong> to stop the clock and hide the paper — this is practice, so take a break whenever you need one.</li>
+            <li><strong>Zoom (+)</strong> and <strong>Zoom (−)</strong> resize the question if the text is hard to read.</li>
+            <li>Spotted a mistake in a question? Use <strong>⚑ Report</strong> to flag it for our team.</li>
+            <li>This is a practice mock — your score is <strong>not rated</strong> and you can retake it anytime.</li>
+          </ol>
+        </div>
+
+        <div className="instructions-legend">
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Question Status Colors</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 13 }}>
+            {[
+              { cls: 'qs-not-visited',     label: 'Not Visited' },
+              { cls: 'qs-not-answered',    label: 'Not Answered' },
+              { cls: 'qs-answered',        label: 'Answered' },
+              { cls: 'qs-marked',          label: 'Marked for Review' },
+              { cls: 'qs-answered-marked', label: 'Answered + Marked' },
+            ].map(({ cls, label }) => (
+              <div key={cls} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className={`legend-dot ${cls}`} />
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {onStart ? (
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <LanguagePicker value={language} onChange={onLanguageChange} />
+            <button className="btn btn-primary btn-full" onClick={onStart}>
+              I'm Ready — Start Test →
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button className="btn btn-primary btn-full" onClick={onClose}>Back to the test</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function MockRoom() {
   const { id } = useParams<{ id: string }>()
   const confirm = useConfirm()
@@ -53,8 +157,8 @@ export default function MockRoom() {
 
   const [mock, setMock] = useState<MockTestData | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
-  // Fixed when the paper starts; submitted with the attempt so the review
-  // afterwards reads in the same language.
+  // Chosen before the clock starts and changeable mid-paper; submitted with the
+  // attempt so the review afterwards reads in the same language.
   const [language, setLanguage] = useState<Language>(getPreferredLanguage())
   const [phase, setPhase] = useState<Phase>('loading')
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -63,11 +167,16 @@ export default function MockRoom() {
   const [visited, setVisited] = useState<Set<string>>(new Set())
   const [timeLeft, setTimeLeft] = useState(0)
   const [showSubmit, setShowSubmit] = useState(false)
+  const [showInstructions, setShowInstructions] = useState(false)
   const [reportQId, setReportQId] = useState<string | null>(null)
   const [muted, setMuted] = useState(() => localStorage.getItem('mockMuted') === '1')
   const [isFull, setIsFull] = useState(false)
   const [qSeconds, setQSeconds] = useState(0) // live seconds on the current question
-  const [dark, setDark] = useState(() => getTheme() === 'dark')
+  const [paused, setPaused] = useState(false)
+  const [zoomPct, setZoomPct] = useState(() => {
+    const saved = Number(localStorage.getItem(ZOOM_KEY))
+    return saved >= ZOOM_MIN && saved <= ZOOM_MAX ? saved : 100
+  })
 
   const draftKey = `mockDraft:${id}`
   const timeSpent = useRef<Record<string, number>>({})
@@ -95,9 +204,14 @@ export default function MockRoom() {
               setVisited(new Set(d.visited ?? [data.questions[idx]?.id].filter(Boolean)))
               timeSpent.current = d.timeSpent ?? {}
               setCurrentIdx(idx)
-              // Strict timer: subtract real time elapsed while the tab was closed.
-              const elapsedAway = d.savedAt ? Math.floor((Date.now() - d.savedAt) / 1000) : 0
+              // Strict timer: subtract real time elapsed while the tab was
+              // closed — unless the test was paused when they left, in which
+              // case the clock was already stopped and stays stopped.
+              const wasPaused = !!d.paused
+              const elapsedAway = !wasPaused && d.savedAt ? Math.floor((Date.now() - d.savedAt) / 1000) : 0
               setTimeLeft(Math.max(0, (d.timeLeft ?? data.durationMinutes * 60) - elapsedAway))
+              setPaused(wasPaused)
+              if (d.language === 'EN' || d.language === 'HI') setLanguage(d.language)
               lastTickQ.current = data.questions[idx]?.id ?? ''
               lastTickTime.current = Date.now()
               setPhase('active')
@@ -114,6 +228,17 @@ export default function MockRoom() {
       })
       .catch(() => navigate('/mocks'))
   }, [id, navigate])
+
+  // A restored draft carries its own language, so re-read the paper in it.
+  const restoredLangRef = useRef(false)
+  useEffect(() => {
+    if (phase !== 'active' || restoredLangRef.current) return
+    restoredLangRef.current = true
+    if (language === 'EN') return
+    api.get(`/mocks/${id}`, { params: { language } })
+      .then(res => { if (res.data?.questions) setQuestions(res.data.questions) })
+      .catch(() => { /* keep the English paper already loaded */ })
+  }, [phase, language, id])
 
   // ── Accumulate time on the current question ─────────────────────────
   const flushTime = useCallback(() => {
@@ -154,6 +279,7 @@ export default function MockRoom() {
       const res = await api.get(`/mocks/${id}`, { params: { language } })
       if (res.data?.questions) setQuestions(res.data.questions)
     } catch { /* keep whatever was already loaded */ }
+    restoredLangRef.current = true
     lastTickQ.current = currentQ?.id ?? ''
     lastTickTime.current = Date.now()
     unlockAudio()
@@ -195,19 +321,25 @@ export default function MockRoom() {
       setPhase('active')
       notify('Submission failed', 'Something went wrong sending your answers. Please try again.')
     }
-  }, [answers, marked, id, navigate, flushTime])
+  }, [answers, marked, language, id, navigate, flushTime])
 
   // ── Countdown ───────────────────────────────────────────────────────
+  // Read through a ref rather than depending on `submit` directly. `submit`
+  // changes identity whenever an answer or a mark does, and depending on it
+  // tore the interval down and started a fresh second on every click — a
+  // candidate answering faster than once a second never lost any time at all.
+  const submitRef = useRef(submit)
+  submitRef.current = submit
   useEffect(() => {
-    if (phase !== 'active') return
+    if (phase !== 'active' || paused) return
     const iv = setInterval(() => {
       setTimeLeft(t => {
-        if (t <= 1) { clearInterval(iv); submit(); return 0 }
+        if (t <= 1) { clearInterval(iv); submitRef.current(); return 0 }
         return t - 1
       })
     }, 1000)
     return () => clearInterval(iv)
-  }, [phase, submit])
+  }, [phase, paused])
 
   // Unlock audio on the first user interaction in the room.
   useEffect(() => {
@@ -227,10 +359,10 @@ export default function MockRoom() {
 
   // ── Keyboard shortcuts: A–D / 1–4 answer, ←/→ navigate, M mark, C clear ──
   useEffect(() => {
-    if (phase !== 'active') return
+    if (phase !== 'active' || paused) return
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || showSubmit || reportQId) return
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || showSubmit || showInstructions || reportQId) return
       const q = questions[currentIdx]
       if (!q) return
       const k = e.key.toLowerCase()
@@ -246,7 +378,7 @@ export default function MockRoom() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, currentIdx, questions, showSubmit, reportQId])
+  }, [phase, paused, currentIdx, questions, showSubmit, showInstructions, reportQId])
 
   // ── Auto-save draft to localStorage (survives refresh / disconnect) ──
   useEffect(() => {
@@ -254,10 +386,10 @@ export default function MockRoom() {
     try {
       localStorage.setItem(draftKey, JSON.stringify({
         answers, marked: Array.from(marked), visited: Array.from(visited),
-        timeSpent: timeSpent.current, currentIdx, timeLeft, savedAt: Date.now(),
+        timeSpent: timeSpent.current, currentIdx, timeLeft, language, paused, savedAt: Date.now(),
       }))
     } catch { /* storage full / disabled — ignore */ }
-  }, [answers, marked, visited, currentIdx, timeLeft, phase, draftKey])
+  }, [answers, marked, visited, currentIdx, timeLeft, language, paused, phase, draftKey])
 
   // ── Warn before leaving (refresh / close) mid-test ──────────────────
   useEffect(() => {
@@ -283,10 +415,10 @@ export default function MockRoom() {
   // ── Per-question live timer ─────────────────────────────────────────
   useEffect(() => { setQSeconds(0) }, [currentIdx])
   useEffect(() => {
-    if (phase !== 'active') return
+    if (phase !== 'active' || paused) return
     const iv = setInterval(() => setQSeconds(s => s + 1), 1000)
     return () => clearInterval(iv)
-  }, [phase, currentIdx])
+  }, [phase, paused, currentIdx])
 
   // ── Sync fullscreen state ───────────────────────────────────────────
   useEffect(() => {
@@ -298,81 +430,20 @@ export default function MockRoom() {
   if (phase === 'loading') return <div className="mock-room-loading">Loading mock test...</div>
   if (!mock || !currentQ) return null
 
+  const totalMarks = questions.reduce((s, q) => s + q.marks, 0)
+
   // ── Instructions gate (shown before the timer starts) ────────────────
   if (phase === 'instructions') {
-    const totalMarks = questions.reduce((s, q) => s + q.marks, 0)
     return (
-      <div className="modal-overlay">
-        <div className="modal-box instructions-modal">
-          <div className="instructions-header">
-            <h2>{mock.title}</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>
-              {SUBJECT_LABELS[mock.subject] ?? mock.subject} · Read the instructions before you begin
-            </p>
-          </div>
-
-          <div className="instructions-meta-grid">
-            <div className="instructions-meta-item">
-              <span className="meta-label">Duration</span>
-              <span className="meta-value">{mock.durationMinutes} minutes</span>
-            </div>
-            <div className="instructions-meta-item">
-              <span className="meta-label">Questions</span>
-              <span className="meta-value">{questions.length}</span>
-            </div>
-            <div className="instructions-meta-item">
-              <span className="meta-label">Total Marks</span>
-              <span className="meta-value">{totalMarks}</span>
-            </div>
-            <div className="instructions-meta-item">
-              <span className="meta-label">Negative Marking</span>
-              <span className="meta-value" style={{ color: 'var(--danger)' }}>−{mock.negativeMarks} per wrong</span>
-            </div>
-          </div>
-
-          <div className="instructions-rules">
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>Rules &amp; Marking Scheme</h3>
-            <ol className="rules-list">
-              <li>You have <strong>{mock.durationMinutes} minutes</strong> to attempt <strong>{questions.length} questions</strong>. The test <strong>auto-submits</strong> when the timer hits zero.</li>
-              <li>Each correct answer earns its marks; every wrong answer deducts <strong>−{mock.negativeMarks}</strong>. Unanswered questions score <strong>0</strong>.</li>
-              <li>Use <strong>🔖 Mark for Review</strong> to flag tricky questions — they'll be highlighted in your result so you can revisit them.</li>
-              <li>You can navigate freely between questions and change answers any time before submitting.</li>
-              <li>Spotted a mistake in a question? Use <strong>⚑ Report</strong> to flag it for our team.</li>
-              <li>This is a practice mock — your score is <strong>not rated</strong> and you can retake it anytime.</li>
-            </ol>
-          </div>
-
-          <div className="instructions-legend">
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Question Status Colors</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 13 }}>
-              {[
-                { cls: 'qs-not-visited',     label: 'Not Visited' },
-                { cls: 'qs-not-answered',    label: 'Not Answered' },
-                { cls: 'qs-answered',        label: 'Answered' },
-                { cls: 'qs-marked',          label: 'Marked for Review' },
-                { cls: 'qs-answered-marked', label: 'Answered + Marked' },
-              ].map(({ cls, label }) => (
-                <div key={cls} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className={`legend-dot ${cls}`} />
-                  {label}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button className="btn btn-ghost" onClick={() => navigate('/mocks')}>Cancel</button>
-            <LanguagePicker
-              value={language}
-              onChange={l => { setLanguage(l); setPreferredLanguage(l) }}
-            />
-
-            <button className="btn btn-primary btn-full" onClick={startTest}>
-              I'm Ready — Start Test →
-            </button>
-          </div>
-        </div>
-      </div>
+      <MockInstructions
+        mock={mock}
+        questionCount={questions.length}
+        totalMarks={totalMarks}
+        language={language}
+        onLanguageChange={l => { setLanguage(l); setPreferredLanguage(l) }}
+        onStart={startTest}
+        onClose={() => navigate('/mocks')}
+      />
     )
   }
 
@@ -411,134 +482,137 @@ export default function MockRoom() {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
     else document.documentElement.requestFullscreen().catch(() => {})
   }
+  function setZoom(next: number) {
+    const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next))
+    setZoomPct(clamped)
+    try { localStorage.setItem(ZOOM_KEY, String(clamped)) } catch { /* storage disabled */ }
+  }
+  // Pausing banks the time already spent on this question; resuming restarts
+  // the clock from now, so the break never lands on a question's total.
+  function togglePause() {
+    if (paused) { lastTickTime.current = Date.now(); setPaused(false) }
+    else { flushTime(); setPaused(true) }
+  }
 
   const answeredCount = Object.keys(answers).length
-  const markedCount = marked.size
   const lowTime = timeLeft <= 60
 
+  // The four analytics counts are disjoint, one per palette colour — which is
+  // why "Answered" here is smaller than the header's total whenever something
+  // is both answered and marked.
+  const states = questions.map(q => getQState(q.id, answers, marked, visited))
+  const stats = {
+    answered: states.filter(s => s === 'answered').length,
+    notAnswered: states.filter(s => s === 'not-answered').length,
+    marked: states.filter(s => s === 'marked').length,
+    answeredMarked: states.filter(s => s === 'answered-marked').length,
+  }
+
+  const palette: PaletteCell[] = questions.map((q, i) => ({
+    id: q.id, label: i + 1, state: states[i],
+  }))
+
   return (
-    <div className="mock-room">
-      {/* Header */}
-      {/* Header and progress bar stick together as one unit, so the header can
-          change height (it wraps to two rows on a phone) without the progress
-          bar needing a matching magic offset. */}
-      <div className="mock-room-topbar">
-      <div className="mock-room-header">
-        <div className="mock-room-title">{mock.title}</div>
-        <LanguageToggle value={language} onChange={switchLanguage} busy={langBusy} />
-
-        <button className="mock-mute-btn" title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-          onClick={() => setDark(toggleTheme() === 'dark')}>
-          {dark ? '☀️' : '🌙'}
-        </button>
-        <button className="mock-mute-btn" title={isFull ? 'Exit fullscreen' : 'Enter fullscreen'} onClick={toggleFullscreen}>
-          {isFull ? '🡼' : '⛶'}
-        </button>
-        <button className="mock-mute-btn" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
-          onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>
-          {muted ? '🔇' : '🔊'}
-        </button>
-        <div className={`mock-room-timer ${lowTime ? 'low' : ''}`}>⏱ {formatTime(timeLeft)}</div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowSubmit(true)}>Submit Test</button>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mock-progress">
-        <div className="mock-progress-fill" style={{ width: `${(answeredCount / questions.length) * 100}%` }} />
-      </div>
-      </div>
-
-      <div className="mock-room-body">
-        {/* Question area */}
-        <div className="mock-room-main">
-          <div className="mock-q-header">
-            <span className="question-num">Question {currentIdx + 1} of {questions.length}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className="q-timer" title="Time spent on this question">
-                ⏱ {formatTime((timeSpent.current[currentQ.id] ?? 0) + qSeconds)}
-              </span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>+{currentQ.marks} / −{currentQ.negativeMarks}</span>
-            </div>
-          </div>
-
-          {/* Exam-style action bar: review / clear on the left, navigation + Save & Next on the right */}
-          <div className="room-exam-bar room-exam-bar-top">
-            <div className="room-exam-left">
-              <button className={`btn btn-ghost mark-btn ${marked.has(currentQ.id) ? 'mark-active' : ''}`} onClick={markReviewNext}>
-                🔖 Mark for Review &amp; Next
-              </button>
-              <button className="btn btn-ghost" style={{ color: 'var(--danger)' }}
-                disabled={!answers[currentQ.id]} onClick={clearAnswer}>
-                Clear Response
-              </button>
-              <button className="btn btn-ghost" style={{ fontSize: 13, color: 'var(--text-muted)' }}
-                onClick={() => setReportQId(currentQ.id)} title="Report a problem with this question">
-                ⚑ Report
-              </button>
-            </div>
-            <div className="room-exam-right">
-              <button className="btn btn-ghost" disabled={currentIdx === 0} onClick={() => goTo(currentIdx - 1)}>← Previous</button>
-              <button className="btn room-submit-btn" onClick={() => setShowSubmit(true)}>Submit</button>
-              <button className="btn btn-primary" disabled={currentIdx === questions.length - 1} onClick={saveAndNext}>Save &amp; Next →</button>
-            </div>
-          </div>
-
-          <QuestionContent q={currentQ} />
-
-          <div className="options">
-            {OPTIONS.map(opt => (
-              <div key={opt}
-                className={`option ${answers[currentQ.id] === opt ? 'selected' : ''}`}
-                onClick={() => selectAnswer(opt)}>
-                <span className="option-label">{opt}</span>
-                <span className="option-text"><RichText html={optionText(currentQ, opt)} /></span>
-              </div>
-            ))}
-          </div>
-
-          <div className="kbd-hint">
+    <>
+      <ExamShellSSC
+        title={mock.title}
+        timeLeft={formatTime(timeLeft)}
+        timeWarn={lowTime}
+        zoomPct={zoomPct}
+        onZoomIn={() => setZoom(zoomPct + ZOOM_STEP)}
+        onZoomOut={() => setZoom(zoomPct - ZOOM_STEP)}
+        isFullscreen={isFull}
+        onToggleFullscreen={toggleFullscreen}
+        paused={paused}
+        onTogglePause={togglePause}
+        onInstructions={() => setShowInstructions(true)}
+        sectionLabel={SUBJECT_LABELS[mock.subject] ?? mock.subject}
+        answeredCount={answeredCount}
+        toolbarExtra={
+          <button className="xs-tool xs-tool-wide" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
+            onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>
+            {muted ? '🔇' : '🔊'}
+          </button>
+        }
+        actions={
+          <>
+            <button className="xs-btn" disabled={currentIdx === 0} onClick={() => goTo(currentIdx - 1)}>
+              Previous
+            </button>
+            <button className="xs-btn" onClick={markReviewNext}
+              title="Mark this question for review and move to the next">
+              Mark for Review
+            </button>
+            <button className="xs-btn" disabled={!answers[currentQ.id]} onClick={clearAnswer}>
+              Clear Response
+            </button>
+            <button className="xs-btn" disabled={currentIdx === questions.length - 1} onClick={saveAndNext}>
+              Save &amp; Next
+            </button>
+            <button className="xs-btn xs-btn-danger" onClick={() => setShowSubmit(true)}>
+              Submit Test
+            </button>
+          </>
+        }
+        questionNo={currentIdx + 1}
+        questionMeta={
+          <>
+            ⏱ {formatTime((timeSpent.current[currentQ.id] ?? 0) + qSeconds)}
+            {' · '}+{currentQ.marks} / −{currentQ.negativeMarks}
+          </>
+        }
+        language={language}
+        onLanguageChange={switchLanguage}
+        langBusy={langBusy}
+        onReport={() => setReportQId(currentQ.id)}
+        palette={palette}
+        currentId={currentQ.id}
+        onSelect={qid => goTo(questions.findIndex(q => q.id === qid))}
+        paletteHeading={SUBJECT_LABELS[mock.subject] ?? mock.subject}
+        stats={stats}
+        sideFooter={
+          <button className="btn btn-ghost btn-sm" style={{ marginTop: 14, width: '100%', color: 'var(--danger)' }}
+            disabled={answeredCount === 0} onClick={clearAll}>
+            Clear all answers
+          </button>
+        }
+        footer={
+          <div className="xs-hint">
             <span><kbd>←</kbd><kbd>→</kbd> navigate</span>
             <span><kbd>M</kbd> mark for review</span>
             <span><kbd>C</kbd> clear response</span>
           </div>
-        </div>
+        }
+      >
+        <QuestionContent q={currentQ} />
 
-        {/* Palette */}
-        <div className="mock-room-palette">
-          <div className="palette-stats">
-            <div className="pstat"><strong style={{ color: 'var(--success)' }}>{answeredCount}</strong><span>Answered</span></div>
-            <div className="pstat"><strong style={{ color: '#d97706' }}>{markedCount}</strong><span>Marked</span></div>
-            <div className="pstat"><strong>{questions.length - answeredCount}</strong><span>Left</span></div>
-          </div>
-          <div className="palette-legend-room">
-            <span><i className="ld qs-answered" /> Answered</span>
-            <span><i className="ld qs-not-answered" /> Not answered</span>
-            <span><i className="ld qs-marked" /> Marked</span>
-            <span><i className="ld qs-not-visited" /> Not visited</span>
-          </div>
-          <div className="q-grid">
-            {questions.map((q, i) => {
-              const state = getQState(q.id, answers, marked, visited)
-              return (
-                <button key={q.id}
-                  className={`q-btn qs-${state} ${i === currentIdx ? 'current' : ''}`}
-                  onClick={() => goTo(i)}>
-                  {i + 1}
-                </button>
-              )
-            })}
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button className="btn btn-ghost btn-sm" style={{ flex: 1, color: 'var(--danger)' }}
-              disabled={answeredCount === 0} onClick={clearAll}>
-              Clear all
-            </button>
-            <button className="btn btn-primary btn-sm" style={{ flex: 2 }} onClick={() => setShowSubmit(true)}>
-              Submit Test
-            </button>
-          </div>
+        <div className="xs-opts">
+          {OPTIONS.map((opt, i) => (
+            <label key={opt} className={`xs-opt ${answers[currentQ.id] === opt ? 'sel' : ''}`}>
+              <input
+                type="radio"
+                name={`q-${currentQ.id}`}
+                checked={answers[currentQ.id] === opt}
+                onChange={() => selectAnswer(opt)}
+              />
+              <span className="xs-opt-letter">{'abcd'[i]})</span>
+              <span><RichText html={optionText(currentQ, opt)} /></span>
+            </label>
+          ))}
         </div>
-      </div>
+      </ExamShellSSC>
+
+      {/* Instructions, re-openable mid-test */}
+      {showInstructions && (
+        <MockInstructions
+          mock={mock}
+          questionCount={questions.length}
+          totalMarks={totalMarks}
+          language={language}
+          onLanguageChange={l => { setLanguage(l); setPreferredLanguage(l) }}
+          onClose={() => setShowInstructions(false)}
+        />
+      )}
 
       {/* Report question modal */}
       {reportQId && (
@@ -562,7 +636,7 @@ export default function MockRoom() {
               <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
                 <div className="mock-submit-stat"><strong style={{ color: 'var(--success)' }}>{answeredCount}</strong><span>Answered</span></div>
                 <div className="mock-submit-stat"><strong>{questions.length - answeredCount}</strong><span>Unanswered</span></div>
-                <div className="mock-submit-stat"><strong style={{ color: '#d97706' }}>{markedCount}</strong><span>Marked</span></div>
+                <div className="mock-submit-stat"><strong style={{ color: '#d97706' }}>{marked.size}</strong><span>Marked</span></div>
               </div>
               <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 16 }}>
                 You can retake this mock anytime. Submit your answers now?
@@ -577,6 +651,6 @@ export default function MockRoom() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
