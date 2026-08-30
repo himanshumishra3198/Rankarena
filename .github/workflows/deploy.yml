@@ -148,6 +148,22 @@ jobs:
               && sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}|" .env \
               || echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> .env
 
+            # ── Reclaim disk before pulling ───────────────────────────────────
+            # Every deploy pulls three image tags and leaves the previous ones
+            # behind, still tagged with their own commit sha. `image prune -f`
+            # only removes *dangling* images, so it never touched them: 389 of
+            # them accumulated until the volume hit 100% and `pull` failed with
+            # no space left. The images had built and pushed fine, so the whole
+            # deploy went red at this step with everything else green.
+            #
+            # This has to run before the pull. A cleanup at the end of the
+            # script is never reached once there is no room to pull, which is
+            # exactly how the disk was allowed to fill in the first place.
+            echo "Disk before prune:"; df -h / | tail -1
+            docker image prune -af --filter "until=24h"
+            docker builder prune -af --filter "until=24h"
+            echo "Disk after prune:"; df -h / | tail -1
+
             # ── Pull new images ───────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml pull backend frontend admin
 
@@ -169,8 +185,9 @@ jobs:
             # keeps pointing at the old (dead) IPs and returns 502.
             docker compose -f docker-compose.prod.yml restart proxy
 
-            # ── Clean up dangling images ──────────────────────────────────────
+            # ── Clean up whatever this deploy superseded ──────────────────────
             docker image prune -f
+            echo "Disk after deploy:"; df -h / | tail -1
 
             echo "Deploy complete: ${{ github.sha }}"
         env:
