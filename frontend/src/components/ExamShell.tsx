@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { LANGUAGES, type Language } from '../lib/language'
+import { usePaletteCollapsed } from '../lib/palettePanel'
 
 /**
  * The exam-room chrome: top bar, action strip, question pane and palette.
@@ -90,6 +91,8 @@ export default function ExamShell({
   topRightExtra?: ReactNode
   analysisLabel?: string
 }) {
+  const [collapsed, toggleCollapsed] = usePaletteCollapsed()
+
   return (
     <div className="xr">
       <div className="xr-top">
@@ -168,7 +171,7 @@ export default function ExamShell({
 
       {banner}
 
-      <div className="xr-body">
+      <div className={`xr-body ${collapsed ? 'side-collapsed' : ''}`}>
         <div className="xr-main">
           <div className="xr-qno">
             Question No. {questionNo}
@@ -194,8 +197,24 @@ export default function ExamShell({
           </div>
         </div>
 
-        <div className="xr-side">
-          <div className="xr-side-head">{analysisLabel ?? partLabel}</div>
+        <div className={`xr-side ${collapsed ? 'collapsed' : ''}`}>
+          <div className="xr-side-head">
+            {/* The arrow points the way the panel moves: ▶ pushes it out of
+                the way, ◀ brings it back. */}
+            <button
+              className="xr-side-toggle"
+              onClick={toggleCollapsed}
+              aria-expanded={!collapsed}
+              aria-controls="xr-palette-panel"
+              aria-label={collapsed ? 'Show the question palette' : 'Hide the question palette'}
+              title={collapsed ? 'Show the question palette' : 'Hide the question palette'}
+            >
+              {collapsed ? '◀' : '▶'}
+            </button>
+            {!collapsed && <span>{analysisLabel ?? partLabel}</span>}
+          </div>
+
+          <div id="xr-palette-panel" className="xr-side-panel" hidden={collapsed}>
           <div className="xr-palette">
             {palette.map(c => (
               <button
@@ -218,6 +237,7 @@ export default function ExamShell({
             {extraStats?.map(s => (
               <div className="xr-analysis-row" key={s.label}><span>{s.label}</span><b>{s.value}</b></div>
             ))}
+          </div>
           </div>
         </div>
       </div>

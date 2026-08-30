@@ -2254,6 +2254,9 @@ select.input { cursor: pointer; }
 
 /* ── Body: question pane + palette ───────────────────────────────────── */
 .xr-body { flex: 1; display: grid; grid-template-columns: 1fr 300px; align-items: start; }
+/* The palette's column shrinks to a rail holding just the handle, so the
+   question pane gets the width rather than the layout jumping. */
+.xr-body.side-collapsed { grid-template-columns: 1fr 34px; }
 .xr-main { padding: 14px 18px 40px; min-width: 0; }
 .xr-qno {
   font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px;
@@ -2296,7 +2299,15 @@ select.input { cursor: pointer; }
   display: flex; align-items: center; gap: 8px; justify-content: center;
   font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 12px;
 }
-.xr-side-head::before { content: '▶'; color: #2563eb; font-size: 12px; }
+/* Collapse handle. Stays put when the panel goes, so there is always
+   something to click to bring it back. */
+.xr-side-toggle {
+  background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
+  color: #2563eb; font-size: 13px; line-height: 1;
+}
+.xr-side-toggle:hover { color: #1d4ed8; }
+.xr-side.collapsed { padding-left: 6px; padding-right: 6px; }
+.xr-side.collapsed .xr-side-head { justify-content: center; margin-bottom: 0; }
 .xr-palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin-bottom: 16px; }
 .xr-cell {
   aspect-ratio: 1; border: 1px solid #1d4ed8; background: #2563eb; color: #fff;
@@ -2339,8 +2350,11 @@ select.input { cursor: pointer; }
   .xr-answered { text-align: left; }
   /* Palette above the question on a phone: it is how you navigate, and
      burying it below a long question would hide the only way around. */
-  .xr-body { grid-template-columns: 1fr; }
+  /* One column either way — the rail is a desktop idea, and on a phone the
+     handle simply sits above a hidden panel. */
+  .xr-body, .xr-body.side-collapsed { grid-template-columns: 1fr; }
   .xr-side { order: -1; border-left: none; border-bottom: 1px solid #cbd5e1; padding-bottom: 14px; }
+  .xr-side.collapsed { padding-bottom: 6px; }
   .xr-palette { grid-template-columns: repeat(8, 1fr); }
   .xr-main { padding: 12px; }
 }
@@ -2578,6 +2592,9 @@ select.input { cursor: pointer; }
 
 /* ── Body ────────────────────────────────────────────────────────────── */
 .xs-body { flex: 1; display: grid; grid-template-columns: 1fr 300px; align-items: start; }
+/* The palette's column shrinks to a rail holding just the handle, so the
+   question pane gets the width rather than the layout jumping. */
+.xs-body.side-collapsed { grid-template-columns: 1fr 40px; }
 .xs-main { padding: 4px 14px 40px; min-width: 0; }
 .xs-card { border: 1px solid #b8b8b8; background: #fff; min-height: 60vh; }
 .xs-card-head {
@@ -2618,9 +2635,14 @@ select.input { cursor: pointer; }
 .xs-side-head {
   font-size: 15px; font-weight: 700; color: #111; text-align: center; margin-bottom: 12px;
 }
-.xs-side::before {
-  content: '▶'; display: block; color: #2f4bc7; font-size: 26px; line-height: 1; margin-bottom: 6px;
+/* Collapse handle. Stays put when the panel goes, so there is always
+   something to click to bring it back. */
+.xs-side-toggle {
+  display: block; background: none; border: none; padding: 0; cursor: pointer;
+  color: #2f4bc7; font-size: 26px; line-height: 1; margin-bottom: 6px; font-family: inherit;
 }
+.xs-side-toggle:hover { color: #24399c; }
+.xs-side.collapsed { padding-left: 6px; padding-right: 6px; }
 .xs-palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px 8px; margin-bottom: 22px; }
 .xs-cell {
   height: 26px; border: 1px solid #24399c; background: #2f4bc7; color: #fff;
@@ -2678,8 +2700,11 @@ select.input { cursor: pointer; }
   .xs-btns { justify-content: flex-start; }
   /* Palette above the question on a phone: it is how you navigate, and burying
      it below a long question would hide the only way around. */
-  .xs-body { grid-template-columns: 1fr; }
+  /* One column either way — the rail is a desktop idea, and on a phone the
+     handle simply sits above a hidden panel. */
+  .xs-body, .xs-body.side-collapsed { grid-template-columns: 1fr; }
   .xs-side { order: -1; border-bottom: 1px solid #b8b8b8; padding: 4px 12px 14px; }
+  .xs-side.collapsed { padding-bottom: 4px; }
   .xs-palette { grid-template-columns: repeat(8, 1fr); margin-bottom: 14px; }
   .xs-main { padding: 10px 12px 40px; }
   .xs-card { min-height: 0; }

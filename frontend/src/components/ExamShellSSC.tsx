@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { LANGUAGES, type Language } from '../lib/language'
+import { usePaletteCollapsed } from '../lib/palettePanel'
 import type { PaletteCell } from './ExamShell'
 
 /**
@@ -82,6 +83,8 @@ export default function ExamShellSSC({
   sideFooter?: ReactNode
   footer?: ReactNode
 }) {
+  const [collapsed, toggleCollapsed] = usePaletteCollapsed()
+
   return (
     <div className={`xs ${paused ? 'paused' : ''}`}>
       <div className="xs-top">
@@ -130,7 +133,7 @@ export default function ExamShellSSC({
         </div>
       </div>
 
-      <div className="xs-body">
+      <div className={`xs-body ${collapsed ? 'side-collapsed' : ''}`}>
         <div className="xs-main">
           <div className="xs-card">
             <div className="xs-card-head">
@@ -161,7 +164,21 @@ export default function ExamShellSSC({
           {footer}
         </div>
 
-        <div className="xs-side">
+        <div className={`xs-side ${collapsed ? 'collapsed' : ''}`}>
+          {/* The arrow points the way the panel moves: ▶ pushes it out of the
+              way, ◀ brings it back. */}
+          <button
+            className="xs-side-toggle"
+            onClick={toggleCollapsed}
+            aria-expanded={!collapsed}
+            aria-controls="xs-palette-panel"
+            aria-label={collapsed ? 'Show the question palette' : 'Hide the question palette'}
+            title={collapsed ? 'Show the question palette' : 'Hide the question palette'}
+          >
+            {collapsed ? '◀' : '▶'}
+          </button>
+
+          <div id="xs-palette-panel" className="xs-side-panel" hidden={collapsed}>
           <div className="xs-side-head">{paletteHeading} :</div>
           <div className="xs-palette">
             {palette.map(c => (
@@ -186,6 +203,7 @@ export default function ExamShellSSC({
           </div>
 
           {sideFooter}
+          </div>
         </div>
       </div>
 
