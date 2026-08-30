@@ -52,6 +52,8 @@ export interface Question {
   /** Language this copy is presented in, and whether it is a real translation. */
   language?: 'EN' | 'HI'
   translated?: boolean
+  /** Every language this question exists in — what the instructions sheet promises. */
+  availableLanguages?: ('EN' | 'HI')[]
   id: string
   questionType: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   text: string

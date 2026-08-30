@@ -5,6 +5,7 @@ import prisma from "../lib/prisma";
 import redis from "../lib/redis";
 import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/auth";
 import { Prisma } from "../generated/prisma/client";
+import { Language } from "../generated/prisma/enums";
 import {
   parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion, DEFAULT_LANGUAGE,
 } from "../lib/i18n";
@@ -219,9 +220,25 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
     orderBy: { displayOrder: "asc" },
   });
 
+  // Which languages each question actually exists in. The localized payload
+  // cannot answer this — it carries one language by design — and the
+  // instructions sheet has to state per section whether Hindi is on offer
+  // rather than promising it for a paper that was never translated.
+  const translated = await prisma.questionTranslation.findMany({
+    where: { questionId: { in: cqs.map((cq) => cq.questionId) } },
+    select: { questionId: true, language: true },
+  });
+  const byQuestion = new Map<string, Language[]>();
+  for (const t of translated) {
+    byQuestion.set(t.questionId, [...(byQuestion.get(t.questionId) ?? []), t.language]);
+  }
+
   const seed = req.user!.id;
   const questions = cqs
-    .map((cq) => localizeQuestion({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }, language))
+    .map((cq) => ({
+      ...localizeQuestion({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }, language),
+      availableLanguages: [DEFAULT_LANGUAGE, ...(byQuestion.get(cq.questionId) ?? [])],
+    }))
     .sort((a, b) => simpleHash(seed + a.id) - simpleHash(seed + b.id));
 
   res.json(questions);

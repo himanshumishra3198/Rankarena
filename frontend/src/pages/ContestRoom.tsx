@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import type { Contest, Question } from '../lib/types'
-import InstructionsModal from '../components/InstructionsModal'
-import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
+import ContestInstructions, { type SectionRow } from '../components/ContestInstructions'
+import { getPreferredLanguage, setPreferredLanguage, LANGUAGES, type Language } from '../lib/language'
 import ExamShell, { type SectionTab } from '../components/ExamShell'
 import { rollNumber } from '../lib/rollNumber'
 import Calculator from '../components/Calculator'
@@ -22,6 +22,12 @@ type Phase = 'loading' | 'waiting' | 'active' | 'ended'
 const SECTIONS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 const SECTION_LABELS: Record<string, string> = {
   QUANT: 'Quant', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'GK',
+}
+// The instructions table has room for the names the exam itself uses; the
+// tabs and buttons in the room do not.
+const SECTION_LABELS_FULL: Record<string, string> = {
+  QUANT: 'Quantitative Aptitude', REASONING: 'General Intelligence',
+  ENGLISH: 'English Comprehension', GK: 'General Awareness',
 }
 
 type QState = 'not-visited' | 'not-answered' | 'answered' | 'marked' | 'answered-marked'
@@ -562,6 +568,24 @@ export default function ContestRoom() {
     answeredMarked: sectionStates.filter(s => s === 'answered-marked').length,
   }
 
+  // A section offers a language only when every question in it has that
+  // language. One untranslated question is enough to make "English & Hindi"
+  // a promise the paper cannot keep, and a candidate who picked Hindi on the
+  // strength of this table would meet it mid-section.
+  const sectionRows: SectionRow[] = availableSections.map(s => {
+    const qs = sectionQuestions[s] ?? []
+    return {
+      key: s,
+      label: SECTION_LABELS_FULL[s] ?? s,
+      questions: qs.length,
+      maxScore: qs.reduce((sum, q) => sum + Number(q.marks), 0),
+      minutes: Math.round(getSectionTimeSecs(s) / 60),
+      languages: LANGUAGES
+        .filter(l => qs.length > 0 && qs.every(q => (q.availableLanguages ?? ['EN']).includes(l.code)))
+        .map(l => l.code),
+    }
+  })
+
   // A section is reachable once every earlier one is closed; already-submitted
   // sections stay reachable, read-only, so a candidate can look back.
   const sectionTabs: SectionTab[] = availableSections.map(s => ({
@@ -726,16 +750,16 @@ export default function ContestRoom() {
         </div>
       </ExamShell>
 
-      {/* ── Instructions modal (feature 1) ───────────────────────── */}
+      {/* ── Instructions sheet (feature 1) ───────────────────────── */}
       {/* Also reachable from the INSTRUCTIONS link mid-exam, where it has no
           Start button and only closes. */}
       {showInstructions && (
-        <InstructionsModal
+        <ContestInstructions
+          contest={contest}
+          sections={sectionRows}
+          totalQuestions={questions.length}
           language={language}
           onLanguageChange={l => { setLanguage(l); setPreferredLanguage(l) }}
-          contest={contest}
-          sections={availableSections}
-          sectionTimeMinutes={Math.floor(getSectionTimeSecs(availableSections[0] ?? 'QUANT') / 60)}
           onStart={examStarted ? undefined : startExam}
           onClose={() => setShowInstructions(false)}
         />
