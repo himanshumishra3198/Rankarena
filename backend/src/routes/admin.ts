@@ -581,7 +581,9 @@ router.get("/contests/:id/questions", async (req: AuthRequest, res: Response) =>
   const contestId = req.params.id as string;
   const cqs = await prisma.contestQuestion.findMany({
     where: { contestId },
-    include: { question: true },
+    // Translations included because the admin form edits them from here. Without
+    // them the Hindi fields load empty and saving wipes the translation.
+    include: { question: { include: { passage: true, translations: true } } },
     orderBy: { displayOrder: "asc" },
   });
   res.json(cqs);
@@ -717,7 +719,7 @@ router.get("/mocks/:id/questions", async (req: AuthRequest, res: Response) => {
   const mockTestId = req.params.id as string;
   const mtqs = await prisma.mockTestQuestion.findMany({
     where: { mockTestId },
-    include: { question: { include: { passage: true } } },
+    include: { question: { include: { passage: true, translations: true } } },
     orderBy: { displayOrder: "asc" },
   });
   res.json(mtqs);
