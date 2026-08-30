@@ -2431,10 +2431,7 @@ select.input { cursor: pointer; }
   display: flex; align-items: center; gap: 14px;
   padding: 8px 18px; border-bottom: 2px solid #d0d0d0; flex-shrink: 0;
 }
-.xi-logo {
-  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
-  background: radial-gradient(circle at 35% 35%, #9ad3ef, #2f8fc4 70%);
-}
+.xi .logo-mark { flex-shrink: 0; }
 .xi-title {
   flex: 1; text-align: center; font-size: 24px; font-weight: 700;
   color: #111; line-height: 1.25; padding-right: 56px;

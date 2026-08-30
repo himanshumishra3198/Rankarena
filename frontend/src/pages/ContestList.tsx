@@ -313,9 +313,15 @@ export default function ContestList() {
                       <td className="contest-past-cell">{formatStart(c.startTime)}</td>
                       <td className="contest-past-cell">{formatDuration(c.durationMinutes)}</td>
                       <td>
-                        {c.hasJoined
+                        {/* Registering is not attempting. This used to offer
+                            "View result" to anyone who had joined, and sent
+                            the ones who never opened the paper to a page that
+                            could only tell them there was nothing to show. */}
+                        {c.hasSubmitted
                           ? <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/contests/${c.id}/result`)}>View result</button>
-                          : <span className="contest-past-cell">Ended</span>}
+                          : c.hasJoined
+                            ? <span className="contest-past-cell">Not attempted</span>
+                            : <span className="contest-past-cell">Ended</span>}
                       </td>
                     </tr>
                   ))}

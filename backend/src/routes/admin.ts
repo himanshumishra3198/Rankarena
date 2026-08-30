@@ -6,6 +6,7 @@ import { LANGUAGES, DEFAULT_LANGUAGE } from "../lib/i18n";
 import redis from "../lib/redis";
 import { computeFingerprint } from "../lib/fingerprint";
 import { isValidTopic } from "../lib/topics";
+import { finalizeContest } from "../lib/finalizeContest";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -126,6 +127,12 @@ async function computeContestRatings(contestId: string) {
   // Idempotency: skip if ratings already recorded
   const existing = await prisma.ratingHistory.count({ where: { contestId } });
   if (existing > 0) return;
+
+  // Attempts left open when the clock ran out are scored first. Ranking before
+  // this ran would have silently excluded everyone whose browser died mid-paper
+  // and, because the delta divides by the participant count, shifted the rating
+  // of everyone who did manage to click submit.
+  await finalizeContest(contestId);
 
   // Test attempts are excluded before ranking, not after. The delta formula
   // divides by the participant count, so leaving an admin in the set would

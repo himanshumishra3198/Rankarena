@@ -6,6 +6,7 @@ import redis from "../lib/redis";
 import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/auth";
 import { Prisma } from "../generated/prisma/client";
 import { Language } from "../generated/prisma/enums";
+import { finalizeContest } from "../lib/finalizeContest";
 import {
   parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion, DEFAULT_LANGUAGE,
 } from "../lib/i18n";
@@ -417,6 +418,10 @@ router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Respo
   const friendsFilter = req.query.filter === "friends";
   const myId = req.user!.id;
 
+  await finalizeContest(contestId).catch((err) =>
+    console.error(`Finalizing contest ${contestId} failed:`, err)
+  );
+
   // For friends filter we need all entries, otherwise just top-N
   const fetchSize = friendsFilter ? 1000 : limit;
 
@@ -425,16 +430,22 @@ router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Respo
     redis.zrevrank(`contest:${contestId}:leaderboard`, myId),
   ]);
 
-  // Parse redis response into ordered list (already sorted highest-first)
-  const allParsed: { userId: string; score: number }[] = [];
+  // Redis holds a composite sort key — `score * 1e10 - submittedAt` — not a
+  // score. It orders correctly, because the smallest score step (0.5) is worth
+  // 5e9 in the key while a whole contest's spread of submission times is a few
+  // million milliseconds, so the score term always dominates and the timestamp
+  // only breaks ties. It does not survive being read back as a number: a
+  // present-day timestamp is around 1.8e12, so dividing the key by 1e10 gave
+  // every candidate a score near −179 that drifted as the epoch advanced.
+  //
+  // The ordering is taken from Redis and the numbers from Postgres, which is
+  // where the real score lives.
+  const allParsed: { userId: string }[] = [];
   for (let i = 0; i < allEntries.length; i += 2) {
-    allParsed.push({
-      userId: allEntries[i],
-      score: Math.floor(Number(allEntries[i + 1]) / 1e10),
-    });
+    allParsed.push({ userId: allEntries[i] });
   }
 
-  let ranked: { rank: number; userId: string; score: number }[];
+  let ranked: { rank: number; userId: string }[];
 
   if (friendsFilter) {
     const follows = await prisma.follow.findMany({
@@ -449,10 +460,7 @@ router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Respo
 
     // Always include self even if not submitted
     if (!ranked.some((e) => e.userId === myId) && userRank !== null) {
-      const myScore = await redis.zscore(`contest:${contestId}:leaderboard`, myId);
-      if (myScore !== null) {
-        ranked.push({ rank: ranked.length + 1, userId: myId, score: Math.floor(Number(myScore) / 1e10) });
-      }
+      ranked.push({ rank: ranked.length + 1, userId: myId });
     }
   } else {
     ranked = allParsed.slice(0, limit).map((e, i) => ({ rank: i + 1, ...e }));
@@ -460,23 +468,28 @@ router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Respo
     // Always include self if not in top-N
     const inTop = userRank !== null && userRank < limit;
     if (!inTop && userRank !== null) {
-      const myScore = await redis.zscore(`contest:${contestId}:leaderboard`, myId);
-      if (myScore !== null) {
-        ranked.push({ rank: userRank + 1, userId: myId, score: Math.floor(Number(myScore) / 1e10) });
-      }
+      ranked.push({ rank: userRank + 1, userId: myId });
     }
   }
 
   const userIds = [...new Set(ranked.map((e) => e.userId))];
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: { id: true, name: true, rating: true },
-  });
+  const [users, scores] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, rating: true },
+    }),
+    prisma.participation.findMany({
+      where: { contestId, userId: { in: userIds } },
+      select: { userId: true, score: true },
+    }),
+  ]);
   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+  const scoreMap = new Map(scores.map((s) => [s.userId, Number(s.score)]));
 
   res.json(
     ranked.map((e) => ({
       ...e,
+      score: scoreMap.get(e.userId) ?? 0,
       name: userMap[e.userId]?.name ?? "Unknown",
       rating: userMap[e.userId]?.rating ?? 0,
       isCurrentUser: e.userId === myId,
@@ -510,6 +523,15 @@ router.post("/:id/language", authenticate, async (req: AuthRequest, res: Respons
 // Result + answer key (after contest ends)
 router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
+
+  // Close out anyone still open past the contest's end before reading. There
+  // is no scheduler in this deployment, so the first request after a contest
+  // finishes is what settles it — and it settles every attempt at once, not
+  // just the caller's, so ranks do not depend on who happened to look first.
+  await finalizeContest(contestId).catch((err) =>
+    console.error(`Finalizing contest ${contestId} failed:`, err)
+  );
+
   const [participation, contest] = await Promise.all([
     prisma.participation.findUnique({
       where: { userId_contestId: { userId: req.user!.id, contestId } },

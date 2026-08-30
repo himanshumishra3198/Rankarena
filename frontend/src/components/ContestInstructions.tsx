@@ -1,3 +1,4 @@
+import { LogoMark } from './Logo'
 import { LANGUAGES, type Language } from '../lib/language'
 import type { Contest } from '../lib/types'
 
@@ -63,7 +64,7 @@ export default function ContestInstructions({
   return (
     <div className="xi">
       <div className="xi-top">
-        <div className="xi-logo" aria-hidden="true" />
+        <LogoMark size={40} />
         <div className="xi-title">{contest.title}</div>
       </div>
 
