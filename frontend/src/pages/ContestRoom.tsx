@@ -4,6 +4,7 @@ import api from '../lib/api'
 import type { Contest, Question } from '../lib/types'
 import InstructionsModal from '../components/InstructionsModal'
 import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
+import LanguageToggle from '../components/LanguageToggle'
 import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import SectionCompleteModal from '../components/SectionCompleteModal'
@@ -331,6 +332,30 @@ export default function ContestRoom() {
     setVisited(prev => new Set([...prev, qId]))
   }
 
+  const [langBusy, setLangBusy] = useState(false)
+
+  /**
+   * Switch the paper's language mid-exam.
+   *
+   * Answers, marks, visited flags and the clock are all keyed by question id
+   * or held separately, so re-reading the paper in another language keeps
+   * every one of them. The server order is seeded per user and stable, so the
+   * question on screen stays the question on screen.
+   */
+  async function switchLanguage(l: Language) {
+    if (l === language || langBusy) return
+    setLangBusy(true)
+    try {
+      await api.post(`/contests/${contestId}/language`, { language: l })
+      const res = await api.get(`/contests/${contestId}/questions`)
+      setQuestions(res.data)
+      setLanguage(l)
+      setPreferredLanguage(l)
+    } catch {
+      // Leave the paper as it is; the toggle simply does not move.
+    } finally { setLangBusy(false) }
+  }
+
   // ── Start exam ("I'm Ready" clicked) ─────────────────────────────────
   async function startExam() {
     // Fix the language on the attempt and re-read the paper in it before the
@@ -644,6 +669,8 @@ export default function ContestRoom() {
             {isFullscreen ? '⊡' : '⛶'}
           </button>
         </div>
+
+        <LanguageToggle value={language} onChange={switchLanguage} busy={langBusy} />
 
         <button className="mock-mute-btn" title={muted ? 'Unmute timer sounds' : 'Mute timer sounds'}
           onClick={() => { const n = !muted; setMuted(n); localStorage.setItem('mockMuted', n ? '1' : '0'); if (!n) unlockAudio() }}>

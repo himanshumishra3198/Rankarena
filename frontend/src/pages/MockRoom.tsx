@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import LanguagePicker from '../components/LanguagePicker'
+import LanguageToggle from '../components/LanguageToggle'
 import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
 import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import type { MockTestData, Question } from '../lib/types'
@@ -157,6 +158,26 @@ export default function MockRoom() {
     lastTickTime.current = Date.now()
     unlockAudio()
     setPhase('active')
+  }
+
+  const [langBusy, setLangBusy] = useState(false)
+
+  /**
+   * Switch language mid-test. A mock has no server-side attempt until submit,
+   * so this only re-reads the paper; the chosen language travels with the
+   * submission. Answers and marks are keyed by question id and the order is
+   * displayOrder, so currentIdx still points at the same question.
+   */
+  async function switchLanguage(l: Language) {
+    if (l === language || langBusy) return
+    setLangBusy(true)
+    try {
+      const res = await api.get(`/mocks/${id}`, { params: { language: l } })
+      if (res.data?.questions) setQuestions(res.data.questions)
+      setLanguage(l)
+      setPreferredLanguage(l)
+    } catch { /* keep the paper as it is */ }
+    finally { setLangBusy(false) }
   }
 
   // ── Submit ──────────────────────────────────────────────────────────
@@ -404,6 +425,8 @@ export default function MockRoom() {
       <div className="mock-room-topbar">
       <div className="mock-room-header">
         <div className="mock-room-title">{mock.title}</div>
+        <LanguageToggle value={language} onChange={switchLanguage} busy={langBusy} />
+
         <button className="mock-mute-btn" title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
           onClick={() => setDark(toggleTheme() === 'dark')}>
           {dark ? '☀️' : '🌙'}
