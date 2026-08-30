@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { useConfirm, useNotify } from '../components/ConfirmDialog'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import ReportModal from '../components/ReportModal'
@@ -171,6 +171,8 @@ export default function Result() {
   const [lbLoading, setLbLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // Submitted, but the contest is still running and the key is embargoed.
+  const [pending, setPending] = useState(false)
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all')
   // Which question the panel below the map is showing. Null means "the first
   // one in whatever the map is currently showing".
@@ -210,7 +212,17 @@ export default function Result() {
             : raw)
         }
       })
-      .catch(() => setError('Result not available yet.'))
+      .catch(err => {
+        // The server distinguishes "you have not submitted" from "you have,
+        // but the answer key is embargoed until the contest ends". Collapsing
+        // both into one message left a candidate who had just submitted a
+        // live contest staring at "Result not available yet", with nothing to
+        // say whether their paper had been recorded.
+        setError(err?.response?.data?.error || 'Result not available yet.')
+        setPending(err?.response?.status === 400
+          && typeof err?.response?.data?.error === 'string'
+          && err.response.data.error.includes('after the contest ends'))
+      })
       .finally(() => setLoading(false))
     api.get('/bookmarks/ids').then(r => setBookmarks(new Set(r.data))).catch(() => {})
   }, [contestId])
@@ -285,6 +297,28 @@ export default function Result() {
   }
 
   if (loading) return <><Navbar /><div className="page"><p style={{ color: 'var(--text-muted)' }}>Loading result...</p></div></>
+  // A submitted paper is not an error state — say so plainly, and confirm the
+  // answers are in, which is the thing the candidate actually wants to know.
+  if (pending) return (
+    <>
+      <Navbar />
+      <div className="page">
+        <div className="card result-pending">
+          <span className="result-pending-icon" aria-hidden="true">✓</span>
+          <h2>Your answers are submitted</h2>
+          <p>{error}</p>
+          <p className="result-pending-sub">
+            Nothing more is needed from you. Your score, rank and the solutions
+            appear on this page as soon as the contest is over.
+          </p>
+          <div className="result-pending-actions">
+            <Link to="/contests" className="btn btn-primary">Back to contests</Link>
+            <Link to="/mocks" className="btn btn-ghost">Practise a mock meanwhile</Link>
+          </div>
+        </div>
+      </div>
+    </>
+  )
   if (error)   return <><Navbar /><div className="page"><div className="alert alert-error">{error}</div></div></>
   if (!result) return null
 

@@ -99,7 +99,32 @@ router.get("/:id", async (req, res: Response) => {
     res.status(404).json({ error: "Contest not found" });
     return;
   }
-  res.json(contest);
+
+  // Optional JWT decode — doesn't reject unauthenticated requests, same as the
+  // list above. The room needs to know whether the caller has already
+  // submitted, and it cannot ask /result: the answer key is embargoed until
+  // the contest ends, so that endpoint refuses a submitted candidate for the
+  // whole time the room is still reachable.
+  let userId: string | null = null;
+  const token = req.headers.authorization?.split(" ")[1];
+  if (token) {
+    try {
+      userId = (jwt.verify(token, process.env.JWT_SECRET!) as { id: string }).id;
+    } catch {}
+  }
+
+  let hasJoined = false;
+  let hasSubmitted = false;
+  if (userId) {
+    const p = await prisma.participation.findUnique({
+      where: { userId_contestId: { userId, contestId: id } },
+      select: { submittedAt: true },
+    });
+    hasJoined = !!p;
+    hasSubmitted = !!p?.submittedAt;
+  }
+
+  res.json({ ...contest, hasJoined, hasSubmitted });
 });
 
 // Join contest

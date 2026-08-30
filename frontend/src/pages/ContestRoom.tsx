@@ -152,18 +152,26 @@ export default function ContestRoom() {
   useEffect(() => {
     async function init() {
       try {
-        // If user already submitted, bounce straight to results
-        const resultCheck = await api.get(`/contests/${contestId}/result`).catch(() => null)
-        if (resultCheck?.status === 200) {
-          navigate(`/contests/${contestId}/result`, { replace: true })
-          return
-        }
-
         const [contestRes, questionsRes, draftRes] = await Promise.all([
           api.get(`/contests/${contestId}`),
           api.get(`/contests/${contestId}/questions`),
           api.get(`/contests/${contestId}/draft`).catch(() => null),
         ])
+
+        // Already submitted — the room is closed to them.
+        //
+        // This used to probe /result and admit anyone it refused, which meant
+        // the guard only worked once the contest had ended. While it was still
+        // running, /result withholds the answer key from everyone, so a
+        // candidate who had submitted was let back in to sit the paper again
+        // for the rest of the window. Nothing they did then counted: the
+        // backend rejects a second submit and stops saving drafts, so an hour
+        // of work was discarded on the way out.
+        if (contestRes.data?.hasSubmitted) {
+          navigate(`/contests/${contestId}/result`, { replace: true })
+          return
+        }
+
         setContest(contestRes.data)
         const qs: Question[] = questionsRes.data
         setQuestions(qs)

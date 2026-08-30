@@ -2399,6 +2399,21 @@ select.input { cursor: pointer; }
   font: inherit; font-weight: 700; padding: 2px 10px; border-radius: 3px;
 }
 
+/* Submitted, waiting for the contest to end. Not an error — the paper is in,
+   and the page says so before it says what is missing. */
+.result-pending { text-align: center; max-width: 520px; margin: 40px auto; }
+.result-pending-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 50%; margin-bottom: 14px;
+  background: var(--success-light); color: var(--success); font-size: 26px; font-weight: 700;
+}
+.result-pending h2 { margin-bottom: 8px; }
+.result-pending p { color: var(--text); font-size: 15px; }
+.result-pending-sub { color: var(--text-muted); font-size: 14px; margin-top: 8px; }
+.result-pending-actions {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;
+}
+
 /* ══ Contest instructions sheet ══════════════════════════════════════════
    The SSC/TCS sheet a candidate reads before the paper opens. Fixed light
    colours and its own type scale — it is the screen candidates have already

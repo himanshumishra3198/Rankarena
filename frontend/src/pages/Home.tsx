@@ -216,9 +216,19 @@ export default function Home() {
                       ? countdown(new Date(attention.startTime).getTime() + attention.durationMinutes * 60_000 - now)
                       : countdown(new Date(attention.startTime).getTime() - now)}
                   </p>
-                  {phaseOf(attention) === 'live' ? (
+                  {/* "View result" used to run enterContest, which walks into
+                      the room — the one place a submitted candidate must not
+                      go. The label was right; the destination was not. */}
+                  {phaseOf(attention) === 'live' && attention.hasSubmitted ? (
+                    <button
+                      className="btn btn-primary btn-sm btn-full"
+                      onClick={() => navigate(`/contests/${attention.id}/result`)}
+                    >
+                      View result
+                    </button>
+                  ) : phaseOf(attention) === 'live' ? (
                     <button className="btn btn-danger btn-sm btn-full" disabled={joining} onClick={() => enterContest(attention)}>
-                      {attention.hasSubmitted ? 'View result' : 'Enter contest'}
+                      Enter contest
                     </button>
                   ) : attention.hasJoined ? (
                     <span className="attention-registered">✓ Registered</span>
