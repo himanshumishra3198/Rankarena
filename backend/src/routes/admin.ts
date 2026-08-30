@@ -618,68 +618,6 @@ router.delete("/contests/:id/questions/:qid", async (req: AuthRequest, res: Resp
   res.json({ ok: true });
 });
 
-const bulkQuestionSchema = z.array(
-  questionSchema.extend({
-    marks: z.number().min(0.1).default(2),
-    negativeMarks: z.number().min(0).default(0.5),
-  })
-).min(1);
-
-router.post("/contests/:id/questions/bulk", async (req: AuthRequest, res: Response) => {
-  const contestId = req.params.id as string;
-  const parsed = bulkQuestionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues });
-    return;
-  }
-
-  // Find current max display order for this contest
-  const lastCq = await prisma.contestQuestion.findFirst({
-    where: { contestId },
-    orderBy: { displayOrder: "desc" },
-    select: { displayOrder: true },
-  });
-  let nextOrder = (lastCq?.displayOrder ?? 0) + 1;
-
-  // Skip exact duplicates: against the DB and within the batch itself.
-  const fingerprints = parsed.data.map((q) => fingerprintOf(q));
-  const existing = await prisma.question.findMany({
-    where: { fingerprint: { in: fingerprints } },
-    select: { fingerprint: true },
-  });
-  const seen = new Set(existing.map((e) => e.fingerprint));
-
-  const toCreate: typeof parsed.data = [];
-  let skipped = 0;
-  parsed.data.forEach((q, i) => {
-    const fp = fingerprints[i];
-    if (seen.has(fp)) { skipped++; return; }
-    seen.add(fp);
-    toCreate.push(q);
-  });
-
-  const results = await prisma.$transaction(
-    toCreate.map(({ marks, negativeMarks, ...qData }) =>
-      prisma.question.create({
-        data: {
-          ...toQuestionData(qData),
-          fingerprint: fingerprintOf(qData),
-          contestQuestions: {
-            create: {
-              contestId,
-              displayOrder: nextOrder++,
-              marks,
-              negativeMarks,
-            },
-          },
-        } as Prisma.QuestionCreateInput,
-      })
-    )
-  );
-
-  res.status(201).json({ created: results.length, skipped });
-});
-
 // ── Mock Tests (sectional practice) ───────────────────────
 
 const mockTestSchema = z.object({

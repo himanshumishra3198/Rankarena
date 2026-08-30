@@ -182,7 +182,6 @@ export default function Result() {
   const [reviewLang, setReviewLang] = useState<Language>(DEFAULT_LANGUAGE)
   const [langBusy, setLangBusy] = useState(false)
   const [activeSection, setActiveSection] = useState<string>('all')
-  const [copied, setCopied] = useState(false)
   const [reportQId, setReportQId] = useState<string | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
 
@@ -388,24 +387,6 @@ export default function Result() {
   const selectedIdx = Math.max(0, reviewQs.findIndex(q => q.id === selectedQId))
   const selectedQ = reviewQs[selectedIdx] ?? null
 
-  // ── Share ────────────────────────────────────────────────────────────────
-  function copyResult() {
-    const lines = [
-      `📊 ${result!.contestTitle}`,
-      `Score: ${numScore.toFixed(2)} / ${totalMaxMarks}`,
-      `Rank: ${rank ? `#${rank} / ${totalParticipants}` : 'Pending'}`,
-      `Accuracy: ${accuracy.toFixed(1)}%  |  Percentile: ${percentile !== null ? percentile.toFixed(1) + '%' : '—'}`,
-      `Attempted: ${attempted} / ${questions.length}  ✓${correct}  ✗${wrong}  —${skipped}`,
-      '',
-      ...sectionStats.map(s => `${SECTION_SHORT[s.sec]}: ${s.earned.toFixed(1)}/${s.maxM}  (${s.cor}✓ ${s.wrg}✗)`),
-      '',
-      `🔗 RankArenas`,
-    ]
-    navigator.clipboard.writeText(lines.join('\n'))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
-  }
-
   return (
     <>
       <Navbar />
@@ -430,9 +411,6 @@ export default function Result() {
               Submitted {new Date(result.submittedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
-          <button className="btn btn-ghost" onClick={copyResult} style={{ flexShrink: 0 }}>
-            {copied ? '✓ Copied!' : '📋 Share Result'}
-          </button>
           {isTest && (
             <button className="btn btn-ghost btn-sm" onClick={retakeAsTest} disabled={retaking}>
               {retaking ? 'Resetting…' : '↻ Retake as test'}

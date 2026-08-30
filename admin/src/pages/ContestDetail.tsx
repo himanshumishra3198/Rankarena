@@ -39,23 +39,7 @@ function errStr(err: any, fallback: string): string {
   return fallback
 }
 
-const BULK_TEMPLATE = JSON.stringify([
-  {
-    text: 'Question text here',
-    imageUrl: '',
-    optionA: 'Option A',
-    optionB: 'Option B',
-    optionC: 'Option C',
-    optionD: 'Option D',
-    correctOption: 'A',
-    subject: 'QUANT',
-    difficulty: 'MEDIUM',
-    marks: 2,
-    negativeMarks: 0.5,
-  },
-], null, 2)
-
-type AddTab = 'bank' | 'create' | 'bulk'
+type AddTab = 'bank' | 'create'
 type Phase = 'scheduled' | 'live' | 'ended'
 
 function getPhase(contest: Contest): Phase {
@@ -180,12 +164,6 @@ export default function ContestDetail() {
   const [uploading, setUploading] = useState(false)
   const [editingQid, setEditingQid] = useState<string | null>(null)
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
-
-  // Bulk import state
-  const [bulkJson, setBulkJson] = useState('')
-  const [bulkError, setBulkError] = useState('')
-  const [bulkSuccess, setBulkSuccess] = useState('')
-  const [importing, setImporting] = useState(false)
 
   async function load() {
     const [contestRes, cqsRes, bankRes, pRes] = await Promise.all([
@@ -400,48 +378,6 @@ export default function ContestDetail() {
     } finally { setUploading(false) }
   }
 
-  async function bulkImport() {
-    setBulkError(''); setBulkSuccess('')
-    let parsed: any[]
-    try {
-      parsed = JSON.parse(bulkJson)
-      if (!Array.isArray(parsed)) throw new Error()
-    } catch {
-      setBulkError('Invalid JSON — paste a valid JSON array of questions.')
-      return
-    }
-    setImporting(true)
-    try {
-      const res = await api.post(`/admin/contests/${id}/questions/bulk`, parsed)
-      const skipped = res.data.skipped ?? 0
-      setBulkSuccess(
-        `Imported ${res.data.created} question${res.data.created !== 1 ? 's' : ''} successfully!` +
-        (skipped > 0 ? ` (${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped)` : '')
-      )
-      setBulkJson('')
-      load()
-    } catch (err: any) {
-      const msg = err.response?.data?.error
-      setBulkError(typeof msg === 'string' ? msg : 'Import failed — check your JSON matches the template.')
-    } finally {
-      setImporting(false)
-    }
-  }
-
-  function downloadTemplate() {
-    const blob = new Blob([BULK_TEMPLATE], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'questions-template.json'; a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  function handleBulkFile(file: File) {
-    const reader = new FileReader()
-    reader.onload = () => setBulkJson(reader.result as string)
-    reader.readAsText(file)
-  }
-
   async function removeQuestion(qid: string) {
     if (!(await confirm({
       title: 'Remove this question?',
@@ -641,19 +577,16 @@ export default function ContestDetail() {
         {/* ── Add question card ────────────────────────────────────────── */}
         <div className="card" style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
-            <button className={`tab-btn ${tab === 'bank' ? 'active' : ''}`} onClick={() => { setTab('bank'); setAddError(''); setCreateError(''); setBulkError(''); setBulkSuccess('') }}>
+            <button className={`tab-btn ${tab === 'bank' ? 'active' : ''}`} onClick={() => { setTab('bank'); setAddError(''); setCreateError('') }}>
               Pick from bank {availableBank.length > 0 && `(${availableBank.length})`}
             </button>
-            <button className={`tab-btn ${tab === 'create' ? 'active' : ''}`} onClick={() => { setTab('create'); resetForm(); setAddError(''); setBulkError(''); setBulkSuccess('') }}>
+            <button className={`tab-btn ${tab === 'create' ? 'active' : ''}`} onClick={() => { setTab('create'); resetForm(); setAddError('') }}>
               {editingQid ? '✎ Editing question' : 'Create question'}
-            </button>
-            <button className={`tab-btn ${tab === 'bulk' ? 'active' : ''}`} onClick={() => { setTab('bulk'); setAddError(''); setCreateError(''); setBulkError(''); setBulkSuccess('') }}>
-              Bulk Import JSON
             </button>
           </div>
 
           {/* Shared marks row — applies when adding a question (not when editing an existing one) */}
-          {!(tab === 'create' && editingQid) && tab !== 'bulk' && (
+          {!(tab === 'create' && editingQid) && (
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'flex-end' }}>
               <div className="form-group" style={{ marginBottom: 0, width: 120 }}>
                 <label>Marks (+)</label>
@@ -694,43 +627,6 @@ export default function ContestDetail() {
                   </button>
                 </form>
               )}
-            </>
-          )}
-
-          {tab === 'bulk' && (
-            <>
-              {bulkError && <div className="alert alert-error">{bulkError}</div>}
-              {bulkSuccess && <div className="alert alert-success">{bulkSuccess}</div>}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={downloadTemplate}>
-                  ⬇ Download JSON template
-                </button>
-                <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
-                  📂 Load JSON file
-                  <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleBulkFile(f) }} />
-                </label>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>or paste JSON below</span>
-              </div>
-              <div className="form-group">
-                <label>JSON array of questions</label>
-                <textarea
-                  className="input"
-                  rows={14}
-                  style={{ resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }}
-                  placeholder={BULK_TEMPLATE}
-                  value={bulkJson}
-                  onChange={e => setBulkJson(e.target.value)}
-                />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button className="btn btn-primary" type="button" disabled={importing || !bulkJson.trim()} onClick={bulkImport}>
-                  {importing ? 'Importing...' : 'Import Questions'}
-                </button>
-                {bulkJson.trim() && (() => {
-                  try { const a = JSON.parse(bulkJson); return Array.isArray(a) ? <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{a.length} question{a.length !== 1 ? 's' : ''} detected</span> : null }
-                  catch { return <span style={{ fontSize: 13, color: 'var(--danger)' }}>Invalid JSON</span> }
-                })()}
-              </div>
             </>
           )}
 
