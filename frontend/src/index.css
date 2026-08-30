@@ -2161,3 +2161,174 @@ select.input { cursor: pointer; }
 .lang-toggle-btn + .lang-toggle-btn { border-left: 1px solid var(--border); }
 .lang-toggle-btn.active { background: var(--primary); color: #fff; }
 .lang-toggle-btn:disabled { opacity: .6; cursor: wait; }
+
+/* ══ Exam room ═══════════════════════════════════════════════════════════
+   Modelled on the TCS/SSC interface candidates actually sit, because the room
+   is the one screen where familiarity beats house style: on exam day nobody
+   wants to learn a new layout. Fixed colours rather than theme variables —
+   the real thing does not have a dark mode, and a contest should look the
+   same to everyone. */
+
+.xr { min-height: 100vh; background: #fff; display: flex; flex-direction: column; }
+
+/* ── Top bar: identity and clock ─────────────────────────────────────── */
+.xr-top {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 12px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #cbd5e1;
+}
+.xr-brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.xr-brand-name { font-size: 15px; font-weight: 700; color: #0f172a; }
+.xr-brand-sub {
+  font-size: 11px; color: #475569; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 220px;
+}
+.xr-title { text-align: center; min-width: 0; }
+.xr-title-main {
+  font-size: 15px; font-weight: 700; color: #0f172a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.xr-roll { font-size: 12px; color: #334155; margin-top: 2px; }
+.xr-topright { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+.xr-iconbtn {
+  border: 1px solid #93c5fd; background: #fff; color: #1d4ed8; cursor: pointer;
+  width: 34px; height: 30px; border-radius: 4px; font-size: 14px; line-height: 1;
+}
+.xr-iconbtn:hover { background: #eff6ff; }
+.xr-clock { text-align: center; }
+.xr-clock-label { font-size: 12px; color: #334155; }
+.xr-clock-value {
+  font-size: 19px; font-weight: 700; color: #b91c1c;
+  background: #fef9c3; padding: 1px 8px; border-radius: 3px;
+  font-variant-numeric: tabular-nums; letter-spacing: 1px;
+}
+/* Placeholders until candidates can upload a photo. Grey silhouettes are what
+   the real interface shows before capture, so they read as "not yet" rather
+   than as something broken. */
+.xr-photos { display: flex; gap: 8px; }
+.xr-photo { text-align: center; }
+.xr-photo-box {
+  width: 52px; height: 44px; background: #d1d5db; border: 1px solid #9ca3af;
+  display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+}
+.xr-photo-box svg { width: 34px; height: 34px; fill: #9ca3af; }
+.xr-photo-cap { font-size: 8px; color: #475569; margin-top: 1px; }
+
+/* ── Action strip ────────────────────────────────────────────────────── */
+.xr-actions {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 12px; padding: 8px 16px; border-bottom: 1px solid #cbd5e1; background: #fff;
+}
+.xr-actions-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.xr-link {
+  background: none; border: none; padding: 0; cursor: pointer; font: inherit;
+  font-size: 12.5px; font-weight: 600; color: #b45309; text-decoration: underline;
+}
+.xr-part {
+  background: #15803d; color: #fff; font-size: 12px; font-weight: 700;
+  letter-spacing: .5px; padding: 4px 12px; border-radius: 3px;
+}
+.xr-actions-mid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.xr-btn {
+  background: #2563eb; color: #fff; border: 1px solid #1d4ed8; cursor: pointer;
+  padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: 600; font-family: inherit;
+}
+.xr-btn:hover:not(:disabled) { background: #1d4ed8; }
+.xr-btn:disabled { opacity: .5; cursor: not-allowed; }
+.xr-btn-plain { background: #fff; color: #1d4ed8; }
+.xr-btn-plain:hover:not(:disabled) { background: #eff6ff; }
+.xr-answered { text-align: right; font-size: 12.5px; color: #334155; }
+.xr-answered b { background: #fef9c3; color: #b45309; padding: 1px 7px; border-radius: 3px; }
+
+/* ── Body: question pane + palette ───────────────────────────────────── */
+.xr-body { flex: 1; display: grid; grid-template-columns: 1fr 300px; align-items: start; }
+.xr-main { padding: 14px 18px 40px; min-width: 0; }
+.xr-qno { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+.xr-card { border: 1px solid #cbd5e1; border-radius: 2px; }
+.xr-card-head {
+  display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+  padding: 8px 12px; flex-wrap: wrap;
+}
+.xr-langsel { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #334155; }
+.xr-langsel select {
+  border: 1px solid #cbd5e1; border-radius: 3px; padding: 3px 6px;
+  font-size: 12.5px; font-family: inherit; background: #fff; color: #0f172a;
+}
+.xr-report {
+  background: none; border: none; cursor: pointer; font: inherit;
+  font-size: 12.5px; color: #475569; display: inline-flex; align-items: center; gap: 4px;
+}
+.xr-qtext {
+  border: 1px solid #cbd5e1; border-bottom: none; margin: 0 12px;
+  padding: 14px; font-size: 15px; line-height: 1.7; color: #0f172a;
+}
+.xr-opts { margin: 0 12px 14px; }
+.xr-opt {
+  display: flex; align-items: flex-start; gap: 12px;
+  border: 1px solid #cbd5e1; border-top: none; padding: 12px 14px;
+  font-size: 15px; color: #0f172a; cursor: pointer; background: #fff;
+}
+.xr-opt:first-child { border-top: 1px solid #cbd5e1; }
+.xr-opt:hover { background: #f8fafc; }
+.xr-opt.sel { background: #eff6ff; }
+.xr-opt input { margin: 3px 0 0; accent-color: #2563eb; flex-shrink: 0; }
+.xr-opt.locked { cursor: default; }
+
+/* ── Palette ─────────────────────────────────────────────────────────── */
+.xr-side { border-left: 1px solid #cbd5e1; padding: 10px 12px 40px; background: #fff; }
+.xr-side-head {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 12px;
+}
+.xr-side-head::before { content: '▶'; color: #2563eb; font-size: 12px; }
+.xr-palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin-bottom: 16px; }
+.xr-cell {
+  aspect-ratio: 1; border: 1px solid #1d4ed8; background: #2563eb; color: #fff;
+  font-size: 12.5px; font-weight: 700; cursor: pointer; border-radius: 2px;
+  display: flex; align-items: center; justify-content: center; font-family: inherit;
+}
+.xr-cell.answered   { background: #15803d; border-color: #166534; }
+.xr-cell.marked     { background: #7c3aed; border-color: #6d28d9; }
+.xr-cell.answered-marked { background: #7c3aed; border-color: #166534; box-shadow: inset 0 -4px 0 #15803d; }
+.xr-cell.not-answered { background: #dc2626; border-color: #b91c1c; }
+.xr-cell.not-visited  { background: #e5e7eb; border-color: #9ca3af; color: #374151; }
+.xr-cell.current { outline: 2px solid #0f172a; outline-offset: 1px; }
+.xr-cell:disabled { opacity: .55; cursor: not-allowed; }
+
+.xr-analysis { border: 1px solid #cbd5e1; }
+.xr-analysis-head {
+  background: #e5e7eb; text-align: center; font-size: 12.5px; font-weight: 700;
+  color: #0f172a; padding: 5px; border-bottom: 1px solid #cbd5e1;
+}
+.xr-analysis-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 10px; font-size: 12.5px; color: #334155; border-bottom: 1px solid #e5e7eb;
+}
+.xr-analysis-row:last-child { border-bottom: none; }
+.xr-analysis-row b {
+  background: #fef9c3; color: #b45309; padding: 0 8px; border-radius: 2px;
+  font-variant-numeric: tabular-nums; min-width: 26px; text-align: center;
+}
+
+/* ── Phones: same interface, stacked ─────────────────────────────────── */
+@media (max-width: 860px) {
+  .xr-top { grid-template-columns: 1fr auto; row-gap: 6px; }
+  .xr-title { grid-column: 1 / -1; order: 3; text-align: left; }
+  .xr-photos { display: none; }
+  .xr-actions { grid-template-columns: 1fr; row-gap: 8px; }
+  .xr-actions-mid { justify-content: flex-start; }
+  .xr-answered { text-align: left; }
+  /* Palette above the question on a phone: it is how you navigate, and
+     burying it below a long question would hide the only way around. */
+  .xr-body { grid-template-columns: 1fr; }
+  .xr-side { order: -1; border-left: none; border-bottom: 1px solid #cbd5e1; padding-bottom: 14px; }
+  .xr-palette { grid-template-columns: repeat(8, 1fr); }
+  .xr-main { padding: 12px; }
+}
+@media (max-width: 420px) {
+  .xr-palette { grid-template-columns: repeat(6, 1fr); }
+  .xr-clock-value { font-size: 17px; }
+}
+/* Last few minutes: the real interface flashes the clock rather than only
+   colouring it, because a candidate heads-down on a question will not glance up. */
+.xr-clock-value.warn { background: #fee2e2; animation: xr-pulse 1s steps(2, end) infinite; }
+@keyframes xr-pulse { 50% { background: #fecaca; } }
