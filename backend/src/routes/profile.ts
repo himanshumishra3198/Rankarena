@@ -1,10 +1,17 @@
 import { Router, Response } from "express";
 import prisma from "../lib/prisma";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { settleEndedContests } from "../lib/settleContest";
 
 const router = Router();
 
 async function buildProfileData(userId: string) {
+  // The profile is where a stale rating is noticed, so settle anything
+  // overdue before reading it rather than showing 1500 and an empty graph
+  // until someone happens to open a contest result. Throttled, and a no-op
+  // once everything overdue is marked ENDED.
+  await settleEndedContests();
+
   const [user, ratingHistory, participations, mockAttempts] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },

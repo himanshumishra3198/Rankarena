@@ -6,7 +6,7 @@ import { LANGUAGES, DEFAULT_LANGUAGE } from "../lib/i18n";
 import redis from "../lib/redis";
 import { computeFingerprint } from "../lib/fingerprint";
 import { isValidTopic } from "../lib/topics";
-import { finalizeContest } from "../lib/finalizeContest";
+import { computeContestRatings } from "../lib/settleContest";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -122,63 +122,6 @@ router.post("/contests/:id/status", async (req: AuthRequest, res: Response) => {
 
   res.json(contest);
 });
-
-async function computeContestRatings(contestId: string) {
-  // Idempotency: skip if ratings already recorded
-  const existing = await prisma.ratingHistory.count({ where: { contestId } });
-  if (existing > 0) return;
-
-  // Attempts left open when the clock ran out are scored first. Ranking before
-  // this ran would have silently excluded everyone whose browser died mid-paper
-  // and, because the delta divides by the participant count, shifted the rating
-  // of everyone who did manage to click submit.
-  await finalizeContest(contestId);
-
-  // Test attempts are excluded before ranking, not after. The delta formula
-  // divides by the participant count, so leaving an admin in the set would
-  // change n and shift the rating of every genuine participant.
-  const participations = await prisma.participation.findMany({
-    where: { contestId, submittedAt: { not: null }, isTest: false },
-    select: { userId: true, score: true, submittedAt: true },
-    orderBy: [{ score: "desc" }, { submittedAt: "asc" }],
-  });
-
-  const n = participations.length;
-  if (n === 0) return;
-
-  const userIds = participations.map((p) => p.userId);
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: { id: true, rating: true },
-  });
-  const ratingMap = new Map(users.map((u) => [u.id, u.rating]));
-
-  const updates = participations.map((p, i) => {
-    const rank = i + 1;
-    const oldRating = ratingMap.get(p.userId) ?? 1500;
-    // Linear delta: +50 for first, 0 for median, -50 for last
-    const delta = n > 1 ? Math.round(((n - 2 * rank + 1) / (n - 1)) * 50) : 0;
-    const newRating = Math.max(100, oldRating + delta);
-    return { userId: p.userId, rank, oldRating, newRating };
-  });
-
-  await prisma.$transaction(async (tx) => {
-    await tx.ratingHistory.createMany({
-      data: updates.map((u) => ({
-        userId: u.userId,
-        contestId,
-        oldRating: u.oldRating,
-        newRating: u.newRating,
-        rank: u.rank,
-        totalParticipants: n,
-      })),
-      skipDuplicates: true,
-    });
-    for (const u of updates) {
-      await tx.user.update({ where: { id: u.userId }, data: { rating: u.newRating } });
-    }
-  });
-}
 
 // Restart an ended contest at a new start time (clears all participation data)
 router.post("/contests/:id/restart", async (req: AuthRequest, res: Response) => {

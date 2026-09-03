@@ -7,6 +7,7 @@ import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/a
 import { Prisma } from "../generated/prisma/client";
 import { Language } from "../generated/prisma/enums";
 import { finalizeContest } from "../lib/finalizeContest";
+import { settleContest, settleEndedContests } from "../lib/settleContest";
 import {
   parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion, DEFAULT_LANGUAGE,
 } from "../lib/i18n";
@@ -15,6 +16,11 @@ const router = Router();
 
 // List contests — active (SCHEDULED/LIVE) + recent past (ENDED), with hasJoined for auth users
 router.get("/", async (req, res: Response) => {
+  // Opportunistic sweep: a contest nobody has opened the result of still has
+  // to settle, or its participants never get their rating. Throttled, and a
+  // no-op once everything overdue is marked ENDED.
+  settleEndedContests().catch(() => {});
+
   // Optional JWT decode — doesn't reject unauthenticated requests
   let userId: string | null = null;
   const token = req.headers.authorization?.split(" ")[1];
@@ -418,8 +424,8 @@ router.get("/:id/leaderboard", authenticate, async (req: AuthRequest, res: Respo
   const friendsFilter = req.query.filter === "friends";
   const myId = req.user!.id;
 
-  await finalizeContest(contestId).catch((err) =>
-    console.error(`Finalizing contest ${contestId} failed:`, err)
+  await settleContest(contestId).catch((err) =>
+    console.error(`Settling contest ${contestId} failed:`, err)
   );
 
   // For friends filter we need all entries, otherwise just top-N
@@ -524,12 +530,13 @@ router.post("/:id/language", authenticate, async (req: AuthRequest, res: Respons
 router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
 
-  // Close out anyone still open past the contest's end before reading. There
-  // is no scheduler in this deployment, so the first request after a contest
-  // finishes is what settles it — and it settles every attempt at once, not
-  // just the caller's, so ranks do not depend on who happened to look first.
-  await finalizeContest(contestId).catch((err) =>
-    console.error(`Finalizing contest ${contestId} failed:`, err)
+  // Settle the contest before reading it: score anyone still open past the
+  // end, rank everyone, apply ratings. There is no scheduler in this
+  // deployment, so the first request after a contest finishes is what settles
+  // it — and it settles every attempt at once, not just the caller's, so ranks
+  // do not depend on who happened to look first.
+  await settleContest(contestId).catch((err) =>
+    console.error(`Settling contest ${contestId} failed:`, err)
   );
 
   const [participation, contest] = await Promise.all([
