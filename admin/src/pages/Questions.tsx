@@ -4,9 +4,12 @@ import type { FormEvent } from 'react'
 import api from '../lib/api'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
 import Navbar from '../components/Navbar'
-import { RichEditor } from '../components/RichEditor'
 import { RichText, stripHtml } from '../components/RichText'
+import QuestionContentTabs, {
+  hindiCompleteOf, hindiStartedOf, translationsPayload,
+} from '../components/QuestionContentTabs'
 import type { Question, Passage, QuestionType } from '../lib/types'
+// Still used by the bank listing's Languages column, not by the editor.
 import { LANGUAGES } from '../lib/types'
 import type { Language } from '../lib/types'
 
@@ -176,11 +179,11 @@ export default function Questions() {
   // Which language tab is showing. Reset to English whenever the form opens,
   // so a new question always starts on the source language.
   const [activeLang, setActiveLang] = useState<Language>('EN')
-  // Drives the status chip and mirrors the server's completeness rule, so the
-  // admin sees "incomplete" before submitting rather than after a 400.
-  const hindiFields = [form.hi.text, form.hi.optionA, form.hi.optionB, form.hi.optionC, form.hi.optionD]
-  const hindiStarted = hindiFields.some(v => stripHtml(v).trim())
-  const hindiComplete = hindiFields.every(v => stripHtml(v).trim())
+  // Taken from the shared editor's own rule rather than a second copy of it
+  // here, so the pre-submit check and the tab's status chip can never disagree
+  // about what counts as half-translated.
+  const hindiStarted = hindiStartedOf(form.hi)
+  const hindiComplete = hindiCompleteOf(form.hi)
   const [passageForm, setPassageForm] = useState(emptyPassageForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -374,14 +377,7 @@ export default function Questions() {
         solution: filled(form.solution) ? form.solution : null,
         // Sent even when blank: an empty translation is how the server is told
         // to remove one, so clearing the fields deletes the Hindi version.
-        translations: {
-          HI: {
-            text: form.hi.text.trim(),
-            optionA: form.hi.optionA.trim(), optionB: form.hi.optionB.trim(),
-            optionC: form.hi.optionC.trim(), optionD: form.hi.optionD.trim(),
-            solution: form.hi.solution.trim() || null,
-          },
-        },
+        translations: translationsPayload(form.hi),
       }
       if (editingId) await api.put(`/admin/questions/${editingId}`, payload)
       else await api.post('/admin/questions', payload)
@@ -644,164 +640,89 @@ export default function Questions() {
 
               </div>
 
-              {/* ── Language tabs ──────────────────────────────────── */}
-              <div className="q-lang-tabs" role="tablist">
-                {LANGUAGES.map(l => {
-                  const isHi = l.code === 'HI'
-                  const state = !isHi ? 'on' : hindiComplete ? 'on' : hindiStarted ? 'partial' : 'off'
-                  return (
-                    <button key={l.code} type="button" role="tab"
-                      aria-selected={activeLang === l.code}
-                      className={`q-lang-tab ${activeLang === l.code ? 'active' : ''}`}
-                      onClick={() => setActiveLang(l.code)}>
-                      <span>{l.native}</span>
-                      <span className={`lang-chip lang-chip-${state}`}>
-                        {state === 'on' ? '✓' : state === 'partial' ? '◐' : '✗'}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Keyed on the language so the editors remount on a tab switch.
-                  TipTap reads its placeholder once at construction, so a reused
-                  instance would show the other language's prompt. Content is
-                  unaffected — it comes from form state, not the editor. */}
-              <div className="q-lang-panel" key={activeLang}>
-              {activeLang === 'EN' ? (
-                <>
-                {/* Syllogism structured input */}
-                {form.questionType === 'SYLLOGISM' && (
-                  <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Statements (bold in exam)</div>
-                    {form.statements.map((s, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                        <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>{i + 1}.</span>
-                        <input className="input" style={{ flex: 1 }} value={s}
-                          placeholder={`Statement ${i + 1}`}
-                          onChange={e => setStatement(i, e.target.value)} />
-                        {form.statements.length > 1 && (
-                          <button type="button" onClick={() => removeStatement(i)}
-                            style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
-                        )}
-                      </div>
-                    ))}
-                    <button type="button" className="btn btn-sm btn-ghost" onClick={addStatement}>+ Statement</button>
-
-                    <div style={{ fontWeight: 600, margin: '16px 0 12px', fontSize: 14 }}>Conclusions (bold in exam)</div>
-                    {form.conclusions.map((c, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                        <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>
-                          {['I.', 'II.', 'III.', 'IV.'][i] ?? `${i + 1}.`}
-                        </span>
-                        <input className="input" style={{ flex: 1 }} value={c}
-                          placeholder={`Conclusion ${i + 1}`}
-                          onChange={e => setConclusion(i, e.target.value)} />
-                        {form.conclusions.length > 1 && (
-                          <button type="button" onClick={() => removeConclusion(i)}
-                            style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
-                        )}
-                      </div>
-                    ))}
-                    <button type="button" className="btn btn-sm btn-ghost" onClick={addConclusion}>+ Conclusion</button>
-                  </div>
-                )}
-
-
-                {/* Question text */}
-                <div className="form-group">
-                  <label>
+              {/* The per-language editor, shared with the contest and mock
+                  forms. This page carried its own copy until now, which is how
+                  a question could gain Hindi fields in one form and not the
+                  others — the reason Hindi ended up typed into English fields.
+                  Anything gained here now reaches all three. */}
+              <QuestionContentTabs
+                value={form}
+                onChange={patch => setForm(f => ({ ...f, ...patch }))}
+                activeLang={activeLang}
+                onLangChange={setActiveLang}
+                textLabel={
+                  <>
                     {form.questionType === 'SYLLOGISM'
                       ? 'Question / Direction Text (appears after statements & conclusions)'
                       : 'Question Text'}
                     <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
                       — use the toolbar for bold, italic, color, x² superscript, x₂ subscript
                     </span>
-                  </label>
-                  <RichEditor value={form.text} onChange={v => set('text', v)} minHeight={70}
-                    placeholder={form.questionType === 'SYLLOGISM' ? 'Which conclusion(s) follow? (or leave blank)' : 'Type the question…'} />
+                  </>
+                }
+                englishExtras={
+                  <>
+            {/* Near-duplicate warning */}
+            {similar.length > 0 && (
+              <div style={{
+                background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8,
+                padding: '12px 14px', marginBottom: 16,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
+                  ⚠ {similar.length} similar question{similar.length !== 1 ? 's' : ''} already in the bank — make sure this isn't a duplicate
                 </div>
-
-
-                {/* Near-duplicate warning */}
-                {similar.length > 0 && (
-                  <div style={{
-                    background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8,
-                    padding: '12px 14px', marginBottom: 16,
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
-                      ⚠ {similar.length} similar question{similar.length !== 1 ? 's' : ''} already in the bank — make sure this isn't a duplicate
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {similar.map(s => (
-                        <div key={s.id} style={{ fontSize: 13, color: '#78350f', display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                          <span style={{ fontWeight: 700, fontSize: 11, background: '#fde68a', color: '#92400e', padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>
-                            {s.score}% match
-                          </span>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-
-                {/* Options */}
-                <div className="form-row">
-                  {(['A', 'B', 'C', 'D'] as const).map(opt => (
-                    <div className="form-group" key={opt}>
-                      <label>Option {opt}</label>
-                      <RichEditor minHeight={40}
-                        value={form[`option${opt}` as keyof typeof emptyForm] as string}
-                        onChange={v => set(`option${opt}` as any, v)} placeholder={`Option ${opt}…`} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {similar.map(s => (
+                    <div key={s.id} style={{ fontSize: 13, color: '#78350f', display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                      <span style={{ fontWeight: 700, fontSize: 11, background: '#fde68a', color: '#92400e', padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>
+                        {s.score}% match
+                      </span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.text}</span>
                     </div>
                   ))}
                 </div>
-
-                {/* Detailed solution */}
-                <div className="form-group">
-                  <label>Detailed Solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional — approach &amp; steps shown to students after the test)</span></label>
-                  <RichEditor value={form.solution} onChange={v => set('solution', v)} minHeight={90}
-                    placeholder="Explain the approach and steps to solve this question…" />
-                </div>
-
-                </>
-              ) : (
-                <>
-                  <p className="q-lang-note">
-                    Optional. Leave every field blank to skip — Hindi candidates then see the
-                    English version with a note explaining why. Fill it in and the question
-                    and all four options are required, so nobody sees a half-translated question.
-                  </p>
-
-                  <div className="form-group">
-                    <label>प्रश्न — Question text</label>
-                    <RichEditor value={form.hi.text} minHeight={70}
-                      onChange={v => set('hi', { ...form.hi, text: v } as never)}
-                      placeholder="प्रश्न हिंदी में लिखें…" />
-                  </div>
-
-                  <div className="form-row">
-                    {(['A', 'B', 'C', 'D'] as const).map(opt => (
-                      <div className="form-group" key={opt}>
-                        <label>विकल्प {opt} — Option {opt}</label>
-                        <RichEditor minHeight={40}
-                          value={form.hi[`option${opt}` as 'optionA']}
-                          onChange={v => set('hi', { ...form.hi, [`option${opt}`]: v } as never)}
-                          placeholder={`विकल्प ${opt}…`} />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="form-group">
-                    <label>समाधान — Detailed solution <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                    <RichEditor value={form.hi.solution} minHeight={90}
-                      onChange={v => set('hi', { ...form.hi, solution: v } as never)}
-                      placeholder="हल हिंदी में…" />
-                  </div>
-                </>
-              )}
               </div>
+            )}
+
+            {/* Syllogism structured input */}
+            {form.questionType === 'SYLLOGISM' && (
+              <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Statements (bold in exam)</div>
+                {form.statements.map((s, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>{i + 1}.</span>
+                    <input className="input" style={{ flex: 1 }} value={s}
+                      placeholder={`Statement ${i + 1}`}
+                      onChange={e => setStatement(i, e.target.value)} />
+                    {form.statements.length > 1 && (
+                      <button type="button" onClick={() => removeStatement(i)}
+                        style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" className="btn btn-sm btn-ghost" onClick={addStatement}>+ Statement</button>
+
+                <div style={{ fontWeight: 600, margin: '16px 0 12px', fontSize: 14 }}>Conclusions (bold in exam)</div>
+                {form.conclusions.map((c, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, fontSize: 13, minWidth: 20 }}>
+                      {['I.', 'II.', 'III.', 'IV.'][i] ?? `${i + 1}.`}
+                    </span>
+                    <input className="input" style={{ flex: 1 }} value={c}
+                      placeholder={`Conclusion ${i + 1}`}
+                      onChange={e => setConclusion(i, e.target.value)} />
+                    {form.conclusions.length > 1 && (
+                      <button type="button" onClick={() => removeConclusion(i)}
+                        style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" className="btn btn-sm btn-ghost" onClick={addConclusion}>+ Conclusion</button>
+              </div>
+            )}
+                  </>
+                }
+              />
 
               <button className="btn btn-primary" type="submit" disabled={saving}>
                 {saving ? 'Saving...' : editingId ? 'Update Question' : 'Save Question'}
