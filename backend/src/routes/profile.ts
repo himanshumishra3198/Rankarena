@@ -29,7 +29,10 @@ async function buildProfileData(userId: string) {
     }),
     prisma.mockAttempt.findMany({
       where: { userId, submittedAt: { not: null } },
-      select: { submittedAt: true, correctCount: true, wrongCount: true },
+      select: {
+        submittedAt: true, correctCount: true, wrongCount: true,
+        mockTestId: true, answers: true,
+      },
     }),
   ]);
 
@@ -55,50 +58,87 @@ async function buildProfileData(userId: string) {
     totalSolved += solved;
   }
 
-  // Subject-level accuracy stats
-  const contestIds = [...new Set(participations.map((p) => p.contestId))];
+  // ── Accuracy, by subject and by topic ──────────────────────────────────
+  //
+  // Walks contests and mocks together. It used to count contests only, which
+  // meant the subject bars ignored every mock a candidate had ever sat while
+  // the heatmap right above them counted those same questions — two numbers
+  // on one page disagreeing about the same work.
+  //
+  // Topic is the level the answer actually lives at. `subject` is four
+  // buckets, so "61% at Quant" says nothing you can act on; topics/lib has 49
+  // entries, and knowing you are 32% on Simple & Compound Interest tells you
+  // what to open next. Questions with no topic tag are counted in the subject
+  // totals and skipped for topics — an "Untagged" row is not a study plan.
   const subjectStats: Record<string, { correct: number; wrong: number; skipped: number }> = {};
+  const topicStats: Record<string, { subject: string; correct: number; wrong: number; skipped: number }> = {};
   let totalCorrect = 0, totalWrong = 0, totalSkipped = 0;
 
-  if (contestIds.length > 0) {
-    const contestQuestions = await prisma.contestQuestion.findMany({
-      where: { contestId: { in: contestIds } },
-      select: {
-        contestId: true,
-        questionId: true,
-        question: { select: { subject: true, correctOption: true } },
-      },
-    });
+  type QMeta = { subject: string; topic: string | null; correctOption: string };
 
-    // contestId → Map<questionId, {subject, correctOption}>
-    const cqByContest = new Map<string, Map<string, { subject: string; correctOption: string }>>();
-    for (const cq of contestQuestions) {
-      if (!cqByContest.has(cq.contestId)) cqByContest.set(cq.contestId, new Map());
-      cqByContest.get(cq.contestId)!.set(cq.questionId, {
-        subject: cq.question.subject,
-        correctOption: cq.question.correctOption,
-      });
-    }
+  function record(meta: QMeta, given: string | undefined) {
+    const verdict = !given ? "skipped" : given === meta.correctOption ? "correct" : "wrong";
 
-    for (const p of participations) {
-      const qMap = cqByContest.get(p.contestId) ?? new Map();
-      const answers = (p.answers as Record<string, string>) ?? {};
+    if (!subjectStats[meta.subject]) subjectStats[meta.subject] = { correct: 0, wrong: 0, skipped: 0 };
+    subjectStats[meta.subject][verdict]++;
 
-      for (const [qId, { subject, correctOption }] of qMap.entries()) {
-        if (!subjectStats[subject]) subjectStats[subject] = { correct: 0, wrong: 0, skipped: 0 };
-        const given = answers[qId];
-        if (!given) {
-          subjectStats[subject].skipped++;
-          totalSkipped++;
-        } else if (given === correctOption) {
-          subjectStats[subject].correct++;
-          totalCorrect++;
-        } else {
-          subjectStats[subject].wrong++;
-          totalWrong++;
-        }
+    if (meta.topic) {
+      if (!topicStats[meta.topic]) {
+        topicStats[meta.topic] = { subject: meta.subject, correct: 0, wrong: 0, skipped: 0 };
       }
+      topicStats[meta.topic][verdict]++;
     }
+
+    if (verdict === "correct") totalCorrect++;
+    else if (verdict === "wrong") totalWrong++;
+    else totalSkipped++;
+  }
+
+  const questionSelect = { subject: true, topic: true, correctOption: true } as const;
+
+  const contestIds = [...new Set(participations.map((p) => p.contestId))];
+  const mockIds = [...new Set(mockAttempts.map((a) => a.mockTestId))];
+
+  const [contestQuestions, mockQuestions] = await Promise.all([
+    contestIds.length > 0
+      ? prisma.contestQuestion.findMany({
+          where: { contestId: { in: contestIds } },
+          select: { contestId: true, questionId: true, question: { select: questionSelect } },
+        })
+      : [],
+    mockIds.length > 0
+      ? prisma.mockTestQuestion.findMany({
+          where: { mockTestId: { in: mockIds } },
+          select: { mockTestId: true, questionId: true, question: { select: questionSelect } },
+        })
+      : [],
+  ]);
+
+  // testId -> questionId -> metadata, so each attempt is scored against the
+  // paper it was actually sat on.
+  function groupByTest<T extends { questionId: string; question: QMeta }>(
+    rows: T[],
+    testIdOf: (row: T) => string,
+  ) {
+    const byTest = new Map<string, Map<string, QMeta>>();
+    for (const row of rows) {
+      const id = testIdOf(row);
+      if (!byTest.has(id)) byTest.set(id, new Map());
+      byTest.get(id)!.set(row.questionId, row.question);
+    }
+    return byTest;
+  }
+
+  const cqByContest = groupByTest(contestQuestions, (r) => r.contestId);
+  const mqByMock = groupByTest(mockQuestions, (r) => r.mockTestId);
+
+  for (const p of participations) {
+    const answers = (p.answers as Record<string, string>) ?? {};
+    for (const [qId, meta] of cqByContest.get(p.contestId) ?? []) record(meta, answers[qId]);
+  }
+  for (const a of mockAttempts) {
+    const answers = (a.answers as Record<string, string>) ?? {};
+    for (const [qId, meta] of mqByMock.get(a.mockTestId) ?? []) record(meta, answers[qId]);
   }
 
   // Streak computation
@@ -159,6 +199,7 @@ async function buildProfileData(userId: string) {
       bestRank, maxRating, maxStreak, currentStreak,
     },
     subjectStats,
+    topicStats: Object.entries(topicStats).map(([topic, v]) => ({ topic, ...v })),
     verdictTotals: { correct: totalCorrect, wrong: totalWrong, skipped: totalSkipped, total: totalCorrect + totalWrong + totalSkipped },
   };
 }

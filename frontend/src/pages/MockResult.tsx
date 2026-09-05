@@ -4,6 +4,10 @@ import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import ReportModal from '../components/ReportModal'
 import QuestionDetail from '../components/QuestionDetail'
+import LanguageToggle from '../components/LanguageToggle'
+import { DEFAULT_LANGUAGE, type Language } from '../lib/language'
+import { fmtSecs } from '../lib/time'
+import DOMPurify from 'dompurify'
 
 interface ResultQuestion {
   id: string; text: string; imageUrl?: string
@@ -14,6 +18,7 @@ interface ResultQuestion {
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: { id: string; title: string; content: string; type: 'TEXT' | 'TABLE'; tableData?: { headers: string[]; rows: string[][] } | null } | null
   solution?: string | null
+  language?: Language
 }
 
 interface MockResultData {
@@ -38,6 +43,14 @@ const SECTION_LABELS: Record<string, string> = {
 // the badges onto extra rows on a phone.
 const SECTION_SHORT: Record<string, string> = {
   QUANT: 'Quant', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'GK',
+}
+
+function excerpt(html: string): string {
+  // ALLOWED_TAGS: [] returns the text content with every tag removed, without
+  // ever building a live subtree that could fetch or fire anything.
+  const text = DOMPurify.sanitize(html ?? '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
+  const clean = text.replace(/\s+/g, ' ').trim()
+  return /<img/i.test(html ?? '') ? `${clean} 🖼` : clean
 }
 
 type Verdict = 'correct' | 'wrong' | 'skipped'
@@ -130,14 +143,36 @@ export default function MockResult() {
   const [reportQId, setReportQId] = useState<string | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
   const [tab, setTab] = useState<'overview' | 'solutions' | 'leaderboard'>('overview')
+  // Review language. Starts as whatever the paper was sat in — the API tells
+  // us via the questions it returns — and can be switched freely afterwards,
+  // since nothing about a finished mock's scoring depends on it.
+  const [reviewLang, setReviewLang] = useState<Language>(DEFAULT_LANGUAGE)
+  const [langBusy, setLangBusy] = useState(false)
 
   useEffect(() => {
     api.get(`/mocks/${id}/result`)
-      .then(r => setData(r.data))
+      .then(r => {
+        setData(r.data)
+        const served = r.data?.questions?.[0]?.language
+        if (served) setReviewLang(served)
+      })
       .catch(() => navigate('/mocks'))
       .finally(() => setLoading(false))
     api.get('/bookmarks/ids').then(r => setBookmarks(new Set(r.data))).catch(() => {})
   }, [id, navigate])
+
+  async function switchLanguage(l: Language) {
+    setLangBusy(true)
+    try {
+      const { data } = await api.get(`/mocks/${id}/result`, { params: { language: l } })
+      setData(data)
+      setReviewLang(l)
+    } catch {
+      // Leave the review as it was; the toggle simply does not move.
+    } finally {
+      setLangBusy(false)
+    }
+  }
 
   async function toggleBookmark(qid: string) {
     // optimistic
@@ -178,6 +213,27 @@ export default function MockResult() {
   }
 
   const VC: Record<Verdict, string> = { correct: '#16a34a', wrong: '#dc2626', skipped: '#94a3b8' }
+
+  // ── Time analysis ────────────────────────────────────────────────────────
+  // The room already records seconds per question and submits them; until now
+  // the mock review only showed that figure inside a single question's detail,
+  // so there was no way to see where the paper's time actually went.
+  const timeSpent = data.timeSpent ?? {}
+  const hasTimeData = Object.keys(timeSpent).length > 0
+  const sortedByTime = hasTimeData
+    ? data.questions.filter(q => timeSpent[q.id]).sort((a, b) => (timeSpent[b.id] ?? 0) - (timeSpent[a.id] ?? 0))
+    : []
+  const slowest = sortedByTime.slice(0, 3)
+  // On a short paper the same question can be both slowest and fastest;
+  // listing it twice makes the comparison meaningless.
+  const slowestIds = new Set(slowest.map(q => q.id))
+  const fastest = [...sortedByTime].reverse().filter(q => !slowestIds.has(q.id)).slice(0, 3)
+
+  function openInSolutions(qid: string) {
+    setFilter('all')
+    setTab('solutions')
+    selectQuestion(qid)
+  }
 
   return (
     <>
@@ -248,6 +304,53 @@ export default function MockResult() {
                 <span className="bd-pill" style={{ background: '#eff6ff', color: '#2563eb' }}>⏱ {data.durationMinutes} min</span>
               </div>
             </div>
+
+            {/* ── Time Analysis ──────────────────────────────────── */}
+            {hasTimeData && (
+              <div className="card" style={{ marginTop: 16 }}>
+                <div className="section-head" style={{ marginBottom: 12 }}>Time Analysis</div>
+                <p className="time-analysis-hint">Tap any question to open it in Solutions, with the options and solution.</p>
+                <div className="time-analysis-grid">
+                  {[
+                    { label: 'Most time spent — review these', items: slowest },
+                    { label: 'Least time spent', items: fastest },
+                  ].map(({ label, items }) => (
+                    <div key={label}>
+                      <div className="time-analysis-sub">{label}</div>
+                      <div className="time-q-list">
+                        {items.length === 0 && <p className="time-q-empty">Not enough questions to compare.</p>}
+                        {items.map(q => {
+                          const v = verdicts.get(q.id) ?? 'skipped'
+                          const short = v === 'correct' ? 'cor' : v === 'wrong' ? 'wrg' : 'skp'
+                          const icon = v === 'correct' ? '✓' : v === 'wrong' ? '✗' : '—'
+                          const qNum = data!.questions.indexOf(q) + 1
+                          return (
+                            <button
+                              key={q.id}
+                              type="button"
+                              className={`time-q-card tq-${short}`}
+                              onClick={() => openInSolutions(q.id)}
+                              aria-label={`Open question ${qNum}`}
+                            >
+                              <div className="time-q-meta">
+                                <span className="time-q-num">Q{qNum}</span>
+                                <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
+                                <span className={`time-q-verdict tqv-${short}`}>{icon}</span>
+                                <span className="time-q-dur">{fmtSecs(timeSpent[q.id] ?? 0)}</span>
+                              </div>
+                              <div className="time-q-body">
+                                <span className="time-q-text">{excerpt(q.text)}</span>
+                              </div>
+                              <span className="time-q-open">View question →</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -283,6 +386,7 @@ export default function MockResult() {
         <div className="card">
           <div className="qmap-head">
             <div className="qmap-filters">
+              <LanguageToggle value={reviewLang} onChange={switchLanguage} busy={langBusy} />
               {(['all', 'correct', 'wrong', 'skipped', ...(marked.size > 0 ? ['marked' as Filter] : [])] as Filter[]).map(f => (
                 <button key={f} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-ghost'}`}
                   style={{ textTransform: 'capitalize' }} onClick={() => setFilter(f)}>

@@ -893,6 +893,30 @@ select.input { cursor: pointer; }
    4th child has to be hidden or it wraps onto a second row. */
 @media (max-width: 600px) { .subject-bar-counts { display: none; } }
 
+/* ── Topic performance ──────────────────────────────────
+   Stacked rather than the subject bars' single grid row: topic names run to
+   ~40 characters, so a fixed name column either truncates most of them or
+   starves the bar. Name and score share the top line, the bar spans the full
+   width beneath. */
+.topic-perf-section { margin-top: 24px; }
+.topic-bars { display: flex; flex-direction: column; gap: 14px; }
+.topic-bar-row { display: flex; flex-direction: column; gap: 5px; }
+.topic-bar-head { display: flex; align-items: center; gap: 8px; }
+.topic-bar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.topic-bar-name {
+  font-size: 13px; font-weight: 600; color: var(--heading);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+}
+.topic-bar-pct { font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.topic-bar-track { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.topic-bar-fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+.topic-bar-counts {
+  display: flex; gap: 10px; font-size: 11.5px; font-weight: 600; align-items: baseline;
+}
+.topic-bar-total { color: var(--text-muted); font-weight: 500; margin-left: auto; }
+.topic-more-btn { margin-top: 14px; }
+.topic-thin-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
 
 /* ── Landing: feature grid ──────────────────────────── */
 

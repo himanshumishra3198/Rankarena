@@ -11,12 +11,15 @@ import { ActivityHeatmap } from '../components/ActivityHeatmap'
 
 interface SubjectStat { correct: number; wrong: number; skipped: number }
 
+interface TopicStat { topic: string; subject: string; correct: number; wrong: number; skipped: number }
+
 interface ProfileData {
   user: { id: string; name: string; email: string; role: string; rating: number; createdAt: string; followerCount: number; followingCount: number }
   ratingHistory: RatingPoint[]
   heatmap: Record<string, number>
   stats: { totalContests: number; totalMocks?: number; totalSolved?: number; activeDays?: number; bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number }
   subjectStats: Record<string, SubjectStat>
+  topicStats: TopicStat[]
   verdictTotals: { correct: number; wrong: number; skipped: number; total: number }
 }
 
@@ -112,6 +115,42 @@ function SubjectBar({ subject, stat }: { subject: string; stat: SubjectStat }) {
   )
 }
 
+/**
+ * One topic's accuracy.
+ *
+ * Ranked weakest first, because the only reason to read this list is to find
+ * what to study next — a table sorted by name would make you do that sorting
+ * yourself across 49 rows.
+ */
+function TopicBar({ stat }: { stat: TopicStat }) {
+  const answered = stat.correct + stat.wrong
+  const total = answered + stat.skipped
+  const accuracy = answered > 0 ? (stat.correct / answered) * 100 : 0
+  const color = SUBJECT_COLORS[stat.subject] ?? '#64748b'
+  // Red below 40, amber below 70, green above — the bar should read as a
+  // verdict at a glance, not just as a length.
+  const tone = accuracy < 40 ? '#dc2626' : accuracy < 70 ? '#d97706' : '#16a34a'
+
+  return (
+    <div className="topic-bar-row">
+      <div className="topic-bar-head">
+        <span className="topic-bar-dot" style={{ background: color }} aria-hidden="true" />
+        <span className="topic-bar-name" title={stat.topic}>{stat.topic}</span>
+        <span className="topic-bar-pct" style={{ color: tone }}>{accuracy.toFixed(0)}%</span>
+      </div>
+      <div className="topic-bar-track">
+        <div className="topic-bar-fill" style={{ width: `${accuracy}%`, background: tone }} />
+      </div>
+      <div className="topic-bar-counts">
+        <span style={{ color: '#16a34a' }}>{stat.correct}✓</span>
+        <span style={{ color: '#dc2626' }}>{stat.wrong}✗</span>
+        <span style={{ color: 'var(--text-muted)' }}>{stat.skipped}—</span>
+        <span className="topic-bar-total">{total} seen</span>
+      </div>
+    </div>
+  )
+}
+
 interface FollowUser { id: string; name: string; rating: number }
 
 function FollowListModal({ userId, kind, onClose }: {
@@ -169,6 +208,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null)
+  const [showAllTopics, setShowAllTopics] = useState(false)
 
   useEffect(() => {
     api.get('/profile')
@@ -181,7 +221,7 @@ export default function Profile() {
   if (error)   return <><Navbar /><div className="page"><div className="alert alert-error">{error}</div></div></>
   if (!data)   return null
 
-  const { user, ratingHistory, heatmap, stats, subjectStats, verdictTotals } = data
+  const { user, ratingHistory, heatmap, stats, subjectStats, topicStats, verdictTotals } = data
   const tier    = getTier(user.rating)
   const maxTier = getTier(stats.maxRating)
 
@@ -192,6 +232,22 @@ export default function Profile() {
 
   const subjectOrder = ['QUANT', 'REASONING', 'ENGLISH', 'GK']
   const subjectsWithData = subjectOrder.filter(s => subjectStats[s])
+
+  // A topic needs a few attempts before its accuracy means anything: one
+  // question answered wrong is 0%, which would otherwise top a "weakest"
+  // list ahead of a topic genuinely failed twenty times.
+  const MIN_ATTEMPTS = 5
+  const rankedTopics = (topicStats ?? [])
+    .filter(t => t.correct + t.wrong >= MIN_ATTEMPTS)
+    .sort((a, b) => {
+      const accA = a.correct / (a.correct + a.wrong)
+      const accB = b.correct / (b.correct + b.wrong)
+      // Weakest first; more evidence breaks a tie.
+      return accA - accB || (b.correct + b.wrong) - (a.correct + a.wrong)
+    })
+  const shownTopics = showAllTopics ? rankedTopics : rankedTopics.slice(0, 5)
+  // Everything tagged but not yet attempted enough to rank.
+  const thinTopics = (topicStats ?? []).filter(t => t.correct + t.wrong > 0).length - rankedTopics.length
 
   return (
     <>
@@ -301,6 +357,33 @@ export default function Profile() {
                   <SubjectBar key={s} subject={s} stat={subjectStats[s]} />
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Topic performance — weakest first */}
+          {rankedTopics.length > 0 && (
+            <div className="topic-perf-section">
+              <div className="activity-section-title">
+                Topic Performance
+                <span className="activity-section-sub">· weakest first</span>
+              </div>
+              <div className="topic-bars">
+                {shownTopics.map(t => <TopicBar key={t.topic} stat={t} />)}
+              </div>
+              {rankedTopics.length > 5 && (
+                <button className="btn btn-ghost btn-sm topic-more-btn"
+                  onClick={() => setShowAllTopics(v => !v)}>
+                  {showAllTopics
+                    ? 'Show fewer'
+                    : `Show all ${rankedTopics.length} topics`}
+                </button>
+              )}
+              {thinTopics > 0 && (
+                <p className="topic-thin-note">
+                  {thinTopics} more topic{thinTopics === 1 ? '' : 's'} attempted fewer than {MIN_ATTEMPTS} times —
+                  not enough yet to be worth ranking.
+                </p>
+              )}
             </div>
           )}
 
