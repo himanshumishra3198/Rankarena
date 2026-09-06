@@ -76,7 +76,35 @@ router.put("/contests/:id", async (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
-  const contest = await prisma.contest.update({ where: { id }, data: parsed.data });
+
+  const existing = await prisma.contest.findUnique({
+    where: { id },
+    select: { startTime: true, durationMinutes: true },
+  });
+  if (!existing) {
+    res.status(404).json({ error: "Contest not found" });
+    return;
+  }
+
+  // Moving a contest has to move its status with it. `status` is derived from
+  // the schedule, but it is stored, so an edit that changed only the start
+  // time left it behind: rescheduling a finished contest into the future kept
+  // it ENDED, and the join route refuses an ENDED contest — locking everyone
+  // out of a contest that had not run yet.
+  const data: Record<string, unknown> = { ...parsed.data };
+  const startTime = parsed.data.startTime ? new Date(parsed.data.startTime) : existing.startTime;
+  const durationMinutes = parsed.data.durationMinutes ?? existing.durationMinutes;
+  const rescheduled =
+    startTime.getTime() !== existing.startTime.getTime() ||
+    durationMinutes !== existing.durationMinutes;
+
+  if (rescheduled) {
+    const now = Date.now();
+    const endsAt = startTime.getTime() + durationMinutes * 60_000;
+    data.status = now < startTime.getTime() ? "SCHEDULED" : now < endsAt ? "LIVE" : "ENDED";
+  }
+
+  const contest = await prisma.contest.update({ where: { id }, data });
   res.json(contest);
 });
 

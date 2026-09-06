@@ -142,7 +142,13 @@ router.post("/:id/join", authenticate, requireVerifiedEmail, async (req: AuthReq
     res.status(404).json({ error: "Contest not found" });
     return;
   }
-  if (contest.status === "ENDED") {
+  // Judged on the clock, not the stored status. `status` is derived data that
+  // can go stale — a contest rescheduled into the future kept the ENDED it was
+  // given when its first window closed, and this gate then refused everyone
+  // from a contest that had not started yet. The list endpoint already
+  // re-splits contests by wall clock for the same reason.
+  const endsAt = contest.startTime.getTime() + contest.durationMinutes * 60_000;
+  if (Date.now() >= endsAt) {
     res.status(400).json({ error: "Contest has ended" });
     return;
   }
