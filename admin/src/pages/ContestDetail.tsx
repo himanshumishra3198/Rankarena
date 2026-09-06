@@ -4,11 +4,13 @@ import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import QuestionContentTabs, { translationsPayload } from '../components/QuestionContentTabs'
+import QuestionContentTabs, {
+  hindiCompleteOf, hindiStartedOf, translationsPayload,
+} from '../components/QuestionContentTabs'
 import { RichText, stripHtml } from '../components/RichText'
 import { SegmentedRadio } from '../components/SegmentedRadio'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
-import type { Contest, Question, ContestQuestion, Section, Passage, QuestionType } from '../lib/types'
+import type { Contest, Question, ContestQuestion, Section, Passage, QuestionType, Language } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
@@ -161,6 +163,9 @@ export default function ContestDetail() {
   const [newQ, setNewQ] = useState(emptyQ)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  // Lifted out of the editor so a failed save can put the admin on the tab
+  // holding the offending fields instead of leaving them to hunt for it.
+  const [activeLang, setActiveLang] = useState<Language>('EN')
   const [uploading, setUploading] = useState(false)
   const [editingQid, setEditingQid] = useState<string | null>(null)
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
@@ -323,6 +328,14 @@ export default function ContestDetail() {
     }
     if (!newQ.correctOption) { setCreateError('Select the correct option.'); return }
     if (needsPassage && !newQ.passageId) { setCreateError('Select a passage/table for this question (create it in the Questions tab first).'); return }
+
+    // Caught here rather than left to the server, so the admin lands on the tab
+    // holding the wrong fields instead of reading a 400 about them.
+    if (hindiStartedOf(newQ.hi) && !hindiCompleteOf(newQ.hi)) {
+      setActiveLang('HI')
+      setCreateError('The Hindi translation is incomplete — the question and all four options are required. Clear every Hindi field to skip it.')
+      return
+    }
 
     setCreating(true); setCreateError('')
     const payload: any = {
@@ -719,6 +732,8 @@ export default function ContestDetail() {
                 <QuestionContentTabs
                   value={newQ}
                   onChange={patch => setNewQ(f => ({ ...f, ...patch }))}
+                  activeLang={activeLang}
+                  onLangChange={setActiveLang}
                   textLabel={newQ.questionType === 'SYLLOGISM' ? 'Question / Direction Text' : 'Question Text'}
                 />
 

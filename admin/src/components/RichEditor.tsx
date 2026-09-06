@@ -203,8 +203,12 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
     title: string,
     active = false,
     extra?: React.CSSProperties,
+    // Only the colour swatches are rendered from a list; every other call site
+    // is a fixed element and passes nothing.
+    key?: string,
   ) => (
     <button
+      key={key}
       type="button"
       title={title}
       className={`re-btn ${active ? 'active' : ''}`}
@@ -231,7 +235,7 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 70, singl
         <span className="re-sep" />
         {COLORS.map(c =>
           btn('A', () => chain().setColor(c).run(), `Colour ${c}`,
-            editor.isActive('textStyle', { color: c }), { color: c, fontWeight: 800 })
+            editor.isActive('textStyle', { color: c }), { color: c, fontWeight: 800 }, c)
         )}
         <span className="re-sep" />
         {btn('⌫', () => chain().unsetAllMarks().run(), 'Clear formatting')}

@@ -4,11 +4,13 @@ import type { FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import QuestionContentTabs, { translationsPayload } from '../components/QuestionContentTabs'
+import QuestionContentTabs, {
+  hindiCompleteOf, hindiStartedOf, translationsPayload,
+} from '../components/QuestionContentTabs'
 import { RichText, stripHtml } from '../components/RichText'
 import { SegmentedRadio } from '../components/SegmentedRadio'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
-import type { MockTest, MockTestQuestion, Question, Passage, QuestionType } from '../lib/types'
+import type { MockTest, MockTestQuestion, Question, Passage, QuestionType, Language } from '../lib/types'
 import { SECTION_LABELS, SECTIONS } from '../lib/types'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -56,6 +58,9 @@ export default function MockTestDetail() {
   const [negMarks, setNegMarks] = useState(0.5)
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
+  // Lifted out of the editor so a failed save can put the admin on the tab
+  // holding the offending fields instead of leaving them to hunt for it.
+  const [activeLang, setActiveLang] = useState<Language>('EN')
   const [tab, setTab] = useState<'bank' | 'create'>('bank')
   const [cForm, setCForm] = useState(emptyCreate)
   const [creating, setCreating] = useState(false)
@@ -154,6 +159,14 @@ export default function MockTestDetail() {
     }
     if (!cForm.correctOption) { setError('Select the correct option.'); return }
     if (needsPassage && !cForm.passageId) { setError('Select a passage/table for this question (create it in the Questions tab first).'); return }
+
+    // Caught here rather than left to the server, so the admin lands on the tab
+    // holding the wrong fields instead of reading a 400 about them.
+    if (hindiStartedOf(cForm.hi) && !hindiCompleteOf(cForm.hi)) {
+      setActiveLang('HI')
+      setError('The Hindi translation is incomplete — the question and all four options are required. Clear every Hindi field to skip it.')
+      return
+    }
 
     setCreating(true); setError('')
     const payload: any = {
@@ -462,6 +475,8 @@ export default function MockTestDetail() {
               <QuestionContentTabs
                 value={cForm}
                 onChange={patch => setCForm(f => ({ ...f, ...patch }))}
+                activeLang={activeLang}
+                onLangChange={setActiveLang}
                 textLabel={cForm.questionType === 'SYLLOGISM' ? 'Question / Direction Text' : 'Question Text'}
               />
 
