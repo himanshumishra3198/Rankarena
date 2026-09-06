@@ -87,7 +87,15 @@ export default function ContestRoom() {
   const [examStarted, setExamStarted] = useState(false)
 
   // ── Feature 2: Section timers ─────────────────────────────────────────
-  const [sectionEnteredAt, setSectionEnteredAt] = useState<Record<string, number>>({})
+  //
+  // Seconds already consumed in each section. This used to be the timestamp of
+  // first entry, with the remaining time derived as `allotted - (now -
+  // enteredAt)` — pure wall clock, which meant a section's budget kept
+  // draining while the candidate was somewhere else. Going back to review a
+  // finished section spent the *open* section's time: five minutes of review
+  // cost five minutes of the paper they had not started yet. A real exam
+  // charges a section only for the time actually spent inside it.
+  const [sectionElapsed, setSectionElapsed] = useState<Record<string, number>>({})
 
   // ── Feature 3: Calculator ─────────────────────────────────────────────
   const [showCalc, setShowCalc] = useState(false)
@@ -116,8 +124,12 @@ export default function ContestRoom() {
   submittingRef.current = submitting
   const submittedSectionsRef = useRef(submittedSections)
   submittedSectionsRef.current = submittedSections
-  const sectionEnteredAtRef = useRef(sectionEnteredAt)
-  sectionEnteredAtRef.current = sectionEnteredAt
+  const sectionElapsedRef = useRef(sectionElapsed)
+  sectionElapsedRef.current = sectionElapsed
+  // Which section's clock is currently running, and since when. Null between
+  // sections — on the checkpoint, or while reviewing a submitted one — which
+  // is precisely when nothing should be ticking.
+  const runningSectionRef = useRef<{ section: string; since: number } | null>(null)
   const examStartedRef = useRef(examStarted)
   examStartedRef.current = examStarted
   const phaseRef = useRef(phase)
@@ -141,11 +153,49 @@ export default function ContestRoom() {
       : 0
   }
 
+  /** Bank whatever the running section has used so far, and stop its clock. */
+  function pauseSectionClock() {
+    const running = runningSectionRef.current
+    if (!running) return
+    runningSectionRef.current = null
+    const spent = Math.floor((Date.now() - running.since) / 1000)
+    if (spent <= 0) return
+    // The ref is updated in step with the state rather than waiting for the
+    // next render: the one-second expiry check reads it, and a stale value
+    // there would hand back time that has already been spent.
+    const next = {
+      ...sectionElapsedRef.current,
+      [running.section]: (sectionElapsedRef.current[running.section] ?? 0) + spent,
+    }
+    sectionElapsedRef.current = next
+    setSectionElapsed(next)
+  }
+
+  /**
+   * Start a section's clock, banking whatever the previous one used.
+   *
+   * A submitted section never starts one — reviewing your finished Quant is
+   * free, which is the whole point.
+   */
+  function startSectionClock(section: string) {
+    if (runningSectionRef.current?.section === section) return
+    pauseSectionClock()
+    if (!submittedSectionsRef.current.has(section)) {
+      runningSectionRef.current = { section, since: Date.now() }
+    }
+  }
+
+  function getSectionElapsed(section: string): number {
+    const banked = sectionElapsedRef.current[section] ?? 0
+    const running = runningSectionRef.current
+    const live = running?.section === section
+      ? Math.floor((Date.now() - running.since) / 1000)
+      : 0
+    return banked + live
+  }
+
   function getSectionTimeLeft(section: string): number {
-    const enteredAt = sectionEnteredAtRef.current[section]
-    const allotted = getSectionTimeSecs(section)
-    if (!enteredAt) return allotted
-    return Math.max(0, allotted - Math.floor((Date.now() - enteredAt) / 1000))
+    return Math.max(0, getSectionTimeSecs(section) - getSectionElapsed(section))
   }
 
   // ── Load ──────────────────────────────────────────────────────────────
@@ -260,17 +310,18 @@ export default function ContestRoom() {
     if (phase === 'ended' && !submittingRef.current) doSubmit()
   }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Section timer: auto-submit expired sections every second ─────────
+  // ── Section timer: auto-submit the running section when its time is up ──
+  // Only one section's clock runs at a time, so only that one can expire. The
+  // old loop swept every section that had ever been entered, which is what let
+  // a section time out while the candidate was working somewhere else.
   useEffect(() => {
     if (phase !== 'active' || availableSections.length === 0) return
     const interval = setInterval(() => {
-      const now = Date.now()
-      for (const section of availableSections) {
-        if (submittedSectionsRef.current.has(section)) continue
-        const enteredAt = sectionEnteredAtRef.current[section]
-        if (!enteredAt) continue
-        const allotted = getSectionTimeSecs(section)
-        if (allotted > 0 && Math.floor((now - enteredAt) / 1000) >= allotted) autoSubmitSection(section)
+      const running = runningSectionRef.current
+      if (!running || submittedSectionsRef.current.has(running.section)) return
+      const allotted = getSectionTimeSecs(running.section)
+      if (allotted > 0 && getSectionElapsed(running.section) >= allotted) {
+        autoSubmitSection(running.section)
       }
     }, 1000)
     return () => clearInterval(interval)
@@ -339,10 +390,10 @@ export default function ContestRoom() {
     }
     qEnteredAtRef.current = now
 
-    // Record first entry into a section (feature 2)
-    if (!sectionEnteredAtRef.current[section]) {
-      setSectionEnteredAt(prev => ({ ...prev, [section]: now }))
-    }
+    // Hand the clock to the section being entered, banking whatever the last
+    // one used. Navigating into a submitted section stops the clock entirely,
+    // so reviewing finished work costs nothing.
+    startSectionClock(section)
 
     setCurrentQId(qId)
     setCurrentSection(section)
@@ -391,12 +442,9 @@ export default function ContestRoom() {
     // Enter fullscreen (feature 6)
     document.documentElement.requestFullscreen().catch(() => {})
 
-    // Record entry for the first section (feature 2)
-    const now = Date.now()
-    if (!sectionEnteredAtRef.current[currentSection]) {
-      setSectionEnteredAt(prev => ({ ...prev, [currentSection]: now }))
-    }
-    qEnteredAtRef.current = now
+    // The first section's clock starts here, not when the room loaded.
+    startSectionClock(currentSection)
+    qEnteredAtRef.current = Date.now()
   }
 
   // ── Answer, mark, clear ───────────────────────────────────────────────
@@ -430,6 +478,9 @@ export default function ContestRoom() {
 
   // ── Section submit (manual + auto) ───────────────────────────────────
   function persistSectionSubmit(section: string) {
+    // A submitted section stops consuming time immediately, whether it was
+    // submitted by hand or by its own timer running out.
+    if (runningSectionRef.current?.section === section) pauseSectionClock()
     const next = new Set([...submittedSectionsRef.current, section])
     setSubmittedSections(next)
     localStorage.setItem(`submitted-sections-${contestId}`, JSON.stringify([...next]))
@@ -469,8 +520,8 @@ export default function ContestRoom() {
 
   /**
    * Move into the next section. Navigating to its first question is what
-   * stamps sectionEnteredAt, so the section's clock starts here — on the
-   * candidate's click — rather than while the checkpoint was on screen.
+   * starts its clock, so the section begins here — on the candidate's click —
+   * rather than while the checkpoint was still on screen.
    */
   function startNextSection() {
     const next = nextUnsubmittedSection(submittedSectionsRef.current)
