@@ -1,3 +1,20 @@
+export type Section = 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+
+/**
+ * The order the four sections are presented in — in the exam room, in the
+ * review afterwards, and on every subject breakdown.
+ *
+ * Defined once because it is a decision about the paper, not about a page. It
+ * used to be a separate array in each file, which meant the order a candidate
+ * met the sections in and the order the admin arranged them in could drift
+ * apart without anything failing.
+ *
+ * Changing this line changes the sequence candidates sit the paper in: the
+ * first entry is the section the exam opens on, and sections unlock in this
+ * order.
+ */
+export const SECTIONS: Section[] = ['REASONING', 'GK', 'QUANT', 'ENGLISH']
+
 export interface User {
   id: string
   name: string

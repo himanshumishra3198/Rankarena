@@ -10,10 +10,9 @@ import QuestionContentTabs, {
 } from '../components/QuestionContentTabs'
 import type { Question, Passage, QuestionType } from '../lib/types'
 // Still used by the bank listing's Languages column, not by the editor.
-import { LANGUAGES } from '../lib/types'
+import { LANGUAGES, SECTIONS as SUBJECTS } from '../lib/types'
 import type { Language } from '../lib/types'
 
-const SUBJECTS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
 const SUBJECT_LABELS: Record<string, string> = {
   QUANT: 'Quantitative Aptitude', REASONING: 'Logical Reasoning',

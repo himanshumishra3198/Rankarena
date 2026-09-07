@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
-import type { Contest, Question } from '../lib/types'
+import { SECTIONS, type Contest, type Question } from '../lib/types'
 import ContestInstructions, { type SectionRow } from '../components/ContestInstructions'
 import { getPreferredLanguage, setPreferredLanguage, LANGUAGES, type Language } from '../lib/language'
 import ExamShell, { type SectionTab } from '../components/ExamShell'
@@ -19,7 +19,6 @@ const OPTIONS = ['A', 'B', 'C', 'D'] as const
 type Option = typeof OPTIONS[number]
 type Phase = 'loading' | 'waiting' | 'active' | 'ended'
 
-const SECTIONS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 const SECTION_LABELS: Record<string, string> = {
   QUANT: 'Quant', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'GK',
 }

@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import { QuestionContext } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import { usePageMeta } from '../lib/seo'
+import { SECTIONS } from '../lib/types'
 
 interface BQuestion {
   id: string; text: string; imageUrl?: string
@@ -18,7 +19,6 @@ interface BQuestion {
 const SECTION_LABELS: Record<string, string> = {
   QUANT: 'Quantitative Aptitude', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'General Awareness',
 }
-const SUBJECTS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 
 function optText(q: BQuestion, opt: string) {
   return ({ A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD } as any)[opt] ?? ''
@@ -61,7 +61,7 @@ export default function Bookmarks() {
               <button className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setFilter('all')}>
                 All ({items.length})
               </button>
-              {SUBJECTS.filter(s => items.some(q => q.subject === s)).map(s => (
+              {SECTIONS.filter(s => items.some(q => q.subject === s)).map(s => (
                 <button key={s} className={`btn btn-sm ${filter === s ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setFilter(s)}>
                   {SECTION_LABELS[s]} ({items.filter(q => q.subject === s).length})
                 </button>

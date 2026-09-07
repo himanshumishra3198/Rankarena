@@ -1,6 +1,11 @@
 export type Section = 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
 
-export const SECTIONS: Section[] = ['QUANT', 'REASONING', 'ENGLISH', 'GK']
+/**
+ * The order sections are presented in, admin side. Must match the student
+ * app's SECTIONS — a candidate has to meet the sections in the order the
+ * contest was arranged in, and the two lists are what keep that true.
+ */
+export const SECTIONS: Section[] = ['REASONING', 'GK', 'QUANT', 'ENGLISH']
 
 export const SECTION_LABELS: Record<Section, string> = {
   QUANT: 'Quantitative Aptitude',

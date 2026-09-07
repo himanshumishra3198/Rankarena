@@ -9,6 +9,7 @@ import QuestionDetail from '../components/QuestionDetail'
 import LanguageToggle from '../components/LanguageToggle'
 import { DEFAULT_LANGUAGE, type Language } from '../lib/language'
 import { fmtSecs } from '../lib/time'
+import { SECTIONS } from '../lib/types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RichQuestion {
@@ -39,7 +40,6 @@ interface LeaderboardEntry {
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const SECTIONS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 const SECTION_LABELS: Record<string, string> = {
   QUANT: 'Quantitative Aptitude', REASONING: 'General Intelligence & Reasoning',
   ENGLISH: 'English Comprehension', GK: 'General Awareness',

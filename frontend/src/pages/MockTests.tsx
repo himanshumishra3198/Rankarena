@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import type { MockTestListItem } from '../lib/types'
+import { SECTIONS, type MockTestListItem } from '../lib/types'
 
-const SECTIONS = ['QUANT', 'REASONING', 'ENGLISH', 'GK'] as const
 
 const SECTION_LABELS: Record<string, string> = {
   QUANT: 'Quantitative Aptitude',
