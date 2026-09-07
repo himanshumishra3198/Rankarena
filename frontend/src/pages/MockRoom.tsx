@@ -178,11 +178,41 @@ export default function MockRoom() {
     return saved >= ZOOM_MIN && saved <= ZOOM_MAX ? saved : 100
   })
 
+  // Whether this account may submit at all. Contests refuse an unverified
+  // candidate at the join step, so they never start one; a mock has no join,
+  // and verification was only checked at submit — so an unverified student sat
+  // the whole paper and was turned away at the end, holding an hour of work
+  // and a message that only said to try again. Null while we are still asking.
+  const [verified, setVerified] = useState<boolean | null>(null)
+  const [resend, setResend] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
+
   const draftKey = `mockDraft:${id}`
   const timeSpent = useRef<Record<string, number>>({})
   const lastTickQ = useRef<string>('')
   const lastTickTime = useRef<number>(Date.now())
   const submittedRef = useRef(false)
+
+  useEffect(() => {
+    // Asked of the server rather than read from storage: someone who verified
+    // in the tab the email opened would otherwise still be refused here.
+    api.get('/auth/me')
+      .then(r => {
+        localStorage.setItem('user', JSON.stringify(r.data.user))
+        setVerified(!!r.data.user.emailVerified)
+      })
+      // If the check itself fails, do not stand in the way — the submit route
+      // is still the real gate.
+      .catch(() => setVerified(true))
+  }, [])
+
+  async function resendVerification() {
+    setResend('sending')
+    try {
+      const res = await api.post('/auth/resend-verification')
+      if (res.data.alreadyVerified) { setVerified(true); return }
+      setResend('sent')
+    } catch { setResend('failed') }
+  }
 
   // ── Load (restore an in-progress draft if one exists) ───────────────
   useEffect(() => {
@@ -316,10 +346,22 @@ export default function MockRoom() {
       await api.post(`/mocks/${id}/submit`, { answers, timeSpent: timeSpent.current, markedForReview: Array.from(marked), language })
       try { localStorage.removeItem(draftKey) } catch { /* noop */ }
       navigate(`/mocks/${id}/result`, { replace: true })
-    } catch {
+    } catch (err: any) {
       submittedRef.current = false
       setPhase('active')
-      notify('Submission failed', 'Something went wrong sending your answers. Please try again.')
+      // The server's own reason, when it gave one. "Try again" was actively
+      // misleading for the refusal that cannot be retried into success — one
+      // student retried twenty times in thirty seconds against a 403.
+      if (err?.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        setVerified(false)
+        notify(
+          'Confirm your email to submit',
+          'Your answers are safe on this page. Confirm your email address, then submit again — nothing is lost.',
+        )
+      } else {
+        notify('Submission failed', err?.response?.data?.error
+          || 'Something went wrong sending your answers. Please try again.')
+      }
     }
   }, [answers, marked, language, id, navigate, flushTime])
 
@@ -433,6 +475,42 @@ export default function MockRoom() {
   const totalMarks = questions.reduce((s, q) => s + q.marks, 0)
 
   // ── Instructions gate (shown before the timer starts) ────────────────
+  // Refused here rather than at submit. Sitting a paper you are not allowed to
+  // hand in is worse than being told at the door, which is what contests do.
+  if (phase === 'instructions' && verified === false) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal-box" style={{ maxWidth: 460, textAlign: 'center' }}>
+          <div style={{ fontSize: 34, marginBottom: 8 }} aria-hidden="true">✉️</div>
+          <h2 style={{ marginBottom: 8 }}>Confirm your email first</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6, marginBottom: 18 }}>
+            Tests can only be submitted from a confirmed account. We sent a link
+            to <strong>{JSON.parse(localStorage.getItem('user') || '{}').email ?? 'your address'}</strong> —
+            open it, then come back and start the test.
+          </p>
+          {resend === 'sent' ? (
+            <p style={{ color: 'var(--success)', fontSize: 14, marginBottom: 16 }}>
+              Sent. Check your inbox, and your spam folder.
+            </p>
+          ) : resend === 'failed' ? (
+            <p style={{ color: 'var(--danger)', fontSize: 14, marginBottom: 16 }}>
+              Could not send it just now. Try again shortly.
+            </p>
+          ) : null}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn btn-ghost" onClick={() => navigate('/mocks')}>Back to mocks</button>
+            <button className="btn btn-primary" disabled={resend === 'sending'} onClick={resendVerification}>
+              {resend === 'sending' ? 'Sending…' : 'Resend the link'}
+            </button>
+            <button className="btn btn-ghost" onClick={() => window.location.reload()}>
+              I have confirmed it
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (phase === 'instructions') {
     return (
       <MockInstructions
