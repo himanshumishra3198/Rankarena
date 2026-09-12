@@ -1,6 +1,11 @@
 import prisma from "./prisma";
 import redis from "./redis";
-import { sendContestAnnouncedEmail, sendContestStartingEmail, type ContestMailData } from "./contestMail";
+import {
+  sendContestAnnouncedEmail,
+  sendContestStartingEmail,
+  REMINDER_LEAD_MS,
+  type ContestMailData,
+} from "./contestMail";
 
 /**
  * Contest announcements and start reminders.
@@ -28,8 +33,6 @@ import { sendContestAnnouncedEmail, sendContestStartingEmail, type ContestMailDa
 
 const LOCK_KEY = "contest-notify:lock";
 const LOCK_MS = 55_000;
-/** How far ahead of the start the reminder goes out. */
-const REMINDER_LEAD_MS = 60 * 60_000;
 
 function mailData(c: {
   id: string; title: string; startTime: Date; durationMinutes: number;

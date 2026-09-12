@@ -37,6 +37,15 @@ function duration(mins: number): string {
   return h ? `${h} hour${h > 1 ? "s" : ""}` : `${m} minutes`;
 }
 
+/**
+ * How far ahead of the start the reminder goes out.
+ *
+ * Lives here rather than in the notifier because the announcement copy has to
+ * know it too — whether a reminder is still coming decides what that email is
+ * allowed to promise — and the notifier already imports this module.
+ */
+export const REMINDER_LEAD_MS = 60 * 60_000;
+
 export interface ContestMailData {
   id: string;
   title: string;
@@ -106,18 +115,26 @@ function shell(opts: {
 export function sendContestAnnouncedEmail(to: string, userId: string, name: string, c: ContestMailData) {
   const url = `${SITE}/contests`;
   const unsub = unsubscribeUrl(userId);
+  // Only promise the reminder when there is still time to send one. A contest
+  // put up half an hour before it starts is worth announcing, but the sweep
+  // will never get to remind anyone about it, and an email that promises a
+  // second email that never arrives is worse than one that says nothing.
+  const reminderComing = c.startTime.getTime() - Date.now() > REMINDER_LEAD_MS;
+  const promise = reminderComing
+    ? "Register now and we will remind you an hour before it begins."
+    : "It starts shortly, so register now if you want to sit it.";
   return sendMail(
     to,
     `New contest: ${c.title} — RankArenas`,
     shell({
       eyebrow: "New contest scheduled", eyebrowColor: "#2563eb",
       heading: c.title,
-      lead: `Hi ${escapeHtml(name.trim() || "there")}, a new rated contest is on the calendar. Register now and we will remind you an hour before it begins.`,
+      lead: `Hi ${escapeHtml(name.trim() || "there")}, a new rated contest is on the calendar. ${promise}`,
       contest: c, cta: "Register for this contest", ctaUrl: url,
       footnote: "Registering is free and takes a moment. Your rating only changes if you sit the paper.",
       unsubUrl: unsub,
     }),
-    `New contest on RankArenas: ${c.title}\n\n`
+    `New contest on RankArenas: ${c.title}\n${promise}\n\n`
       + `Starts: ${longDate(c.startTime)}\nDuration: ${duration(c.durationMinutes)}\n`
       + `Marking: +2 correct, -${Number(c.negativeMarks)} wrong\n\n`
       + `Register: ${url}\n\nUnsubscribe from contest emails: ${unsub}`,
