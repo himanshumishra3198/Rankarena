@@ -42,6 +42,7 @@ export type UserMinAggregateOutputType = {
   googleId: string | null
   avatarUrl: string | null
   emailVerified: boolean | null
+  contestEmails: boolean | null
   role: $Enums.Role | null
   rating: number | null
   createdAt: Date | null
@@ -55,6 +56,7 @@ export type UserMaxAggregateOutputType = {
   googleId: string | null
   avatarUrl: string | null
   emailVerified: boolean | null
+  contestEmails: boolean | null
   role: $Enums.Role | null
   rating: number | null
   createdAt: Date | null
@@ -68,6 +70,7 @@ export type UserCountAggregateOutputType = {
   googleId: number
   avatarUrl: number
   emailVerified: number
+  contestEmails: number
   role: number
   rating: number
   createdAt: number
@@ -91,6 +94,7 @@ export type UserMinAggregateInputType = {
   googleId?: true
   avatarUrl?: true
   emailVerified?: true
+  contestEmails?: true
   role?: true
   rating?: true
   createdAt?: true
@@ -104,6 +108,7 @@ export type UserMaxAggregateInputType = {
   googleId?: true
   avatarUrl?: true
   emailVerified?: true
+  contestEmails?: true
   role?: true
   rating?: true
   createdAt?: true
@@ -117,6 +122,7 @@ export type UserCountAggregateInputType = {
   googleId?: true
   avatarUrl?: true
   emailVerified?: true
+  contestEmails?: true
   role?: true
   rating?: true
   createdAt?: true
@@ -217,6 +223,7 @@ export type UserGroupByOutputType = {
   googleId: string | null
   avatarUrl: string | null
   emailVerified: boolean
+  contestEmails: boolean
   role: $Enums.Role
   rating: number
   createdAt: Date
@@ -253,6 +260,7 @@ export type UserWhereInput = {
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
+  contestEmails?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   rating?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -280,6 +288,7 @@ export type UserOrderByWithRelationInput = {
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  contestEmails?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -310,6 +319,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
+  contestEmails?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   rating?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -337,6 +347,7 @@ export type UserOrderByWithAggregationInput = {
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  contestEmails?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -358,6 +369,7 @@ export type UserScalarWhereWithAggregatesInput = {
   googleId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  contestEmails?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   rating?: Prisma.IntWithAggregatesFilter<"User"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -371,6 +383,7 @@ export type UserCreateInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -398,6 +411,7 @@ export type UserUncheckedCreateInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -425,6 +439,7 @@ export type UserUpdateInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -452,6 +467,7 @@ export type UserUncheckedUpdateInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -479,6 +495,7 @@ export type UserCreateManyInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -492,6 +509,7 @@ export type UserUpdateManyMutationInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -505,6 +523,7 @@ export type UserUncheckedUpdateManyInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -518,6 +537,7 @@ export type UserCountOrderByAggregateInput = {
   googleId?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  contestEmails?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -535,6 +555,7 @@ export type UserMaxOrderByAggregateInput = {
   googleId?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  contestEmails?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -548,6 +569,7 @@ export type UserMinOrderByAggregateInput = {
   googleId?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  contestEmails?: Prisma.SortOrder
   role?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -801,6 +823,7 @@ export type UserCreateWithoutAuthTokensInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -827,6 +850,7 @@ export type UserUncheckedCreateWithoutAuthTokensInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -869,6 +893,7 @@ export type UserUpdateWithoutAuthTokensInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -895,6 +920,7 @@ export type UserUncheckedUpdateWithoutAuthTokensInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -921,6 +947,7 @@ export type UserCreateWithoutNotificationsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -947,6 +974,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -978,6 +1006,7 @@ export type UserCreateWithoutActedNotificationsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1004,6 +1033,7 @@ export type UserUncheckedCreateWithoutActedNotificationsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1046,6 +1076,7 @@ export type UserUpdateWithoutNotificationsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1072,6 +1103,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1109,6 +1141,7 @@ export type UserUpdateWithoutActedNotificationsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1135,6 +1168,7 @@ export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1161,6 +1195,7 @@ export type UserCreateWithoutArticlesInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1187,6 +1222,7 @@ export type UserUncheckedCreateWithoutArticlesInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1229,6 +1265,7 @@ export type UserUpdateWithoutArticlesInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1255,6 +1292,7 @@ export type UserUncheckedUpdateWithoutArticlesInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1281,6 +1319,7 @@ export type UserCreateWithoutArticleCommentsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1307,6 +1346,7 @@ export type UserUncheckedCreateWithoutArticleCommentsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1349,6 +1389,7 @@ export type UserUpdateWithoutArticleCommentsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1375,6 +1416,7 @@ export type UserUncheckedUpdateWithoutArticleCommentsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1401,6 +1443,7 @@ export type UserCreateWithoutArticleVotesInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1427,6 +1470,7 @@ export type UserUncheckedCreateWithoutArticleVotesInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1469,6 +1513,7 @@ export type UserUpdateWithoutArticleVotesInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1495,6 +1540,7 @@ export type UserUncheckedUpdateWithoutArticleVotesInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1521,6 +1567,7 @@ export type UserCreateWithoutCommentVotesInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1547,6 +1594,7 @@ export type UserUncheckedCreateWithoutCommentVotesInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1589,6 +1637,7 @@ export type UserUpdateWithoutCommentVotesInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1615,6 +1664,7 @@ export type UserUncheckedUpdateWithoutCommentVotesInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1641,6 +1691,7 @@ export type UserCreateWithoutBookmarksInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1667,6 +1718,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1709,6 +1761,7 @@ export type UserUpdateWithoutBookmarksInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1735,6 +1788,7 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1761,6 +1815,7 @@ export type UserCreateWithoutFollowingInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1787,6 +1842,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1818,6 +1874,7 @@ export type UserCreateWithoutFollowersInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1844,6 +1901,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -1886,6 +1944,7 @@ export type UserUpdateWithoutFollowingInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1912,6 +1971,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1949,6 +2009,7 @@ export type UserUpdateWithoutFollowersInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1975,6 +2036,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2001,6 +2063,7 @@ export type UserCreateWithoutQuestionReportsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2027,6 +2090,7 @@ export type UserUncheckedCreateWithoutQuestionReportsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2069,6 +2133,7 @@ export type UserUpdateWithoutQuestionReportsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2095,6 +2160,7 @@ export type UserUncheckedUpdateWithoutQuestionReportsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2121,6 +2187,7 @@ export type UserCreateWithoutMockAttemptsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2147,6 +2214,7 @@ export type UserUncheckedCreateWithoutMockAttemptsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2189,6 +2257,7 @@ export type UserUpdateWithoutMockAttemptsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2215,6 +2284,7 @@ export type UserUncheckedUpdateWithoutMockAttemptsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2241,6 +2311,7 @@ export type UserCreateWithoutParticipationsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2267,6 +2338,7 @@ export type UserUncheckedCreateWithoutParticipationsInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2309,6 +2381,7 @@ export type UserUpdateWithoutParticipationsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2335,6 +2408,7 @@ export type UserUncheckedUpdateWithoutParticipationsInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2361,6 +2435,7 @@ export type UserCreateWithoutRatingHistoryInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2387,6 +2462,7 @@ export type UserUncheckedCreateWithoutRatingHistoryInput = {
   googleId?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: $Enums.Role
   rating?: number
   createdAt?: Date | string
@@ -2429,6 +2505,7 @@ export type UserUpdateWithoutRatingHistoryInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2455,6 +2532,7 @@ export type UserUncheckedUpdateWithoutRatingHistoryInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2629,6 +2707,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   googleId?: boolean
   avatarUrl?: boolean
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
@@ -2657,6 +2736,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   googleId?: boolean
   avatarUrl?: boolean
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
@@ -2670,6 +2750,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   googleId?: boolean
   avatarUrl?: boolean
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
@@ -2683,12 +2764,13 @@ export type UserSelectScalar = {
   googleId?: boolean
   avatarUrl?: boolean
   emailVerified?: boolean
+  contestEmails?: boolean
   role?: boolean
   rating?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "googleId" | "avatarUrl" | "emailVerified" | "role" | "rating" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "googleId" | "avatarUrl" | "emailVerified" | "contestEmails" | "role" | "rating" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   participations?: boolean | Prisma.User$participationsArgs<ExtArgs>
   ratingHistory?: boolean | Prisma.User$ratingHistoryArgs<ExtArgs>
@@ -2735,6 +2817,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     googleId: string | null
     avatarUrl: string | null
     emailVerified: boolean
+    contestEmails: boolean
     role: $Enums.Role
     rating: number
     createdAt: Date
@@ -3182,6 +3265,7 @@ export interface UserFieldRefs {
   readonly googleId: Prisma.FieldRef<"User", 'String'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
   readonly emailVerified: Prisma.FieldRef<"User", 'Boolean'>
+  readonly contestEmails: Prisma.FieldRef<"User", 'Boolean'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly rating: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>

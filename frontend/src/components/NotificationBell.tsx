@@ -4,7 +4,9 @@ import api from '../lib/api'
 import { timeAgo } from '../lib/time'
 import { getTier } from '../lib/tiers'
 
-type NotificationType = 'FOLLOW' | 'ARTICLE_VOTE' | 'COMMENT_VOTE' | 'ANNOUNCEMENT'
+type NotificationType =
+  | 'FOLLOW' | 'ARTICLE_VOTE' | 'COMMENT_VOTE' | 'ANNOUNCEMENT'
+  | 'CONTEST_ANNOUNCED' | 'CONTEST_STARTING'
 
 interface Notification {
   id: string
@@ -16,6 +18,8 @@ interface Notification {
   articleId: string | null
   articleTitle: string | null
   commentPreview: string | null
+  contestId: string | null
+  contestTitle: string | null
 }
 
 const ICONS: Record<NotificationType, string> = {
@@ -23,6 +27,8 @@ const ICONS: Record<NotificationType, string> = {
   ARTICLE_VOTE: '📄',
   COMMENT_VOTE: '💬',
   ANNOUNCEMENT: '📣',
+  CONTEST_ANNOUNCED: '🗓',
+  CONTEST_STARTING: '⏰',
 }
 
 // How often the badge re-checks while the tab is open. Long enough to be
@@ -46,6 +52,10 @@ function describe(n: Notification): { text: string; strong?: string } {
       }
     case 'ANNOUNCEMENT':
       return { text: n.articleTitle ? `New announcement: “${n.articleTitle}”` : 'New announcement' }
+    case 'CONTEST_ANNOUNCED':
+      return { text: n.contestTitle ? `is scheduled — register now` : 'A new contest is scheduled', strong: n.contestTitle ?? undefined }
+    case 'CONTEST_STARTING':
+      return { text: n.contestTitle ? `starts within the hour` : 'Your contest starts within the hour', strong: n.contestTitle ?? undefined }
   }
 }
 
@@ -106,6 +116,8 @@ export default function NotificationBell() {
   function go(n: Notification) {
     setOpen(false)
     if (n.type === 'FOLLOW' && n.actor) navigate(`/profile/${n.actor.id}`)
+    else if (n.type === 'CONTEST_STARTING' && n.contestId) navigate(`/contests/${n.contestId}`)
+    else if (n.contestId) navigate('/contests')
     else if (n.articleId) navigate(`/community/${n.articleId}`)
   }
 

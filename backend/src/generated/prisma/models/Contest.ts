@@ -43,6 +43,7 @@ export type ContestMinAggregateOutputType = {
   durationMinutes: number | null
   negativeMarks: runtime.Decimal | null
   status: $Enums.ContestStatus | null
+  announcedAt: Date | null
   createdAt: Date | null
 }
 
@@ -53,6 +54,7 @@ export type ContestMaxAggregateOutputType = {
   durationMinutes: number | null
   negativeMarks: runtime.Decimal | null
   status: $Enums.ContestStatus | null
+  announcedAt: Date | null
   createdAt: Date | null
 }
 
@@ -64,6 +66,7 @@ export type ContestCountAggregateOutputType = {
   negativeMarks: number
   sectionLimits: number
   status: number
+  announcedAt: number
   createdAt: number
   _all: number
 }
@@ -86,6 +89,7 @@ export type ContestMinAggregateInputType = {
   durationMinutes?: true
   negativeMarks?: true
   status?: true
+  announcedAt?: true
   createdAt?: true
 }
 
@@ -96,6 +100,7 @@ export type ContestMaxAggregateInputType = {
   durationMinutes?: true
   negativeMarks?: true
   status?: true
+  announcedAt?: true
   createdAt?: true
 }
 
@@ -107,6 +112,7 @@ export type ContestCountAggregateInputType = {
   negativeMarks?: true
   sectionLimits?: true
   status?: true
+  announcedAt?: true
   createdAt?: true
   _all?: true
 }
@@ -205,6 +211,7 @@ export type ContestGroupByOutputType = {
   negativeMarks: runtime.Decimal
   sectionLimits: runtime.JsonValue | null
   status: $Enums.ContestStatus
+  announcedAt: Date | null
   createdAt: Date
   _count: ContestCountAggregateOutputType | null
   _avg: ContestAvgAggregateOutputType | null
@@ -239,10 +246,12 @@ export type ContestWhereInput = {
   negativeMarks?: Prisma.DecimalFilter<"Contest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.JsonNullableFilter<"Contest">
   status?: Prisma.EnumContestStatusFilter<"Contest"> | $Enums.ContestStatus
+  announcedAt?: Prisma.DateTimeNullableFilter<"Contest"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Contest"> | Date | string
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
   participations?: Prisma.ParticipationListRelationFilter
   ratingHistory?: Prisma.RatingHistoryListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
 }
 
 export type ContestOrderByWithRelationInput = {
@@ -253,10 +262,12 @@ export type ContestOrderByWithRelationInput = {
   negativeMarks?: Prisma.SortOrder
   sectionLimits?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   contestQuestions?: Prisma.ContestQuestionOrderByRelationAggregateInput
   participations?: Prisma.ParticipationOrderByRelationAggregateInput
   ratingHistory?: Prisma.RatingHistoryOrderByRelationAggregateInput
+  notifications?: Prisma.NotificationOrderByRelationAggregateInput
 }
 
 export type ContestWhereUniqueInput = Prisma.AtLeast<{
@@ -270,10 +281,12 @@ export type ContestWhereUniqueInput = Prisma.AtLeast<{
   negativeMarks?: Prisma.DecimalFilter<"Contest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.JsonNullableFilter<"Contest">
   status?: Prisma.EnumContestStatusFilter<"Contest"> | $Enums.ContestStatus
+  announcedAt?: Prisma.DateTimeNullableFilter<"Contest"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Contest"> | Date | string
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
   participations?: Prisma.ParticipationListRelationFilter
   ratingHistory?: Prisma.RatingHistoryListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
 }, "id">
 
 export type ContestOrderByWithAggregationInput = {
@@ -284,6 +297,7 @@ export type ContestOrderByWithAggregationInput = {
   negativeMarks?: Prisma.SortOrder
   sectionLimits?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ContestCountOrderByAggregateInput
   _avg?: Prisma.ContestAvgOrderByAggregateInput
@@ -303,6 +317,7 @@ export type ContestScalarWhereWithAggregatesInput = {
   negativeMarks?: Prisma.DecimalWithAggregatesFilter<"Contest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.JsonNullableWithAggregatesFilter<"Contest">
   status?: Prisma.EnumContestStatusWithAggregatesFilter<"Contest"> | $Enums.ContestStatus
+  announcedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Contest"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Contest"> | Date | string
 }
 
@@ -314,10 +329,12 @@ export type ContestCreateInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
   participations?: Prisma.ParticipationCreateNestedManyWithoutContestInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutContestInput
 }
 
 export type ContestUncheckedCreateInput = {
@@ -328,10 +345,12 @@ export type ContestUncheckedCreateInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutContestInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutContestInput
 }
 
 export type ContestUpdateInput = {
@@ -342,10 +361,12 @@ export type ContestUpdateInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
   participations?: Prisma.ParticipationUpdateManyWithoutContestNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutContestNestedInput
 }
 
 export type ContestUncheckedUpdateInput = {
@@ -356,10 +377,12 @@ export type ContestUncheckedUpdateInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutContestNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutContestNestedInput
 }
 
 export type ContestCreateManyInput = {
@@ -370,6 +393,7 @@ export type ContestCreateManyInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -381,6 +405,7 @@ export type ContestUpdateManyMutationInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -392,7 +417,13 @@ export type ContestUncheckedUpdateManyInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ContestNullableScalarRelationFilter = {
+  is?: Prisma.ContestWhereInput | null
+  isNot?: Prisma.ContestWhereInput | null
 }
 
 export type ContestCountOrderByAggregateInput = {
@@ -403,6 +434,7 @@ export type ContestCountOrderByAggregateInput = {
   negativeMarks?: Prisma.SortOrder
   sectionLimits?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -418,6 +450,7 @@ export type ContestMaxOrderByAggregateInput = {
   durationMinutes?: Prisma.SortOrder
   negativeMarks?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -428,6 +461,7 @@ export type ContestMinOrderByAggregateInput = {
   durationMinutes?: Prisma.SortOrder
   negativeMarks?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -439,6 +473,22 @@ export type ContestSumOrderByAggregateInput = {
 export type ContestScalarRelationFilter = {
   is?: Prisma.ContestWhereInput
   isNot?: Prisma.ContestWhereInput
+}
+
+export type ContestCreateNestedOneWithoutNotificationsInput = {
+  create?: Prisma.XOR<Prisma.ContestCreateWithoutNotificationsInput, Prisma.ContestUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.ContestCreateOrConnectWithoutNotificationsInput
+  connect?: Prisma.ContestWhereUniqueInput
+}
+
+export type ContestUpdateOneWithoutNotificationsNestedInput = {
+  create?: Prisma.XOR<Prisma.ContestCreateWithoutNotificationsInput, Prisma.ContestUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.ContestCreateOrConnectWithoutNotificationsInput
+  upsert?: Prisma.ContestUpsertWithoutNotificationsInput
+  disconnect?: Prisma.ContestWhereInput | boolean
+  delete?: Prisma.ContestWhereInput | boolean
+  connect?: Prisma.ContestWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ContestUpdateToOneWithWhereWithoutNotificationsInput, Prisma.ContestUpdateWithoutNotificationsInput>, Prisma.ContestUncheckedUpdateWithoutNotificationsInput>
 }
 
 export type DecimalFieldUpdateOperationsInput = {
@@ -495,6 +545,82 @@ export type ContestUpdateOneRequiredWithoutRatingHistoryNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ContestUpdateToOneWithWhereWithoutRatingHistoryInput, Prisma.ContestUpdateWithoutRatingHistoryInput>, Prisma.ContestUncheckedUpdateWithoutRatingHistoryInput>
 }
 
+export type ContestCreateWithoutNotificationsInput = {
+  id?: string
+  title: string
+  startTime: Date | string
+  durationMinutes: number
+  negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
+  createdAt?: Date | string
+  contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
+  participations?: Prisma.ParticipationCreateNestedManyWithoutContestInput
+  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutContestInput
+}
+
+export type ContestUncheckedCreateWithoutNotificationsInput = {
+  id?: string
+  title: string
+  startTime: Date | string
+  durationMinutes: number
+  negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
+  createdAt?: Date | string
+  contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
+  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutContestInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutContestInput
+}
+
+export type ContestCreateOrConnectWithoutNotificationsInput = {
+  where: Prisma.ContestWhereUniqueInput
+  create: Prisma.XOR<Prisma.ContestCreateWithoutNotificationsInput, Prisma.ContestUncheckedCreateWithoutNotificationsInput>
+}
+
+export type ContestUpsertWithoutNotificationsInput = {
+  update: Prisma.XOR<Prisma.ContestUpdateWithoutNotificationsInput, Prisma.ContestUncheckedUpdateWithoutNotificationsInput>
+  create: Prisma.XOR<Prisma.ContestCreateWithoutNotificationsInput, Prisma.ContestUncheckedCreateWithoutNotificationsInput>
+  where?: Prisma.ContestWhereInput
+}
+
+export type ContestUpdateToOneWithWhereWithoutNotificationsInput = {
+  where?: Prisma.ContestWhereInput
+  data: Prisma.XOR<Prisma.ContestUpdateWithoutNotificationsInput, Prisma.ContestUncheckedUpdateWithoutNotificationsInput>
+}
+
+export type ContestUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
+  participations?: Prisma.ParticipationUpdateManyWithoutContestNestedInput
+  ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutContestNestedInput
+}
+
+export type ContestUncheckedUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
+  participations?: Prisma.ParticipationUncheckedUpdateManyWithoutContestNestedInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutContestNestedInput
+}
+
 export type ContestCreateWithoutContestQuestionsInput = {
   id?: string
   title: string
@@ -503,9 +629,11 @@ export type ContestCreateWithoutContestQuestionsInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutContestInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutContestInput
 }
 
 export type ContestUncheckedCreateWithoutContestQuestionsInput = {
@@ -516,9 +644,11 @@ export type ContestUncheckedCreateWithoutContestQuestionsInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutContestInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutContestInput
 }
 
 export type ContestCreateOrConnectWithoutContestQuestionsInput = {
@@ -545,9 +675,11 @@ export type ContestUpdateWithoutContestQuestionsInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutContestNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutContestNestedInput
 }
 
 export type ContestUncheckedUpdateWithoutContestQuestionsInput = {
@@ -558,9 +690,11 @@ export type ContestUncheckedUpdateWithoutContestQuestionsInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutContestNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutContestNestedInput
 }
 
 export type ContestCreateWithoutParticipationsInput = {
@@ -571,9 +705,11 @@ export type ContestCreateWithoutParticipationsInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutContestInput
 }
 
 export type ContestUncheckedCreateWithoutParticipationsInput = {
@@ -584,9 +720,11 @@ export type ContestUncheckedCreateWithoutParticipationsInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutContestInput
 }
 
 export type ContestCreateOrConnectWithoutParticipationsInput = {
@@ -613,9 +751,11 @@ export type ContestUpdateWithoutParticipationsInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutContestNestedInput
 }
 
 export type ContestUncheckedUpdateWithoutParticipationsInput = {
@@ -626,9 +766,11 @@ export type ContestUncheckedUpdateWithoutParticipationsInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutContestNestedInput
 }
 
 export type ContestCreateWithoutRatingHistoryInput = {
@@ -639,9 +781,11 @@ export type ContestCreateWithoutRatingHistoryInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
   participations?: Prisma.ParticipationCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutContestInput
 }
 
 export type ContestUncheckedCreateWithoutRatingHistoryInput = {
@@ -652,9 +796,11 @@ export type ContestUncheckedCreateWithoutRatingHistoryInput = {
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.ContestStatus
+  announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutContestInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutContestInput
 }
 
 export type ContestCreateOrConnectWithoutRatingHistoryInput = {
@@ -681,9 +827,11 @@ export type ContestUpdateWithoutRatingHistoryInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
   participations?: Prisma.ParticipationUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutContestNestedInput
 }
 
 export type ContestUncheckedUpdateWithoutRatingHistoryInput = {
@@ -694,9 +842,11 @@ export type ContestUncheckedUpdateWithoutRatingHistoryInput = {
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutContestNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutContestNestedInput
 }
 
 
@@ -708,12 +858,14 @@ export type ContestCountOutputType = {
   contestQuestions: number
   participations: number
   ratingHistory: number
+  notifications: number
 }
 
 export type ContestCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   contestQuestions?: boolean | ContestCountOutputTypeCountContestQuestionsArgs
   participations?: boolean | ContestCountOutputTypeCountParticipationsArgs
   ratingHistory?: boolean | ContestCountOutputTypeCountRatingHistoryArgs
+  notifications?: boolean | ContestCountOutputTypeCountNotificationsArgs
 }
 
 /**
@@ -747,6 +899,13 @@ export type ContestCountOutputTypeCountRatingHistoryArgs<ExtArgs extends runtime
   where?: Prisma.RatingHistoryWhereInput
 }
 
+/**
+ * ContestCountOutputType without action
+ */
+export type ContestCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationWhereInput
+}
+
 
 export type ContestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -756,10 +915,12 @@ export type ContestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   negativeMarks?: boolean
   sectionLimits?: boolean
   status?: boolean
+  announcedAt?: boolean
   createdAt?: boolean
   contestQuestions?: boolean | Prisma.Contest$contestQuestionsArgs<ExtArgs>
   participations?: boolean | Prisma.Contest$participationsArgs<ExtArgs>
   ratingHistory?: boolean | Prisma.Contest$ratingHistoryArgs<ExtArgs>
+  notifications?: boolean | Prisma.Contest$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.ContestCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contest"]>
 
@@ -771,6 +932,7 @@ export type ContestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   negativeMarks?: boolean
   sectionLimits?: boolean
   status?: boolean
+  announcedAt?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["contest"]>
 
@@ -782,6 +944,7 @@ export type ContestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   negativeMarks?: boolean
   sectionLimits?: boolean
   status?: boolean
+  announcedAt?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["contest"]>
 
@@ -793,14 +956,16 @@ export type ContestSelectScalar = {
   negativeMarks?: boolean
   sectionLimits?: boolean
   status?: boolean
+  announcedAt?: boolean
   createdAt?: boolean
 }
 
-export type ContestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "startTime" | "durationMinutes" | "negativeMarks" | "sectionLimits" | "status" | "createdAt", ExtArgs["result"]["contest"]>
+export type ContestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "startTime" | "durationMinutes" | "negativeMarks" | "sectionLimits" | "status" | "announcedAt" | "createdAt", ExtArgs["result"]["contest"]>
 export type ContestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   contestQuestions?: boolean | Prisma.Contest$contestQuestionsArgs<ExtArgs>
   participations?: boolean | Prisma.Contest$participationsArgs<ExtArgs>
   ratingHistory?: boolean | Prisma.Contest$ratingHistoryArgs<ExtArgs>
+  notifications?: boolean | Prisma.Contest$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.ContestCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ContestIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -812,6 +977,7 @@ export type $ContestPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     contestQuestions: Prisma.$ContestQuestionPayload<ExtArgs>[]
     participations: Prisma.$ParticipationPayload<ExtArgs>[]
     ratingHistory: Prisma.$RatingHistoryPayload<ExtArgs>[]
+    notifications: Prisma.$NotificationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -821,6 +987,7 @@ export type $ContestPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     negativeMarks: runtime.Decimal
     sectionLimits: runtime.JsonValue | null
     status: $Enums.ContestStatus
+    announcedAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["contest"]>
   composites: {}
@@ -1219,6 +1386,7 @@ export interface Prisma__ContestClient<T, Null = never, ExtArgs extends runtime.
   contestQuestions<T extends Prisma.Contest$contestQuestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Contest$contestQuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContestQuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   participations<T extends Prisma.Contest$participationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Contest$participationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ParticipationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ratingHistory<T extends Prisma.Contest$ratingHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Contest$ratingHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RatingHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notifications<T extends Prisma.Contest$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Contest$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1255,6 +1423,7 @@ export interface ContestFieldRefs {
   readonly negativeMarks: Prisma.FieldRef<"Contest", 'Decimal'>
   readonly sectionLimits: Prisma.FieldRef<"Contest", 'Json'>
   readonly status: Prisma.FieldRef<"Contest", 'ContestStatus'>
+  readonly announcedAt: Prisma.FieldRef<"Contest", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Contest", 'DateTime'>
 }
     
@@ -1718,6 +1887,30 @@ export type Contest$ratingHistoryArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.RatingHistoryScalarFieldEnum | Prisma.RatingHistoryScalarFieldEnum[]
+}
+
+/**
+ * Contest.notifications
+ */
+export type Contest$notificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null
+  where?: Prisma.NotificationWhereInput
+  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
 }
 
 /**

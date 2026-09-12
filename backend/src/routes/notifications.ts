@@ -31,6 +31,7 @@ router.get("/", async (req: AuthRequest, res: Response) => {
   // Resolve titles in two queries rather than per row.
   const articleIds = [...new Set(rows.map((r) => r.articleId).filter(Boolean))] as string[];
   const commentIds = [...new Set(rows.map((r) => r.commentId).filter(Boolean))] as string[];
+  const contestIds = [...new Set(rows.map((r) => r.contestId).filter(Boolean))] as string[];
 
   const [articles, comments] = await Promise.all([
     articleIds.length
@@ -46,8 +47,12 @@ router.get("/", async (req: AuthRequest, res: Response) => {
         })
       : [],
   ]);
+  const contests = contestIds.length
+    ? await prisma.contest.findMany({ where: { id: { in: contestIds } }, select: { id: true, title: true } })
+    : [];
   const articleById = new Map(articles.map((a) => [a.id, a]));
   const commentById = new Map(comments.map((c) => [c.id, c]));
+  const contestById = new Map(contests.map((c) => [c.id, c]));
 
   res.json(
     rows.map((n) => {
@@ -67,6 +72,8 @@ router.get("/", async (req: AuthRequest, res: Response) => {
         articleTitle: article?.title ?? null,
         commentPreview:
           comment && !comment.deleted ? comment.body.slice(0, 80) : null,
+        contestId: n.contestId,
+        contestTitle: n.contestId ? contestById.get(n.contestId)?.title ?? null : null,
       };
     })
   );

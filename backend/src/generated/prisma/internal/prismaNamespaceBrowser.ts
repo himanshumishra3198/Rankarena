@@ -98,6 +98,7 @@ export const UserScalarFieldEnum = {
   googleId: 'googleId',
   avatarUrl: 'avatarUrl',
   emailVerified: 'emailVerified',
+  contestEmails: 'contestEmails',
   role: 'role',
   rating: 'rating',
   createdAt: 'createdAt'
@@ -127,6 +128,7 @@ export const NotificationScalarFieldEnum = {
   articleId: 'articleId',
   commentId: 'commentId',
   voteValue: 'voteValue',
+  contestId: 'contestId',
   read: 'read',
   createdAt: 'createdAt'
 } as const
@@ -215,6 +217,7 @@ export const ContestScalarFieldEnum = {
   negativeMarks: 'negativeMarks',
   sectionLimits: 'sectionLimits',
   status: 'status',
+  announcedAt: 'announcedAt',
   createdAt: 'createdAt'
 } as const
 

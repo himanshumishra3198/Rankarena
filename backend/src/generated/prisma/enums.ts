@@ -87,7 +87,9 @@ export const NotificationType = {
   FOLLOW: 'FOLLOW',
   ARTICLE_VOTE: 'ARTICLE_VOTE',
   COMMENT_VOTE: 'COMMENT_VOTE',
-  ANNOUNCEMENT: 'ANNOUNCEMENT'
+  ANNOUNCEMENT: 'ANNOUNCEMENT',
+  CONTEST_ANNOUNCED: 'CONTEST_ANNOUNCED',
+  CONTEST_STARTING: 'CONTEST_STARTING'
 } as const
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]

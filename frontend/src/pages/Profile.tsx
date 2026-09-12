@@ -15,7 +15,9 @@ interface SubjectStat { correct: number; wrong: number; skipped: number }
 interface TopicStat { topic: string; subject: string; correct: number; wrong: number; skipped: number }
 
 interface ProfileData {
-  user: { id: string; name: string; email: string; role: string; rating: number; createdAt: string; followerCount: number; followingCount: number }
+  user: {
+    id: string; name: string; email: string; role: string; rating: number; createdAt: string
+    followerCount: number; followingCount: number; contestEmails?: boolean }
   ratingHistory: RatingPoint[]
   heatmap: Record<string, number>
   stats: { totalContests: number; totalMocks?: number; totalSolved?: number; activeDays?: number; bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number }
@@ -210,6 +212,8 @@ export default function Profile() {
   const [error, setError] = useState('')
   const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null)
   const [showAllTopics, setShowAllTopics] = useState(false)
+  const [contestEmails, setContestEmails] = useState<boolean | null>(null)
+  const [prefBusy, setPrefBusy] = useState(false)
 
   useEffect(() => {
     api.get('/profile')
@@ -223,6 +227,17 @@ export default function Profile() {
   if (!data)   return null
 
   const { user, ratingHistory, heatmap, stats, subjectStats, topicStats, verdictTotals } = data
+
+  // Seeded from the profile payload the first time it arrives, then owned
+  // locally so the switch responds immediately rather than after a round trip.
+  const emailsOn = contestEmails ?? user.contestEmails ?? true
+  async function toggleContestEmails() {
+    const next = !emailsOn
+    setContestEmails(next); setPrefBusy(true)
+    try { await api.patch('/profile/preferences', { contestEmails: next }) }
+    catch { setContestEmails(!next) }
+    finally { setPrefBusy(false) }
+  }
   const tier    = getTier(user.rating)
   const maxTier = getTier(stats.maxRating)
 
@@ -386,6 +401,27 @@ export default function Profile() {
               )}
             </div>
           )}
+
+          {/* Contest email preference */}
+          <div className="pref-row">
+            <div>
+              <div className="pref-label">Contest emails</div>
+              <div className="pref-help">
+                New contests, and a reminder an hour before one you have registered for.
+                Account emails are not affected.
+              </div>
+            </div>
+            <button
+              className={`pref-switch ${emailsOn ? 'on' : ''}`}
+              role="switch"
+              aria-checked={emailsOn}
+              aria-label="Contest emails"
+              disabled={prefBusy}
+              onClick={toggleContestEmails}
+            >
+              <span className="pref-knob" />
+            </button>
+          </div>
 
           {/* Heatmap */}
           <div className="activity-section-title" style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>

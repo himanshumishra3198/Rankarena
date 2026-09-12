@@ -26,6 +26,7 @@ import notificationRoutes from "./routes/notifications";
 import seoRoutes from "./routes/seo";
 import prisma from "./lib/prisma";
 import { computeFingerprint } from "./lib/fingerprint";
+import { startContestNotifier } from "./lib/contestNotifier";
 
 // Backfill fingerprints for any questions missing one (pre-dedup rows).
 async function backfillFingerprints() {
@@ -122,6 +123,11 @@ process.on("uncaughtException", (err) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Contest announcements and start reminders. A sweep rather than a cron
+// container: the work is idempotent at the database level, so the only thing
+// a second replica costs is a wasted query, and a restart is not a gap.
+startContestNotifier();
 
 // One-time backfill: compute fingerprints for questions added before the
 // dedup feature existed. Idempotent — only touches rows with NULL fingerprint.

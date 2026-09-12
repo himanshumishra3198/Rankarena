@@ -21,6 +21,10 @@ model User {
   // Existing accounts were backfilled true: they predate verification and
   // locking them out of contests would be a regression, not a fix.
   emailVerified Boolean  @default(false) @map("email_verified")
+  // Contest announcements and start reminders. Defaults on — someone who
+  // registered for a contest expects to hear about it — and every such email
+  // carries a one-click unsubscribe that flips this.
+  contestEmails Boolean  @default(true) @map("contest_emails")
   role          Role     @default(STUDENT)
   rating        Int      @default(1500)
   createdAt     DateTime @default(now()) @map("created_at")
@@ -88,12 +92,23 @@ model Notification {
   // Copied from the vote so the text can say "upvoted" or "downvoted" without
   // reading back a vote row that may since have been cleared.
   voteValue Int?             @map("vote_value")
+  // Which contest this is about, for the two contest types. Postgres treats
+  // NULLs as distinct, so the compound unique below does not actually dedupe
+  // rows whose target columns are null — that is why the social types are
+  // upserted by hand. Contest notifications get a real guarantee instead, from
+  // a partial unique index on (user, type, contest) added in the migration.
+  contestId String?          @map("contest_id")
   read      Boolean          @default(false)
   createdAt DateTime         @default(now()) @map("created_at")
 
-  user  User  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
-  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  user    User     @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor   User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  contest Contest? @relation(fields: [contestId], references: [id], onDelete: Cascade)
 
+  // Refined in SQL to a partial index over social notifications only
+  // (WHERE contest_id IS NULL). It is NULLS NOT DISTINCT, so without that
+  // narrowing it collapses to (userId, type) for contest rows and admits one
+  // per user for all time. See 20260913000000_contest_notifications.
   @@unique([userId, actorId, type, articleId, commentId])
   @@index([userId, read])
   @@index([userId, createdAt])
@@ -219,11 +234,17 @@ model Contest {
   negativeMarks   Decimal       @default(0.5) @map("negative_marks")
   sectionLimits   Json?         @map("section_limits") // { QUANT: 25, REASONING: 20, ENGLISH: 25, GK: 20 }
   status          ContestStatus @default(SCHEDULED)
+  // When the "a new contest is scheduled" mail went out. Null means it has not
+  // been announced yet, which is what the sweep looks for — so a crash halfway
+  // through a send is picked up on the next pass instead of being lost or
+  // repeated.
+  announcedAt     DateTime?     @map("announced_at")
   createdAt       DateTime      @default(now()) @map("created_at")
 
   contestQuestions ContestQuestion[]
   participations   Participation[]
   ratingHistory    RatingHistory[]
+  notifications    Notification[]
 
   @@map("contests")
 }
@@ -461,6 +482,10 @@ enum NotificationType {
   ARTICLE_VOTE
   COMMENT_VOTE
   ANNOUNCEMENT
+  // A new contest has been scheduled — sent to everyone.
+  CONTEST_ANNOUNCED
+  // Your contest starts within the hour — sent to those registered for it.
+  CONTEST_STARTING
 }
 
 enum ArticleType {

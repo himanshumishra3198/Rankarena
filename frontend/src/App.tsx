@@ -22,6 +22,7 @@ import ArticleView from './pages/ArticleView'
 import ArticleEditor from './pages/ArticleEditor'
 import AnalyticsTracker from './components/AnalyticsTracker'
 import { ConfirmProvider } from './components/ConfirmDialog'
+import Unsubscribe from './pages/Unsubscribe'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
         {/* Public and unauthenticated: Google's reviewer has to reach these. */}
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

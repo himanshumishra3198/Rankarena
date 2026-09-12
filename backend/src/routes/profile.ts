@@ -1,6 +1,8 @@
 import { Router, Response } from "express";
 import prisma from "../lib/prisma";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { verifyUnsubscribeToken } from "../lib/unsubscribe";
+import { z } from "zod";
 import { settleEndedContests } from "../lib/settleContest";
 
 const router = Router();
@@ -15,7 +17,7 @@ async function buildProfileData(userId: string) {
   const [user, ratingHistory, participations, mockAttempts] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, role: true, rating: true, createdAt: true },
+      select: { id: true, name: true, role: true, rating: true, createdAt: true, contestEmails: true },
     }),
     prisma.ratingHistory.findMany({
       where: { userId },
@@ -203,6 +205,58 @@ async function buildProfileData(userId: string) {
     verdictTotals: { correct: totalCorrect, wrong: totalWrong, skipped: totalSkipped, total: totalCorrect + totalWrong + totalSkipped },
   };
 }
+
+/**
+ * Contest email preference.
+ *
+ * Separate from the profile payload it is read from because it is the only
+ * writable thing here, and a PATCH that could touch a rating would be a
+ * different kind of endpoint.
+ */
+router.patch("/preferences", authenticate, async (req: AuthRequest, res: Response) => {
+  const parsed = z.object({ contestEmails: z.boolean() }).safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "contestEmails must be true or false" });
+    return;
+  }
+  const user = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: { contestEmails: parsed.data.contestEmails },
+    select: { contestEmails: true },
+  });
+  res.json(user);
+});
+
+/**
+ * One-click unsubscribe from an email, with no session.
+ *
+ * Deliberately unauthenticated: the whole point is that it works from an inbox
+ * on a device that has never signed in. The signed token is the authorisation,
+ * and it only ever turns contest mail off — the worst a leaked link can do is
+ * stop someone's reminders, which is the same thing the link is for.
+ *
+ * Idempotent, so the "did it work?" second click says yes rather than erroring.
+ */
+router.post("/unsubscribe", async (req, res: Response) => {
+  const parsed = z.object({ userId: z.string(), token: z.string() }).safeParse(req.body);
+  if (!parsed.success || !verifyUnsubscribeToken(parsed.data.userId, parsed.data.token)) {
+    res.status(400).json({ error: "This unsubscribe link is not valid." });
+    return;
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: parsed.data.userId },
+    select: { email: true },
+  });
+  if (!user) {
+    res.status(404).json({ error: "Account not found." });
+    return;
+  }
+  await prisma.user.update({
+    where: { id: parsed.data.userId },
+    data: { contestEmails: false },
+  });
+  res.json({ ok: true, email: user.email });
+});
 
 // Own profile
 router.get("/", authenticate, async (req: AuthRequest, res: Response) => {

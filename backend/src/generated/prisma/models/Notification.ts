@@ -42,6 +42,7 @@ export type NotificationMinAggregateOutputType = {
   articleId: string | null
   commentId: string | null
   voteValue: number | null
+  contestId: string | null
   read: boolean | null
   createdAt: Date | null
 }
@@ -54,6 +55,7 @@ export type NotificationMaxAggregateOutputType = {
   articleId: string | null
   commentId: string | null
   voteValue: number | null
+  contestId: string | null
   read: boolean | null
   createdAt: Date | null
 }
@@ -66,6 +68,7 @@ export type NotificationCountAggregateOutputType = {
   articleId: number
   commentId: number
   voteValue: number
+  contestId: number
   read: number
   createdAt: number
   _all: number
@@ -88,6 +91,7 @@ export type NotificationMinAggregateInputType = {
   articleId?: true
   commentId?: true
   voteValue?: true
+  contestId?: true
   read?: true
   createdAt?: true
 }
@@ -100,6 +104,7 @@ export type NotificationMaxAggregateInputType = {
   articleId?: true
   commentId?: true
   voteValue?: true
+  contestId?: true
   read?: true
   createdAt?: true
 }
@@ -112,6 +117,7 @@ export type NotificationCountAggregateInputType = {
   articleId?: true
   commentId?: true
   voteValue?: true
+  contestId?: true
   read?: true
   createdAt?: true
   _all?: true
@@ -211,6 +217,7 @@ export type NotificationGroupByOutputType = {
   articleId: string | null
   commentId: string | null
   voteValue: number | null
+  contestId: string | null
   read: boolean
   createdAt: Date
   _count: NotificationCountAggregateOutputType | null
@@ -246,10 +253,12 @@ export type NotificationWhereInput = {
   articleId?: Prisma.StringNullableFilter<"Notification"> | string | null
   commentId?: Prisma.StringNullableFilter<"Notification"> | string | null
   voteValue?: Prisma.IntNullableFilter<"Notification"> | number | null
+  contestId?: Prisma.StringNullableFilter<"Notification"> | string | null
   read?: Prisma.BoolFilter<"Notification"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   actor?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  contest?: Prisma.XOR<Prisma.ContestNullableScalarRelationFilter, Prisma.ContestWhereInput> | null
 }
 
 export type NotificationOrderByWithRelationInput = {
@@ -260,10 +269,12 @@ export type NotificationOrderByWithRelationInput = {
   articleId?: Prisma.SortOrderInput | Prisma.SortOrder
   commentId?: Prisma.SortOrderInput | Prisma.SortOrder
   voteValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  contestId?: Prisma.SortOrderInput | Prisma.SortOrder
   read?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   actor?: Prisma.UserOrderByWithRelationInput
+  contest?: Prisma.ContestOrderByWithRelationInput
 }
 
 export type NotificationWhereUniqueInput = Prisma.AtLeast<{
@@ -278,10 +289,12 @@ export type NotificationWhereUniqueInput = Prisma.AtLeast<{
   articleId?: Prisma.StringNullableFilter<"Notification"> | string | null
   commentId?: Prisma.StringNullableFilter<"Notification"> | string | null
   voteValue?: Prisma.IntNullableFilter<"Notification"> | number | null
+  contestId?: Prisma.StringNullableFilter<"Notification"> | string | null
   read?: Prisma.BoolFilter<"Notification"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   actor?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  contest?: Prisma.XOR<Prisma.ContestNullableScalarRelationFilter, Prisma.ContestWhereInput> | null
 }, "id" | "userId_actorId_type_articleId_commentId">
 
 export type NotificationOrderByWithAggregationInput = {
@@ -292,6 +305,7 @@ export type NotificationOrderByWithAggregationInput = {
   articleId?: Prisma.SortOrderInput | Prisma.SortOrder
   commentId?: Prisma.SortOrderInput | Prisma.SortOrder
   voteValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  contestId?: Prisma.SortOrderInput | Prisma.SortOrder
   read?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.NotificationCountOrderByAggregateInput
@@ -312,6 +326,7 @@ export type NotificationScalarWhereWithAggregatesInput = {
   articleId?: Prisma.StringNullableWithAggregatesFilter<"Notification"> | string | null
   commentId?: Prisma.StringNullableWithAggregatesFilter<"Notification"> | string | null
   voteValue?: Prisma.IntNullableWithAggregatesFilter<"Notification"> | number | null
+  contestId?: Prisma.StringNullableWithAggregatesFilter<"Notification"> | string | null
   read?: Prisma.BoolWithAggregatesFilter<"Notification"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Notification"> | Date | string
 }
@@ -326,6 +341,7 @@ export type NotificationCreateInput = {
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationsInput
   actor?: Prisma.UserCreateNestedOneWithoutActedNotificationsInput
+  contest?: Prisma.ContestCreateNestedOneWithoutNotificationsInput
 }
 
 export type NotificationUncheckedCreateInput = {
@@ -336,6 +352,7 @@ export type NotificationUncheckedCreateInput = {
   articleId?: string | null
   commentId?: string | null
   voteValue?: number | null
+  contestId?: string | null
   read?: boolean
   createdAt?: Date | string
 }
@@ -350,6 +367,7 @@ export type NotificationUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationsNestedInput
   actor?: Prisma.UserUpdateOneWithoutActedNotificationsNestedInput
+  contest?: Prisma.ContestUpdateOneWithoutNotificationsNestedInput
 }
 
 export type NotificationUncheckedUpdateInput = {
@@ -360,6 +378,7 @@ export type NotificationUncheckedUpdateInput = {
   articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -372,6 +391,7 @@ export type NotificationCreateManyInput = {
   articleId?: string | null
   commentId?: string | null
   voteValue?: number | null
+  contestId?: string | null
   read?: boolean
   createdAt?: Date | string
 }
@@ -394,6 +414,7 @@ export type NotificationUncheckedUpdateManyInput = {
   articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -424,6 +445,7 @@ export type NotificationCountOrderByAggregateInput = {
   articleId?: Prisma.SortOrder
   commentId?: Prisma.SortOrder
   voteValue?: Prisma.SortOrder
+  contestId?: Prisma.SortOrder
   read?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -440,6 +462,7 @@ export type NotificationMaxOrderByAggregateInput = {
   articleId?: Prisma.SortOrder
   commentId?: Prisma.SortOrder
   voteValue?: Prisma.SortOrder
+  contestId?: Prisma.SortOrder
   read?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -452,6 +475,7 @@ export type NotificationMinOrderByAggregateInput = {
   articleId?: Prisma.SortOrder
   commentId?: Prisma.SortOrder
   voteValue?: Prisma.SortOrder
+  contestId?: Prisma.SortOrder
   read?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -556,6 +580,48 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NotificationCreateNestedManyWithoutContestInput = {
+  create?: Prisma.XOR<Prisma.NotificationCreateWithoutContestInput, Prisma.NotificationUncheckedCreateWithoutContestInput> | Prisma.NotificationCreateWithoutContestInput[] | Prisma.NotificationUncheckedCreateWithoutContestInput[]
+  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutContestInput | Prisma.NotificationCreateOrConnectWithoutContestInput[]
+  createMany?: Prisma.NotificationCreateManyContestInputEnvelope
+  connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+}
+
+export type NotificationUncheckedCreateNestedManyWithoutContestInput = {
+  create?: Prisma.XOR<Prisma.NotificationCreateWithoutContestInput, Prisma.NotificationUncheckedCreateWithoutContestInput> | Prisma.NotificationCreateWithoutContestInput[] | Prisma.NotificationUncheckedCreateWithoutContestInput[]
+  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutContestInput | Prisma.NotificationCreateOrConnectWithoutContestInput[]
+  createMany?: Prisma.NotificationCreateManyContestInputEnvelope
+  connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+}
+
+export type NotificationUpdateManyWithoutContestNestedInput = {
+  create?: Prisma.XOR<Prisma.NotificationCreateWithoutContestInput, Prisma.NotificationUncheckedCreateWithoutContestInput> | Prisma.NotificationCreateWithoutContestInput[] | Prisma.NotificationUncheckedCreateWithoutContestInput[]
+  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutContestInput | Prisma.NotificationCreateOrConnectWithoutContestInput[]
+  upsert?: Prisma.NotificationUpsertWithWhereUniqueWithoutContestInput | Prisma.NotificationUpsertWithWhereUniqueWithoutContestInput[]
+  createMany?: Prisma.NotificationCreateManyContestInputEnvelope
+  set?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  disconnect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  delete?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  update?: Prisma.NotificationUpdateWithWhereUniqueWithoutContestInput | Prisma.NotificationUpdateWithWhereUniqueWithoutContestInput[]
+  updateMany?: Prisma.NotificationUpdateManyWithWhereWithoutContestInput | Prisma.NotificationUpdateManyWithWhereWithoutContestInput[]
+  deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
+}
+
+export type NotificationUncheckedUpdateManyWithoutContestNestedInput = {
+  create?: Prisma.XOR<Prisma.NotificationCreateWithoutContestInput, Prisma.NotificationUncheckedCreateWithoutContestInput> | Prisma.NotificationCreateWithoutContestInput[] | Prisma.NotificationUncheckedCreateWithoutContestInput[]
+  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutContestInput | Prisma.NotificationCreateOrConnectWithoutContestInput[]
+  upsert?: Prisma.NotificationUpsertWithWhereUniqueWithoutContestInput | Prisma.NotificationUpsertWithWhereUniqueWithoutContestInput[]
+  createMany?: Prisma.NotificationCreateManyContestInputEnvelope
+  set?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  disconnect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  delete?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  update?: Prisma.NotificationUpdateWithWhereUniqueWithoutContestInput | Prisma.NotificationUpdateWithWhereUniqueWithoutContestInput[]
+  updateMany?: Prisma.NotificationUpdateManyWithWhereWithoutContestInput | Prisma.NotificationUpdateManyWithWhereWithoutContestInput[]
+  deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
+}
+
 export type NotificationCreateWithoutUserInput = {
   id?: string
   type: $Enums.NotificationType
@@ -565,6 +631,7 @@ export type NotificationCreateWithoutUserInput = {
   read?: boolean
   createdAt?: Date | string
   actor?: Prisma.UserCreateNestedOneWithoutActedNotificationsInput
+  contest?: Prisma.ContestCreateNestedOneWithoutNotificationsInput
 }
 
 export type NotificationUncheckedCreateWithoutUserInput = {
@@ -574,6 +641,7 @@ export type NotificationUncheckedCreateWithoutUserInput = {
   articleId?: string | null
   commentId?: string | null
   voteValue?: number | null
+  contestId?: string | null
   read?: boolean
   createdAt?: Date | string
 }
@@ -597,6 +665,7 @@ export type NotificationCreateWithoutActorInput = {
   read?: boolean
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationsInput
+  contest?: Prisma.ContestCreateNestedOneWithoutNotificationsInput
 }
 
 export type NotificationUncheckedCreateWithoutActorInput = {
@@ -606,6 +675,7 @@ export type NotificationUncheckedCreateWithoutActorInput = {
   articleId?: string | null
   commentId?: string | null
   voteValue?: number | null
+  contestId?: string | null
   read?: boolean
   createdAt?: Date | string
 }
@@ -647,6 +717,7 @@ export type NotificationScalarWhereInput = {
   articleId?: Prisma.StringNullableFilter<"Notification"> | string | null
   commentId?: Prisma.StringNullableFilter<"Notification"> | string | null
   voteValue?: Prisma.IntNullableFilter<"Notification"> | number | null
+  contestId?: Prisma.StringNullableFilter<"Notification"> | string | null
   read?: Prisma.BoolFilter<"Notification"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
 }
@@ -667,6 +738,56 @@ export type NotificationUpdateManyWithWhereWithoutActorInput = {
   data: Prisma.XOR<Prisma.NotificationUpdateManyMutationInput, Prisma.NotificationUncheckedUpdateManyWithoutActorInput>
 }
 
+export type NotificationCreateWithoutContestInput = {
+  id?: string
+  type: $Enums.NotificationType
+  articleId?: string | null
+  commentId?: string | null
+  voteValue?: number | null
+  read?: boolean
+  createdAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutNotificationsInput
+  actor?: Prisma.UserCreateNestedOneWithoutActedNotificationsInput
+}
+
+export type NotificationUncheckedCreateWithoutContestInput = {
+  id?: string
+  userId: string
+  type: $Enums.NotificationType
+  actorId?: string | null
+  articleId?: string | null
+  commentId?: string | null
+  voteValue?: number | null
+  read?: boolean
+  createdAt?: Date | string
+}
+
+export type NotificationCreateOrConnectWithoutContestInput = {
+  where: Prisma.NotificationWhereUniqueInput
+  create: Prisma.XOR<Prisma.NotificationCreateWithoutContestInput, Prisma.NotificationUncheckedCreateWithoutContestInput>
+}
+
+export type NotificationCreateManyContestInputEnvelope = {
+  data: Prisma.NotificationCreateManyContestInput | Prisma.NotificationCreateManyContestInput[]
+  skipDuplicates?: boolean
+}
+
+export type NotificationUpsertWithWhereUniqueWithoutContestInput = {
+  where: Prisma.NotificationWhereUniqueInput
+  update: Prisma.XOR<Prisma.NotificationUpdateWithoutContestInput, Prisma.NotificationUncheckedUpdateWithoutContestInput>
+  create: Prisma.XOR<Prisma.NotificationCreateWithoutContestInput, Prisma.NotificationUncheckedCreateWithoutContestInput>
+}
+
+export type NotificationUpdateWithWhereUniqueWithoutContestInput = {
+  where: Prisma.NotificationWhereUniqueInput
+  data: Prisma.XOR<Prisma.NotificationUpdateWithoutContestInput, Prisma.NotificationUncheckedUpdateWithoutContestInput>
+}
+
+export type NotificationUpdateManyWithWhereWithoutContestInput = {
+  where: Prisma.NotificationScalarWhereInput
+  data: Prisma.XOR<Prisma.NotificationUpdateManyMutationInput, Prisma.NotificationUncheckedUpdateManyWithoutContestInput>
+}
+
 export type NotificationCreateManyUserInput = {
   id?: string
   type: $Enums.NotificationType
@@ -674,6 +795,7 @@ export type NotificationCreateManyUserInput = {
   articleId?: string | null
   commentId?: string | null
   voteValue?: number | null
+  contestId?: string | null
   read?: boolean
   createdAt?: Date | string
 }
@@ -685,6 +807,7 @@ export type NotificationCreateManyActorInput = {
   articleId?: string | null
   commentId?: string | null
   voteValue?: number | null
+  contestId?: string | null
   read?: boolean
   createdAt?: Date | string
 }
@@ -698,6 +821,7 @@ export type NotificationUpdateWithoutUserInput = {
   read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actor?: Prisma.UserUpdateOneWithoutActedNotificationsNestedInput
+  contest?: Prisma.ContestUpdateOneWithoutNotificationsNestedInput
 }
 
 export type NotificationUncheckedUpdateWithoutUserInput = {
@@ -707,6 +831,7 @@ export type NotificationUncheckedUpdateWithoutUserInput = {
   articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -718,6 +843,7 @@ export type NotificationUncheckedUpdateManyWithoutUserInput = {
   articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -731,6 +857,7 @@ export type NotificationUpdateWithoutActorInput = {
   read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationsNestedInput
+  contest?: Prisma.ContestUpdateOneWithoutNotificationsNestedInput
 }
 
 export type NotificationUncheckedUpdateWithoutActorInput = {
@@ -740,6 +867,7 @@ export type NotificationUncheckedUpdateWithoutActorInput = {
   articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -748,6 +876,55 @@ export type NotificationUncheckedUpdateManyWithoutActorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
+  articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  read?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type NotificationCreateManyContestInput = {
+  id?: string
+  userId: string
+  type: $Enums.NotificationType
+  actorId?: string | null
+  articleId?: string | null
+  commentId?: string | null
+  voteValue?: number | null
+  read?: boolean
+  createdAt?: Date | string
+}
+
+export type NotificationUpdateWithoutContestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
+  articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  read?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutNotificationsNestedInput
+  actor?: Prisma.UserUpdateOneWithoutActedNotificationsNestedInput
+}
+
+export type NotificationUncheckedUpdateWithoutContestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
+  actorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  read?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type NotificationUncheckedUpdateManyWithoutContestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
+  actorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   articleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   commentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voteValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -765,10 +942,12 @@ export type NotificationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   articleId?: boolean
   commentId?: boolean
   voteValue?: boolean
+  contestId?: boolean
   read?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   actor?: boolean | Prisma.Notification$actorArgs<ExtArgs>
+  contest?: boolean | Prisma.Notification$contestArgs<ExtArgs>
 }, ExtArgs["result"]["notification"]>
 
 export type NotificationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -779,10 +958,12 @@ export type NotificationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   articleId?: boolean
   commentId?: boolean
   voteValue?: boolean
+  contestId?: boolean
   read?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   actor?: boolean | Prisma.Notification$actorArgs<ExtArgs>
+  contest?: boolean | Prisma.Notification$contestArgs<ExtArgs>
 }, ExtArgs["result"]["notification"]>
 
 export type NotificationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -793,10 +974,12 @@ export type NotificationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   articleId?: boolean
   commentId?: boolean
   voteValue?: boolean
+  contestId?: boolean
   read?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   actor?: boolean | Prisma.Notification$actorArgs<ExtArgs>
+  contest?: boolean | Prisma.Notification$contestArgs<ExtArgs>
 }, ExtArgs["result"]["notification"]>
 
 export type NotificationSelectScalar = {
@@ -807,22 +990,26 @@ export type NotificationSelectScalar = {
   articleId?: boolean
   commentId?: boolean
   voteValue?: boolean
+  contestId?: boolean
   read?: boolean
   createdAt?: boolean
 }
 
-export type NotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "actorId" | "articleId" | "commentId" | "voteValue" | "read" | "createdAt", ExtArgs["result"]["notification"]>
+export type NotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "actorId" | "articleId" | "commentId" | "voteValue" | "contestId" | "read" | "createdAt", ExtArgs["result"]["notification"]>
 export type NotificationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   actor?: boolean | Prisma.Notification$actorArgs<ExtArgs>
+  contest?: boolean | Prisma.Notification$contestArgs<ExtArgs>
 }
 export type NotificationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   actor?: boolean | Prisma.Notification$actorArgs<ExtArgs>
+  contest?: boolean | Prisma.Notification$contestArgs<ExtArgs>
 }
 export type NotificationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   actor?: boolean | Prisma.Notification$actorArgs<ExtArgs>
+  contest?: boolean | Prisma.Notification$contestArgs<ExtArgs>
 }
 
 export type $NotificationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -830,6 +1017,7 @@ export type $NotificationPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     actor: Prisma.$UserPayload<ExtArgs> | null
+    contest: Prisma.$ContestPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -839,6 +1027,7 @@ export type $NotificationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     articleId: string | null
     commentId: string | null
     voteValue: number | null
+    contestId: string | null
     read: boolean
     createdAt: Date
   }, ExtArgs["result"]["notification"]>
@@ -1237,6 +1426,7 @@ export interface Prisma__NotificationClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   actor<T extends Prisma.Notification$actorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Notification$actorArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  contest<T extends Prisma.Notification$contestArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Notification$contestArgs<ExtArgs>>): Prisma.Prisma__ContestClient<runtime.Types.Result.GetResult<Prisma.$ContestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1273,6 +1463,7 @@ export interface NotificationFieldRefs {
   readonly articleId: Prisma.FieldRef<"Notification", 'String'>
   readonly commentId: Prisma.FieldRef<"Notification", 'String'>
   readonly voteValue: Prisma.FieldRef<"Notification", 'Int'>
+  readonly contestId: Prisma.FieldRef<"Notification", 'String'>
   readonly read: Prisma.FieldRef<"Notification", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Notification", 'DateTime'>
 }
@@ -1692,6 +1883,25 @@ export type Notification$actorArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   include?: Prisma.UserInclude<ExtArgs> | null
   where?: Prisma.UserWhereInput
+}
+
+/**
+ * Notification.contest
+ */
+export type Notification$contestArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Contest
+   */
+  select?: Prisma.ContestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Contest
+   */
+  omit?: Prisma.ContestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContestInclude<ExtArgs> | null
+  where?: Prisma.ContestWhereInput
 }
 
 /**
