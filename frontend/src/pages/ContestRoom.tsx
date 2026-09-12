@@ -758,34 +758,34 @@ export default function ContestRoom() {
           <>
             <button className="xr-btn xr-btn-plain" disabled={idxInSection === 0}
               onClick={() => { const prev = sectionQs[idxInSection - 1]; if (prev) goToQuestion(prev.id, currentSection) }}>
-              Previous
+              <span className="lbl-long">Previous</span><span className="lbl-short">Prev</span>
             </button>
             {!isSectionLocked && phase === 'active' && (
               <>
                 <button className="xr-btn xr-btn-plain" onClick={markReviewNext}
                   title="Mark this question for review and move to the next">
-                  Mark for Review
+                  <span className="lbl-long">Mark for Review</span><span className="lbl-short">Mark</span>
                 </button>
                 <button className="xr-btn xr-btn-plain" disabled={!answers[currentQ.id]}
                   onClick={() => clearAnswer(currentQ.id)}>
-                  Clear Response
+                  <span className="lbl-long">Clear Response</span><span className="lbl-short">Clear</span>
                 </button>
               </>
             )}
             <button className="xr-btn" disabled={isLastInSection} onClick={saveAndNext}>
               Save &amp; Next
             </button>
-            {/* On the last open section there is nothing to move on to, so the
-                shell's Submit Test is the only button that ends the paper —
-                locking one more section would drop the candidate on a
-                checkpoint with only one way out. */}
-            {!isSectionLocked && phase === 'active' && !isFinalSection && (
-              <button className="xr-btn xr-btn-plain" onClick={() => submitSection(currentSection)}>
-                Submit {SECTION_LABELS[currentSection]} ✓
-              </button>
-            )}
           </>
         }
+        /* On the last open section there is nothing to move on to, so the
+           shell's Submit Test is the only button that ends the paper — locking
+           one more section would drop the candidate on a checkpoint with only
+           one way out. */
+        sectionAction={!isSectionLocked && phase === 'active' && !isFinalSection ? (
+          <button className="xr-btn xr-btn-plain" onClick={() => submitSection(currentSection)}>
+            Submit {SECTION_LABELS[currentSection]} ✓
+          </button>
+        ) : undefined}
       >
         <div className="xr-qtext">
           <QuestionContent q={currentQ} />

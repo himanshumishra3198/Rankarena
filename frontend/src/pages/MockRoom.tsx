@@ -615,23 +615,21 @@ export default function MockRoom() {
         actions={
           <>
             <button className="xs-btn" disabled={currentIdx === 0} onClick={() => goTo(currentIdx - 1)}>
-              Previous
+              <span className="lbl-long">Previous</span><span className="lbl-short">Prev</span>
             </button>
             <button className="xs-btn" onClick={markReviewNext}
               title="Mark this question for review and move to the next">
-              Mark for Review
+              <span className="lbl-long">Mark for Review</span><span className="lbl-short">Mark</span>
             </button>
             <button className="xs-btn" disabled={!answers[currentQ.id]} onClick={clearAnswer}>
-              Clear Response
+              <span className="lbl-long">Clear Response</span><span className="lbl-short">Clear</span>
             </button>
             <button className="xs-btn" disabled={currentIdx === questions.length - 1} onClick={saveAndNext}>
               Save &amp; Next
             </button>
-            <button className="xs-btn xs-btn-danger" onClick={() => setShowSubmit(true)}>
-              Submit Test
-            </button>
           </>
         }
+        onSubmit={() => setShowSubmit(true)}
         questionNo={currentIdx + 1}
         questionMeta={
           <>

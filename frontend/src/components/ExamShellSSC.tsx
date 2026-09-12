@@ -40,7 +40,7 @@ export default function ExamShellSSC({
   isFullscreen, onToggleFullscreen,
   paused, onTogglePause,
   onInstructions, sectionLabel, answeredCount,
-  actions, toolbarExtra,
+  actions, onSubmit, submitLabel, toolbarExtra,
   questionNo, questionMeta,
   language, onLanguageChange, langBusy, onReport,
   children,
@@ -63,8 +63,14 @@ export default function ExamShellSSC({
   /** The green tag: the subject or section being attempted. */
   sectionLabel: string
   answeredCount: number
-  /** Previous / Mark for Review / Save & Next and friends. */
+  /**
+   * Previous / Mark for Review / Save & Next and friends — the per-question
+   * controls. On a phone these become a fixed bar at the bottom of the screen,
+   * so keep Submit out of them: it belongs somewhere a thumb does not rest.
+   */
   actions: ReactNode
+  onSubmit: () => void
+  submitLabel?: string
   /** Sound, and anything else that belongs beside the zoom controls. */
   toolbarExtra?: ReactNode
   questionNo: number
@@ -128,7 +134,14 @@ export default function ExamShellSSC({
         <div className="xs-actions-right">
           <div className="xs-answered">
             Total Questions answered : <b>{answeredCount}</b>
+            <button className="xs-btn xs-btn-danger xs-submit" onClick={onSubmit}>
+              {submitLabel ?? 'Submit Test'}
+            </button>
           </div>
+          {/* The per-question controls. Fixed to the bottom of the screen on a
+              phone — they used to sit above a question that was itself below
+              the fold, so answering one meant scrolling down to the options and
+              back up to Save & Next, twice per question. */}
           <div className="xs-btns">{actions}</div>
         </div>
       </div>

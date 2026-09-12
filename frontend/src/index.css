@@ -2193,6 +2193,11 @@ select.input { cursor: pointer; }
    the real thing does not have a dark mode, and a contest should look the
    same to everyone. */
 
+/* Action buttons carry a full label and a short one; the short one is used
+   only in the phone thumb bar, where four buttons share 390px and truncated
+   text ("Mark for R…") is worse than a shorter word. */
+.lbl-short { display: none; }
+
 /* Shared components rendered inside a room — passages, data tables, rich text —
    style themselves from the theme variables. The rooms are deliberately fixed
    light, so the light values are pinned here; without this a candidate on the
@@ -2265,6 +2270,8 @@ select.input { cursor: pointer; }
   letter-spacing: .5px; padding: 4px 12px; border-radius: 3px;
 }
 .xr-actions-mid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.xr-actions-q { display: flex; gap: 8px; flex-wrap: wrap; }
+.xr-actions-end { display: flex; gap: 8px; flex-wrap: wrap; }
 .xr-btn {
   background: #2563eb; color: #fff; border: 1px solid #1d4ed8; cursor: pointer;
   padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: 600; font-family: inherit;
@@ -2370,8 +2377,34 @@ select.input { cursor: pointer; }
   .xr-brand-sub { display: none; }
   .xr-photos { display: none; }
   .xr-actions { grid-template-columns: 1fr; row-gap: 8px; }
-  .xr-actions-mid { justify-content: flex-start; }
+  .xr-actions-mid {
+    display: flex; flex-direction: column-reverse; align-items: stretch; gap: 8px;
+  }
+  .xr-submit { align-self: flex-start; padding: 5px 14px; }
   .xr-answered { text-align: left; }
+
+  /* Same reasoning as the mock room: the controls a candidate uses on every
+     question belong within thumb reach, not above a question they have to
+     scroll past to read. */
+  .xr-actions-q {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: #fff; border-top: 2px solid #cbd5e1;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, .10);
+  }
+  .xr-actions-q { grid-template-columns: repeat(4, 1fr); }
+  .xr-actions-q .xr-btn {
+    padding: 10px 4px; font-size: 12.5px; white-space: nowrap; min-height: 42px;
+  }
+  .xr-actions-q .lbl-long { display: none; }
+  .xr-actions-q .lbl-short { display: inline; }
+  /* Submit Test and "Submit <section>" — deliberate acts, kept in the flow. */
+  .xr-actions-end { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* Room for the bar, and no sideways scroll: sub-pixel rounding in the
+     header was leaving a 1px drift, and nothing in the room is meant to
+     scroll horizontally — wide tables carry their own scroll box. */
+  .xr { padding-bottom: 72px; overflow-x: hidden; }
   /* Palette above the question on a phone: it is how you navigate, and
      burying it below a long question would hide the only way around. */
   /* One column either way — the rail is a desktop idea, and on a phone the
@@ -2732,8 +2765,30 @@ select.input { cursor: pointer; }
   .xs-avatar { display: none; }
   .xs-actions { flex-direction: column; align-items: stretch; padding: 8px 12px; }
   .xs-actions-right { align-items: stretch; }
-  .xs-answered { text-align: left; }
-  .xs-btns { justify-content: flex-start; }
+  .xs-answered { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .xs-submit { flex-shrink: 0; padding: 5px 12px; font-size: 13px; }
+
+  /* The per-question controls ride at the bottom of the screen, under the
+     thumb. They used to sit above a question that was itself below the fold:
+     answering one meant scrolling down to the options, back up to Save & Next,
+     then down again — twice a question, fifty times in a 25-question paper. */
+  .xs-btns {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: #fff; border-top: 2px solid #d0d0d0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, .10);
+  }
+  .xs-btns .xs-btn {
+    padding: 10px 4px; font-size: 12.5px; white-space: nowrap; min-height: 42px;
+  }
+  .xs-btns .lbl-long { display: none; }
+  .xs-btns .lbl-short { display: inline; }
+  /* Room for the bar, so it never covers the last option. */
+  /* Room for the bar, and no sideways scroll: sub-pixel rounding in the
+     header was leaving a 1px drift, and nothing in the room is meant to
+     scroll horizontally — wide tables carry their own scroll box. */
+  .xs { padding-bottom: 72px; overflow-x: hidden; }
   /* Palette above the question on a phone: it is how you navigate, and burying
      it below a long question would hide the only way around. */
   /* One column either way — the rail is a desktop idea, and on a phone the

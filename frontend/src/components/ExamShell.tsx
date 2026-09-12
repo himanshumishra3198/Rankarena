@@ -45,7 +45,7 @@ export default function ExamShell({
   onInstructions, onReport, onSubmit, submitLabel,
   answeredCount, stats, extraStats,
   palette, currentId, onSelect,
-  questionNo, questionMeta, banner, children, actions, topRightExtra, analysisLabel,
+  questionNo, questionMeta, banner, children, actions, sectionAction, topRightExtra, analysisLabel,
 }: {
   title: string
   rollNumber: string
@@ -88,6 +88,12 @@ export default function ExamShell({
   children: ReactNode
   /** Mark for Review / Save & Next — they differ between the two rooms. */
   actions: ReactNode
+  /**
+   * Section-level actions such as "Submit Quant". Kept out of `actions`
+   * because that group becomes a thumb bar on a phone, and closing a section
+   * is not something to do by accident while reaching for Save & Next.
+   */
+  sectionAction?: ReactNode
   topRightExtra?: ReactNode
   analysisLabel?: string
 }) {
@@ -138,8 +144,14 @@ export default function ExamShell({
           <span className="xr-part">{partLabel}</span>
         </div>
         <div className="xr-actions-mid">
-          {actions}
-          <button className="xr-btn" onClick={onSubmit}>{submitLabel ?? 'Submit Test'}</button>
+          {/* Per-question controls, grouped so a phone can fix them to the
+              bottom of the screen. Submit stays outside the group: it is not a
+              button anyone should meet with their thumb mid-paper. */}
+          <div className="xr-actions-q">{actions}</div>
+          <div className="xr-actions-end">
+            {sectionAction}
+            <button className="xr-btn xr-submit" onClick={onSubmit}>{submitLabel ?? 'Submit Test'}</button>
+          </div>
         </div>
         <div className="xr-answered">
           Total Questions Answered: <b>{answeredCount}</b>
