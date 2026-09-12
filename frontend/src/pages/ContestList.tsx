@@ -301,32 +301,36 @@ export default function ContestList() {
         {!loading && past.length > 0 && (
           <>
             <h2 className="contest-section-heading">Past contests</h2>
-            <div className="card" style={{ padding: 0 }}>
-              <table className="contest-table">
-                <thead>
-                  <tr><th>Name</th><th>Start</th><th>Length</th><th></th></tr>
-                </thead>
-                <tbody>
-                  {past.map(c => (
-                    <tr key={c.id}>
-                      <td className="contest-table-name">{c.title}</td>
-                      <td className="contest-past-cell">{formatStart(c.startTime)}</td>
-                      <td className="contest-past-cell">{formatDuration(c.durationMinutes)}</td>
-                      <td>
-                        {/* Registering is not attempting. This used to offer
-                            "View result" to anyone who had joined, and sent
-                            the ones who never opened the paper to a page that
-                            could only tell them there was nothing to show. */}
-                        {c.hasSubmitted
-                          ? <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/contests/${c.id}/result`)}>View result</button>
-                          : c.hasJoined
-                            ? <span className="contest-past-cell">Not attempted</span>
-                            : <span className="contest-past-cell">Ended</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* One markup for both sizes: a four-column grid on a desktop,
+                stacked cards on a phone. It was a table, which at 390px was
+                441px wide — the action column sat off the right edge, so the
+                one thing a candidate comes here to tap could not be reached,
+                and names wrapped to three lines to make 86px-tall rows. */}
+            <div className="past-list">
+              <div className="past-head" aria-hidden="true">
+                <span>Name</span><span>Start &amp; length</span><span />
+              </div>
+              {past.map(c => (
+                <div className="past-row" key={c.id}>
+                  <div className="past-name">{c.title}</div>
+                  <div className="past-meta">
+                    <span className="past-start">{formatStart(c.startTime)}</span>
+                    <span className="past-dot" aria-hidden="true">·</span>
+                    <span className="past-len">{formatDuration(c.durationMinutes)}</span>
+                  </div>
+                  <div className="past-action">
+                    {/* Registering is not attempting. This used to offer
+                        "View result" to anyone who had joined, and sent the
+                        ones who never opened the paper to a page that could
+                        only tell them there was nothing to show. */}
+                    {c.hasSubmitted
+                      ? <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/contests/${c.id}/result`)}>View result</button>
+                      : c.hasJoined
+                        ? <span className="past-muted">Not attempted</span>
+                        : <span className="past-muted">Ended</span>}
+                  </div>
+                </div>
+              ))}
             </div>
           </>
         )}
