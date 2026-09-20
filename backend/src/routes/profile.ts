@@ -186,7 +186,12 @@ async function buildProfileData(userId: string) {
     ratingHistory: ratingHistory.map((r) => ({
       contestId: r.contestId,
       contestTitle: r.contest.title,
-      date: r.contest.startTime.toISOString(),
+      // When the rating actually changed, not when the contest was scheduled.
+      // These are minutes apart for a normal contest, but a contest that is
+      // rescheduled after it has been rated keeps its rating history and gains
+      // a new start time — sometimes a future one, which plotted the point
+      // ahead of today and made the graph double back on itself.
+      date: r.createdAt.toISOString(),
       oldRating: r.oldRating,
       newRating: r.newRating,
       rank: r.rank,

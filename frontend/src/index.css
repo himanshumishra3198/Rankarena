@@ -847,6 +847,27 @@ select.input { cursor: pointer; }
 /* Rating chart */
 .chart-empty { display: flex; align-items: center; justify-content: center; height: 160px; color: var(--text-muted); font-size: 14px; background: var(--bg); border-radius: var(--radius); }
 
+/* Rating chart — Codeforces-style: the tier bands are the background, the line
+   is a thin dark thread between them, and each dot carries its tier's colour.
+   Kept in CSS rather than on the elements so the whole thing follows the theme. */
+.rc-band  { opacity: .75; }
+.rc-grid  { stroke: rgba(15, 23, 42, .09); stroke-width: 1; }
+.rc-frame { stroke: var(--border); stroke-width: 1; }
+.rc-today { stroke: var(--text-muted); stroke-width: 1; opacity: .55; }
+.rc-axis-text { fill: var(--text-muted); }
+.rc-line  { stroke: #1f2937; stroke-width: 1.8; }
+.rc-point { stroke: #1f2937; stroke-width: 1.5; fill: var(--tier-fg); transition: r .1s; }
+.rc-tier-label { fill: var(--tier-fg); }
+
+[data-theme="dark"] .rc-band  { opacity: .3; }
+[data-theme="dark"] .rc-grid  { stroke: rgba(248, 250, 252, .08); }
+[data-theme="dark"] .rc-line  { stroke: #e2e8f0; }
+[data-theme="dark"] .rc-point { stroke: #0f172a; fill: var(--tier-bg); }
+/* The saturated tier colours are unreadable on a dark ground — the band
+   colours are the same hues, pitched light, so the theme swaps which one
+   the dot and the label wear. */
+[data-theme="dark"] .rc-tier-label { fill: var(--tier-bg); }
+
 /* Floating tooltip */
 .chart-tooltip { position: absolute; background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 10px 14px; font-size: 12px; pointer-events: none; white-space: nowrap; z-index: 20; box-shadow: 0 8px 24px rgba(0,0,0,.25); line-height: 1.6; }
 .chart-tooltip-title  { font-weight: 700; font-size: 13px; margin-bottom: 2px; color: #fff; }

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TIERS, getTier } from '../lib/tiers'
 
 export interface RatingPoint {
@@ -6,15 +6,49 @@ export interface RatingPoint {
   oldRating: number; newRating: number; rank: number; totalParticipants: number
 }
 
-const CW = 860, CH = 270
-const PL = 55, PR = 115, PT = 22, PB = 38
-
 interface TipPos { x: number; y: number; isRight: boolean }
 
+/**
+ * The SVG scales to its container, so one viewBox for every screen means a
+ * phone gets the desktop drawing shrunk to a third — a 292x98 letterbox with
+ * 3px axis labels. A narrow screen gets its own geometry instead: taller for
+ * its width, tighter margins, and no room spent on the tier legend, which the
+ * bands and the tooltip already convey.
+ */
+function useNarrow(query = '(max-width: 640px)') {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const onChange = () => setNarrow(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [query])
+  return narrow
+}
+
+/**
+ * Rating over time, drawn the way Codeforces draws it: the tier bands are the
+ * background rather than a tint over it, a thin dark polyline carries the eye,
+ * and each contest is a dot filled with the colour of the tier it landed in.
+ * The colour of a point is the information — the line only joins them up.
+ */
 export function RatingChart({ history }: { history: RatingPoint[] }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [hovered, setHovered] = useState<number | null>(null)
   const [tipPos, setTipPos]   = useState<TipPos | null>(null)
+  const narrow = useNarrow()
+
+  const CW = narrow ? 390 : 860
+  const CH = narrow ? 245 : 290
+  const PL = narrow ? 40 : 52
+  const PR = narrow ? 12 : 118
+  const PT = narrow ? 20 : 22
+  const PB = narrow ? 30 : 38
+  const fsY = narrow ? 11 : 10
+  const fsX = narrow ? 10 : 9
 
   const pw = CW - PL - PR, ph = CH - PT - PB
 
@@ -22,18 +56,26 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
     return <div className="chart-empty">No rated contests yet — participate to build your rating graph</div>
   }
 
-  const ratings = history.map(p => p.newRating)
+  // Sorted here rather than trusted from the caller: the series is a line, and
+  // a line through points in the wrong order doubles back and reads as a loss
+  // that never happened.
+  const data = [...history].sort((a, b) => +new Date(a.date) - +new Date(b.date))
+
+  const ratings = data.map(p => p.newRating)
   const rawMin = Math.min(...ratings), rawMax = Math.max(...ratings)
   const yPad   = Math.max(120, (rawMax - rawMin) * 0.35)
   const yMin   = Math.max(0, Math.floor((rawMin - yPad) / 100) * 100)
   const yMax   = Math.ceil((rawMax + yPad) / 100) * 100
 
   const now    = new Date()
-  const xStart = new Date(history[0].date)
+  const lastTs = +new Date(data[data.length - 1].date)
+  const xStart = new Date(data[0].date)
   xStart.setDate(1)
   xStart.setMonth(xStart.getMonth() - 1)
   const xMin   = xStart.getTime()
-  const xMax   = now.getTime()
+  // Never let a point sit beyond the right edge, where clamping would stack it
+  // on top of whatever came before.
+  const xMax   = Math.max(now.getTime(), lastTs)
   const xRange = Math.max(xMax - xMin, 1)
 
   const tx = (ts: number) => PL + Math.max(0, Math.min(1, (ts - xMin) / xRange)) * pw
@@ -46,18 +88,21 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
     return [{ ...t, y1: ty(hi), y2: ty(lo) }]
   })
 
-  const TIER_BOUNDS = [1200, 1400, 1600, 1900, 2100, 2300]
-  const yLabels = TIER_BOUNDS.filter(r => r > yMin && r < yMax)
-  if (!yLabels.includes(yMin + 100) && yMin + 100 < yMax) yLabels.push(yMin + 100)
-  if (!yLabels.includes(yMax - 100) && yMax - 100 > yMin) yLabels.push(yMax - 100)
-  yLabels.sort((a, b) => a - b)
+  // Round 100s all the way up, thinned out so a wide range does not turn the
+  // axis into a wall of numbers.
+  const step = 100 * Math.max(1, Math.ceil((yMax - yMin) / 100 / 8))
+  const yLabels: number[] = []
+  for (let r = Math.ceil(yMin / step) * step; r < yMax; r += step) {
+    if (r > yMin) yLabels.push(r)
+  }
 
   const rangeMonths = Math.round(xRange / (30.44 * 86_400_000))
   const mStep = rangeMonths <= 6 ? 1 : rangeMonths <= 18 ? 2 : rangeMonths <= 36 ? 3 : 6
   const xLabels: { x: number; label: string }[] = []
   {
     let d = new Date(xStart.getFullYear(), xStart.getMonth() + 1, 1)
-    while (d <= now) {
+    const end = new Date(xMax)
+    while (d <= end) {
       if (d.getMonth() % mStep === 0) {
         xLabels.push({
           x: tx(d.getTime()),
@@ -68,11 +113,9 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
     }
   }
 
-  const pts  = history.map(p => ({ x: tx(new Date(p.date).getTime()), y: ty(p.newRating) }))
+  const todayX = tx(now.getTime())
+  const pts   = data.map(p => ({ x: tx(new Date(p.date).getTime()), y: ty(p.newRating) }))
   const lineD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
-  const areaD = pts.length > 1
-    ? `${lineD} L ${pts[pts.length - 1].x.toFixed(1)} ${(PT + ph).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(PT + ph).toFixed(1)} Z`
-    : ''
 
   function onSvgMove(e: React.MouseEvent<SVGSVGElement>) {
     const rect = svgRef.current?.getBoundingClientRect()
@@ -96,7 +139,7 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
     setTipPos({ x: px, y: py, isRight: pts[best].x > PL + pw * 0.55 })
   }
 
-  const hp    = hovered !== null ? history[hovered] : null
+  const hp    = hovered !== null ? data[hovered] : null
   const delta = hp ? hp.newRating - hp.oldRating : 0
 
   return (
@@ -112,86 +155,73 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
           <clipPath id="rclip">
             <rect x={PL} y={PT} width={pw} height={ph} />
           </clipPath>
-          <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#f59e0b" stopOpacity={0.28} />
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
-          </linearGradient>
         </defs>
 
-        {/* Tier bands */}
+        {/* Tier bands — the background itself, not a wash over it */}
         <g clipPath="url(#rclip)">
           {bands.map(b => (
-            <rect key={b.label} x={PL} y={b.y1} width={pw} height={Math.max(0, b.y2 - b.y1)} fill={b.bg} opacity={0.45} />
+            <rect key={b.label} className="rc-band" x={PL} y={b.y1} width={pw}
+              height={Math.max(0, b.y2 - b.y1)} fill={b.bg} />
           ))}
         </g>
 
-        {/* Chart border */}
-        <rect x={PL} y={PT} width={pw} height={ph} fill="none" stroke="#cbd5e1" strokeWidth={1} />
-
-        {/* Y-axis grid + labels */}
+        {/* Grid */}
         {yLabels.map(r => {
           const y = ty(r)
           return (
             <g key={r}>
-              <line x1={PL} x2={PL + pw} y1={y} y2={y} stroke="#e2e8f0" strokeWidth={0.8} />
-              <text x={PL - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#94a3b8" style={{ fontVariantNumeric: 'tabular-nums' }}>{r}</text>
+              <line className="rc-grid" x1={PL} x2={PL + pw} y1={y} y2={y} />
+              <text className="rc-axis-text" x={PL - 8} y={y + 3.5} textAnchor="end" fontSize={fsY}
+                style={{ fontVariantNumeric: 'tabular-nums' }}>{r}</text>
             </g>
           )
         })}
 
+        <rect className="rc-frame" x={PL} y={PT} width={pw} height={ph} fill="none" />
+
         {/* X-axis ticks + labels */}
         {xLabels.map(({ x, label }) => (
           <g key={label + x.toFixed(0)}>
-            <line x1={x} x2={x} y1={PT + ph} y2={PT + ph + 4} stroke="#cbd5e1" strokeWidth={1} />
-            <text x={x} y={CH - 7} textAnchor="middle" fontSize={9} fill="#94a3b8">{label}</text>
+            <line className="rc-frame" x1={x} x2={x} y1={PT + ph} y2={PT + ph + 4} />
+            <text className="rc-axis-text" x={x} y={CH - 7} textAnchor="middle" fontSize={fsX}>{label}</text>
           </g>
         ))}
 
-        {/* Today line */}
-        <line x1={tx(now.getTime())} x2={tx(now.getTime())} y1={PT} y2={PT + ph}
-          stroke="#94a3b8" strokeWidth={1} strokeDasharray="4,3" opacity={0.55} />
-        <text x={tx(now.getTime())} y={PT - 7} textAnchor="middle" fontSize={9} fill="#94a3b8">Today</text>
+        {/* Today — the label hugs the line when the line is the right edge,
+            which it usually is, rather than hanging half of itself outside. */}
+        <line className="rc-today" x1={todayX} x2={todayX} y1={PT} y2={PT + ph} strokeDasharray="4,3" />
+        <text className="rc-axis-text" x={todayX} y={PT - 7} fontSize={fsX}
+          textAnchor={todayX > PL + pw - 22 ? 'end' : 'middle'}>Today</text>
 
-        {/* Area + line */}
-        <g clipPath="url(#rclip)">
-          {areaD && <path d={areaD} fill="url(#area-grad)" />}
-          <path d={lineD} fill="none" stroke="#f59e0b" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-        </g>
-
-        {/* Vertical crosshair on hover */}
+        {/* Crosshair */}
         {hovered !== null && (
-          <line
-            clipPath="url(#rclip)"
-            x1={pts[hovered].x} x2={pts[hovered].x}
-            y1={PT} y2={PT + ph}
-            stroke="#94a3b8" strokeWidth={1} strokeDasharray="3,2" opacity={0.7}
-          />
+          <line className="rc-today" clipPath="url(#rclip)"
+            x1={pts[hovered].x} x2={pts[hovered].x} y1={PT} y2={PT + ph} strokeDasharray="3,2" />
         )}
 
-        {/* Data point circles */}
+        {/* The series */}
         <g clipPath="url(#rclip)">
+          <path className="rc-line" d={lineD} fill="none" strokeLinejoin="round" strokeLinecap="round" />
           {pts.map((pt, i) => {
-            const isLast = i === history.length - 1
-            const isHov  = hovered === i
-            const tier   = getTier(history[i].newRating)
+            const tier = getTier(data[i].newRating)
             return (
-              <circle key={i} cx={pt.x} cy={pt.y}
-                r={isHov ? 7 : isLast ? 5.5 : 4}
-                fill={isHov || isLast ? tier.fg : '#fff'}
-                stroke={tier.fg} strokeWidth={isHov ? 0 : 2}
-                style={{ transition: 'r .1s' }}
+              <circle key={i} className="rc-point" cx={pt.x} cy={pt.y}
+                r={hovered === i ? 6.5 : 4.5}
+                style={{ '--tier-fg': tier.fg, '--tier-bg': tier.bg } as React.CSSProperties}
                 pointerEvents="none"
               />
             )
           })}
         </g>
 
-        {/* Tier labels on right */}
-        {bands.map(b => {
+        {/* Tier names — desktop only; on a phone the margin is better spent on the plot */}
+        {!narrow && bands.map(b => {
           const mid = (b.y1 + b.y2) / 2
           if (b.y2 - b.y1 < 14) return null
           return (
-            <text key={`lbl-${b.label}`} x={PL + pw + 8} y={mid + 4} fontSize={10} fill={b.fg} fontWeight={600}>{b.label}</text>
+            <text key={`lbl-${b.label}`} className="rc-tier-label"
+              x={PL + pw + 9} y={mid + 3.5} fontSize={10} fontWeight={600}
+              style={{ '--tier-fg': b.fg, '--tier-bg': b.bg } as React.CSSProperties}>{b.label}</text>
           )
         })}
       </svg>
