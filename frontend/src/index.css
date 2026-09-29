@@ -1345,9 +1345,8 @@ select.input { cursor: pointer; }
    room at the edges than a single column of cards does, and the pager needs
    air under it instead of sitting on the fold. */
 .ps-page { max-width: 1240px; padding: 30px 28px 60px; }
-.ps-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 26px; flex-wrap: wrap; }
-.ps-title { font-size: 27px; margin: 0 0 7px; }
-.ps-sub { color: var(--text-muted); font-size: 14px; line-height: 1.6; max-width: 62ch; margin: 0; }
+.ps-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.ps-title { font-size: 26px; line-height: 1.2; margin: 0; }
 
 /* List on the left, filters in a rail on the right — the same split the home
    page uses, so the page reads as part of the site rather than a one-off. */
@@ -1448,14 +1447,14 @@ select.input { cursor: pointer; }
 
 /* ── Pager ──────────────────────────────────────────────────────── */
 .ps-pager { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
-.ps-page {
+.ps-pager-btn {
   min-width: 35px; height: 35px; padding: 0 10px; font: inherit; font-size: 13.5px; font-weight: 600;
   color: var(--text); background: var(--surface); border: 1px solid var(--border);
   border-radius: 8px; cursor: pointer;
 }
-.ps-page:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
-.ps-page.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.ps-page:disabled { opacity: .4; cursor: default; }
+.ps-pager-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.ps-pager-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ps-pager-btn:disabled { opacity: .4; cursor: default; }
 .ps-pager-gap { color: var(--text-muted); padding: 0 2px; }
 
 /* ── Filter rail ────────────────────────────────────────────────── */
@@ -1540,7 +1539,7 @@ select.input { cursor: pointer; }
 
 @media (max-width: 620px) {
   .ps-page, .pp-page { padding: 22px 16px 44px; }
-  .ps-head { gap: 14px; margin-bottom: 20px; }
+  .ps-head { gap: 12px; margin-bottom: 18px; }
   .ps-title { font-size: 23px; }
   .ps-head-row { display: none; }
   /* Two columns on a phone: the number goes, and difficulty joins the meta
@@ -1557,7 +1556,7 @@ select.input { cursor: pointer; }
   .ps-row .ps-from { display: none; }
   .ps-topic { max-width: 26ch; }
   .ps-pager { gap: 4px; }
-  .ps-page { min-width: 33px; height: 33px; padding: 0 8px; font-size: 13px; }
+  .ps-pager-btn { min-width: 33px; height: 33px; padding: 0 8px; font-size: 13px; }
   .pp-card { padding: 20px 18px; }
   .pp-qtext { font-size: 15.5px; }
   /* Thumb reach: the two buttons that move you through the list get the full

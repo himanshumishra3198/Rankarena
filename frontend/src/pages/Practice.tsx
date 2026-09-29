@@ -236,13 +236,7 @@ export default function Practice() {
       <Navbar />
       <div className="page-wide ps-page">
         <header className="ps-head">
-          <div>
-            <h1 className="ps-title">Problemset</h1>
-            <p className="ps-sub">
-              Every question from a contest that has finished or a published mock test.
-              Untimed and unscored.
-            </p>
-          </div>
+          <h1 className="ps-title">Problemset</h1>
           <LanguageToggle value={language} onChange={pickLanguage} />
         </header>
 
@@ -360,7 +354,7 @@ export default function Practice() {
                 {data.pageCount > 1 && (
                   <nav className="ps-pager" aria-label="Problemset pages">
                     <button
-                      className="ps-page ps-page-step"
+                      className="ps-pager-btn ps-pager-step"
                       disabled={page <= 1}
                       onClick={() => setFilter({ page: String(page - 1) })}
                     >
@@ -372,7 +366,7 @@ export default function Practice() {
                         : (
                           <button
                             key={p}
-                            className={`ps-page ${p === page ? 'active' : ''}`}
+                            className={`ps-pager-btn ${p === page ? 'active' : ''}`}
                             aria-current={p === page ? 'page' : undefined}
                             onClick={() => setFilter({ page: String(p) })}
                           >
@@ -381,7 +375,7 @@ export default function Practice() {
                         )
                     )}
                     <button
-                      className="ps-page ps-page-step"
+                      className="ps-pager-btn ps-pager-step"
                       disabled={page >= data.pageCount}
                       onClick={() => setFilter({ page: String(page + 1) })}
                     >
