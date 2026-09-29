@@ -222,7 +222,7 @@ export default function PracticeProblem() {
   return (
     <>
       <Navbar />
-      <div className="page" style={{ maxWidth: 880 }}>
+      <div className="page pp-page">
         <div className="pp-topbar">
           <Link to={backHref} className="pp-back">← Problemset</Link>
           {hasPlace && neighbours && (
@@ -231,12 +231,12 @@ export default function PracticeProblem() {
           <LanguageToggle value={language} onChange={pickLanguage} />
         </div>
 
-        {loading && <div className="card prac-status">Loading…</div>}
+        {loading && <div className="card ps-status">Loading…</div>}
 
         {!loading && error === 'missing' && (
-          <div className="card prac-status">
-            <div className="prac-empty-icon">🔒</div>
-            <p className="prac-empty-title">Not in the problemset</p>
+          <div className="card ps-status">
+            <div className="ps-empty-icon">🔒</div>
+            <p className="ps-empty-title">Not in the problemset</p>
             <p>
               This question isn't available for practice. Questions join the
               problemset once the contest they were set in has finished.
@@ -246,23 +246,26 @@ export default function PracticeProblem() {
         )}
 
         {!loading && error === 'failed' && (
-          <div className="card prac-status">
+          <div className="card ps-status">
             <p>Couldn't load this problem.</p>
             <Link to={backHref} className="btn btn-ghost btn-sm">Back to the problemset</Link>
           </div>
         )}
 
         {!loading && problem && error === 'none' && (
-          <article className="card prac-card">
-            <div className="prac-card-head">
-              <div className="prac-card-tags">
-                <span className="prac-subject" style={{ color: SUBJECT_COLOR[problem.subject] }}>
+          <article className="card pp-card">
+            <div className="pp-head">
+              <div className="pp-tags">
+                <span className="pp-subject" style={{ color: SUBJECT_COLOR[problem.subject] }}>
                   {SUBJECT_SHORT[problem.subject] ?? problem.subject}
                 </span>
-                {problem.topic && <span className="prac-topic">{problem.topic}</span>}
+                {problem.topic && <span className="pp-topic">{problem.topic}</span>}
                 <span className={`badge badge-${problem.difficulty.toLowerCase()}`}>
                   {titleCase(problem.difficulty)}
                 </span>
+                {problem.source && (
+                  <span className="pp-source">from <strong>{problem.source.title}</strong></span>
+                )}
                 {solvedMark === 'SOLVED' && <span className="pp-solved-flag">✓ Solved</span>}
               </div>
               <button
@@ -274,13 +277,6 @@ export default function PracticeProblem() {
               </button>
             </div>
 
-            {problem.source && (
-              <p className="pp-source">
-                From <strong>{problem.source.title}</strong>
-                {problem.source.type === 'CONTEST' ? ' · past contest' : ' · mock test'}
-              </p>
-            )}
-
             <QuestionContext q={problem} />
 
             {problem.imageUrl && (
@@ -289,7 +285,7 @@ export default function PracticeProblem() {
               </div>
             )}
 
-            {problem.text && <RichText as="div" className="qd-qtext" html={problem.text} />}
+            {problem.text && <RichText as="div" className="pp-qtext" html={problem.text} />}
 
             {!picked && <div className="practice-banner">Pick an answer to check yourself</div>}
 
@@ -338,12 +334,12 @@ export default function PracticeProblem() {
               </>
             )}
 
-            <div className="prac-card-foot">
+            <div className="pp-foot">
               <button className="btn btn-ghost btn-sm" onClick={() => setReporting(true)}>
                 ⚑ Report a problem
               </button>
               {hasPlace && (
-                <div className="prac-nav">
+                <div className="pp-nav">
                   <button className="btn btn-ghost" onClick={() => go(-1)} disabled={!canPrev}>← Previous</button>
                   <button className="btn btn-primary" onClick={() => go(1)} disabled={!canNext}>Next →</button>
                 </div>

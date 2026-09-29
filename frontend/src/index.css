@@ -1341,118 +1341,223 @@ select.input { cursor: pointer; }
 }
 
 /* ── Practice: problemset list and problem page ──────────────────── */
-.prac-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
-.prac-title { font-size: 26px; margin: 0 0 6px; }
-.prac-sub { color: var(--text-muted); font-size: 14px; line-height: 1.55; max-width: 66ch; margin: 0; }
+.ps-page { padding-top: 20px; }
+.ps-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.ps-title { font-size: 25px; margin: 0 0 4px; }
+.ps-sub { color: var(--text-muted); font-size: 13.5px; line-height: 1.5; max-width: 62ch; margin: 0; }
 
-.prac-filters { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
-/* Label in a fixed column so the rows of controls line up down the card. */
-.prac-filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.prac-filter-label {
-  min-width: 74px; font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .6px; color: var(--text-muted);
-}
-.prac-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.prac-filter-hint { font-size: 13px; color: var(--text-muted); margin: 0; }
-.prac-select, .prac-search-input {
-  padding: 8px 10px; font: inherit; font-size: 14px; color: var(--text);
-  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-}
-.prac-select { flex: 1; min-width: 220px; max-width: 420px; }
-.prac-search { flex: 1; min-width: 180px; display: flex; }
-.prac-search-input { width: 100%; }
-.prac-search-input:focus, .prac-select:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+/* List on the left, filters in a rail on the right — the same split the home
+   page uses, so the page reads as part of the site rather than a one-off. */
+.ps-layout { display: grid; grid-template-columns: minmax(0, 1fr) 244px; gap: 20px; align-items: start; }
+.ps-col { min-width: 0; }
+.ps-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; }
 
-.prac-status { text-align: center; color: var(--text-muted); font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.prac-empty-icon { font-size: 30px; }
-.prac-empty-title { font-size: 16px; font-weight: 700; color: var(--heading); margin: 0; }
+/* ── Search ─────────────────────────────────────────────────────── */
+.ps-searchbar { position: relative; display: flex; margin-bottom: 12px; }
+.ps-search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 17px; line-height: 1; color: var(--text-muted); pointer-events: none;
+}
+.ps-search-input {
+  width: 100%; padding: 9px 12px 9px 32px; font: inherit; font-size: 14px; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 9px;
+}
+.ps-search-input::placeholder { color: var(--text-muted); }
+.ps-search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 
 .ps-summary {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  flex-wrap: wrap; font-size: 13px; color: var(--text-muted); margin-bottom: 10px;
+  flex-wrap: wrap; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; padding: 0 2px;
 }
-.ps-summary strong { color: var(--heading); }
-.ps-solved-count { color: #16a34a; font-weight: 700; }
+.ps-summary strong { color: var(--heading); font-weight: 700; }
+.ps-solved-count { color: var(--success); font-weight: 700; }
 
-/* The list itself: one padded card, rows divided by a hairline. The row is a
-   link with the bookmark button beside it rather than inside it, so the whole
-   row opens the problem and the star stays its own control. */
+.ps-status { text-align: center; color: var(--text-muted); font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.ps-empty-icon { font-size: 30px; }
+.ps-empty-title { font-size: 16px; font-weight: 700; color: var(--heading); margin: 0; }
+
+/* ── The list ───────────────────────────────────────────────────── */
+/* One grid shared by the heading row and every problem row, so the columns
+   line up down the page instead of each row laying itself out. */
 .ps-list { padding: 0; overflow: hidden; }
-.ps-row {
-  display: flex; align-items: center; border-top: 1px solid var(--border);
-  transition: background .12s ease;
+.ps-head-row, .ps-row-link {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 12px;
 }
-.ps-list .ps-row:first-child { border-top: none; }
-.ps-row:hover { background: var(--surface-raised, var(--bg)); }
-.ps-row-link {
-  flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
-  padding: 12px 8px 12px 16px; color: inherit; text-decoration: none;
+.ps-head-row {
+  padding: 8px 46px 8px 14px; background: var(--bg); border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted);
 }
+.ps-head-diff { text-align: center; }
+
+.ps-row { display: flex; align-items: stretch; border-top: 1px solid var(--border); }
+.ps-list .ps-head-row + .ps-row { border-top: none; }
+.ps-row:hover { background: var(--surface-raised); }
+.ps-row-link { flex: 1; min-width: 0; padding: 10px 6px 10px 14px; color: inherit; text-decoration: none; }
 .ps-row-link:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 
-.ps-mark {
-  width: 18px; flex-shrink: 0; text-align: center; font-weight: 800; font-size: 14px;
-  color: var(--border);
-}
-.ps-mark-solved { color: #16a34a; }
-.ps-mark-tried { color: #f59e0b; }
+/* Solved and attempted colour the row's edge rather than taking a column of
+   their own — the number stays readable and the state is visible at a glance. */
+.ps-row-solved { box-shadow: inset 3px 0 0 var(--success); }
+.ps-row-tried { box-shadow: inset 3px 0 0 var(--warning); }
 
-/* min-width:0 so a long question title can ellipsis instead of shoving the
-   difficulty badge and the star off the row. */
-.ps-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.ps-title {
-  font-size: 14.5px; font-weight: 600; color: var(--heading); line-height: 1.4;
+.ps-idx {
+  font-size: 12.5px; font-weight: 600; color: var(--text-muted);
+  font-variant-numeric: tabular-nums; text-align: right;
+}
+.ps-row-solved .ps-idx { color: var(--success); font-size: 15px; font-weight: 800; }
+.ps-row-tried .ps-idx { color: var(--warning); }
+
+.ps-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ps-title-text {
+  font-size: 14px; font-weight: 600; color: var(--heading); line-height: 1.4;
   display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.ps-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); }
-.ps-subject { font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-.ps-dot { opacity: .5; }
-.ps-from { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ps-diff { flex-shrink: 0; }
-.ps-star { flex-shrink: 0; padding: 12px 16px 12px 8px; }
+.ps-row:hover .ps-title-text { color: var(--primary); }
+.ps-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-muted); }
+/* Separators are generated, not written: a dot that belongs to the item
+   after it wraps with that item instead of being stranded at a line end. */
+.ps-meta > * + *::before { content: '·'; opacity: .45; margin-right: 5px; }
+.ps-subject { font-weight: 700; text-transform: uppercase; letter-spacing: .3px; flex-shrink: 0; }
+.ps-topic, .ps-from { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 24ch; }
+.ps-has-sol { font-size: 10.5px; }
 
-.ps-pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
-.ps-pager-pages { display: flex; align-items: center; gap: 4px; }
+/* Difficulty reads as a tinted word, not a loud pill: three of them on every
+   screen means the quiet version is the legible one. */
+.ps-diff {
+  justify-self: center; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+  white-space: nowrap;
+}
+.ps-diff.diff-easy   { background: var(--success-light); color: #15803d; }
+.ps-diff.diff-medium { background: #fef3c7; color: #b45309; }
+.ps-diff.diff-hard   { background: var(--danger-light); color: #b91c1c; }
+[data-theme="dark"] .ps-diff.diff-easy   { background: #14261e; color: #4ade80; }
+[data-theme="dark"] .ps-diff.diff-medium { background: #3a2a09; color: #fbbf24; }
+[data-theme="dark"] .ps-diff.diff-hard   { background: #2d1515; color: #f87171; }
+
+.ps-star { flex-shrink: 0; padding: 0 14px 0 6px; font-size: 16px; opacity: .55; }
+.ps-star:hover { opacity: 1; }
+.ps-row:hover .ps-star { opacity: .85; }
+
+/* ── Pager ──────────────────────────────────────────────────────── */
+.ps-pager { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 16px; flex-wrap: wrap; }
 .ps-page {
-  min-width: 32px; height: 32px; padding: 0 8px; font: inherit; font-size: 13px; font-weight: 600;
+  min-width: 32px; height: 32px; padding: 0 9px; font: inherit; font-size: 13px; font-weight: 600;
   color: var(--text); background: var(--surface); border: 1px solid var(--border);
   border-radius: 8px; cursor: pointer;
 }
-.ps-page:hover { border-color: var(--primary); }
+.ps-page:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
 .ps-page.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ps-page:disabled { opacity: .4; cursor: default; }
 .ps-pager-gap { color: var(--text-muted); padding: 0 2px; }
 
+/* ── Filter rail ────────────────────────────────────────────────── */
+.ps-filter-toggle { display: none; }
+.ps-filter-panel { display: flex; flex-direction: column; gap: 16px; }
+.ps-facet-group {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 8px 8px; box-shadow: var(--shadow);
+}
+.ps-facet-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 0 6px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--text-muted);
+}
+.ps-clear {
+  font: inherit; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+  color: var(--primary); background: none; border: none; padding: 0; cursor: pointer;
+}
+.ps-clear:hover { text-decoration: underline; }
+
+/* A facet is a full-width row, name left and count right, so the four groups
+   read as one column of choices rather than four clouds of pills. */
+.ps-facet {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px;
+  font: inherit; font-size: 13px; color: var(--text); text-align: left;
+  background: none; border: none; border-radius: 7px; cursor: pointer;
+}
+.ps-facet:hover { background: var(--bg); }
+.ps-facet.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
+.ps-facet-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ps-facet-pip { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.ps-facet-pip-any { background: linear-gradient(135deg, #16a34a 0 33%, #d97706 33% 66%, #dc2626 66%); }
+.ps-facet-pip.diff-easy { background: #16a34a; }
+.ps-facet-pip.diff-medium { background: #d97706; }
+.ps-facet-pip.diff-hard { background: #dc2626; }
+.ps-facet-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-facet-count {
+  flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ps-facet.active .ps-facet-count { color: var(--primary); }
+.ps-facet-hint { font-size: 12px; color: var(--text-muted); margin: 0; padding: 0 6px 4px; line-height: 1.45; }
+.ps-select {
+  width: 100%; padding: 7px 8px; font: inherit; font-size: 13px; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+}
+.ps-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
 /* ── One problem ─────────────────────────────────────────────────── */
+.pp-page { max-width: 820px; }
 .pp-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .pp-back { font-size: 14px; font-weight: 600; color: var(--primary); text-decoration: none; }
 .pp-back:hover { text-decoration: underline; }
 .pp-place { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; margin-left: auto; }
-.pp-source { font-size: 12.5px; color: var(--text-muted); margin: 0 0 12px; }
-.pp-source strong { color: var(--heading); font-weight: 600; }
-.pp-solved-flag { font-size: 11px; font-weight: 700; color: #16a34a; }
+.pp-card { padding: 20px 22px; }
+.pp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.pp-tags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.pp-subject { font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.pp-topic { color: var(--text-muted); }
+.pp-source { color: var(--text-muted); }
+.pp-source strong { color: var(--text); font-weight: 600; }
+.pp-solved-flag { font-size: 11px; font-weight: 700; color: var(--success); }
+.pp-qtext { font-size: 15.5px; line-height: 1.6; color: var(--heading); margin: 0 0 14px; }
+.pp-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.pp-nav { display: flex; gap: 8px; margin-left: auto; }
 
-.prac-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.prac-card-tags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.prac-subject { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-.prac-topic { font-size: 12px; color: var(--text-muted); }
-.prac-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
-.prac-nav { display: flex; gap: 8px; margin-left: auto; }
+/* ── Narrow screens ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* The rail becomes a panel above the list, closed to begin with, so the
+     first problem is on screen when the page opens. */
+  .ps-layout { grid-template-columns: 1fr; gap: 14px; }
+  .ps-side { position: static; order: -1; gap: 0; }
+  .ps-filter-toggle {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    padding: 10px 14px; font: inherit; font-size: 14px; font-weight: 600; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 9px; cursor: pointer;
+  }
+  .ps-filter-caret { font-size: 10px; color: var(--text-muted); }
+  .ps-filter-panel { display: none; padding-top: 12px; }
+  .ps-side.open .ps-filter-panel { display: flex; }
+}
 
-@media (max-width: 560px) {
-  .prac-filter-label { min-width: 0; }
-  .prac-filter-row { gap: 8px; }
-  .prac-select, .prac-search { max-width: none; min-width: 0; width: 100%; }
-  .ps-row { padding: 12px 12px; gap: 10px; }
-  /* The badge reads as a tag next to the metadata rather than its own
-     column, which on a phone would squeeze the title to nothing. */
-  .ps-diff { align-self: flex-start; }
+@media (max-width: 620px) {
+  .ps-head { gap: 10px; }
+  .ps-title { font-size: 22px; }
+  .ps-head-row { display: none; }
+  /* Two columns on a phone: the number goes, and difficulty joins the meta
+     line so the title keeps the full width. */
+  .ps-row-link { grid-template-columns: minmax(0, 1fr) 68px; gap: 10px; padding: 11px 4px 11px 12px; }
+  .ps-idx { display: none; }
+  .ps-diff { font-size: 10px; padding: 3px 7px; }
+  .ps-star { padding: 0 10px 0 4px; }
+  /* One line, clipped, rather than a second line of metadata under every
+     row: the source is the part that gives way. */
+  .ps-meta { flex-wrap: nowrap; overflow: hidden; }
+  .ps-topic { max-width: 18ch; }
   .ps-from { max-width: 14ch; }
-  /* Thumb reach: the two buttons that move you through the list get the
-     full width, and the report link stays a small aside above them. */
-  .prac-card-foot { flex-direction: column-reverse; align-items: stretch; }
-  .prac-nav { margin-left: 0; }
-  .prac-nav .btn { flex: 1; }
-  .prac-card-foot > .btn { align-self: flex-start; }
+  .ps-pager { gap: 4px; }
+  .ps-page { min-width: 30px; height: 30px; padding: 0 7px; font-size: 12.5px; }
+  .pp-card { padding: 16px 14px; }
+  .pp-qtext { font-size: 15px; }
+  /* Thumb reach: the two buttons that move you through the list get the full
+     width, and the report link stays a small aside above them. */
+  .pp-foot { flex-direction: column-reverse; align-items: stretch; }
+  .pp-nav { margin-left: 0; }
+  .pp-nav .btn { flex: 1; }
+  .pp-foot > .btn { align-self: flex-start; }
 }
 
 /* ── Mock room UI polish ───────────────────────────────────── */

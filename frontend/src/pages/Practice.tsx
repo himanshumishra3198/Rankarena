@@ -94,6 +94,7 @@ export default function Practice() {
   const [failed, setFailed] = useState(false)
   const [marks, setMarks] = useState<Record<string, ProblemMark>>(readMarks)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // Everything the list is looking at lives in the URL, so a reload, the back
   // button and a shared link all land on the same page of the same filter.
@@ -206,6 +207,10 @@ export default function Practice() {
     }
   }
 
+  function clearFilters() {
+    setParams(new URLSearchParams(), { replace: true })
+  }
+
   function pickLanguage(next: Language) {
     setLanguage(next)
     setPreferredLanguage(next)
@@ -224,118 +229,33 @@ export default function Practice() {
   const firstRow = data ? (data.page - 1) * data.pageSize + 1 : 0
   const lastRow = data ? Math.min(data.page * data.pageSize, data.total) : 0
 
+  const activeFilters = [subject !== 'ALL', !!topic, !!difficulty, !!source, !!search].filter(Boolean).length
+
   return (
     <>
       <Navbar />
-      <div className="page" style={{ maxWidth: 1040 }}>
-        <header className="prac-head">
+      <div className="page-wide ps-page">
+        <header className="ps-head">
           <div>
-            <h1 className="prac-title">Problemset</h1>
-            <p className="prac-sub">
+            <h1 className="ps-title">Problemset</h1>
+            <p className="ps-sub">
               Every question from a contest that has finished or a published mock test.
-              Untimed and unscored — your rating and the leaderboard only ever move in contests.
+              Untimed and unscored.
             </p>
           </div>
           <LanguageToggle value={language} onChange={pickLanguage} />
         </header>
 
-        <div className="card prac-filters">
-          <div className="prac-filter-row">
-            <span className="prac-filter-label">Subject</span>
-            <div className="prac-chips">
-              <button
-                className={`mock-section-tab ${subject === 'ALL' ? 'active' : ''}`}
-                onClick={() => setFilter({ subject: 'ALL', topic: '' })}
-              >
-                Everything
-                {filters && <span className="mock-tab-count">{bankTotal}</span>}
-              </button>
-              {SECTIONS.map(s => {
-                const f = filters?.subjects.find(x => x.subject === s)
-                if (filters && !f) return null
-                const isActive = subject === s
-                return (
-                  <button
-                    key={s}
-                    className={`mock-section-tab ${isActive ? 'active' : ''}`}
-                    onClick={() => setFilter({ subject: s, topic: '' })}
-                    style={isActive
-                      ? { background: SUBJECT_COLOR[s], borderColor: SUBJECT_COLOR[s], color: '#fff' }
-                      : { ['--subject' as string]: SUBJECT_COLOR[s] }}
-                  >
-                    <span className="mock-tab-dot" style={{ background: SUBJECT_COLOR[s] }} />
-                    {SUBJECT_SHORT[s]}
-                    {f && <span className="mock-tab-count">{f.count}</span>}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="prac-filter-row">
-            <span className="prac-filter-label">Topic</span>
-            {subject === 'ALL' ? (
-              <p className="prac-filter-hint">Pick a subject to narrow this down by topic.</p>
-            ) : (
-              <select className="prac-select" value={topic} onChange={e => setFilter({ topic: e.target.value })}>
-                <option value="">
-                  All of {SUBJECT_LABEL[subject] ?? subject}
-                  {activeSubject ? ` (${activeSubject.count})` : ''}
-                </option>
-                {(activeSubject?.topics ?? []).map(t => (
-                  <option key={t.topic} value={t.topic}>{t.topic} ({t.count})</option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          <div className="prac-filter-row">
-            <span className="prac-filter-label">Difficulty</span>
-            <div className="prac-chips">
-              <button
-                className={`mock-section-tab ${difficulty === '' ? 'active' : ''}`}
-                onClick={() => setFilter({ difficulty: '' })}
-              >
-                Any
-              </button>
-              {DIFFICULTIES.map(d => (
-                <button
-                  key={d}
-                  className={`mock-section-tab ${difficulty === d ? 'active' : ''}`}
-                  onClick={() => setFilter({ difficulty: d })}
-                >
-                  {titleCase(d)}
-                  {filters && <span className="mock-tab-count">{difficultyCounts[d] ?? 0}</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="prac-filter-row">
-            <span className="prac-filter-label">From</span>
-            <select className="prac-select" value={source} onChange={e => setFilter({ source: e.target.value })}>
-              <option value="">Every past paper</option>
-              {(filters?.sources.contests.length ?? 0) > 0 && (
-                <optgroup label="Past contests">
-                  {filters!.sources.contests.map(c => (
-                    <option key={c.value} value={c.value}>{c.title} ({c.count})</option>
-                  ))}
-                </optgroup>
-              )}
-              {(filters?.sources.mocks.length ?? 0) > 0 && (
-                <optgroup label="Mock tests">
-                  {filters!.sources.mocks.map(m => (
-                    <option key={m.value} value={m.value}>{m.title} ({m.count})</option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+        <div className="ps-layout">
+          {/* ── The list ─────────────────────────────────────────────── */}
+          <div className="ps-col">
             <form
-              className="prac-search"
+              className="ps-searchbar"
               onSubmit={e => { e.preventDefault(); setFilter({ q: searchDraft.trim() }) }}
             >
+              <span className="ps-search-icon" aria-hidden="true">⌕</span>
               <input
-                className="prac-search-input"
+                className="ps-search-input"
                 type="search"
                 placeholder="Search question text…"
                 aria-label="Search question text"
@@ -344,125 +264,255 @@ export default function Practice() {
                 onBlur={() => { if (searchDraft.trim() !== search) setFilter({ q: searchDraft.trim() }) }}
               />
             </form>
-          </div>
-        </div>
 
-        {loading && <div className="card prac-status">Loading the problemset…</div>}
+            {loading && <div className="card ps-status">Loading the problemset…</div>}
 
-        {!loading && failed && (
-          <div className="card prac-status">
-            <p>Couldn't load the problemset.</p>
-            <button className="btn btn-ghost btn-sm" onClick={() => setFilter({})}>Try again</button>
-          </div>
-        )}
-
-        {!loading && !failed && data && data.total === 0 && (
-          <div className="card prac-status">
-            <div className="prac-empty-icon">📭</div>
-            <p className="prac-empty-title">No problems match</p>
-            <p>
-              Nothing here for these filters. A problem only joins the problemset
-              once the contest it was set in has finished.
-            </p>
-          </div>
-        )}
-
-        {!loading && !failed && data && data.total > 0 && (
-          <>
-            <div className="ps-summary">
-              <span>
-                Showing <strong>{firstRow}–{lastRow}</strong> of <strong>{data.total}</strong>
-                {data.total === 1 ? ' problem' : ' problems'}
-              </span>
-              {solvedCount > 0 && <span className="ps-solved-count">✓ {solvedCount} solved</span>}
-            </div>
-
-            <div className="card ps-list">
-              {data.problems.map((p, i) => {
-                const mark = marks[p.id]
-                return (
-                  <div key={p.id} className="ps-row">
-                    <Link className="ps-row-link" to={problemHref(p, i)}>
-                    <span
-                      className={`ps-mark ps-mark-${(mark ?? 'none').toLowerCase()}`}
-                      title={mark === 'SOLVED' ? 'Solved first try' : mark === 'TRIED' ? 'Attempted' : 'Not attempted'}
-                    >
-                      {mark === 'SOLVED' ? '✓' : mark === 'TRIED' ? '•' : ''}
-                    </span>
-
-                    <span className="ps-main">
-                      <span className="ps-title">{p.title}</span>
-                      <span className="ps-meta">
-                        <span className="ps-subject" style={{ color: SUBJECT_COLOR[p.subject] }}>
-                          {SUBJECT_SHORT[p.subject] ?? p.subject}
-                        </span>
-                        {p.topic && <><span className="ps-dot">·</span><span>{p.topic}</span></>}
-                        {p.source && (
-                          <>
-                            <span className="ps-dot">·</span>
-                            <span className="ps-from" title={p.source.title}>{p.source.title}</span>
-                          </>
-                        )}
-                        {p.hasSolution && <><span className="ps-dot">·</span><span>💡 Solution</span></>}
-                      </span>
-                    </span>
-
-                    <span className={`badge badge-${p.difficulty.toLowerCase()} ps-diff`}>
-                      {titleCase(p.difficulty)}
-                    </span>
-                    </Link>
-
-                    {/* Outside the link: a button nested in an anchor is not
-                        something a browser or a screen reader handles well. */}
-                    <button
-                      className="bookmark-btn ps-star"
-                      title={bookmarks.has(p.id) ? 'Remove bookmark' : 'Bookmark for revision'}
-                      aria-label={bookmarks.has(p.id) ? 'Remove bookmark' : 'Bookmark for revision'}
-                      onClick={() => toggleBookmark(p.id)}
-                    >
-                      {bookmarks.has(p.id) ? '⭐' : '☆'}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-
-            {data.pageCount > 1 && (
-              <nav className="ps-pager" aria-label="Problemset pages">
-                <button
-                  className="btn btn-ghost btn-sm"
-                  disabled={page <= 1}
-                  onClick={() => setFilter({ page: String(page - 1) })}
-                >
-                  ← Prev
-                </button>
-                <span className="ps-pager-pages">
-                  {pageWindow(page, data.pageCount).map((p, i) =>
-                    p === null
-                      ? <span key={`gap-${i}`} className="ps-pager-gap">…</span>
-                      : (
-                        <button
-                          key={p}
-                          className={`ps-page ${p === page ? 'active' : ''}`}
-                          aria-current={p === page ? 'page' : undefined}
-                          onClick={() => setFilter({ page: String(p) })}
-                        >
-                          {p}
-                        </button>
-                      )
-                  )}
-                </span>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  disabled={page >= data.pageCount}
-                  onClick={() => setFilter({ page: String(page + 1) })}
-                >
-                  Next →
-                </button>
-              </nav>
+            {!loading && failed && (
+              <div className="card ps-status">
+                <p>Couldn't load the problemset.</p>
+                <button className="btn btn-ghost btn-sm" onClick={() => setFilter({})}>Try again</button>
+              </div>
             )}
-          </>
-        )}
+
+            {!loading && !failed && data && data.total === 0 && (
+              <div className="card ps-status">
+                <div className="ps-empty-icon">📭</div>
+                <p className="ps-empty-title">No problems match</p>
+                <p>
+                  Nothing here for these filters. A problem only joins the problemset
+                  once the contest it was set in has finished.
+                </p>
+                {activeFilters > 0 && (
+                  <button className="btn btn-ghost btn-sm" onClick={clearFilters}>Clear filters</button>
+                )}
+              </div>
+            )}
+
+            {!loading && !failed && data && data.total > 0 && (
+              <>
+                <div className="ps-summary">
+                  <span>
+                    <strong>{firstRow}–{lastRow}</strong> of <strong>{data.total}</strong>
+                    {data.total === 1 ? ' problem' : ' problems'}
+                  </span>
+                  {solvedCount > 0 && <span className="ps-solved-count">✓ {solvedCount} solved</span>}
+                </div>
+
+                <div className="card ps-list">
+                  {/* Column headings, desktop only — on a phone the row is
+                      read top to bottom, not scanned across. */}
+                  <div className="ps-head-row" aria-hidden="true">
+                    <span>#</span>
+                    <span>Problem</span>
+                    <span className="ps-head-diff">Difficulty</span>
+                    <span />
+                  </div>
+
+                  {data.problems.map((p, i) => {
+                    const mark = marks[p.id]
+                    const number = (page - 1) * PROBLEMS_PER_PAGE + i + 1
+                    return (
+                      <div key={p.id} className={`ps-row ps-row-${(mark ?? 'none').toLowerCase()}`}>
+                        <Link className="ps-row-link" to={problemHref(p, i)}>
+                          <span
+                            className="ps-idx"
+                            title={mark === 'SOLVED' ? 'Solved first try' : mark === 'TRIED' ? 'Attempted' : undefined}
+                          >
+                            {mark === 'SOLVED' ? '✓' : number}
+                          </span>
+
+                          <span className="ps-main">
+                            <span className="ps-title-text">{p.title}</span>
+                            <span className="ps-meta">
+                              <span className="ps-subject" style={{ color: SUBJECT_COLOR[p.subject] }}>
+                                {SUBJECT_SHORT[p.subject] ?? p.subject}
+                              </span>
+                              {p.topic && <span className="ps-topic">{p.topic}</span>}
+                              {p.source && (
+                                <span className="ps-from" title={p.source.title}>{p.source.title}</span>
+                              )}
+                              {p.hasSolution && (
+                                <span className="ps-has-sol" title="A written solution is available">💡</span>
+                              )}
+                            </span>
+                          </span>
+
+                          <span className={`ps-diff diff-${p.difficulty.toLowerCase()}`}>
+                            {titleCase(p.difficulty)}
+                          </span>
+                        </Link>
+
+                        {/* Outside the link: a button nested in an anchor is not
+                            something a browser or a screen reader handles well. */}
+                        <button
+                          className="bookmark-btn ps-star"
+                          title={bookmarks.has(p.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                          aria-label={bookmarks.has(p.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                          onClick={() => toggleBookmark(p.id)}
+                        >
+                          {bookmarks.has(p.id) ? '⭐' : '☆'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {data.pageCount > 1 && (
+                  <nav className="ps-pager" aria-label="Problemset pages">
+                    <button
+                      className="ps-page ps-page-step"
+                      disabled={page <= 1}
+                      onClick={() => setFilter({ page: String(page - 1) })}
+                    >
+                      ←
+                    </button>
+                    {pageWindow(page, data.pageCount).map((p, i) =>
+                      p === null
+                        ? <span key={`gap-${i}`} className="ps-pager-gap">…</span>
+                        : (
+                          <button
+                            key={p}
+                            className={`ps-page ${p === page ? 'active' : ''}`}
+                            aria-current={p === page ? 'page' : undefined}
+                            onClick={() => setFilter({ page: String(p) })}
+                          >
+                            {p}
+                          </button>
+                        )
+                    )}
+                    <button
+                      className="ps-page ps-page-step"
+                      disabled={page >= data.pageCount}
+                      onClick={() => setFilter({ page: String(page + 1) })}
+                    >
+                      →
+                    </button>
+                  </nav>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* ── Filters ──────────────────────────────────────────────── */}
+          <aside className={`ps-side ${filtersOpen ? 'open' : ''}`}>
+            {/* Phones only: the filters are a panel you pull down, so the
+                first problem is on screen when the page opens. */}
+            <button
+              className="ps-filter-toggle"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen(o => !o)}
+            >
+              <span>Filters{activeFilters > 0 ? ` · ${activeFilters}` : ''}</span>
+              <span className="ps-filter-caret" aria-hidden="true">{filtersOpen ? '▲' : '▼'}</span>
+            </button>
+
+            <div className="ps-filter-panel">
+              <div className="ps-facet-group">
+                <div className="ps-facet-head">
+                  <span>Subject</span>
+                  {activeFilters > 0 && (
+                    <button className="ps-clear" onClick={clearFilters}>Clear all</button>
+                  )}
+                </div>
+                <button
+                  className={`ps-facet ${subject === 'ALL' ? 'active' : ''}`}
+                  onClick={() => setFilter({ subject: 'ALL', topic: '' })}
+                >
+                  <span className="ps-facet-name">Everything</span>
+                  {filters && <span className="ps-facet-count">{bankTotal}</span>}
+                </button>
+                {SECTIONS.map(s => {
+                  const f = filters?.subjects.find(x => x.subject === s)
+                  if (filters && !f) return null
+                  return (
+                    <button
+                      key={s}
+                      className={`ps-facet ${subject === s ? 'active' : ''}`}
+                      title={SUBJECT_LABEL[s] ?? s}
+                      onClick={() => setFilter({ subject: s, topic: '' })}
+                    >
+                      <span className="ps-facet-dot" style={{ background: SUBJECT_COLOR[s] }} />
+                      <span className="ps-facet-name">{SUBJECT_SHORT[s] ?? s}</span>
+                      {f && <span className="ps-facet-count">{f.count}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="ps-facet-group">
+                <div className="ps-facet-head"><span>Difficulty</span></div>
+                <button
+                  className={`ps-facet ${difficulty === '' ? 'active' : ''}`}
+                  onClick={() => setFilter({ difficulty: '' })}
+                >
+                  <span className="ps-facet-pip ps-facet-pip-any" />
+                  <span className="ps-facet-name">Any</span>
+                  {filters && (
+                    <span className="ps-facet-count">{activeSubject?.count ?? bankTotal}</span>
+                  )}
+                </button>
+                {DIFFICULTIES.map(d => (
+                  <button
+                    key={d}
+                    className={`ps-facet ${difficulty === d ? 'active' : ''}`}
+                    onClick={() => setFilter({ difficulty: d })}
+                  >
+                    <span className={`ps-facet-pip diff-${d.toLowerCase()}`} />
+                    <span className="ps-facet-name">{titleCase(d)}</span>
+                    {filters && <span className="ps-facet-count">{difficultyCounts[d] ?? 0}</span>}
+                  </button>
+                ))}
+              </div>
+
+              <div className="ps-facet-group">
+                <label className="ps-facet-head" htmlFor="ps-topic"><span>Topic</span></label>
+                {subject === 'ALL' ? (
+                  <p className="ps-facet-hint">Pick a subject to narrow this down by topic.</p>
+                ) : (
+                  <select
+                    id="ps-topic"
+                    className="ps-select"
+                    value={topic}
+                    onChange={e => setFilter({ topic: e.target.value })}
+                  >
+                    <option value="">
+                      All topics{activeSubject ? ` (${activeSubject.count})` : ''}
+                    </option>
+                    {(activeSubject?.topics ?? []).map(t => (
+                      <option key={t.topic} value={t.topic}>{t.topic} ({t.count})</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="ps-facet-group">
+                <label className="ps-facet-head" htmlFor="ps-source"><span>From</span></label>
+                <select
+                  id="ps-source"
+                  className="ps-select"
+                  value={source}
+                  onChange={e => setFilter({ source: e.target.value })}
+                >
+                  <option value="">Every past paper</option>
+                  {(filters?.sources.contests.length ?? 0) > 0 && (
+                    <optgroup label="Past contests">
+                      {filters!.sources.contests.map(c => (
+                        <option key={c.value} value={c.value}>{c.title} ({c.count})</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {(filters?.sources.mocks.length ?? 0) > 0 && (
+                    <optgroup label="Mock tests">
+                      {filters!.sources.mocks.map(m => (
+                        <option key={m.value} value={m.value}>{m.title} ({m.count})</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </>
   )
