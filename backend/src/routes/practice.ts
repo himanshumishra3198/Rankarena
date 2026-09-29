@@ -3,7 +3,10 @@ import prisma from "../lib/prisma";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { Prisma } from "../generated/prisma/client";
 import { Language, Difficulty } from "../generated/prisma/enums";
-import { parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion } from "../lib/i18n";
+import {
+  parseLanguage, translationSelect, titleTranslationSelect, passageTranslationSelect, localizeQuestion,
+} from "../lib/i18n";
+import { excerptFromHtml } from "../lib/excerpt";
 import { ONLY_SAFE_TO_REVEAL } from "../lib/questionSafety";
 import { SUBJECTS, TOPICS_BY_SUBJECT, ALL_TOPICS, type Subject } from "../lib/topics";
 
@@ -201,23 +204,148 @@ router.get("/recommendations", async (req: AuthRequest, res: Response) => {
 });
 
 const DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;
+const PAGE_SIZE_DEFAULT = 25;
+const PAGE_SIZE_MAX = 100;
+
+/** Which past paper a problem came from, for the "From" column. */
+interface ProblemSource {
+  type: "CONTEST" | "MOCK";
+  id: string;
+  title: string;
+}
+
+/**
+ * Where each of these questions was released.
+ *
+ * A reused question belongs to several papers; the newest finished contest
+ * wins, because that is the one a candidate is most likely to remember
+ * sitting. A question released only by a published mock names the mock.
+ * Both lists are already narrowed to finished papers, so nothing here can
+ * name a contest that has not run.
+ */
+async function resolveSources(questionIds: string[]): Promise<Map<string, ProblemSource>> {
+  if (questionIds.length === 0) return new Map();
+
+  const [contestLinks, mockLinks] = await Promise.all([
+    prisma.contestQuestion.findMany({
+      where: { questionId: { in: questionIds }, contest: { status: "ENDED" } },
+      select: { questionId: true, contest: { select: { id: true, title: true, startTime: true } } },
+    }),
+    prisma.mockTestQuestion.findMany({
+      where: { questionId: { in: questionIds }, mockTest: { isPublished: true } },
+      select: { questionId: true, mockTest: { select: { id: true, title: true } } },
+    }),
+  ]);
+
+  const sources = new Map<string, ProblemSource>();
+  const newest = new Map<string, number>();
+  for (const link of contestLinks) {
+    const at = link.contest.startTime.getTime();
+    if ((newest.get(link.questionId) ?? -Infinity) >= at) continue;
+    newest.set(link.questionId, at);
+    sources.set(link.questionId, { type: "CONTEST", id: link.contest.id, title: link.contest.title });
+  }
+  for (const link of mockLinks) {
+    if (sources.has(link.questionId)) continue;
+    sources.set(link.questionId, { type: "MOCK", id: link.mockTest.id, title: link.mockTest.title });
+  }
+  return sources;
+}
+
+/**
+ * A one-line label for a question in a list.
+ *
+ * Questions have no title — they are a body of rich text — so the row is
+ * labelled with the opening of the question itself, the way a problemset
+ * names a problem. Two kinds of question have no usable text of their own: a
+ * comprehension or data-set question, which is named after its passage, and a
+ * syllogism, whose text lives in `structuredData`.
+ */
+function problemTitle(q: {
+  text: string;
+  structuredData: Prisma.JsonValue;
+  passage: { title: string } | null;
+}): string {
+  const fromText = excerptFromHtml(q.text, 150);
+  if (fromText) return fromText;
+
+  const statements = (q.structuredData as { statements?: string[] } | null)?.statements;
+  if (statements?.length) return excerptFromHtml(statements.join(" "), 150);
+
+  if (q.passage?.title) return q.passage.title;
+  return "Untitled question";
+}
+
+/** Reads `subject`, `topic` and `difficulty` off a request, or explains itself. */
+function parseFilters(req: AuthRequest):
+  | { ok: true; subject?: Subject; topic?: string; difficulty?: Difficulty }
+  | { ok: false; error: string } {
+  const rawSubject = typeof req.query.subject === "string" ? req.query.subject.trim().toUpperCase() : "";
+  if (rawSubject && !(SUBJECTS as readonly string[]).includes(rawSubject)) {
+    return { ok: false, error: `Unknown subject. Expected one of: ${SUBJECTS.join(", ")}.` };
+  }
+  const subject = (rawSubject || undefined) as Subject | undefined;
+
+  const rawDifficulty = typeof req.query.difficulty === "string" ? req.query.difficulty.trim().toUpperCase() : "";
+  if (rawDifficulty && !(DIFFICULTIES as readonly string[]).includes(rawDifficulty)) {
+    return { ok: false, error: `Unknown difficulty. Expected one of: ${DIFFICULTIES.join(", ")}.` };
+  }
+  const difficulty = (rawDifficulty || undefined) as Difficulty | undefined;
+
+  // Validated rather than passed through: an unknown topic would silently
+  // return an empty page, which reads as "nothing to practise here" when it
+  // is really a typo or a stale link.
+  const topic = typeof req.query.topic === "string" && req.query.topic.trim() ? req.query.topic.trim() : undefined;
+  if (topic && !(subject ? TOPICS_BY_SUBJECT[subject].includes(topic) : ALL_TOPICS.includes(topic))) {
+    return { ok: false, error: subject ? `Unknown topic for ${subject}.` : "Unknown topic." };
+  }
+
+  return { ok: true, subject, topic, difficulty };
+}
+
+/**
+ * `source=contest:<id>` / `source=mock:<id>` — one past paper's problems.
+ *
+ * Narrowing only. The paper still has to clear ONLY_SAFE_TO_REVEAL, so
+ * naming a live contest here returns nothing rather than its questions.
+ */
+function sourceFilter(value: unknown): Prisma.QuestionWhereInput {
+  if (typeof value !== "string") return {};
+  const [kind, id] = value.split(":");
+  if (!id) return {};
+  if (kind === "contest") return { contestQuestions: { some: { contestId: id } } };
+  if (kind === "mock") return { mockTestQuestions: { some: { mockTestId: id } } };
+  return {};
+}
 
 // GET /practice/filters
 //
-// What the browse page is allowed to offer. Counted through the same safety
-// filter the questions themselves come through, so a filter that is offered
-// always has something behind it — listing all 49 syllabus topics here would
-// mean most choices lead to an empty page.
+// What the problemset is allowed to offer. Counted through the same filter
+// the problems themselves come through, so a choice that is offered always
+// has something behind it — listing all 49 syllabus topics, or every contest
+// ever scheduled, would mean most choices lead to an empty page.
 router.get("/filters", async (_req: AuthRequest, res: Response) => {
-  const groups = await prisma.question.groupBy({
-    by: ["subject", "topic", "difficulty"],
-    where: ONLY_SAFE_TO_REVEAL,
-    _count: { _all: true },
-  });
+  const [groups, contestCounts, mockCounts] = await Promise.all([
+    prisma.question.groupBy({
+      by: ["subject", "topic", "difficulty"],
+      where: ONLY_SAFE_TO_REVEAL,
+      _count: { _all: true },
+    }),
+    prisma.contestQuestion.groupBy({
+      by: ["contestId"],
+      where: { question: ONLY_SAFE_TO_REVEAL, contest: { status: "ENDED" } },
+      _count: { _all: true },
+    }),
+    prisma.mockTestQuestion.groupBy({
+      by: ["mockTestId"],
+      where: { question: ONLY_SAFE_TO_REVEAL, mockTest: { isPublished: true } },
+      _count: { _all: true },
+    }),
+  ]);
 
   interface Bucket {
     count: number;
-    /** Questions with no topic tag: reachable under "any topic", not on their own. */
+    /** Questions with no topic tag: reachable under "all topics", not on their own. */
     untagged: number;
     difficulties: Record<string, number>;
     topics: Map<string, number>;
@@ -255,97 +383,167 @@ router.get("/filters", async (_req: AuthRequest, res: Response) => {
     };
   });
 
-  res.json({ total: subjects.reduce((n, s) => n + s.count, 0), subjects });
+  const [contests, mocks] = await Promise.all([
+    contestCounts.length
+      ? prisma.contest.findMany({
+          where: { id: { in: contestCounts.map((c) => c.contestId) } },
+          select: { id: true, title: true, startTime: true },
+          orderBy: { startTime: "desc" },
+        })
+      : [],
+    mockCounts.length
+      ? prisma.mockTest.findMany({
+          where: { id: { in: mockCounts.map((m) => m.mockTestId) } },
+          select: { id: true, title: true, subject: true },
+          orderBy: { createdAt: "asc" },
+        })
+      : [],
+  ]);
+  const contestCount = new Map(contestCounts.map((c) => [c.contestId, c._count._all]));
+  const mockCount = new Map(mockCounts.map((m) => [m.mockTestId, m._count._all]));
+
+  res.json({
+    total: subjects.reduce((n, s) => n + s.count, 0),
+    subjects,
+    sources: {
+      contests: contests.map((c) => ({
+        value: `contest:${c.id}`, title: c.title, date: c.startTime, count: contestCount.get(c.id) ?? 0,
+      })),
+      mocks: mocks.map((m) => ({
+        value: `mock:${m.id}`, title: m.title, subject: m.subject, count: mockCount.get(m.id) ?? 0,
+      })),
+    },
+  });
 });
 
-// GET /practice/questions?subject=&topic=&difficulty=&limit=&cursor=&language=
+// GET /practice/problems?subject=&topic=&difficulty=&source=&q=&page=&limit=&language=
 //
-// The question bank, browsable — the only door into it that isn't a finished
-// test. Answers and solutions come with each card, because the point is to
-// attempt one question and find out immediately.
+// The problemset: one page of the archive, as a list.
 //
-// Two things hold this up.
+// It carries no answer keys. A row is a label, a subject, a topic, a
+// difficulty and where the problem came from — enough to choose what to open
+// and nothing more. The correct option and the solution live behind
+// /practice/problems/:id, one question at a time, which is the difference
+// between a page somebody reads and a page somebody scrapes.
 //
-// ONLY_SAFE_TO_REVEAL is the whole of the protection. /recommendations can
-// also lean on the caller having submitted an attempt covering the question;
-// browsing has no such evidence to ask for, by definition, so that filter is
-// load-bearing on its own and is tested directly in tests/practice.test.ts.
-//
-// Nothing here is written down. No attempt row, no score, no rating: practice
-// cannot reach a leaderboard because it produces nothing that could. The page
-// keeps its own tally in the browser. Topic accuracy on the profile ignores
-// practice for the same reason it has to — those percentages come from
-// submitted papers, where the answer was hidden and there was one attempt at
-// it; folding in a mode that shows you the answer and lets you retry would
-// turn a study plan into a number nobody can act on.
-router.get("/questions", async (req: AuthRequest, res: Response) => {
-  const rawSubject = typeof req.query.subject === "string" ? req.query.subject.trim().toUpperCase() : "";
-  if (rawSubject && !(SUBJECTS as readonly string[]).includes(rawSubject)) {
-    res.status(400).json({ error: `Unknown subject. Expected one of: ${SUBJECTS.join(", ")}.` });
-    return;
-  }
-  const subject = (rawSubject || undefined) as Subject | undefined;
-
-  const rawDifficulty = typeof req.query.difficulty === "string" ? req.query.difficulty.trim().toUpperCase() : "";
-  if (rawDifficulty && !(DIFFICULTIES as readonly string[]).includes(rawDifficulty)) {
-    res.status(400).json({ error: `Unknown difficulty. Expected one of: ${DIFFICULTIES.join(", ")}.` });
-    return;
-  }
-  const difficulty = (rawDifficulty || undefined) as Difficulty | undefined;
-
-  // Validated rather than passed through: an unknown topic would silently
-  // return an empty page, which reads as "nothing to practise here" when it
-  // is really a typo or a stale bookmark.
-  const topic = typeof req.query.topic === "string" && req.query.topic.trim() ? req.query.topic.trim() : undefined;
-  if (topic && !(subject ? TOPICS_BY_SUBJECT[subject].includes(topic) : ALL_TOPICS.includes(topic))) {
-    res.status(400).json({
-      error: subject ? `Unknown topic for ${subject}.` : "Unknown topic.",
-    });
+// Ordered by subject, then topic, then difficulty, then id. Every part of
+// that is stable, which is what makes page 3 mean the same thing twice and a
+// link to it worth keeping.
+router.get("/problems", async (req: AuthRequest, res: Response) => {
+  const filters = parseFilters(req);
+  if (!filters.ok) {
+    res.status(400).json({ error: filters.error });
     return;
   }
 
-  const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 20);
-  const cursor = typeof req.query.cursor === "string" && req.query.cursor.trim() ? req.query.cursor.trim() : undefined;
+  const limit = Math.min(Math.max(Number(req.query.limit) || PAGE_SIZE_DEFAULT, 1), PAGE_SIZE_MAX);
+  const page = Math.max(Number(req.query.page) || 1, 1);
   const language = parseLanguage(req.query.language);
+  const search = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 100) : "";
 
   const where: Prisma.QuestionWhereInput = {
     ...ONLY_SAFE_TO_REVEAL,
-    ...(subject ? { subject } : {}),
-    ...(topic ? { topic } : {}),
-    ...(difficulty ? { difficulty } : {}),
+    ...(filters.subject ? { subject: filters.subject } : {}),
+    ...(filters.topic ? { topic: filters.topic } : {}),
+    ...(filters.difficulty ? { difficulty: filters.difficulty } : {}),
+    ...sourceFilter(req.query.source),
+    // Searches the English text only. A Hindi reader searching in Hindi finds
+    // nothing rather than something wrong, which is the better of the two
+    // until translations are indexed.
+    ...(search ? { text: { contains: search, mode: "insensitive" as const } } : {}),
   };
 
-  // Ordered by id — a uuid, so the sequence is arbitrary but the same every
-  // time. Stable is the point: it makes a cursor a resumable place in the
-  // topic ("14 of 43"), where reshuffling per request would hand back
-  // questions already done and never finish. Written as `id > cursor` rather
-  // than Prisma's `cursor` option so that a stale id — a question deleted
-  // since the page was last open — pages on instead of failing the request.
   const [total, rows] = await Promise.all([
     prisma.question.count({ where }),
     prisma.question.findMany({
-      where: cursor ? { ...where, id: { gt: cursor } } : where,
-      select: cardSelect(language),
-      orderBy: { id: "asc" },
+      where,
+      select: {
+        id: true,
+        text: true,
+        subject: true,
+        topic: true,
+        difficulty: true,
+        questionType: true,
+        structuredData: true,
+        // Not returned — only asked so the row can say whether opening the
+        // problem will come with a written explanation.
+        solution: true,
+        passage: { select: { title: true } },
+        translations: titleTranslationSelect(language),
+      },
+      orderBy: [{ subject: "asc" }, { topic: "asc" }, { difficulty: "asc" }, { id: "asc" }],
+      skip: (page - 1) * limit,
       take: limit,
     }),
   ]);
 
-  const bookmarked = new Set(
-    (
-      await prisma.bookmark.findMany({
-        where: { userId: req.user!.id, questionId: { in: rows.map((r) => r.id) } },
-        select: { questionId: true },
-      })
-    ).map((b) => b.questionId)
-  );
+  const ids = rows.map((r) => r.id);
+  const [sources, bookmarked] = await Promise.all([
+    resolveSources(ids),
+    prisma.bookmark
+      .findMany({ where: { userId: req.user!.id, questionId: { in: ids } }, select: { questionId: true } })
+      .then((bs) => new Set(bs.map((b) => b.questionId))),
+  ]);
 
   res.json({
     total,
-    // A full page might be the last one; the follow-up request that comes
-    // back empty is what ends the run.
-    nextCursor: rows.length === limit ? rows[rows.length - 1]!.id : null,
-    questions: rows.map((r) => ({ ...localizeQuestion(r, language), bookmarked: bookmarked.has(r.id) })),
+    page,
+    pageSize: limit,
+    pageCount: Math.max(Math.ceil(total / limit), 1),
+    problems: rows.map((r) => {
+      const translated = r.translations?.[0];
+      return {
+        id: r.id,
+        title: problemTitle({ ...r, text: translated?.text ?? r.text }),
+        subject: r.subject,
+        topic: r.topic,
+        difficulty: r.difficulty,
+        questionType: r.questionType,
+        hasSolution: !!r.solution,
+        // English is the source, never a fallback, so it is always "translated".
+        translated: language === "EN" || !!translated,
+        bookmarked: bookmarked.has(r.id),
+        source: sources.get(r.id) ?? null,
+      };
+    }),
+  });
+});
+
+// GET /practice/problems/:id?language=
+//
+// One problem, with the answer and the solution.
+//
+// The same filter as the list, applied again rather than assumed: the list
+// is not a gate, it is a view, and an id from anywhere else — a guess, an
+// old link, a row that was practisable last week — arrives here directly.
+// A question the archive does not hold is a 404 and not a 403, because
+// "this question exists but you may not see it" is itself worth knowing when
+// what you are probing for is next week's paper.
+router.get("/problems/:id", async (req: AuthRequest, res: Response) => {
+  const language = parseLanguage(req.query.language);
+  const id = req.params.id as string;
+
+  const question = await prisma.question.findFirst({
+    where: { AND: [{ id }, ONLY_SAFE_TO_REVEAL] },
+    select: cardSelect(language),
+  });
+  if (!question) {
+    res.status(404).json({ error: "No such practice problem." });
+    return;
+  }
+
+  const [sources, bookmark] = await Promise.all([
+    resolveSources([id]),
+    prisma.bookmark.findUnique({
+      where: { userId_questionId: { userId: req.user!.id, questionId: id } },
+      select: { id: true },
+    }),
+  ]);
+
+  res.json({
+    ...localizeQuestion(question, language),
+    bookmarked: !!bookmark,
+    source: sources.get(id) ?? null,
   });
 });
 

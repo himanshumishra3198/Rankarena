@@ -1,305 +1,192 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import ReportModal from '../components/ReportModal'
 import LanguageToggle from '../components/LanguageToggle'
-import { QuestionContext } from '../components/QuestionContent'
-import { RichText } from '../components/RichText'
 import { usePageMeta } from '../lib/seo'
 import { SECTIONS } from '../lib/types'
 import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
+import {
+  DIFFICULTIES, PROBLEMS_PER_PAGE, SUBJECT_COLOR, SUBJECT_LABEL, SUBJECT_SHORT,
+  readMarks, titleCase, type ProblemMark,
+} from '../lib/practice'
 
 /**
- * Free practice — the question bank without a test around it.
+ * The problemset — every question the archive holds, as a list.
  *
- * Everywhere else on the site a question arrives inside a paper: you sit the
- * whole thing, submit, and only then see any answers. That is the right shape
- * for a contest and the wrong one for revision, where you want a single
- * question on a single topic and the answer a second later.
+ * A problem is in here once the paper it was written for has finished: a
+ * contest that has ENDED, or a published mock. Until then it does not appear
+ * at all, because a question sitting in the bank unused is not spare content,
+ * it is what the next contest will be built from.
  *
- * Nothing here is recorded. There is no attempt row, no score and no rating
- * on the other side of the answer, so the session tally below is the only
- * record that this happened at all and it lasts as long as the tab does. The
- * one thing that does persist is your place in the bank — see PROGRESS_KEY.
+ * Rows carry no answers. The correct option and the solution arrive one
+ * problem at a time on /practice/:id, which is the difference between a page
+ * you read and a page you scrape.
  */
 
-const PAGE_SIZE = 10
-
-const SECTION_LABELS: Record<string, string> = {
-  QUANT: 'Quantitative Aptitude',
-  REASONING: 'General Intelligence & Reasoning',
-  ENGLISH: 'English Language',
-  GK: 'General Awareness',
-}
-const SECTION_SHORT: Record<string, string> = {
-  QUANT: 'Quant', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'GK',
-}
-const SECTION_COLORS: Record<string, string> = {
-  QUANT: '#7c3aed', REASONING: '#0ea5e9', ENGLISH: '#16a34a', GK: '#f59e0b',
-}
-const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
-const OPTIONS = ['A', 'B', 'C', 'D'] as const
-
-interface PracticeQuestion {
+interface Problem {
   id: string
-  text: string
-  imageUrl?: string | null
-  optionA: string; optionB: string; optionC: string; optionD: string
-  correctOption: string
+  title: string
   subject: string
   topic: string | null
   difficulty: string
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
-  structuredData?: { statements: string[]; conclusions: string[] } | null
-  passage?: {
-    id: string; title: string; content: string
-    type: 'TEXT' | 'TABLE'
-    tableData?: { headers: string[]; rows: string[][] } | null
-  } | null
-  solution?: string | null
-  bookmarked: boolean
-  /** The language actually rendered, and whether it matched what was asked for. */
-  language: string
+  questionType: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+  hasSolution: boolean
   translated: boolean
+  bookmarked: boolean
+  source: { type: 'CONTEST' | 'MOCK'; id: string; title: string } | null
 }
 
-interface PracticePage {
+interface ProblemPage {
   total: number
-  nextCursor: string | null
-  questions: PracticeQuestion[]
+  page: number
+  pageSize: number
+  pageCount: number
+  problems: Problem[]
 }
 
 interface SubjectFilter {
   subject: string
   count: number
-  /** Questions with no topic tag — reachable under "all topics", not on their own. */
   untagged: number
   difficulties: Record<string, number>
   topics: { topic: string; count: number }[]
 }
 
-/**
- * One pass through the bank under one set of filters.
- *
- * `start` is where `questions[0]` sits in the whole filtered set and `cursor`
- * is what fetched it, which together are enough to say "question 14 of 43"
- * and to pick the run up again later.
- */
-interface Run {
-  /** The filters this run belongs to; a stale run is ignored, never saved. */
-  key: string
-  cursor: string
-  start: number
+interface SourceOption {
+  value: string
+  title: string
+  count: number
+  date?: string
+  subject?: string
+}
+
+interface Filters {
   total: number
-  next: string | null
-  questions: PracticeQuestion[]
+  subjects: SubjectFilter[]
+  sources: { contests: SourceOption[]; mocks: SourceOption[] }
 }
 
-/**
- * Where you had got to, per filter combination.
- *
- * The server orders the bank by question id — arbitrary, but the same order
- * every time — so a cursor is a real place in a topic rather than a page
- * number over a reshuffle. Coming back tomorrow continues from the question
- * after the last one you looked at instead of starting at the top of
- * Percentage again. Kept in the browser because practice is deliberately
- * unrecorded server-side.
- */
-const PROGRESS_KEY = 'practice-progress'
-type Progress = Record<string, { cursor: string; seen: number }>
-
-function readProgress(): Progress {
-  try {
-    const raw = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}')
-    return raw && typeof raw === 'object' ? raw : {}
-  } catch {
-    return {}
-  }
-}
-
-function writeProgress(key: string, value: { cursor: string; seen: number } | null) {
-  try {
-    const all = readProgress()
-    if (value) all[key] = value
-    else delete all[key]
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify(all))
-  } catch {
-    // A full or blocked localStorage costs the resume, nothing else.
-  }
-}
-
-function optText(q: PracticeQuestion, opt: string) {
-  return ({ A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD } as Record<string, string>)[opt] ?? ''
+/** Page numbers around the current one, with gaps marked by null. */
+function pageWindow(page: number, pageCount: number): (number | null)[] {
+  if (pageCount <= 7) return Array.from({ length: pageCount }, (_, i) => i + 1)
+  const wanted = new Set([1, pageCount, page, page - 1, page + 1])
+  const sorted = [...wanted].filter(p => p >= 1 && p <= pageCount).sort((a, b) => a - b)
+  const out: (number | null)[] = []
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push(null)
+    out.push(p)
+  })
+  return out
 }
 
 export default function Practice() {
   usePageMeta(
-    'Practice questions — RankArenas',
-    'Work through SSC questions by subject, topic and difficulty. Untimed, unrated, with answers and solutions as you go.'
+    'Problemset — RankArenas',
+    'Every question from past SSC contests and mock tests, browsable by subject, topic and difficulty. Untimed, unrated.'
   )
-
-  const [filters, setFilters] = useState<SubjectFilter[] | null>(null)
-  const [language, setLanguage] = useState<Language>(getPreferredLanguage())
-  // The filters live in the URL rather than in state: a reload comes back to
-  // the same drill, and "Percentage, hard" is a link you can keep.
   const [params, setParams] = useSearchParams()
+  const [language, setLanguage] = useState<Language>(getPreferredLanguage())
 
-  const [run, setRun] = useState<Run | null>(null)
-  const [index, setIndex] = useState(0)
+  const [filters, setFilters] = useState<Filters | null>(null)
+  const [data, setData] = useState<ProblemPage | null>(null)
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [reload, setReload] = useState(0)
-
-  const [picks, setPicks] = useState<Record<string, string>>({})
+  const [marks, setMarks] = useState<Record<string, ProblemMark>>(readMarks)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
-  const [reportId, setReportId] = useState<string | null>(null)
-  // First attempts only: retrying a question you got wrong doesn't quietly
-  // turn it into a correct one.
-  const [tally, setTally] = useState({ attempted: 0, correct: 0 })
-  const tallied = useRef<Set<string>>(new Set())
 
+  // Everything the list is looking at lives in the URL, so a reload, the back
+  // button and a shared link all land on the same page of the same filter.
   const rawSubject = (params.get('subject') ?? 'ALL').toUpperCase()
   const subject = (SECTIONS as string[]).includes(rawSubject) ? rawSubject : 'ALL'
   const rawDifficulty = (params.get('difficulty') ?? '').toUpperCase()
   const difficulty = (DIFFICULTIES as readonly string[]).includes(rawDifficulty) ? rawDifficulty : ''
-  const activeSubject = filters?.find(f => f.subject === subject) ?? null
+  const source = params.get('source') ?? ''
+  const search = params.get('q') ?? ''
+  const page = Math.max(Number(params.get('page')) || 1, 1)
+
+  const activeSubject = filters?.subjects.find(s => s.subject === subject) ?? null
   // A topic only means something inside its own subject. Once the filter list
   // has arrived, one the subject doesn't have is dropped rather than sent —
-  // an edited or stale URL lands on the subject instead of on an error.
+  // an edited or stale link lands on the subject instead of on an error.
   const rawTopic = params.get('topic') ?? ''
   const topic = subject !== 'ALL' && (!filters || activeSubject?.topics.some(t => t.topic === rawTopic))
     ? rawTopic
     : ''
 
-  const filterKey = `${subject}|${topic}|${difficulty}`
+  // Typing shouldn't cost a request per keystroke, so the box is local and
+  // the URL catches up on submit or when the box loses focus.
+  const [searchDraft, setSearchDraft] = useState(search)
+  useEffect(() => setSearchDraft(search), [search])
 
-  function setFilter(next: { subject?: string; topic?: string; difficulty?: string }) {
-    const merged = { subject, topic, difficulty, ...next }
+  const query = useMemo(() => {
     const q = new URLSearchParams()
-    if (merged.subject !== 'ALL') q.set('subject', merged.subject)
+    if (subject !== 'ALL') q.set('subject', subject)
+    if (topic) q.set('topic', topic)
+    if (difficulty) q.set('difficulty', difficulty)
+    if (source) q.set('source', source)
+    if (search) q.set('q', search)
+    return q.toString()
+  }, [subject, topic, difficulty, source, search])
+
+  function setFilter(next: Record<string, string>) {
+    const merged: Record<string, string> = {
+      subject, topic, difficulty, source, q: search, page: '1', ...next,
+    }
+    const q = new URLSearchParams()
+    if (merged.subject && merged.subject !== 'ALL') q.set('subject', merged.subject)
     if (merged.topic) q.set('topic', merged.topic)
     if (merged.difficulty) q.set('difficulty', merged.difficulty)
-    // Replaced, not pushed: the back button should leave the page, not walk
-    // back through every chip that was tapped on the way here.
+    if (merged.source) q.set('source', merged.source)
+    if (merged.q) q.set('q', merged.q)
+    // Any change to what is being looked at goes back to page 1 unless the
+    // caller asked for a page: keeping page 7 of the old filter would land
+    // on an empty list more often than not.
+    if (merged.page && merged.page !== '1') q.set('page', merged.page)
     setParams(q, { replace: true })
   }
 
   useEffect(() => {
     api.get('/practice/filters')
-      .then(r => setFilters(r.data.subjects))
-      .catch(() => setFilters([]))
+      .then(r => setFilters(r.data))
+      .catch(() => setFilters({ total: 0, subjects: [], sources: { contests: [], mocks: [] } }))
   }, [])
 
-  // Every filter change starts a fresh run, resumed from wherever this
-  // combination was left. A language change lands here too: the saved
-  // position is the question on screen, so it comes back in the new language
-  // rather than jumping to the top of the topic.
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setFailed(false)
-
-    const saved = readProgress()[filterKey]
-    const params: Record<string, string | number> = { limit: PAGE_SIZE, language }
-    if (subject !== 'ALL') params.subject = subject
-    if (topic) params.topic = topic
-    if (difficulty) params.difficulty = difficulty
-    if (saved?.cursor) params.cursor = saved.cursor
-
-    api.get('/practice/questions', { params })
+    const q = new URLSearchParams(query)
+    q.set('page', String(page))
+    q.set('limit', String(PROBLEMS_PER_PAGE))
+    q.set('language', language)
+    api.get(`/practice/problems?${q}`)
       .then(r => {
         if (cancelled) return
-        const page: PracticePage = r.data
-        setRun({
-          key: filterKey,
-          cursor: saved?.cursor ?? '',
-          start: page.questions.length ? (saved?.seen ?? 0) : 0,
-          total: page.total,
-          next: page.nextCursor,
-          questions: page.questions,
-        })
-        setIndex(0)
-        setBookmarks(new Set(page.questions.filter(q => q.bookmarked).map(q => q.id)))
+        const body: ProblemPage = r.data
+        setData(body)
+        setBookmarks(new Set(body.problems.filter(p => p.bookmarked).map(p => p.id)))
       })
       .catch(() => { if (!cancelled) setFailed(true) })
       .finally(() => { if (!cancelled) setLoading(false) })
-
     return () => { cancelled = true }
-    // subject/topic/difficulty are exactly what filterKey is built from, so
-    // they change together and this runs once per change, not three times.
-  }, [filterKey, subject, topic, difficulty, language, reload])
+  }, [query, page, language])
 
-  // Remember the question on screen, not the one after it, so a reload or a
-  // language switch resumes here rather than skipping one.
-  useEffect(() => {
-    if (!run || run.key !== filterKey || run.questions.length === 0) return
-    writeProgress(filterKey, {
-      cursor: index === 0 ? run.cursor : run.questions[index - 1].id,
-      seen: run.start + index,
-    })
-  }, [run, index, filterKey])
+  // Marks are written on the problem page; re-read them when a page of
+  // results lands so the ticks are current on the way back.
+  useEffect(() => setMarks(readMarks()), [data])
 
-  const current: PracticeQuestion | null = run?.questions[index] ?? null
-  const picked = current ? picks[current.id] : undefined
-  const atEnd = !!run && index >= run.questions.length - 1 && !run.next
-  const position = run ? run.start + index + 1 : 0
-
-  function choose(opt: string) {
-    if (!current || picks[current.id]) return
-    setPicks(p => ({ ...p, [current.id]: opt }))
-    if (!tallied.current.has(current.id)) {
-      tallied.current.add(current.id)
-      setTally(t => ({
-        attempted: t.attempted + 1,
-        correct: t.correct + (opt === current.correctOption ? 1 : 0),
-      }))
-    }
-  }
-
-  function retry() {
-    if (!current) return
-    setPicks(p => { const next = { ...p }; delete next[current.id]; return next })
-  }
-
-  async function goNext() {
-    if (!run || loadingMore) return
-    if (index + 1 < run.questions.length) { setIndex(index + 1); return }
-    if (!run.next) return
-
-    setLoadingMore(true)
-    try {
-      const params: Record<string, string | number> = { limit: PAGE_SIZE, language, cursor: run.next }
-      if (subject !== 'ALL') params.subject = subject
-      if (topic) params.topic = topic
-      if (difficulty) params.difficulty = difficulty
-      const page: PracticePage = (await api.get('/practice/questions', { params })).data
-
-      setRun(r => r && ({
-        ...r,
-        total: page.total,
-        // An exactly-full page looks like there is more until the follow-up
-        // comes back empty; that empty answer is what ends the run.
-        next: page.questions.length ? page.nextCursor : null,
-        questions: [...r.questions, ...page.questions],
-      }))
-      setBookmarks(b => {
-        const n = new Set(b)
-        page.questions.filter(q => q.bookmarked).forEach(q => n.add(q.id))
-        return n
-      })
-      if (page.questions.length) setIndex(i => i + 1)
-    } catch {
-      setFailed(true)
-    } finally {
-      setLoadingMore(false)
-    }
-  }
-
-  function startOver() {
-    writeProgress(filterKey, null)
-    setReload(n => n + 1)
+  /**
+   * A real link, so a row can be middle-clicked into a new tab and its
+   * destination shows in the status bar. `i` is where the problem sits in
+   * the whole filtered list — enough for the problem page to offer
+   * previous/next, and to send "back" to the page it came from, without the
+   * list itself being passed along.
+   */
+  function problemHref(p: Problem, rowIndex: number) {
+    const q = new URLSearchParams(query)
+    q.set('i', String((page - 1) * PROBLEMS_PER_PAGE + rowIndex))
+    return `/practice/${p.id}?${q}`
   }
 
   function flipBookmark(id: string) {
@@ -319,56 +206,34 @@ export default function Practice() {
     }
   }
 
-  function pickSubject(next: string) {
-    // A topic belongs to one subject, so it cannot survive the switch.
-    setFilter({ subject: next, topic: '' })
-  }
-
   function pickLanguage(next: Language) {
     setLanguage(next)
     setPreferredLanguage(next)
   }
 
-  // A drill is a keyboard thing: A–D (or 1–4) answers, the arrows move.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.altKey || e.ctrlKey || e.metaKey) return
-      if ((e.target as HTMLElement)?.closest?.('input, textarea, select, [contenteditable]')) return
-      const letter = e.key.toUpperCase()
-      const byLetter = (OPTIONS as readonly string[]).indexOf(letter)
-      const byNumber = ['1', '2', '3', '4'].indexOf(e.key)
-      if (byLetter >= 0 || byNumber >= 0) {
-        e.preventDefault()
-        choose(OPTIONS[byLetter >= 0 ? byLetter : byNumber])
-        return
-      }
-      if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); goNext() }
-      if (e.key === 'ArrowLeft' && index > 0) { e.preventDefault(); setIndex(index - 1) }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  })
-
-  const bankTotal = useMemo(() => (filters ?? []).reduce((n, f) => n + f.count, 0), [filters])
+  const bankTotal = filters?.total ?? 0
+  const solvedCount = useMemo(() => Object.values(marks).filter(m => m === 'SOLVED').length, [marks])
   const difficultyCounts = useMemo(() => {
-    const source = activeSubject ? [activeSubject] : (filters ?? [])
+    const scope = activeSubject ? [activeSubject] : (filters?.subjects ?? [])
     return DIFFICULTIES.reduce((acc, d) => {
-      acc[d] = source.reduce((n, f) => n + (f.difficulties[d] ?? 0), 0)
+      acc[d] = scope.reduce((n, f) => n + (f.difficulties[d] ?? 0), 0)
       return acc
     }, {} as Record<string, number>)
   }, [filters, activeSubject])
 
+  const firstRow = data ? (data.page - 1) * data.pageSize + 1 : 0
+  const lastRow = data ? Math.min(data.page * data.pageSize, data.total) : 0
+
   return (
     <>
       <Navbar />
-      <div className="page" style={{ maxWidth: 880 }}>
+      <div className="page" style={{ maxWidth: 1040 }}>
         <header className="prac-head">
           <div>
-            <h1 className="prac-title">Practice</h1>
+            <h1 className="prac-title">Problemset</h1>
             <p className="prac-sub">
-              One question at a time, with the answer as soon as you've tried it.
-              Nothing here is timed, scored or rated — your rating and the
-              leaderboard only ever move in contests.
+              Every question from a contest that has finished or a published mock test.
+              Untimed and unscored — your rating and the leaderboard only ever move in contests.
             </p>
           </div>
           <LanguageToggle value={language} onChange={pickLanguage} />
@@ -380,26 +245,26 @@ export default function Practice() {
             <div className="prac-chips">
               <button
                 className={`mock-section-tab ${subject === 'ALL' ? 'active' : ''}`}
-                onClick={() => pickSubject('ALL')}
+                onClick={() => setFilter({ subject: 'ALL', topic: '' })}
               >
                 Everything
                 {filters && <span className="mock-tab-count">{bankTotal}</span>}
               </button>
               {SECTIONS.map(s => {
-                const f = filters?.find(x => x.subject === s)
+                const f = filters?.subjects.find(x => x.subject === s)
                 if (filters && !f) return null
                 const isActive = subject === s
                 return (
                   <button
                     key={s}
                     className={`mock-section-tab ${isActive ? 'active' : ''}`}
-                    onClick={() => pickSubject(s)}
+                    onClick={() => setFilter({ subject: s, topic: '' })}
                     style={isActive
-                      ? { background: SECTION_COLORS[s], borderColor: SECTION_COLORS[s], color: '#fff' }
-                      : { ['--subject' as string]: SECTION_COLORS[s] }}
+                      ? { background: SUBJECT_COLOR[s], borderColor: SUBJECT_COLOR[s], color: '#fff' }
+                      : { ['--subject' as string]: SUBJECT_COLOR[s] }}
                   >
-                    <span className="mock-tab-dot" style={{ background: SECTION_COLORS[s] }} />
-                    {SECTION_SHORT[s]}
+                    <span className="mock-tab-dot" style={{ background: SUBJECT_COLOR[s] }} />
+                    {SUBJECT_SHORT[s]}
                     {f && <span className="mock-tab-count">{f.count}</span>}
                   </button>
                 )
@@ -412,13 +277,9 @@ export default function Practice() {
             {subject === 'ALL' ? (
               <p className="prac-filter-hint">Pick a subject to narrow this down by topic.</p>
             ) : (
-              <select
-                className="prac-select"
-                value={topic}
-                onChange={e => setFilter({ topic: e.target.value })}
-              >
+              <select className="prac-select" value={topic} onChange={e => setFilter({ topic: e.target.value })}>
                 <option value="">
-                  All of {SECTION_LABELS[subject] ?? subject}
+                  All of {SUBJECT_LABEL[subject] ?? subject}
                   {activeSubject ? ` (${activeSubject.count})` : ''}
                 </option>
                 {(activeSubject?.topics ?? []).map(t => (
@@ -443,178 +304,166 @@ export default function Practice() {
                   className={`mock-section-tab ${difficulty === d ? 'active' : ''}`}
                   onClick={() => setFilter({ difficulty: d })}
                 >
-                  {d[0] + d.slice(1).toLowerCase()}
+                  {titleCase(d)}
                   {filters && <span className="mock-tab-count">{difficultyCounts[d] ?? 0}</span>}
                 </button>
               ))}
             </div>
           </div>
+
+          <div className="prac-filter-row">
+            <span className="prac-filter-label">From</span>
+            <select className="prac-select" value={source} onChange={e => setFilter({ source: e.target.value })}>
+              <option value="">Every past paper</option>
+              {(filters?.sources.contests.length ?? 0) > 0 && (
+                <optgroup label="Past contests">
+                  {filters!.sources.contests.map(c => (
+                    <option key={c.value} value={c.value}>{c.title} ({c.count})</option>
+                  ))}
+                </optgroup>
+              )}
+              {(filters?.sources.mocks.length ?? 0) > 0 && (
+                <optgroup label="Mock tests">
+                  {filters!.sources.mocks.map(m => (
+                    <option key={m.value} value={m.value}>{m.title} ({m.count})</option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+            <form
+              className="prac-search"
+              onSubmit={e => { e.preventDefault(); setFilter({ q: searchDraft.trim() }) }}
+            >
+              <input
+                className="prac-search-input"
+                type="search"
+                placeholder="Search question text…"
+                aria-label="Search question text"
+                value={searchDraft}
+                onChange={e => setSearchDraft(e.target.value)}
+                onBlur={() => { if (searchDraft.trim() !== search) setFilter({ q: searchDraft.trim() }) }}
+              />
+            </form>
+          </div>
         </div>
 
-        {tally.attempted > 0 && (
-          <div className="prac-tally">
-            <span><strong>{tally.attempted}</strong> attempted this session</span>
-            <span className="prac-tally-sep">·</span>
-            <span><strong>{tally.correct}</strong> right first time</span>
-            <span className="prac-tally-sep">·</span>
-            <span>{Math.round((tally.correct / tally.attempted) * 100)}%</span>
-          </div>
-        )}
-
-        {loading && <div className="card prac-status">Loading questions…</div>}
+        {loading && <div className="card prac-status">Loading the problemset…</div>}
 
         {!loading && failed && (
           <div className="card prac-status">
-            <p>Couldn't load practice questions.</p>
-            <button className="btn btn-ghost btn-sm" onClick={() => setReload(n => n + 1)}>Try again</button>
+            <p>Couldn't load the problemset.</p>
+            <button className="btn btn-ghost btn-sm" onClick={() => setFilter({})}>Try again</button>
           </div>
         )}
 
-        {!loading && !failed && run && run.total === 0 && (
+        {!loading && !failed && data && data.total === 0 && (
           <div className="card prac-status">
             <div className="prac-empty-icon">📭</div>
-            <p className="prac-empty-title">Nothing here yet</p>
-            <p>No questions match these filters. Try a different topic or difficulty.</p>
+            <p className="prac-empty-title">No problems match</p>
+            <p>
+              Nothing here for these filters. A problem only joins the problemset
+              once the contest it was set in has finished.
+            </p>
           </div>
         )}
 
-        {/* The run's questions are exhausted: either worked all the way
-            through, or resumed past the end of a bank that has since shrunk. */}
-        {!loading && !failed && run && run.total > 0 && !current && (
-          <div className="card prac-status">
-            <div className="prac-empty-icon">🎉</div>
-            <p className="prac-empty-title">That's every question in this filter</p>
-            <p>You've been through all {run.total}. Start again, or pick another topic.</p>
-            <button className="btn btn-primary btn-sm" onClick={startOver}>Start over</button>
-          </div>
-        )}
-
-        {!loading && !failed && current && run && (
+        {!loading && !failed && data && data.total > 0 && (
           <>
-            <div className="prac-progress-row">
-              <span className="prac-position">
-                Question {Math.min(position, run.total)} of {run.total}
+            <div className="ps-summary">
+              <span>
+                Showing <strong>{firstRow}–{lastRow}</strong> of <strong>{data.total}</strong>
+                {data.total === 1 ? ' problem' : ' problems'}
               </span>
-              {position > 1 && (
-                <button className="btn btn-ghost btn-sm" onClick={startOver}>Start from the top</button>
-              )}
-            </div>
-            <div className="prac-progress">
-              <div
-                className="prac-progress-fill"
-                style={{ width: `${Math.min(100, (position / Math.max(run.total, 1)) * 100)}%` }}
-              />
+              {solvedCount > 0 && <span className="ps-solved-count">✓ {solvedCount} solved</span>}
             </div>
 
-            <article className="card prac-card">
-              <div className="prac-card-head">
-                <div className="prac-card-tags">
-                  <span className="prac-subject" style={{ color: SECTION_COLORS[current.subject] }}>
-                    {SECTION_SHORT[current.subject] ?? current.subject}
-                  </span>
-                  {current.topic && <span className="prac-topic">{current.topic}</span>}
-                  <span className={`badge badge-${current.difficulty.toLowerCase()}`}>{current.difficulty}</span>
-                </div>
-                <button
-                  className="bookmark-btn"
-                  title={bookmarks.has(current.id) ? 'Remove bookmark' : 'Bookmark for revision'}
-                  onClick={() => toggleBookmark(current.id)}
-                >
-                  {bookmarks.has(current.id) ? '⭐' : '☆'}
-                </button>
-              </div>
-
-              <QuestionContext q={current} />
-
-              {current.imageUrl && (
-                <div className="qd-image">
-                  <img src={current.imageUrl} alt="Question diagram" />
-                </div>
-              )}
-
-              {current.text && <RichText as="div" className="qd-qtext" html={current.text} />}
-
-              {!picked && <div className="practice-banner">Pick an answer to check yourself</div>}
-
-              <div className="review-options qd-options" style={{ marginTop: 12 }}>
-                {OPTIONS.map(opt => {
-                  const isCorrect = opt === current.correctOption
-                  const isPicked = opt === picked
-                  const cls = picked && isCorrect ? 'correct-opt' : picked && isPicked ? 'wrong-opt' : ''
-                  return (
-                    <div
-                      key={opt}
-                      className={`review-option ${cls}`}
-                      style={{ cursor: picked ? 'default' : 'pointer' }}
-                      onClick={() => choose(opt)}
+            <div className="card ps-list">
+              {data.problems.map((p, i) => {
+                const mark = marks[p.id]
+                return (
+                  <div key={p.id} className="ps-row">
+                    <Link className="ps-row-link" to={problemHref(p, i)}>
+                    <span
+                      className={`ps-mark ps-mark-${(mark ?? 'none').toLowerCase()}`}
+                      title={mark === 'SOLVED' ? 'Solved first try' : mark === 'TRIED' ? 'Attempted' : 'Not attempted'}
                     >
-                      <span className="option-label">{opt}</span>
-                      <span><RichText html={optText(current, opt)} /></span>
-                      {picked && isCorrect && <span className="opt-tag correct-tag">✓ Correct answer</span>}
-                      {picked && isPicked && !isCorrect && <span className="opt-tag wrong-tag">Your pick</span>}
-                    </div>
-                  )
-                })}
-              </div>
+                      {mark === 'SOLVED' ? '✓' : mark === 'TRIED' ? '•' : ''}
+                    </span>
 
-              {picked && (
-                <div
-                  className="qd-practice-verdict"
-                  style={{ color: picked === current.correctOption ? '#16a34a' : '#dc2626' }}
-                >
-                  {picked === current.correctOption
-                    ? '✓ Correct!'
-                    : '✗ Not quite — the correct answer is highlighted.'}
-                </div>
-              )}
+                    <span className="ps-main">
+                      <span className="ps-title">{p.title}</span>
+                      <span className="ps-meta">
+                        <span className="ps-subject" style={{ color: SUBJECT_COLOR[p.subject] }}>
+                          {SUBJECT_SHORT[p.subject] ?? p.subject}
+                        </span>
+                        {p.topic && <><span className="ps-dot">·</span><span>{p.topic}</span></>}
+                        {p.source && (
+                          <>
+                            <span className="ps-dot">·</span>
+                            <span className="ps-from" title={p.source.title}>{p.source.title}</span>
+                          </>
+                        )}
+                        {p.hasSolution && <><span className="ps-dot">·</span><span>💡 Solution</span></>}
+                      </span>
+                    </span>
 
-              {picked && (
-                <div className="qd-practice-actions">
-                  <button className="btn btn-ghost btn-sm" onClick={retry}>Try again</button>
-                </div>
-              )}
+                    <span className={`badge badge-${p.difficulty.toLowerCase()} ps-diff`}>
+                      {titleCase(p.difficulty)}
+                    </span>
+                    </Link>
 
-              {picked && (
-                current.solution ? (
-                  <div className="qd-solution">
-                    <div className="qd-solution-title">💡 Solution</div>
-                    <RichText as="div" className="sol-explain-text" html={current.solution} />
+                    {/* Outside the link: a button nested in an anchor is not
+                        something a browser or a screen reader handles well. */}
+                    <button
+                      className="bookmark-btn ps-star"
+                      title={bookmarks.has(p.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                      aria-label={bookmarks.has(p.id) ? 'Remove bookmark' : 'Bookmark for revision'}
+                      onClick={() => toggleBookmark(p.id)}
+                    >
+                      {bookmarks.has(p.id) ? '⭐' : '☆'}
+                    </button>
                   </div>
-                ) : (
-                  <p className="qd-no-solution">No written solution has been added for this question yet.</p>
                 )
-              )}
+              })}
+            </div>
 
-              <div className="prac-card-foot">
-                <button className="btn btn-ghost btn-sm" onClick={() => setReportId(current.id)}>
-                  ⚑ Report a problem
+            {data.pageCount > 1 && (
+              <nav className="ps-pager" aria-label="Problemset pages">
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={page <= 1}
+                  onClick={() => setFilter({ page: String(page - 1) })}
+                >
+                  ← Prev
                 </button>
-                <div className="prac-nav">
-                  <button className="btn btn-ghost" onClick={() => setIndex(index - 1)} disabled={index === 0}>
-                    ← Previous
-                  </button>
-                  <button className="btn btn-primary" onClick={goNext} disabled={atEnd || loadingMore}>
-                    {loadingMore ? 'Loading…' : atEnd ? 'No more questions' : picked ? 'Next question →' : 'Skip →'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="kbd-hint">
-                <span><kbd>A</kbd>–<kbd>D</kbd> answer</span>
-                <span><kbd>←</kbd> <kbd>→</kbd> move between questions</span>
-              </div>
-            </article>
+                <span className="ps-pager-pages">
+                  {pageWindow(page, data.pageCount).map((p, i) =>
+                    p === null
+                      ? <span key={`gap-${i}`} className="ps-pager-gap">…</span>
+                      : (
+                        <button
+                          key={p}
+                          className={`ps-page ${p === page ? 'active' : ''}`}
+                          aria-current={p === page ? 'page' : undefined}
+                          onClick={() => setFilter({ page: String(p) })}
+                        >
+                          {p}
+                        </button>
+                      )
+                  )}
+                </span>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={page >= data.pageCount}
+                  onClick={() => setFilter({ page: String(page + 1) })}
+                >
+                  Next →
+                </button>
+              </nav>
+            )}
           </>
         )}
       </div>
-
-      {reportId && (
-        <ReportModal
-          questionId={reportId}
-          source="practice"
-          onClose={() => setReportId(null)}
-        />
-      )}
     </>
   )
 }

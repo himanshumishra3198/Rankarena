@@ -45,14 +45,47 @@ export function toPlainText(markdown: string): string {
   return out.replace(/\s+/g, " ").trim();
 }
 
+/** Cut to `limit` characters on a word boundary, so no word is sliced in half. */
+function truncate(text: string, limit: number): string {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
+}
+
 /**
  * Plain-text preview capped at `limit` characters, cut on a word boundary so
  * the last word isn't sliced in half.
  */
 export function makeExcerpt(markdown: string, limit = 300): string {
-  const text = toPlainText(markdown);
-  if (text.length <= limit) return text;
-  const cut = text.slice(0, limit);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
+  return truncate(toPlainText(markdown), limit);
+}
+
+/**
+ * The same idea for question text, which is rich text rather than Markdown —
+ * the narrow HTML the admin editor produces and RichText renders.
+ *
+ * Only ever used to label a question in a list. The tags carry no meaning
+ * worth keeping in a one-line title, and an inline <img> leaves nothing
+ * behind, so a question that is only a diagram falls through to whatever
+ * fallback the caller has.
+ */
+export function htmlToPlainText(html: string): string {
+  return (html ?? "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/(p|div|li|tr|h[1-6])>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    // Ampersand last: decoding it first would turn "&amp;lt;" into "<".
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function excerptFromHtml(html: string, limit = 160): string {
+  return truncate(htmlToPlainText(html), limit);
 }

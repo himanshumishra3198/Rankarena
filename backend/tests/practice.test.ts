@@ -1,14 +1,14 @@
 /**
- * Free practice: what the bank is allowed to hand out.
+ * Free practice: what the archive is allowed to hand out.
  *
- * GET /practice/questions gives a signed-in caller the correct option and the
- * written solution for anything it returns. /recommendations can at least ask
- * for evidence that the caller already sat the question; browsing cannot, so
+ * GET /practice/problems/:id gives a signed-in caller the correct option and
+ * the written solution. /recommendations can at least ask for evidence that
+ * the caller already sat the question; browsing an archive cannot, so
  * ONLY_SAFE_TO_REVEAL is the only thing standing between the endpoint and the
- * answer key of a contest that has not run yet. That makes the filter worth a
- * test of its own rather than a reading of the `where` clause — what is being
- * checked here is Prisma's `NOT`/`some` semantics against a real database,
- * which is exactly the part that could be quietly wrong.
+ * answer key of a paper nobody has sat. That makes the filter worth a test of
+ * its own rather than a reading of the `where` clause — what is being checked
+ * here is Prisma's AND/OR/NOT semantics against a real database, which is
+ * exactly the part that could be quietly wrong.
  *
  * Runs against the DATABASE_URL in backend/.env — the local docker-compose
  * Postgres during development. It creates its own rows, tagged with a
@@ -27,6 +27,7 @@ import prisma from "../src/lib/prisma";
 import practiceRoutes from "../src/routes/practice";
 
 const MARKER = `practice-test-${randomUUID()}`;
+const SOLUTION = `${MARKER} the written solution`;
 
 // Every fixture sits in one cell of the filter grid, so a single query with
 // all three filters set sees all of them and nothing else has to be guessed.
@@ -34,19 +35,29 @@ const SUBJECT = "QUANT";
 const TOPIC = "Percentage";
 const DIFFICULTY = "MEDIUM";
 
-/** Fixture key -> whether practice is allowed to serve it. */
+/**
+ * Fixture key -> whether practice is allowed to serve it.
+ *
+ * Released by a finished paper and held by no unfinished one. The first
+ * entry is the one people find surprising: a question in no paper at all is
+ * unreleased, not unused — it is what next month's contest will be built
+ * from — so the archive does not have it.
+ */
 const EXPECTED: Record<string, boolean> = {
-  "no test at all": true,
+  "no paper at all": false,
   "ended contest": true,
   "published mock": true,
+  "ended contest + published mock": true,
   "live contest": false,
   "scheduled contest": false,
   "unpublished mock": false,
-  // A question can sit in several papers at once. One unfinished paper is
-  // enough to withhold it, however many finished ones it is also in.
+  // A question can sit in several papers at once. One unfinished paper
+  // withholds it however many finished ones it is also in.
   "ended contest + live contest": false,
+  "ended contest + unpublished mock": false,
   "published mock + unpublished mock": false,
 };
+const ALLOWED_COUNT = Object.values(EXPECTED).filter(Boolean).length;
 
 let server: Server;
 let baseUrl: string;
@@ -57,60 +68,63 @@ const ids = new Map<string, string>();
 const contestIds: string[] = [];
 const mockIds: string[] = [];
 
-interface PracticeQuestion {
+interface Problem {
   id: string;
-  text: string;
-  correctOption: string;
+  title: string;
   subject: string;
   topic: string | null;
   difficulty: string;
-  solution: string | null;
-  bookmarked: boolean;
-  language: string;
+  hasSolution: boolean;
   translated: boolean;
+  bookmarked: boolean;
+  source: { type: string; id: string; title: string } | null;
 }
-interface PracticePage {
+interface ProblemPage {
   total: number;
-  nextCursor: string | null;
-  questions: PracticeQuestion[];
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  problems: Problem[];
 }
 
 async function get(path: string, opts: { auth?: boolean } = {}) {
   const res = await fetch(`${baseUrl}${path}`, {
     headers: opts.auth === false ? {} : { Authorization: `Bearer ${token}` },
   });
-  return { status: res.status, body: await res.json() as any };
+  const text = await res.text();
+  return { status: res.status, text, body: text ? JSON.parse(text) as any : null };
 }
 
 /**
- * Every question the endpoint will serve for a filter, followed to the end.
- * The bank holds far more than one page, and "never served" is only a claim
- * worth making about the whole run.
+ * Every problem the list will serve for a filter, followed to the last page.
+ * The archive holds far more than one page, and "never served" is only a
+ * claim worth making about the whole of it.
  */
-async function fetchAll(query: string): Promise<PracticeQuestion[]> {
-  const all: PracticeQuestion[] = [];
-  let cursor: string | null = null;
-  // The bank is a few hundred questions; anything beyond this many pages of
-  // 20 means the cursor stopped advancing.
-  for (let page = 0; page < 200; page++) {
-    const res = await get(`${query}&limit=20${cursor ? `&cursor=${cursor}` : ""}`);
-    assert.equal(res.status, 200, `page ${page}: ${JSON.stringify(res.body)}`);
-    const body = res.body as PracticePage;
-    all.push(...body.questions);
-    if (!body.nextCursor) return all;
-    cursor = body.nextCursor;
+async function listAll(query: string): Promise<{ problems: Problem[]; raw: string }> {
+  const problems: Problem[] = [];
+  const raw: string[] = [];
+  let page = 1;
+  for (;;) {
+    const res = await get(`${query}&limit=100&page=${page}`);
+    assert.equal(res.status, 200, `page ${page}: ${res.text}`);
+    const body = res.body as ProblemPage;
+    problems.push(...body.problems);
+    raw.push(res.text);
+    if (page >= body.pageCount) return { problems, raw: raw.join("") };
+    page++;
+    assert.ok(page < 200, "pagination did not terminate");
   }
-  throw new Error("pagination did not terminate");
 }
 
 async function makeQuestion(key: string) {
   const q = await prisma.question.create({
     data: {
       text: `${MARKER} — ${key}`,
-      optionA: "A", optionB: "B", optionC: "C", optionD: "D",
+      optionA: `${MARKER} choice A`, optionB: `${MARKER} choice B`,
+      optionC: `${MARKER} choice C`, optionD: `${MARKER} choice D`,
       correctOption: "C",
       subject: SUBJECT, topic: TOPIC, difficulty: DIFFICULTY,
-      solution: "Because.",
+      solution: SOLUTION,
     },
     select: { id: true },
   });
@@ -118,7 +132,7 @@ async function makeQuestion(key: string) {
   return q.id;
 }
 
-async function makeContest(status: "SCHEDULED" | "LIVE" | "ENDED", questionIds: string[]) {
+async function makeContest(status: "SCHEDULED" | "LIVE" | "ENDED", keys: string[]) {
   const contest = await prisma.contest.create({
     data: {
       title: `${MARKER} ${status.toLowerCase()} contest`,
@@ -130,11 +144,12 @@ async function makeContest(status: "SCHEDULED" | "LIVE" | "ENDED", questionIds: 
   });
   contestIds.push(contest.id);
   await prisma.contestQuestion.createMany({
-    data: questionIds.map((questionId, i) => ({ contestId: contest.id, questionId, displayOrder: i + 1 })),
+    data: keys.map((key, i) => ({ contestId: contest.id, questionId: ids.get(key)!, displayOrder: i + 1 })),
   });
+  return contest.id;
 }
 
-async function makeMock(isPublished: boolean, questionIds: string[]) {
+async function makeMock(isPublished: boolean, keys: string[]) {
   const mock = await prisma.mockTest.create({
     data: {
       title: `${MARKER} ${isPublished ? "published" : "draft"} mock`,
@@ -146,13 +161,15 @@ async function makeMock(isPublished: boolean, questionIds: string[]) {
   });
   mockIds.push(mock.id);
   await prisma.mockTestQuestion.createMany({
-    data: questionIds.map((questionId, i) => ({ mockTestId: mock.id, questionId, displayOrder: i + 1 })),
+    data: keys.map((key, i) => ({ mockTestId: mock.id, questionId: ids.get(key)!, displayOrder: i + 1 })),
   });
+  return mock.id;
 }
 
-describe("GET /practice/questions", () => {
+describe("practice problemset", () => {
   /** The topic's count before any fixture existed, read back from /filters. */
   let baselineTopicCount = 0;
+  let endedContestId = "";
 
   before(async () => {
     assert.ok(process.env.DATABASE_URL, "DATABASE_URL must be set (backend/.env)");
@@ -179,11 +196,24 @@ describe("GET /practice/questions", () => {
 
     for (const key of Object.keys(EXPECTED)) await makeQuestion(key);
 
-    await makeContest("ENDED", [ids.get("ended contest")!, ids.get("ended contest + live contest")!]);
-    await makeContest("LIVE", [ids.get("live contest")!, ids.get("ended contest + live contest")!]);
-    await makeContest("SCHEDULED", [ids.get("scheduled contest")!]);
-    await makeMock(true, [ids.get("published mock")!, ids.get("published mock + unpublished mock")!]);
-    await makeMock(false, [ids.get("unpublished mock")!, ids.get("published mock + unpublished mock")!]);
+    endedContestId = await makeContest("ENDED", [
+      "ended contest",
+      "ended contest + published mock",
+      "ended contest + live contest",
+      "ended contest + unpublished mock",
+    ]);
+    await makeContest("LIVE", ["live contest", "ended contest + live contest"]);
+    await makeContest("SCHEDULED", ["scheduled contest"]);
+    await makeMock(true, [
+      "published mock",
+      "ended contest + published mock",
+      "published mock + unpublished mock",
+    ]);
+    await makeMock(false, [
+      "unpublished mock",
+      "ended contest + unpublished mock",
+      "published mock + unpublished mock",
+    ]);
   });
 
   after(async () => {
@@ -194,86 +224,133 @@ describe("GET /practice/questions", () => {
     }
     if (contestIds.length) await prisma.contest.deleteMany({ where: { id: { in: contestIds } } });
     if (mockIds.length) await prisma.mockTest.deleteMany({ where: { id: { in: mockIds } } });
-    // Translations cascade with their question.
+    // Translations and bookmarks cascade with their question.
     if (questionIds.length) await prisma.question.deleteMany({ where: { id: { in: questionIds } } });
     if (userId) await prisma.user.deleteMany({ where: { id: userId } });
     server?.close();
     await prisma.$disconnect();
   });
 
-  it("serves questions no unfinished paper depends on, and withholds the rest", async () => {
-    const served = await fetchAll(`/practice/questions?subject=${SUBJECT}&topic=${encodeURIComponent(TOPIC)}&difficulty=${DIFFICULTY}`);
-    const servedIds = new Set(served.map((q) => q.id));
+  it("lists problems released by a finished paper, and withholds the rest", async () => {
+    const { problems } = await listAll(
+      `/practice/problems?subject=${SUBJECT}&topic=${encodeURIComponent(TOPIC)}&difficulty=${DIFFICULTY}`
+    );
+    const listed = new Set(problems.map((p) => p.id));
 
     for (const [key, allowed] of Object.entries(EXPECTED)) {
       assert.equal(
-        servedIds.has(ids.get(key)!),
+        listed.has(ids.get(key)!),
         allowed,
         allowed
-          ? `"${key}" should be practisable but was withheld`
-          : `"${key}" was served — its answer key leaked out of an unfinished paper`
+          ? `"${key}" should be in the archive but was withheld`
+          : `"${key}" was listed — it is not released by a finished paper`
       );
     }
   });
 
   it("withholds them on an unfiltered browse too, not just this topic", async () => {
     // The filters narrow the result set; they are not what makes it safe. An
-    // unfiltered run is the same claim over the whole bank.
-    const served = await fetchAll("/practice/questions?");
-    const servedIds = new Set(served.map((q) => q.id));
+    // unfiltered run is the same claim over the whole archive.
+    const { problems } = await listAll("/practice/problems?");
+    const listed = new Set(problems.map((p) => p.id));
     for (const [key, allowed] of Object.entries(EXPECTED)) {
-      if (!allowed) {
-        assert.ok(!servedIds.has(ids.get(key)!), `"${key}" was served by an unfiltered browse`);
+      if (!allowed) assert.ok(!listed.has(ids.get(key)!), `"${key}" was listed by an unfiltered browse`);
+    }
+  });
+
+  it("opens a released problem and 404s every withheld one", async () => {
+    // The list is a view, not a gate. An id reaches this endpoint directly.
+    for (const [key, allowed] of Object.entries(EXPECTED)) {
+      const res = await get(`/practice/problems/${ids.get(key)}`);
+      assert.equal(
+        res.status,
+        allowed ? 200 : 404,
+        `"${key}" opened with ${res.status}: ${res.text.slice(0, 200)}`
+      );
+      if (allowed) {
+        assert.equal(res.body.correctOption, "C");
+        assert.equal(res.body.solution, SOLUTION);
       }
     }
   });
 
+  it("keeps the answer key out of the list", async () => {
+    // A row is a label and a tag or two. Everything that would let the list
+    // be scraped for an answer key lives behind the detail endpoint.
+    const { problems, raw } = await listAll(
+      `/practice/problems?subject=${SUBJECT}&topic=${encodeURIComponent(TOPIC)}&difficulty=${DIFFICULTY}`
+    );
+    assert.ok(!raw.includes("correctOption"), "the list is carrying correctOption");
+    assert.ok(!raw.includes("choice C"), "the list is carrying the option text");
+    assert.ok(!raw.includes(SOLUTION), "the list is carrying the solution");
+
+    const one = problems.find((p) => p.id === ids.get("ended contest"));
+    assert.ok(one, "the released fixture should be listed");
+    // What a row does say: enough to choose what to open.
+    assert.match(one!.title, /ended contest/);
+    assert.equal(one!.hasSolution, true);
+    assert.equal(one!.difficulty, DIFFICULTY);
+    assert.equal(one!.bookmarked, false);
+  });
+
+  it("names the paper each problem came from", async () => {
+    const { problems } = await listAll(`/practice/problems?source=contest:${endedContestId}`);
+    const listed = new Set(problems.map((p) => p.id));
+    // The ended contest holds four fixtures; two of them are also in an
+    // unfinished paper and stay out even when their contest is named.
+    assert.ok(listed.has(ids.get("ended contest")!));
+    assert.ok(listed.has(ids.get("ended contest + published mock")!));
+    assert.ok(!listed.has(ids.get("ended contest + live contest")!));
+    assert.ok(!listed.has(ids.get("ended contest + unpublished mock")!));
+
+    const one = problems.find((p) => p.id === ids.get("ended contest"));
+    assert.equal(one!.source?.type, "CONTEST");
+    assert.equal(one!.source?.id, endedContestId);
+    assert.match(one!.source!.title, /ended contest/);
+
+    // Released only by a mock: the mock is what the row names.
+    const { problems: all } = await listAll(`/practice/problems?topic=${encodeURIComponent(TOPIC)}`);
+    const mockOnly = all.find((p) => p.id === ids.get("published mock"));
+    assert.equal(mockOnly!.source?.type, "MOCK");
+  });
+
   it("does not count withheld questions in the filter list", async () => {
-    // Three of the eight fixtures are practisable; a count that moved by more
-    // than that is advertising questions the browse will never hand over.
+    // A count that moved by more than the released fixtures is advertising
+    // problems the list will never hand over.
     const filters = await get("/practice/filters");
     const count = filters.body.subjects
       .find((s: any) => s.subject === SUBJECT)?.topics
       .find((t: any) => t.topic === TOPIC)?.count ?? 0;
-    assert.equal(count - baselineTopicCount, 3);
-  });
+    assert.equal(count - baselineTopicCount, ALLOWED_COUNT);
 
-  it("hands over the answer and the solution", async () => {
-    // The point of the mode: you attempt one question and find out at once.
-    const res = await get(`/practice/questions?subject=${SUBJECT}&topic=${encodeURIComponent(TOPIC)}&difficulty=${DIFFICULTY}&limit=20`);
-    const free = (res.body as PracticePage).questions.find((q) => q.id === ids.get("no test at all"));
-    // The fixture may be on a later page; ask for it directly if so.
-    const q = free ?? (await fetchAll(`/practice/questions?subject=${SUBJECT}&topic=${encodeURIComponent(TOPIC)}&difficulty=${DIFFICULTY}`))
-      .find((c) => c.id === ids.get("no test at all"));
-    assert.ok(q, "the free fixture should be practisable");
-    assert.equal(q!.correctOption, "C");
-    assert.equal(q!.solution, "Because.");
-    assert.equal(q!.bookmarked, false);
+    // And a live contest is not offered as somewhere to browse.
+    const offered = filters.body.sources.contests.map((c: any) => c.title);
+    assert.ok(offered.some((t: string) => t.includes(`${MARKER} ended`)), "the finished contest should be offered");
+    assert.ok(!offered.some((t: string) => t.includes(`${MARKER} live`)), "a live contest was offered as a source");
+    assert.ok(!offered.some((t: string) => t.includes(`${MARKER} scheduled`)), "a scheduled contest was offered");
   });
 
   it("writes nothing down", async () => {
     // "Practice never affects ratings or leaderboards" is held up by there
     // being no record of a practice attempt at all — nothing a rating or a
     // leaderboard could be computed from.
-    const before = await Promise.all([
+    const counts = () => Promise.all([
       prisma.participation.count({ where: { userId } }),
       prisma.mockAttempt.count({ where: { userId } }),
       prisma.ratingHistory.count({ where: { userId } }),
     ]);
-    await fetchAll(`/practice/questions?subject=${SUBJECT}`);
-    const after = await Promise.all([
-      prisma.participation.count({ where: { userId } }),
-      prisma.mockAttempt.count({ where: { userId } }),
-      prisma.ratingHistory.count({ where: { userId } }),
-    ]);
+    const before = await counts();
+    await listAll(`/practice/problems?subject=${SUBJECT}`);
+    await get(`/practice/problems/${ids.get("ended contest")}`);
+    const after = await counts();
     assert.deepEqual(after, before);
     assert.deepEqual(after, [0, 0, 0]);
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { rating: true } });
     assert.equal(user!.rating, 1500);
   });
 
-  it("serves the question in the language asked for, falling back to English", async () => {
-    const id = ids.get("no test at all")!;
+  it("serves a problem in the language asked for, falling back to English", async () => {
+    const id = ids.get("ended contest")!;
     await prisma.questionTranslation.create({
       data: {
         questionId: id, language: "HI",
@@ -282,39 +359,71 @@ describe("GET /practice/questions", () => {
       },
     });
 
-    const hindi = (await fetchAll(`/practice/questions?subject=${SUBJECT}&topic=${encodeURIComponent(TOPIC)}&difficulty=${DIFFICULTY}&language=HI`))
-      .find((q) => q.id === id);
-    assert.ok(hindi);
-    assert.equal(hindi!.language, "HI");
-    assert.equal(hindi!.translated, true);
-    assert.match(hindi!.text, /हिंदी/);
+    const detail = await get(`/practice/problems/${id}?language=HI`);
+    assert.equal(detail.body.language, "HI");
+    assert.equal(detail.body.translated, true);
+    assert.match(detail.body.text, /हिंदी/);
+    assert.equal(detail.body.optionC, "ग");
+    // The answer key is not a translated field — a Hindi reader and an
+    // English one are answering the same question.
+    assert.equal(detail.body.correctOption, "C");
 
-    // An untranslated question in the same run reads in English and says so,
-    // rather than coming back blank.
-    const untranslated = (await fetchAll(`/practice/questions?subject=${SUBJECT}&topic=${encodeURIComponent(TOPIC)}&difficulty=${DIFFICULTY}&language=HI`))
-      .find((q) => q.id === ids.get("published mock"));
-    assert.ok(untranslated);
+    // The list is labelled in the same language.
+    const { problems } = await listAll(`/practice/problems?topic=${encodeURIComponent(TOPIC)}&language=HI`);
+    assert.match(problems.find((p) => p.id === id)!.title, /हिंदी/);
+
+    // An untranslated problem reads in English and says so, rather than
+    // coming back blank.
+    const untranslated = problems.find((p) => p.id === ids.get("published mock"));
     assert.equal(untranslated!.translated, false);
-    assert.match(untranslated!.text, /published mock/);
+    assert.match(untranslated!.title, /published mock/);
   });
 
-  it("pages through a filter without repeating or skipping", async () => {
-    const all = await fetchAll(`/practice/questions?subject=${SUBJECT}`);
-    assert.equal(new Set(all.map((q) => q.id)).size, all.length, "a question came back on two pages");
-    const first = await get(`/practice/questions?subject=${SUBJECT}&limit=20`);
-    assert.equal((first.body as PracticePage).total, all.length, "`total` disagrees with what paging returns");
+  it("pages without repeating or skipping a problem", async () => {
+    const { problems } = await listAll(`/practice/problems?subject=${SUBJECT}`);
+    assert.equal(new Set(problems.map((p) => p.id)).size, problems.length, "a problem came back on two pages");
+
+    const first = await get(`/practice/problems?subject=${SUBJECT}&limit=5&page=1`);
+    const body = first.body as ProblemPage;
+    assert.equal(body.total, problems.length, "`total` disagrees with what paging returns");
+    assert.equal(body.pageCount, Math.max(Math.ceil(problems.length / 5), 1));
+    assert.deepEqual(body.problems.map((p) => p.id), problems.slice(0, 5).map((p) => p.id));
+
+    const second = await get(`/practice/problems?subject=${SUBJECT}&limit=5&page=2`);
+    assert.deepEqual((second.body as ProblemPage).problems.map((p) => p.id), problems.slice(5, 10).map((p) => p.id));
+
+    // Past the end is an empty page, not an error.
+    const beyond = await get(`/practice/problems?subject=${SUBJECT}&limit=5&page=9999`);
+    assert.equal(beyond.status, 200);
+    assert.equal((beyond.body as ProblemPage).problems.length, 0);
+  });
+
+  it("finds a problem by its text", async () => {
+    // A fixture whose name is nobody else's prefix: `contains` is a
+    // substring match, so "— ended contest" would also find the two
+    // fixtures whose names start that way.
+    const needle = `${MARKER} — ended contest + published mock`;
+    const res = await get(`/practice/problems?q=${encodeURIComponent(needle)}`);
+    const found = (res.body as ProblemPage).problems;
+    assert.equal(found.length, 1);
+    assert.equal(found[0].id, ids.get("ended contest + published mock"));
+
+    // Search does not reach past the archive rule either.
+    const withheld = await get(`/practice/problems?q=${encodeURIComponent(`${MARKER} — live contest`)}`);
+    assert.equal((withheld.body as ProblemPage).total, 0);
   });
 
   it("rejects filters that are not in the syllabus", async () => {
-    assert.equal((await get("/practice/questions?subject=HISTORY")).status, 400);
-    assert.equal((await get("/practice/questions?difficulty=IMPOSSIBLE")).status, 400);
-    assert.equal((await get("/practice/questions?topic=Percentages")).status, 400);
+    assert.equal((await get("/practice/problems?subject=HISTORY")).status, 400);
+    assert.equal((await get("/practice/problems?difficulty=IMPOSSIBLE")).status, 400);
+    assert.equal((await get("/practice/problems?topic=Percentages")).status, 400);
     // A real topic, but not one this subject has.
-    assert.equal((await get("/practice/questions?subject=GK&topic=Percentage")).status, 400);
+    assert.equal((await get("/practice/problems?subject=GK&topic=Percentage")).status, 400);
   });
 
   it("is closed to callers without a token", async () => {
-    assert.equal((await get("/practice/questions", { auth: false })).status, 401);
+    assert.equal((await get("/practice/problems", { auth: false })).status, 401);
     assert.equal((await get("/practice/filters", { auth: false })).status, 401);
+    assert.equal((await get(`/practice/problems/${ids.get("ended contest")}`, { auth: false })).status, 401);
   });
 });

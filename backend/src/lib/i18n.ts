@@ -39,6 +39,17 @@ export function translationSelect(language: Language) {
       } as const);
 }
 
+/**
+ * The same, for a list that only labels each question: one column, not the
+ * whole card. A problemset page reads fifty rows at a time and shows none of
+ * the options, so fetching them — and the solution — would be pure weight.
+ */
+export function titleTranslationSelect(language: Language) {
+  return language === DEFAULT_LANGUAGE
+    ? undefined
+    : ({ where: { language }, select: { text: true }, take: 1 } as const);
+}
+
 export function passageTranslationSelect(language: Language) {
   return language === DEFAULT_LANGUAGE
     ? undefined
