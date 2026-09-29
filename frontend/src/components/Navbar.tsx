@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { path: '/', label: 'Home', guest: true },
   { path: '/contests', label: 'Contests', guest: true },
   { path: '/mocks', label: 'Mock Tests' },
+  { path: '/practice', label: 'Practice' },
   { path: '/leaderboard', label: 'Leaderboard', guest: true },
   { path: '/community', label: 'Community', guest: true },
   { path: '/bookmarks', label: 'Bookmarks' },

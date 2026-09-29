@@ -13,6 +13,7 @@ import Result from './pages/Result'
 import MockTests from './pages/MockTests'
 import MockRoom from './pages/MockRoom'
 import MockResult from './pages/MockResult'
+import Practice from './pages/Practice'
 import Bookmarks from './pages/Bookmarks'
 import Profile from './pages/Profile'
 import PublicProfile from './pages/PublicProfile'
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/mocks" element={<PrivateRoute><MockTests /></PrivateRoute>} />
         <Route path="/mocks/:id" element={<PrivateRoute><MockRoom /></PrivateRoute>} />
         <Route path="/mocks/:id/result" element={<PrivateRoute><MockResult /></PrivateRoute>} />
+        <Route path="/practice" element={<PrivateRoute><Practice /></PrivateRoute>} />
         <Route path="/bookmarks" element={<PrivateRoute><Bookmarks /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/profile/:id" element={<PrivateRoute><PublicProfile /></PrivateRoute>} />

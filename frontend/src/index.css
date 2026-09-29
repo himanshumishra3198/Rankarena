@@ -1340,6 +1340,63 @@ select.input { cursor: pointer; }
   max-width: 100%; max-height: 260px; border-radius: 6px; border: 1px solid var(--border); vertical-align: middle; margin: 2px 0;
 }
 
+/* ── Free practice (browse the bank, one question at a time) ─────── */
+.prac-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.prac-title { font-size: 26px; margin: 0 0 6px; }
+.prac-sub { color: var(--text-muted); font-size: 14px; line-height: 1.55; max-width: 60ch; margin: 0; }
+
+.prac-filters { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+/* Label in a fixed column so the three rows of controls line up. */
+.prac-filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.prac-filter-label {
+  min-width: 74px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--text-muted);
+}
+.prac-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.prac-chips .mock-section-tab { margin: 0; }
+.prac-filter-hint { font-size: 13px; color: var(--text-muted); margin: 0; }
+.prac-select {
+  flex: 1; min-width: 240px; max-width: 420px; padding: 8px 10px; font: inherit; font-size: 14px;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+}
+
+.prac-tally {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 13px; color: var(--text-muted); margin-bottom: 14px;
+}
+.prac-tally strong { color: var(--heading); font-size: 15px; }
+.prac-tally-sep { opacity: .5; }
+
+.prac-status { text-align: center; color: var(--text-muted); font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.prac-empty-icon { font-size: 30px; }
+.prac-empty-title { font-size: 16px; font-weight: 700; color: var(--heading); margin: 0; }
+
+.prac-progress-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+.prac-position { font-size: 13px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.prac-progress { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 14px; }
+.prac-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #7c3aed); transition: width .3s ease; }
+
+.prac-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.prac-card-tags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prac-subject { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.prac-topic { font-size: 12px; color: var(--text-muted); }
+.prac-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.prac-nav { display: flex; gap: 8px; margin-left: auto; }
+
+@media (max-width: 560px) {
+  .prac-filter-label { min-width: 0; }
+  .prac-filter-row { gap: 8px; }
+  .prac-select { max-width: none; min-width: 0; width: 100%; }
+  /* Thumb reach: the two buttons that actually move you through the bank get
+     the full width, and the report link sits above them. */
+  .prac-card-foot { flex-direction: column-reverse; align-items: stretch; }
+  .prac-nav { margin-left: 0; }
+  .prac-nav .btn { flex: 1; }
+  /* Reporting is a rare aside — it shouldn't stretch into a third button
+     the same size as the two that move you through the bank. */
+  .prac-card-foot > .btn { align-self: flex-start; }
+}
+
 /* ── Mock room UI polish ───────────────────────────────────── */
 .mock-progress { height: 4px; background: var(--border); }
 .mock-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #7c3aed); transition: width .3s ease; }

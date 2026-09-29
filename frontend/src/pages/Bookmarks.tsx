@@ -47,12 +47,12 @@ export default function Bookmarks() {
       <div className="page" style={{ maxWidth: 900 }}>
         <h1 style={{ marginBottom: 6 }}>⭐ Bookmarked Questions</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
-          Questions you saved across mocks — revise them anytime.
+          Questions you saved while practising or reviewing — revise them anytime.
         </p>
 
         {items === null && <p style={{ color: 'var(--text-muted)' }}>Loading…</p>}
         {items && items.length === 0 && (
-          <div className="card"><p className="empty">No bookmarks yet. Tap the ☆ on any question in a mock result to save it here.</p></div>
+          <div className="card"><p className="empty">No bookmarks yet. Tap the ☆ on any question — in a mock result, or while practising — to save it here.</p></div>
         )}
 
         {items && items.length > 0 && (

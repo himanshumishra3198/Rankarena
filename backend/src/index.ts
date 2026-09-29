@@ -92,6 +92,20 @@ const communityWriteLimiter = rateLimit({
   message: { error: "You're posting too fast, please slow down." },
 });
 
+// Free practice is three queries a page — a count, a page of questions and a
+// bookmark lookup — and an account can page through the whole open bank. This
+// is a load guard, not an anti-scraping measure: the bank being readable is
+// the feature, and the answer keys it hands out are only ever for questions
+// no live contest or unpublished mock depends on. What it stops is one client
+// hammering the endpoint faster than any human reading a question could.
+const practiceLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 150,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Slow down a moment — too many practice requests." },
+});
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/auth", authLimiter, authRoutes);
@@ -105,7 +119,7 @@ app.use("/profile", profileRoutes);
 app.use("/follows", followRoutes);
 app.use("/reports", reportRoutes);
 app.use("/bookmarks", bookmarkRoutes);
-app.use("/practice", practiceRoutes);
+app.use("/practice", practiceLimiter, practiceRoutes);
 app.use("/stats", statsRoutes);
 app.use("/community", communityWriteLimiter, communityRoutes);
 app.use("/notifications", notificationRoutes);
