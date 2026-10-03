@@ -68,13 +68,21 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const mock = await prisma.mockTest.findUnique({ where: { id } });
 
-  // The attempt records the language when the paper is started. Until then
-  // (the instructions screen) fall back to whatever the client asks for.
-  const existing = await prisma.mockAttempt.findUnique({
-    where: { userId_mockTestId: { userId: req.user!.id, mockTestId: id } },
-    select: { language: true, submittedAt: true },
-  });
-  const language = existing?.language ?? parseLanguage(req.query.language);
+  // The paper is served in whatever language is asked for, every time.
+  //
+  // This used to prefer the language on the caller's MockAttempt row, on the
+  // theory that the row records the language the paper was started in. It
+  // does not. A mock has no server-side state until it is submitted, so that
+  // row exists only once the test has been *finished* at least once — which
+  // made every retake permanently pinned to the language of the previous
+  // submission. The picker would change, the paper would not.
+  //
+  // Contests are the other way round and keep their pinning: a Participation
+  // is created on join, before the paper is sat, so there the row really does
+  // hold the language in progress and POST /contests/:id/language moves it.
+  // The mock attempt's language is for the review, which GET /:id/result
+  // reads for itself.
+  const language = parseLanguage(req.query.language);
   if (!mock || !mock.isPublished) {
     res.status(404).json({ error: "Mock test not found" });
     return;
