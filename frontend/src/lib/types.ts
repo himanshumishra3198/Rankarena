@@ -36,6 +36,8 @@ export interface Contest {
   _count?: { participations: number }
 }
 
+export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD'
+
 export interface MockTestListItem {
   id: string
   title: string
@@ -43,9 +45,19 @@ export interface MockTestListItem {
   durationMinutes: number
   negativeMarks: number
   questionCount: number
+  /** Derived from the questions on the paper, not stored on the test. */
+  difficulty: Difficulty | null
+  difficultyMix: Record<Difficulty, number>
+  /** How many people have sat it, admin test runs excluded. */
+  attemptCount: number
   attempted: boolean
+  /** "Last", not "best": a retake overwrites the previous attempt row. */
   lastScore: number | null
   lastTotal: number | null
+  lastSubmittedAt?: string | null
+  accuracy?: number | null
+  rank?: number | null
+  rankOutOf?: number | null
 }
 
 export interface MockTestData {

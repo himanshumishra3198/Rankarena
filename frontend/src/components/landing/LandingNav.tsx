@@ -21,8 +21,15 @@ const LINKS = [
   { label: 'Roadmap', to: '#roadmap', hash: true },
 ]
 
-export default function LandingNav() {
+export default function LandingNav({ active }: { active?: string } = {}) {
   const navigate = useNavigate()
+  // The nav is shared with pages behind the login now, so the right-hand
+  // side has to know who is looking: a signed-in user does not need to be
+  // offered a sign-up button on a page they are already using.
+  const signedIn = Boolean(localStorage.getItem('token'))
+  const user = (() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}') } catch { return {} }
+  })()
   const scrolled = useScrolled(14)
   const [open, setOpen] = useState(false)
 
@@ -53,13 +60,30 @@ export default function LandingNav() {
 
         <nav className="lp-nav-links" aria-label="Primary">
           {LINKS.map(l => (
-            <button key={l.label} className="lp-nav-link" onClick={() => go(l)}>{l.label}</button>
+            <button
+              key={l.label}
+              className={`lp-nav-link ${active === l.label ? 'is-active' : ''}`}
+              aria-current={active === l.label ? 'page' : undefined}
+              onClick={() => go(l)}
+            >
+              {l.label}
+            </button>
           ))}
         </nav>
 
         <div className="lp-nav-actions">
-          <Link to="/login" className="lp-nav-login">Login</Link>
-          <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm">Sign Up</Link>
+          {signedIn ? (
+            <Link to="/profile" className="lp-nav-user">
+              <span className="lp-nav-avatar">{(user.name || '?')[0].toUpperCase()}</span>
+              <span className="lp-nav-name">{user.name}</span>
+              {typeof user.rating === 'number' && <span className="lp-nav-rating">{user.rating}</span>}
+            </Link>
+          ) : (
+            <>
+              <Link to="/login" className="lp-nav-login">Login</Link>
+              <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm">Sign Up</Link>
+            </>
+          )}
         </div>
 
         <button
@@ -77,13 +101,25 @@ export default function LandingNav() {
           <div className="lp-drawer-scrim" onClick={() => setOpen(false)} />
           <div className="lp-drawer">
             {LINKS.map(l => (
-              <button key={l.label} className="lp-drawer-link" onClick={() => go(l)}>{l.label}</button>
+              <button
+                key={l.label}
+                className={`lp-drawer-link ${active === l.label ? 'is-active' : ''}`}
+                onClick={() => go(l)}
+              >
+                {l.label}
+              </button>
             ))}
             <div className="lp-drawer-sep" />
-            <Link to="/login" className="lp-drawer-link" onClick={() => setOpen(false)}>Login</Link>
-            <Link to="/register" className="lp-btn lp-btn-primary lp-drawer-cta" onClick={() => setOpen(false)}>
-              Sign Up
-            </Link>
+            {signedIn ? (
+              <Link to="/profile" className="lp-drawer-link" onClick={() => setOpen(false)}>Profile</Link>
+            ) : (
+              <>
+                <Link to="/login" className="lp-drawer-link" onClick={() => setOpen(false)}>Login</Link>
+                <Link to="/register" className="lp-btn lp-btn-primary lp-drawer-cta" onClick={() => setOpen(false)}>
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </>
       )}

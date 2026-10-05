@@ -9,6 +9,51 @@ import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/a
 
 const router = Router();
 
+/**
+ * A mock's difficulty, read off the questions actually on it.
+ *
+ * MockTest has no difficulty column and should not grow one: the paper's
+ * level is a property of its contents, so storing it separately would be a
+ * second source of truth that drifts the moment a question is swapped.
+ * EASY/MEDIUM/HARD weigh 1/2/3 and the mean picks the band.
+ */
+function bandOf(mix: { EASY: number; MEDIUM: number; HARD: number }) {
+  const n = mix.EASY + mix.MEDIUM + mix.HARD;
+  if (n === 0) return null;
+  const mean = (mix.EASY + mix.MEDIUM * 2 + mix.HARD * 3) / n;
+  return mean < 1.67 ? "EASY" : mean < 2.34 ? "MEDIUM" : "HARD";
+}
+
+/** Difficulty mix per published mock, in one pass over the join table. */
+async function difficultyByMock() {
+  const rows = await prisma.mockTestQuestion.findMany({
+    where: { mockTest: { isPublished: true } },
+    select: { mockTestId: true, question: { select: { difficulty: true } } },
+  });
+  const mix = new Map<string, { EASY: number; MEDIUM: number; HARD: number }>();
+  for (const r of rows) {
+    let m = mix.get(r.mockTestId);
+    if (!m) { m = { EASY: 0, MEDIUM: 0, HARD: 0 }; mix.set(r.mockTestId, m); }
+    m[r.question.difficulty] += 1;
+  }
+  return mix;
+}
+
+/**
+ * How many people have sat each mock.
+ *
+ * `isTest` attempts are an admin trying the product and are excluded here
+ * for the same reason they are excluded from every leaderboard.
+ */
+async function attemptCountByMock() {
+  const rows = await prisma.mockAttempt.groupBy({
+    by: ["mockTestId"],
+    where: { submittedAt: { not: null }, isTest: false },
+    _count: { _all: true },
+  });
+  return new Map(rows.map((r) => [r.mockTestId, r._count._all]));
+}
+
 // Public: list published mock tests (metadata only, no per-user attempt data).
 // Lets logged-out visitors browse mocks on the landing page before signing up.
 router.get("/public", async (_req, res: Response) => {
@@ -17,6 +62,8 @@ router.get("/public", async (_req, res: Response) => {
     orderBy: { createdAt: "asc" },
     include: { _count: { select: { mockTestQuestions: true } } },
   });
+  const [mix, attemptCounts] = await Promise.all([difficultyByMock(), attemptCountByMock()]);
+
   res.json(
     mocks.map((m) => ({
       id: m.id,
@@ -25,6 +72,14 @@ router.get("/public", async (_req, res: Response) => {
       durationMinutes: m.durationMinutes,
       negativeMarks: Number(m.negativeMarks),
       questionCount: m._count.mockTestQuestions,
+      difficulty: bandOf(mix.get(m.id) ?? { EASY: 0, MEDIUM: 0, HARD: 0 }),
+      difficultyMix: mix.get(m.id) ?? { EASY: 0, MEDIUM: 0, HARD: 0 },
+      attemptCount: attemptCounts.get(m.id) ?? 0,
+      // A guest has no attempt of their own; the shape stays the same so the
+      // card component does not need to know who is asking.
+      attempted: false,
+      lastScore: null,
+      lastTotal: null,
     }))
   );
 });
@@ -40,14 +95,50 @@ router.get("/", async (req: AuthRequest, res: Response) => {
     include: { _count: { select: { mockTestQuestions: true } } },
   });
 
-  const attempts = await prisma.mockAttempt.findMany({
-    where: { userId: req.user!.id, submittedAt: { not: null } },
-    select: { mockTestId: true, score: true, totalMarks: true },
-  });
+  const [attempts, mix, attemptCounts] = await Promise.all([
+    prisma.mockAttempt.findMany({
+      where: { userId: req.user!.id, submittedAt: { not: null } },
+      select: {
+        mockTestId: true, score: true, totalMarks: true,
+        correctCount: true, wrongCount: true, submittedAt: true,
+      },
+    }),
+    difficultyByMock(),
+    attemptCountByMock(),
+  ]);
   const attemptMap = new Map(attempts.map((a) => [a.mockTestId, a]));
+
+  /**
+   * Where the caller placed on each mock they have sat.
+   *
+   * Only the papers they actually attempted are ranked, so this reads a
+   * handful of rows rather than every attempt on the platform. Rank is
+   * "how many people beat this score, plus one" — ties share a place, which
+   * is how the contest standings behave too.
+   */
+  const ranked = new Map<string, { rank: number; outOf: number }>();
+  const sat = [...attemptMap.keys()];
+  if (sat.length) {
+    const field = await prisma.mockAttempt.findMany({
+      where: { mockTestId: { in: sat }, submittedAt: { not: null }, isTest: false },
+      select: { mockTestId: true, score: true },
+    });
+    const byMock = new Map<string, number[]>();
+    for (const row of field) {
+      byMock.set(row.mockTestId, [...(byMock.get(row.mockTestId) ?? []), Number(row.score)]);
+    }
+    for (const [mockTestId, mine] of attemptMap) {
+      const scores = byMock.get(mockTestId);
+      if (!scores?.length) continue;
+      const better = scores.filter((v) => v > Number(mine.score)).length;
+      ranked.set(mockTestId, { rank: better + 1, outOf: scores.length });
+    }
+  }
 
   const result = mocks.map((m) => {
     const a = attemptMap.get(m.id);
+    const place = ranked.get(m.id);
+    const answered = a ? a.correctCount + a.wrongCount : 0;
     return {
       id: m.id,
       title: m.title,
@@ -55,9 +146,19 @@ router.get("/", async (req: AuthRequest, res: Response) => {
       durationMinutes: m.durationMinutes,
       negativeMarks: Number(m.negativeMarks),
       questionCount: m._count.mockTestQuestions,
+      difficulty: bandOf(mix.get(m.id) ?? { EASY: 0, MEDIUM: 0, HARD: 0 }),
+      difficultyMix: mix.get(m.id) ?? { EASY: 0, MEDIUM: 0, HARD: 0 },
+      attemptCount: attemptCounts.get(m.id) ?? 0,
       attempted: !!a,
+      // Named "last", not "best": the attempt row is upserted on every
+      // submit, so a retake overwrites the previous one and no history of
+      // earlier scores survives to take a maximum of.
       lastScore: a ? Number(a.score) : null,
       lastTotal: a ? Number(a.totalMarks) : null,
+      lastSubmittedAt: a?.submittedAt ?? null,
+      accuracy: answered > 0 ? Math.round((a!.correctCount / answered) * 100) : null,
+      rank: place?.rank ?? null,
+      rankOutOf: place?.outOf ?? null,
     };
   });
   res.json(result);

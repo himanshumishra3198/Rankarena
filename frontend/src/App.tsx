@@ -57,7 +57,10 @@ export default function App() {
         <Route path="/contests" element={<PrivateRoute><ContestList /></PrivateRoute>} />
         <Route path="/contests/:id" element={<PrivateRoute><ContestRoom /></PrivateRoute>} />
         <Route path="/contests/:id/result" element={<PrivateRoute><Result /></PrivateRoute>} />
-        <Route path="/mocks" element={<PrivateRoute><MockTests /></PrivateRoute>} />
+        {/* Open to guests: the catalogue is what convinces somebody to sign
+            up, and /mocks/public serves it without anyone's scores. The room
+            and the result behind it still require an account. */}
+        <Route path="/mocks" element={<MockTests />} />
         <Route path="/mocks/:id" element={<PrivateRoute><MockRoom /></PrivateRoute>} />
         <Route path="/mocks/:id/result" element={<PrivateRoute><MockResult /></PrivateRoute>} />
         <Route path="/practice" element={<PrivateRoute><Practice /></PrivateRoute>} />
