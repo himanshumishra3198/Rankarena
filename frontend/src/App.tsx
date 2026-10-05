@@ -7,6 +7,7 @@ import VerifyEmail from './pages/VerifyEmail'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Home from './pages/Home'
+import Landing from './pages/Landing'
 import ContestList from './pages/ContestList'
 import ContestRoom from './pages/ContestRoom'
 import Result from './pages/Result'
@@ -30,6 +31,10 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return localStorage.getItem('token') ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+function HomeRoute() {
+  return localStorage.getItem('token') ? <Home /> : <Landing />
+}
+
 export default function App() {
   return (
     <ConfirmProvider>
@@ -45,9 +50,10 @@ export default function App() {
         {/* Public and unauthenticated: Google's reviewer has to reach these. */}
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
-        {/* One home page for everyone, Codeforces-style: the same feed and
-            sidebar whether or not you're signed in. */}
-        <Route path="/" element={<Home />} />
+        {/* Visitors get the landing page; signed-in users get their feed.
+            Someone who came back to sit a contest should not be sold the
+            product they already use. */}
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/contests" element={<PrivateRoute><ContestList /></PrivateRoute>} />
         <Route path="/contests/:id" element={<PrivateRoute><ContestRoom /></PrivateRoute>} />
         <Route path="/contests/:id/result" element={<PrivateRoute><Result /></PrivateRoute>} />
