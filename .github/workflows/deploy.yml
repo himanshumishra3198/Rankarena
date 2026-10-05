@@ -3,6 +3,12 @@ name: Build → ECR → Deploy to EC2
 on:
   push:
     branches: [main]
+  # Lets a deploy be re-run from the Actions tab without pushing a commit.
+  # Added after a run was dropped before a runner was ever allocated: the
+  # job sat queued for 15 minutes, GitHub cancelled it, and the only way
+  # back was another push. A dropped run is a GitHub-side event, so the
+  # recovery for it should not require inventing a commit.
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
