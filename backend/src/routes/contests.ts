@@ -33,8 +33,13 @@ router.get("/", async (req, res: Response) => {
 
   const contestSelect = {
     id: true, title: true, startTime: true, durationMinutes: true,
-    negativeMarks: true, status: true,
-    _count: { select: { participations: { where: { isTest: false } } } },
+    negativeMarks: true, status: true, sectionLimits: true,
+    _count: {
+      select: {
+        participations: { where: { isTest: false } },
+        contestQuestions: true,
+      },
+    },
   } as const;
 
   const [active, past] = await Promise.all([
@@ -70,25 +75,54 @@ router.get("/", async (req, res: Response) => {
 
   const allContests = [...effectivelyActive, ...allPast];
 
-  // Fetch which contests the user has joined / submitted in one query
+  // Fetch which contests the user has joined / submitted in one query, plus
+  // how each rated one turned out for them.
   let joinedIds = new Set<string>();
   let submittedIds = new Set<string>();
+  type Outcome = { rank: number; totalParticipants: number; oldRating: number; newRating: number };
+  let outcomes = new Map<string, Outcome>();
   if (userId && allContests.length > 0) {
-    const participations = await prisma.participation.findMany({
-      where: { userId, contestId: { in: allContests.map((c) => c.id) } },
-      select: { contestId: true, submittedAt: true },
-    });
+    const ids = allContests.map((c) => c.id);
+    const [participations, rated] = await Promise.all([
+      prisma.participation.findMany({
+        where: { userId, contestId: { in: ids } },
+        select: { contestId: true, submittedAt: true },
+      }),
+      // The settle step writes one of these per participant per contest, so
+      // it is the record of where somebody placed and what it did to their
+      // rating. Reading it here saves the listing page a request per card.
+      prisma.ratingHistory.findMany({
+        where: { userId, contestId: { in: ids } },
+        select: {
+          contestId: true, rank: true, totalParticipants: true,
+          oldRating: true, newRating: true,
+        },
+      }),
+    ]);
     joinedIds = new Set(participations.map((p) => p.contestId));
     submittedIds = new Set(
       participations.filter((p) => p.submittedAt !== null).map((p) => p.contestId)
     );
+    outcomes = new Map(rated.map((r) => [r.contestId, r]));
   }
 
-  const withJoined = (c: (typeof active)[number]) => ({
-    ...c,
-    hasJoined: joinedIds.has(c.id),
-    hasSubmitted: submittedIds.has(c.id),
-  });
+  const withJoined = (c: (typeof active)[number]) => {
+    const mine = outcomes.get(c.id);
+    const { _count, ...rest } = c;
+    return {
+      ...rest,
+      _count,
+      questionCount: _count.contestQuestions,
+      hasJoined: joinedIds.has(c.id),
+      hasSubmitted: submittedIds.has(c.id),
+      // Null until the contest has settled; a card shows a result only when
+      // there is a real one to show.
+      myRank: mine?.rank ?? null,
+      myTotalParticipants: mine?.totalParticipants ?? null,
+      myOldRating: mine?.oldRating ?? null,
+      myNewRating: mine?.newRating ?? null,
+    };
+  };
 
   res.json({ active: effectivelyActive.map(withJoined), past: allPast.map(withJoined) });
 });

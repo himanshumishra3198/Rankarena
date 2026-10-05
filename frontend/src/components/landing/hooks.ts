@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * Motion helpers shared by the landing sections.
@@ -18,23 +18,30 @@ export function prefersReducedMotion() {
  * Adds `is-in` to an element the first time it scrolls into view, which is
  * what the CSS reveal transitions key off. One-shot: sections do not
  * re-animate when you scroll back up, which reads as jitter.
+ *
+ * A callback ref, not a plain one with a mount effect. Several sections
+ * render nothing until their data arrives (a featured contest, a
+ * recommendation list) — with an effect keyed on `[]` the observer was
+ * attached once while the element did not exist yet and never again once it
+ * did, so the section mounted at opacity 0 and stayed invisible for good.
+ * A callback ref fires whenever the node actually attaches.
  */
 export function useReveal<T extends HTMLElement = HTMLDivElement>() {
-  const ref = useRef<T | null>(null)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    if (prefersReducedMotion()) { el.classList.add('is-in'); return }
-    const io = new IntersectionObserver(
+  const io = useRef<IntersectionObserver | null>(null)
+  useEffect(() => () => io.current?.disconnect(), [])
+
+  return useCallback((node: T | null) => {
+    io.current?.disconnect()
+    if (!node) return
+    if (prefersReducedMotion()) { node.classList.add('is-in'); return }
+    io.current = new IntersectionObserver(
       entries => entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target) }
+        if (e.isIntersecting) { e.target.classList.add('is-in'); io.current?.unobserve(e.target) }
       }),
       { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
     )
-    io.observe(el)
-    return () => io.disconnect()
+    io.current.observe(node)
   }, [])
-  return ref
 }
 
 /**

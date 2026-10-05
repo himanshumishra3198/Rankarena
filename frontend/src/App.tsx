@@ -54,7 +54,9 @@ export default function App() {
             Someone who came back to sit a contest should not be sold the
             product they already use. */}
         <Route path="/" element={<HomeRoute />} />
-        <Route path="/contests" element={<PrivateRoute><ContestList /></PrivateRoute>} />
+        {/* Open to guests, like /mocks: GET /contests already answers
+            without a token and withholds the caller's own results. */}
+        <Route path="/contests" element={<ContestList />} />
         <Route path="/contests/:id" element={<PrivateRoute><ContestRoom /></PrivateRoute>} />
         <Route path="/contests/:id/result" element={<PrivateRoute><Result /></PrivateRoute>} />
         {/* Open to guests: the catalogue is what convinces somebody to sign

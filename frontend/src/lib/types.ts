@@ -33,7 +33,25 @@ export interface Contest {
   status: 'SCHEDULED' | 'LIVE' | 'ENDED'
   hasJoined?: boolean
   hasSubmitted?: boolean
-  _count?: { participations: number }
+  /** Questions actually attached to the paper. */
+  questionCount?: number
+  _count?: { participations: number; contestQuestions?: number }
+  /** The caller's own outcome. Null until the contest has settled. */
+  myRank?: number | null
+  myTotalParticipants?: number | null
+  myOldRating?: number | null
+  myNewRating?: number | null
+}
+
+/** Where a contest is in its lifecycle, by the clock rather than the column. */
+export type ContestPhase = 'upcoming' | 'live' | 'past'
+
+export function contestPhase(c: Contest, now = Date.now()): ContestPhase {
+  const start = new Date(c.startTime).getTime()
+  const end = start + c.durationMinutes * 60_000
+  if (now >= end) return 'past'
+  if (now >= start) return 'live'
+  return 'upcoming'
 }
 
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD'
