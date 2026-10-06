@@ -7,6 +7,7 @@ import redis from "../lib/redis";
 import { computeFingerprint } from "../lib/fingerprint";
 import { isValidTopic } from "../lib/topics";
 import { computeContestRatings } from "../lib/settleContest";
+import { findFlaggedQuestions } from "../lib/flaggedQuestions";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -393,6 +394,50 @@ router.get("/questions/similar", async (req: AuthRequest, res: Response) => {
   res.json(rows.map((r) => ({ ...r, score: Math.round(Number(r.score) * 100) })));
 });
 
+// Likely mis-keyed questions: at least ?minAttempts people chose an option,
+// and a wrong option was chosen more often than the key. Sorted by how many
+// chose that wrong option, highest share first. See lib/flaggedQuestions.ts
+// for exactly which attempts count.
+router.get("/questions/flagged", async (req: AuthRequest, res: Response) => {
+  const minAttempts = req.query.minAttempts === undefined ? 20 : Number(req.query.minAttempts);
+  if (!Number.isInteger(minAttempts) || minAttempts < 1 || minAttempts > 100_000) {
+    res.status(400).json({ error: "minAttempts must be a whole number of at least 1." });
+    return;
+  }
+  res.json({ minAttempts, questions: await findFlaggedQuestions(minAttempts) });
+});
+
+// Mark a flagged question safe: an admin looked at it and the key is right.
+// Recorded with who and when, and cleared by any later change to the
+// question's text, options or key (see PUT /questions/:id).
+router.post("/questions/:id/safe", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  // The mark names the admin, so the token's user must still exist. A token
+  // outlives a local database reset; without this the insert fails on the
+  // foreign key and the admin sees a bare 500.
+  const admin = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { id: true } });
+  if (!admin) {
+    res.status(401).json({ error: "Your session has expired. Please log out and log in again." });
+    return;
+  }
+  const result = await prisma.question.updateMany({
+    where: { id },
+    data: { markedSafeAt: new Date(), markedSafeById: req.user!.id },
+  });
+  if (result.count === 0) { res.status(404).json({ error: "Question not found" }); return; }
+  res.json({ ok: true });
+});
+
+router.delete("/questions/:id/safe", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const result = await prisma.question.updateMany({
+    where: { id },
+    data: { markedSafeAt: null, markedSafeById: null },
+  });
+  if (result.count === 0) { res.status(404).json({ error: "Question not found" }); return; }
+  res.json({ ok: true });
+});
+
 // Question bank listing: filters, free-text search, optional pagination.
 //
 // Paging is opt-in via ?page — without it the whole filtered set comes back,
@@ -419,6 +464,8 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
     : {};
 
   const where = {
+    // One question by id, so another page can link straight to its editor.
+    ...(typeof req.query.id === "string" ? { id: req.query.id } : {}),
     ...(subject ? { subject: subject as any } : {}),
     ...(difficulty ? { difficulty: difficulty as any } : {}),
     // "__none" filters to questions nobody has tagged yet.
@@ -507,6 +554,20 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
         return;
       }
       (data as any).fingerprint = fingerprint;
+    }
+  }
+
+  // A "marked safe" review was of the question as it was. If what is being
+  // asked or the key changes, the review no longer applies.
+  const reviewed = ["text", "optionA", "optionB", "optionC", "optionD", "correctOption"] as const;
+  if (reviewed.some((k) => p[k] !== undefined)) {
+    const current = await prisma.question.findUnique({
+      where: { id },
+      select: { text: true, optionA: true, optionB: true, optionC: true, optionD: true, correctOption: true, markedSafeAt: true },
+    });
+    if (current?.markedSafeAt && reviewed.some((k) => p[k] !== undefined && p[k] !== current[k])) {
+      (data as Record<string, unknown>).markedSafeAt = null;
+      (data as Record<string, unknown>).markedSafeById = null;
     }
   }
 
