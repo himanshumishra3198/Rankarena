@@ -176,6 +176,23 @@ async function buildProfileData(userId: string) {
   const bestRank = ratingHistory.length > 0 ? Math.min(...ratingHistory.map((r) => r.rank)) : null;
   const maxRating = ratingHistory.length > 0 ? Math.max(...ratingHistory.map((r) => r.newRating)) : user.rating;
 
+  /**
+   * Where this user sits on the global ladder.
+   *
+   * /ratings/leaderboard takes the top 100, so it cannot answer this for
+   * anybody below that — which is most people, and exactly the people who
+   * want to know. Counting the students rated above them is one indexed
+   * count and gives everyone a real number instead of a blank.
+   *
+   * Ties share a place: two students on the same rating both sit at the
+   * position after everyone who beat them, which is how the contest
+   * standings read too.
+   */
+  const globalRank = user.role === "STUDENT"
+    ? (await prisma.user.count({ where: { role: "STUDENT", rating: { gt: user.rating } } })) + 1
+    : null;
+  const totalRanked = await prisma.user.count({ where: { role: "STUDENT" } });
+
   const [followerCount, followingCount] = await Promise.all([
     prisma.follow.count({ where: { followingId: userId } }),
     prisma.follow.count({ where: { followerId: userId } }),
@@ -204,6 +221,7 @@ async function buildProfileData(userId: string) {
       totalSolved,
       activeDays: Object.keys(heatmap).length,
       bestRank, maxRating, maxStreak, currentStreak,
+      globalRank, totalRanked,
     },
     subjectStats,
     topicStats: Object.entries(topicStats).map(([topic, v]) => ({ topic, ...v })),

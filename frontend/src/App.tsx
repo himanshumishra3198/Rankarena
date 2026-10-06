@@ -6,7 +6,7 @@ import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
-import Home from './pages/Home'
+import Dashboard from './pages/Dashboard'
 import Landing from './pages/Landing'
 import ContestList from './pages/ContestList'
 import ContestRoom from './pages/ContestRoom'
@@ -32,7 +32,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 function HomeRoute() {
-  return localStorage.getItem('token') ? <Home /> : <Landing />
+  return localStorage.getItem('token') ? <Dashboard /> : <Landing />
 }
 
 export default function App() {

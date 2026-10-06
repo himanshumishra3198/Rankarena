@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from '../Logo'
+import NotificationBell from '../NotificationBell'
 import { useScrolled } from './hooks'
 
 /**
@@ -14,6 +15,7 @@ import { useScrolled } from './hooks'
  */
 
 const LINKS = [
+  { label: 'Home', to: '/' },
   { label: 'Contests', to: '/contests' },
   { label: 'Mock Tests', to: '/mocks' },
   { label: 'Leaderboard', to: '/leaderboard' },
@@ -32,11 +34,18 @@ export default function LandingNav({ active }: { active?: string } = {}) {
   })()
   const scrolled = useScrolled(14)
   const [open, setOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  function logout() {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    navigate('/login')
+  }
 
   // The drawer must not outlive the reason it was opened.
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); setMenuOpen(false) } }
     window.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
@@ -73,11 +82,34 @@ export default function LandingNav({ active }: { active?: string } = {}) {
 
         <div className="lp-nav-actions">
           {signedIn ? (
-            <Link to="/profile" className="lp-nav-user">
-              <span className="lp-nav-avatar">{(user.name || '?')[0].toUpperCase()}</span>
-              <span className="lp-nav-name">{user.name}</span>
-              {typeof user.rating === 'number' && <span className="lp-nav-rating">{user.rating}</span>}
-            </Link>
+            <>
+              <NotificationBell />
+              <div className="lp-nav-menu">
+                <button
+                  className="lp-nav-user"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen(o => !o)}
+                >
+                  <span className="lp-nav-avatar">{(user.name || '?')[0].toUpperCase()}</span>
+                  <span className="lp-nav-name">{user.name}</span>
+                  {typeof user.rating === 'number' && <span className="lp-nav-rating">{user.rating}</span>}
+                </button>
+                {menuOpen && (
+                  <>
+                    <div className="lp-menu-scrim" onClick={() => setMenuOpen(false)} />
+                    <div className="lp-menu" role="menu">
+                      <Link to="/profile" role="menuitem" onClick={() => setMenuOpen(false)}>Profile</Link>
+                      <Link to="/profile" role="menuitem" onClick={() => setMenuOpen(false)}>My performance</Link>
+                      <Link to="/contests?tab=mine" role="menuitem" onClick={() => setMenuOpen(false)}>Contest history</Link>
+                      <Link to="/bookmarks" role="menuitem" onClick={() => setMenuOpen(false)}>Bookmarks</Link>
+                      <div className="lp-menu-sep" />
+                      <button role="menuitem" className="lp-menu-out" onClick={logout}>Log out</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
           ) : (
             <>
               <Link to="/login" className="lp-nav-login">Login</Link>
