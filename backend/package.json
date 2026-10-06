@@ -10,7 +10,9 @@
     "test": "node --test --require ts-node/register tests/*.test.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset && prisma db seed"
   },
   "keywords": [],
   "author": "",
