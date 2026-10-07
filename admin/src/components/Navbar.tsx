@@ -65,6 +65,12 @@ export default function Navbar() {
             Reports
             {openReports > 0 && <span className="nav-report-badge">{openReports}</span>}
           </button>
+          <button
+            className={`nav-link ${pathname.startsWith('/flagged') ? 'active' : ''}`}
+            onClick={() => navigate('/flagged')}
+          >
+            Flagged
+          </button>
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

@@ -278,6 +278,7 @@ export type UserWhereInput = {
   notifications?: Prisma.NotificationListRelationFilter
   actedNotifications?: Prisma.NotificationListRelationFilter
   authTokens?: Prisma.AuthTokenListRelationFilter
+  markedSafeQuestions?: Prisma.QuestionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -306,6 +307,7 @@ export type UserOrderByWithRelationInput = {
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
   actedNotifications?: Prisma.NotificationOrderByRelationAggregateInput
   authTokens?: Prisma.AuthTokenOrderByRelationAggregateInput
+  markedSafeQuestions?: Prisma.QuestionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -337,6 +339,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   notifications?: Prisma.NotificationListRelationFilter
   actedNotifications?: Prisma.NotificationListRelationFilter
   authTokens?: Prisma.AuthTokenListRelationFilter
+  markedSafeQuestions?: Prisma.QuestionListRelationFilter
 }, "id" | "email" | "googleId">
 
 export type UserOrderByWithAggregationInput = {
@@ -401,6 +404,7 @@ export type UserCreateInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -429,6 +433,7 @@ export type UserUncheckedCreateInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUpdateInput = {
@@ -457,6 +462,7 @@ export type UserUpdateInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -485,6 +491,7 @@ export type UserUncheckedUpdateInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -759,6 +766,22 @@ export type UserUpdateOneRequiredWithoutFollowersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFollowersInput, Prisma.UserUpdateWithoutFollowersInput>, Prisma.UserUncheckedUpdateWithoutFollowersInput>
 }
 
+export type UserCreateNestedOneWithoutMarkedSafeQuestionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMarkedSafeQuestionsInput, Prisma.UserUncheckedCreateWithoutMarkedSafeQuestionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkedSafeQuestionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutMarkedSafeQuestionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMarkedSafeQuestionsInput, Prisma.UserUncheckedCreateWithoutMarkedSafeQuestionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkedSafeQuestionsInput
+  upsert?: Prisma.UserUpsertWithoutMarkedSafeQuestionsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutMarkedSafeQuestionsInput, Prisma.UserUpdateWithoutMarkedSafeQuestionsInput>, Prisma.UserUncheckedUpdateWithoutMarkedSafeQuestionsInput>
+}
+
 export type UserCreateNestedOneWithoutQuestionReportsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutQuestionReportsInput, Prisma.UserUncheckedCreateWithoutQuestionReportsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutQuestionReportsInput
@@ -840,6 +863,7 @@ export type UserCreateWithoutAuthTokensInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutAuthTokensInput = {
@@ -867,6 +891,7 @@ export type UserUncheckedCreateWithoutAuthTokensInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutAuthTokensInput = {
@@ -910,6 +935,7 @@ export type UserUpdateWithoutAuthTokensInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuthTokensInput = {
@@ -937,6 +963,7 @@ export type UserUncheckedUpdateWithoutAuthTokensInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -964,6 +991,7 @@ export type UserCreateWithoutNotificationsInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -991,6 +1019,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -1023,6 +1052,7 @@ export type UserCreateWithoutActedNotificationsInput = {
   commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutActedNotificationsInput = {
@@ -1050,6 +1080,7 @@ export type UserUncheckedCreateWithoutActedNotificationsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutActedNotificationsInput = {
@@ -1093,6 +1124,7 @@ export type UserUpdateWithoutNotificationsInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -1120,6 +1152,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUpsertWithoutActedNotificationsInput = {
@@ -1158,6 +1191,7 @@ export type UserUpdateWithoutActedNotificationsInput = {
   commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutActedNotificationsInput = {
@@ -1185,6 +1219,7 @@ export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutArticlesInput = {
@@ -1212,6 +1247,7 @@ export type UserCreateWithoutArticlesInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutArticlesInput = {
@@ -1239,6 +1275,7 @@ export type UserUncheckedCreateWithoutArticlesInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutArticlesInput = {
@@ -1282,6 +1319,7 @@ export type UserUpdateWithoutArticlesInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticlesInput = {
@@ -1309,6 +1347,7 @@ export type UserUncheckedUpdateWithoutArticlesInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutArticleCommentsInput = {
@@ -1336,6 +1375,7 @@ export type UserCreateWithoutArticleCommentsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutArticleCommentsInput = {
@@ -1363,6 +1403,7 @@ export type UserUncheckedCreateWithoutArticleCommentsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutArticleCommentsInput = {
@@ -1406,6 +1447,7 @@ export type UserUpdateWithoutArticleCommentsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticleCommentsInput = {
@@ -1433,6 +1475,7 @@ export type UserUncheckedUpdateWithoutArticleCommentsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutArticleVotesInput = {
@@ -1460,6 +1503,7 @@ export type UserCreateWithoutArticleVotesInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutArticleVotesInput = {
@@ -1487,6 +1531,7 @@ export type UserUncheckedCreateWithoutArticleVotesInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutArticleVotesInput = {
@@ -1530,6 +1575,7 @@ export type UserUpdateWithoutArticleVotesInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutArticleVotesInput = {
@@ -1557,6 +1603,7 @@ export type UserUncheckedUpdateWithoutArticleVotesInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutCommentVotesInput = {
@@ -1584,6 +1631,7 @@ export type UserCreateWithoutCommentVotesInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutCommentVotesInput = {
@@ -1611,6 +1659,7 @@ export type UserUncheckedCreateWithoutCommentVotesInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutCommentVotesInput = {
@@ -1654,6 +1703,7 @@ export type UserUpdateWithoutCommentVotesInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentVotesInput = {
@@ -1681,6 +1731,7 @@ export type UserUncheckedUpdateWithoutCommentVotesInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutBookmarksInput = {
@@ -1708,6 +1759,7 @@ export type UserCreateWithoutBookmarksInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutBookmarksInput = {
@@ -1735,6 +1787,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutBookmarksInput = {
@@ -1778,6 +1831,7 @@ export type UserUpdateWithoutBookmarksInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBookmarksInput = {
@@ -1805,6 +1859,7 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutFollowingInput = {
@@ -1832,6 +1887,7 @@ export type UserCreateWithoutFollowingInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutFollowingInput = {
@@ -1859,6 +1915,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutFollowingInput = {
@@ -1891,6 +1948,7 @@ export type UserCreateWithoutFollowersInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutFollowersInput = {
@@ -1918,6 +1976,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutFollowersInput = {
@@ -1961,6 +2020,7 @@ export type UserUpdateWithoutFollowingInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowingInput = {
@@ -1988,6 +2048,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUpsertWithoutFollowersInput = {
@@ -2026,6 +2087,7 @@ export type UserUpdateWithoutFollowersInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowersInput = {
@@ -2046,6 +2108,135 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
+}
+
+export type UserCreateWithoutMarkedSafeQuestionsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  contestEmails?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutMarkedSafeQuestionsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  contestEmails?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutMarkedSafeQuestionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutMarkedSafeQuestionsInput, Prisma.UserUncheckedCreateWithoutMarkedSafeQuestionsInput>
+}
+
+export type UserUpsertWithoutMarkedSafeQuestionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutMarkedSafeQuestionsInput, Prisma.UserUncheckedUpdateWithoutMarkedSafeQuestionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutMarkedSafeQuestionsInput, Prisma.UserUncheckedCreateWithoutMarkedSafeQuestionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutMarkedSafeQuestionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutMarkedSafeQuestionsInput, Prisma.UserUncheckedUpdateWithoutMarkedSafeQuestionsInput>
+}
+
+export type UserUpdateWithoutMarkedSafeQuestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutMarkedSafeQuestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
   articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
   articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
   articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
@@ -2080,6 +2271,7 @@ export type UserCreateWithoutQuestionReportsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutQuestionReportsInput = {
@@ -2107,6 +2299,7 @@ export type UserUncheckedCreateWithoutQuestionReportsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutQuestionReportsInput = {
@@ -2150,6 +2343,7 @@ export type UserUpdateWithoutQuestionReportsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutQuestionReportsInput = {
@@ -2177,6 +2371,7 @@ export type UserUncheckedUpdateWithoutQuestionReportsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutMockAttemptsInput = {
@@ -2204,6 +2399,7 @@ export type UserCreateWithoutMockAttemptsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutMockAttemptsInput = {
@@ -2231,6 +2427,7 @@ export type UserUncheckedCreateWithoutMockAttemptsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutMockAttemptsInput = {
@@ -2274,6 +2471,7 @@ export type UserUpdateWithoutMockAttemptsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMockAttemptsInput = {
@@ -2301,6 +2499,7 @@ export type UserUncheckedUpdateWithoutMockAttemptsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutParticipationsInput = {
@@ -2328,6 +2527,7 @@ export type UserCreateWithoutParticipationsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutParticipationsInput = {
@@ -2355,6 +2555,7 @@ export type UserUncheckedCreateWithoutParticipationsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutParticipationsInput = {
@@ -2398,6 +2599,7 @@ export type UserUpdateWithoutParticipationsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutParticipationsInput = {
@@ -2425,6 +2627,7 @@ export type UserUncheckedUpdateWithoutParticipationsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserCreateWithoutRatingHistoryInput = {
@@ -2452,6 +2655,7 @@ export type UserCreateWithoutRatingHistoryInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserUncheckedCreateWithoutRatingHistoryInput = {
@@ -2479,6 +2683,7 @@ export type UserUncheckedCreateWithoutRatingHistoryInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput
 }
 
 export type UserCreateOrConnectWithoutRatingHistoryInput = {
@@ -2522,6 +2727,7 @@ export type UserUpdateWithoutRatingHistoryInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRatingHistoryInput = {
@@ -2549,6 +2755,7 @@ export type UserUncheckedUpdateWithoutRatingHistoryInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+  markedSafeQuestions?: Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput
 }
 
 
@@ -2571,6 +2778,7 @@ export type UserCountOutputType = {
   notifications: number
   actedNotifications: number
   authTokens: number
+  markedSafeQuestions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2588,6 +2796,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
   actedNotifications?: boolean | UserCountOutputTypeCountActedNotificationsArgs
   authTokens?: boolean | UserCountOutputTypeCountAuthTokensArgs
+  markedSafeQuestions?: boolean | UserCountOutputTypeCountMarkedSafeQuestionsArgs
 }
 
 /**
@@ -2698,6 +2907,13 @@ export type UserCountOutputTypeCountAuthTokensArgs<ExtArgs extends runtime.Types
   where?: Prisma.AuthTokenWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMarkedSafeQuestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.QuestionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2725,6 +2941,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   actedNotifications?: boolean | Prisma.User$actedNotificationsArgs<ExtArgs>
   authTokens?: boolean | Prisma.User$authTokensArgs<ExtArgs>
+  markedSafeQuestions?: boolean | Prisma.User$markedSafeQuestionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -2786,6 +3003,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   actedNotifications?: boolean | Prisma.User$actedNotificationsArgs<ExtArgs>
   authTokens?: boolean | Prisma.User$authTokensArgs<ExtArgs>
+  markedSafeQuestions?: boolean | Prisma.User$markedSafeQuestionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2808,6 +3026,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
     actedNotifications: Prisma.$NotificationPayload<ExtArgs>[]
     authTokens: Prisma.$AuthTokenPayload<ExtArgs>[]
+    markedSafeQuestions: Prisma.$QuestionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3229,6 +3448,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   actedNotifications<T extends Prisma.User$actedNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$actedNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   authTokens<T extends Prisma.User$authTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$authTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuthTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  markedSafeQuestions<T extends Prisma.User$markedSafeQuestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$markedSafeQuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3995,6 +4215,30 @@ export type User$authTokensArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.AuthTokenScalarFieldEnum | Prisma.AuthTokenScalarFieldEnum[]
+}
+
+/**
+ * User.markedSafeQuestions
+ */
+export type User$markedSafeQuestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Question
+   */
+  select?: Prisma.QuestionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Question
+   */
+  omit?: Prisma.QuestionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.QuestionInclude<ExtArgs> | null
+  where?: Prisma.QuestionWhereInput
+  orderBy?: Prisma.QuestionOrderByWithRelationInput | Prisma.QuestionOrderByWithRelationInput[]
+  cursor?: Prisma.QuestionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.QuestionScalarFieldEnum | Prisma.QuestionScalarFieldEnum[]
 }
 
 /**

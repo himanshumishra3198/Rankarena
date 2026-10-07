@@ -40,6 +40,8 @@ export type QuestionMinAggregateOutputType = {
   passageId: string | null
   solution: string | null
   fingerprint: string | null
+  markedSafeAt: Date | null
+  markedSafeById: string | null
 }
 
 export type QuestionMaxAggregateOutputType = {
@@ -58,6 +60,8 @@ export type QuestionMaxAggregateOutputType = {
   passageId: string | null
   solution: string | null
   fingerprint: string | null
+  markedSafeAt: Date | null
+  markedSafeById: string | null
 }
 
 export type QuestionCountAggregateOutputType = {
@@ -77,6 +81,8 @@ export type QuestionCountAggregateOutputType = {
   structuredData: number
   solution: number
   fingerprint: number
+  markedSafeAt: number
+  markedSafeById: number
   _all: number
 }
 
@@ -97,6 +103,8 @@ export type QuestionMinAggregateInputType = {
   passageId?: true
   solution?: true
   fingerprint?: true
+  markedSafeAt?: true
+  markedSafeById?: true
 }
 
 export type QuestionMaxAggregateInputType = {
@@ -115,6 +123,8 @@ export type QuestionMaxAggregateInputType = {
   passageId?: true
   solution?: true
   fingerprint?: true
+  markedSafeAt?: true
+  markedSafeById?: true
 }
 
 export type QuestionCountAggregateInputType = {
@@ -134,6 +144,8 @@ export type QuestionCountAggregateInputType = {
   structuredData?: true
   solution?: true
   fingerprint?: true
+  markedSafeAt?: true
+  markedSafeById?: true
   _all?: true
 }
 
@@ -226,6 +238,8 @@ export type QuestionGroupByOutputType = {
   structuredData: runtime.JsonValue | null
   solution: string | null
   fingerprint: string | null
+  markedSafeAt: Date | null
+  markedSafeById: string | null
   _count: QuestionCountAggregateOutputType | null
   _min: QuestionMinAggregateOutputType | null
   _max: QuestionMaxAggregateOutputType | null
@@ -266,6 +280,9 @@ export type QuestionWhereInput = {
   structuredData?: Prisma.JsonNullableFilter<"Question">
   solution?: Prisma.StringNullableFilter<"Question"> | string | null
   fingerprint?: Prisma.StringNullableFilter<"Question"> | string | null
+  markedSafeAt?: Prisma.DateTimeNullableFilter<"Question"> | Date | string | null
+  markedSafeById?: Prisma.StringNullableFilter<"Question"> | string | null
+  markedSafeBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   translations?: Prisma.QuestionTranslationListRelationFilter
   passage?: Prisma.XOR<Prisma.PassageNullableScalarRelationFilter, Prisma.PassageWhereInput> | null
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
@@ -291,6 +308,9 @@ export type QuestionOrderByWithRelationInput = {
   structuredData?: Prisma.SortOrderInput | Prisma.SortOrder
   solution?: Prisma.SortOrderInput | Prisma.SortOrder
   fingerprint?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedSafeAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedSafeById?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedSafeBy?: Prisma.UserOrderByWithRelationInput
   translations?: Prisma.QuestionTranslationOrderByRelationAggregateInput
   passage?: Prisma.PassageOrderByWithRelationInput
   contestQuestions?: Prisma.ContestQuestionOrderByRelationAggregateInput
@@ -319,6 +339,9 @@ export type QuestionWhereUniqueInput = Prisma.AtLeast<{
   structuredData?: Prisma.JsonNullableFilter<"Question">
   solution?: Prisma.StringNullableFilter<"Question"> | string | null
   fingerprint?: Prisma.StringNullableFilter<"Question"> | string | null
+  markedSafeAt?: Prisma.DateTimeNullableFilter<"Question"> | Date | string | null
+  markedSafeById?: Prisma.StringNullableFilter<"Question"> | string | null
+  markedSafeBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   translations?: Prisma.QuestionTranslationListRelationFilter
   passage?: Prisma.XOR<Prisma.PassageNullableScalarRelationFilter, Prisma.PassageWhereInput> | null
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
@@ -344,6 +367,8 @@ export type QuestionOrderByWithAggregationInput = {
   structuredData?: Prisma.SortOrderInput | Prisma.SortOrder
   solution?: Prisma.SortOrderInput | Prisma.SortOrder
   fingerprint?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedSafeAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  markedSafeById?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.QuestionCountOrderByAggregateInput
   _max?: Prisma.QuestionMaxOrderByAggregateInput
   _min?: Prisma.QuestionMinOrderByAggregateInput
@@ -369,6 +394,8 @@ export type QuestionScalarWhereWithAggregatesInput = {
   structuredData?: Prisma.JsonNullableWithAggregatesFilter<"Question">
   solution?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
   fingerprint?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
+  markedSafeAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Question"> | Date | string | null
+  markedSafeById?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
 }
 
 export type QuestionCreateInput = {
@@ -387,6 +414,8 @@ export type QuestionCreateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeBy?: Prisma.UserCreateNestedOneWithoutMarkedSafeQuestionsInput
   translations?: Prisma.QuestionTranslationCreateNestedManyWithoutQuestionInput
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
@@ -412,6 +441,8 @@ export type QuestionUncheckedCreateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
   translations?: Prisma.QuestionTranslationUncheckedCreateNestedManyWithoutQuestionInput
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
@@ -435,6 +466,8 @@ export type QuestionUpdateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeBy?: Prisma.UserUpdateOneWithoutMarkedSafeQuestionsNestedInput
   translations?: Prisma.QuestionTranslationUpdateManyWithoutQuestionNestedInput
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
@@ -460,6 +493,8 @@ export type QuestionUncheckedUpdateInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   translations?: Prisma.QuestionTranslationUncheckedUpdateManyWithoutQuestionNestedInput
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
@@ -484,6 +519,8 @@ export type QuestionCreateManyInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
 }
 
 export type QuestionUpdateManyMutationInput = {
@@ -502,6 +539,7 @@ export type QuestionUpdateManyMutationInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type QuestionUncheckedUpdateManyInput = {
@@ -521,11 +559,8 @@ export type QuestionUncheckedUpdateManyInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type QuestionScalarRelationFilter = {
-  is?: Prisma.QuestionWhereInput
-  isNot?: Prisma.QuestionWhereInput
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type QuestionListRelationFilter = {
@@ -536,6 +571,11 @@ export type QuestionListRelationFilter = {
 
 export type QuestionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type QuestionScalarRelationFilter = {
+  is?: Prisma.QuestionWhereInput
+  isNot?: Prisma.QuestionWhereInput
 }
 
 export type QuestionCountOrderByAggregateInput = {
@@ -555,6 +595,8 @@ export type QuestionCountOrderByAggregateInput = {
   structuredData?: Prisma.SortOrder
   solution?: Prisma.SortOrder
   fingerprint?: Prisma.SortOrder
+  markedSafeAt?: Prisma.SortOrder
+  markedSafeById?: Prisma.SortOrder
 }
 
 export type QuestionMaxOrderByAggregateInput = {
@@ -573,6 +615,8 @@ export type QuestionMaxOrderByAggregateInput = {
   passageId?: Prisma.SortOrder
   solution?: Prisma.SortOrder
   fingerprint?: Prisma.SortOrder
+  markedSafeAt?: Prisma.SortOrder
+  markedSafeById?: Prisma.SortOrder
 }
 
 export type QuestionMinOrderByAggregateInput = {
@@ -591,6 +635,50 @@ export type QuestionMinOrderByAggregateInput = {
   passageId?: Prisma.SortOrder
   solution?: Prisma.SortOrder
   fingerprint?: Prisma.SortOrder
+  markedSafeAt?: Prisma.SortOrder
+  markedSafeById?: Prisma.SortOrder
+}
+
+export type QuestionCreateNestedManyWithoutMarkedSafeByInput = {
+  create?: Prisma.XOR<Prisma.QuestionCreateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput> | Prisma.QuestionCreateWithoutMarkedSafeByInput[] | Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput[]
+  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput | Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput[]
+  createMany?: Prisma.QuestionCreateManyMarkedSafeByInputEnvelope
+  connect?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+}
+
+export type QuestionUncheckedCreateNestedManyWithoutMarkedSafeByInput = {
+  create?: Prisma.XOR<Prisma.QuestionCreateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput> | Prisma.QuestionCreateWithoutMarkedSafeByInput[] | Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput[]
+  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput | Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput[]
+  createMany?: Prisma.QuestionCreateManyMarkedSafeByInputEnvelope
+  connect?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+}
+
+export type QuestionUpdateManyWithoutMarkedSafeByNestedInput = {
+  create?: Prisma.XOR<Prisma.QuestionCreateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput> | Prisma.QuestionCreateWithoutMarkedSafeByInput[] | Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput[]
+  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput | Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput[]
+  upsert?: Prisma.QuestionUpsertWithWhereUniqueWithoutMarkedSafeByInput | Prisma.QuestionUpsertWithWhereUniqueWithoutMarkedSafeByInput[]
+  createMany?: Prisma.QuestionCreateManyMarkedSafeByInputEnvelope
+  set?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  disconnect?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  delete?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  connect?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  update?: Prisma.QuestionUpdateWithWhereUniqueWithoutMarkedSafeByInput | Prisma.QuestionUpdateWithWhereUniqueWithoutMarkedSafeByInput[]
+  updateMany?: Prisma.QuestionUpdateManyWithWhereWithoutMarkedSafeByInput | Prisma.QuestionUpdateManyWithWhereWithoutMarkedSafeByInput[]
+  deleteMany?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
+}
+
+export type QuestionUncheckedUpdateManyWithoutMarkedSafeByNestedInput = {
+  create?: Prisma.XOR<Prisma.QuestionCreateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput> | Prisma.QuestionCreateWithoutMarkedSafeByInput[] | Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput[]
+  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput | Prisma.QuestionCreateOrConnectWithoutMarkedSafeByInput[]
+  upsert?: Prisma.QuestionUpsertWithWhereUniqueWithoutMarkedSafeByInput | Prisma.QuestionUpsertWithWhereUniqueWithoutMarkedSafeByInput[]
+  createMany?: Prisma.QuestionCreateManyMarkedSafeByInputEnvelope
+  set?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  disconnect?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  delete?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  connect?: Prisma.QuestionWhereUniqueInput | Prisma.QuestionWhereUniqueInput[]
+  update?: Prisma.QuestionUpdateWithWhereUniqueWithoutMarkedSafeByInput | Prisma.QuestionUpdateWithWhereUniqueWithoutMarkedSafeByInput[]
+  updateMany?: Prisma.QuestionUpdateManyWithWhereWithoutMarkedSafeByInput | Prisma.QuestionUpdateManyWithWhereWithoutMarkedSafeByInput[]
+  deleteMany?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
 }
 
 export type QuestionCreateNestedOneWithoutBookmarksInput = {
@@ -717,6 +805,106 @@ export type QuestionUpdateOneRequiredWithoutTranslationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.QuestionUpdateToOneWithWhereWithoutTranslationsInput, Prisma.QuestionUpdateWithoutTranslationsInput>, Prisma.QuestionUncheckedUpdateWithoutTranslationsInput>
 }
 
+export type QuestionCreateWithoutMarkedSafeByInput = {
+  id?: string
+  questionType?: $Enums.QuestionType
+  text: string
+  imageUrl?: string | null
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctOption: string
+  subject: $Enums.Subject
+  topic?: string | null
+  difficulty?: $Enums.Difficulty
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: string | null
+  fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  translations?: Prisma.QuestionTranslationCreateNestedManyWithoutQuestionInput
+  passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
+  contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
+  mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportCreateNestedManyWithoutQuestionInput
+  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutQuestionInput
+}
+
+export type QuestionUncheckedCreateWithoutMarkedSafeByInput = {
+  id?: string
+  questionType?: $Enums.QuestionType
+  text: string
+  imageUrl?: string | null
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctOption: string
+  subject: $Enums.Subject
+  topic?: string | null
+  difficulty?: $Enums.Difficulty
+  passageId?: string | null
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: string | null
+  fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  translations?: Prisma.QuestionTranslationUncheckedCreateNestedManyWithoutQuestionInput
+  contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+  mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
+  reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
+  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutQuestionInput
+}
+
+export type QuestionCreateOrConnectWithoutMarkedSafeByInput = {
+  where: Prisma.QuestionWhereUniqueInput
+  create: Prisma.XOR<Prisma.QuestionCreateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput>
+}
+
+export type QuestionCreateManyMarkedSafeByInputEnvelope = {
+  data: Prisma.QuestionCreateManyMarkedSafeByInput | Prisma.QuestionCreateManyMarkedSafeByInput[]
+  skipDuplicates?: boolean
+}
+
+export type QuestionUpsertWithWhereUniqueWithoutMarkedSafeByInput = {
+  where: Prisma.QuestionWhereUniqueInput
+  update: Prisma.XOR<Prisma.QuestionUpdateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedUpdateWithoutMarkedSafeByInput>
+  create: Prisma.XOR<Prisma.QuestionCreateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedCreateWithoutMarkedSafeByInput>
+}
+
+export type QuestionUpdateWithWhereUniqueWithoutMarkedSafeByInput = {
+  where: Prisma.QuestionWhereUniqueInput
+  data: Prisma.XOR<Prisma.QuestionUpdateWithoutMarkedSafeByInput, Prisma.QuestionUncheckedUpdateWithoutMarkedSafeByInput>
+}
+
+export type QuestionUpdateManyWithWhereWithoutMarkedSafeByInput = {
+  where: Prisma.QuestionScalarWhereInput
+  data: Prisma.XOR<Prisma.QuestionUpdateManyMutationInput, Prisma.QuestionUncheckedUpdateManyWithoutMarkedSafeByInput>
+}
+
+export type QuestionScalarWhereInput = {
+  AND?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
+  OR?: Prisma.QuestionScalarWhereInput[]
+  NOT?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
+  id?: Prisma.StringFilter<"Question"> | string
+  questionType?: Prisma.EnumQuestionTypeFilter<"Question"> | $Enums.QuestionType
+  text?: Prisma.StringFilter<"Question"> | string
+  imageUrl?: Prisma.StringNullableFilter<"Question"> | string | null
+  optionA?: Prisma.StringFilter<"Question"> | string
+  optionB?: Prisma.StringFilter<"Question"> | string
+  optionC?: Prisma.StringFilter<"Question"> | string
+  optionD?: Prisma.StringFilter<"Question"> | string
+  correctOption?: Prisma.StringFilter<"Question"> | string
+  subject?: Prisma.EnumSubjectFilter<"Question"> | $Enums.Subject
+  topic?: Prisma.StringNullableFilter<"Question"> | string | null
+  difficulty?: Prisma.EnumDifficultyFilter<"Question"> | $Enums.Difficulty
+  passageId?: Prisma.StringNullableFilter<"Question"> | string | null
+  structuredData?: Prisma.JsonNullableFilter<"Question">
+  solution?: Prisma.StringNullableFilter<"Question"> | string | null
+  fingerprint?: Prisma.StringNullableFilter<"Question"> | string | null
+  markedSafeAt?: Prisma.DateTimeNullableFilter<"Question"> | Date | string | null
+  markedSafeById?: Prisma.StringNullableFilter<"Question"> | string | null
+}
+
 export type QuestionCreateWithoutBookmarksInput = {
   id?: string
   questionType?: $Enums.QuestionType
@@ -733,6 +921,8 @@ export type QuestionCreateWithoutBookmarksInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeBy?: Prisma.UserCreateNestedOneWithoutMarkedSafeQuestionsInput
   translations?: Prisma.QuestionTranslationCreateNestedManyWithoutQuestionInput
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
@@ -757,6 +947,8 @@ export type QuestionUncheckedCreateWithoutBookmarksInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
   translations?: Prisma.QuestionTranslationUncheckedCreateNestedManyWithoutQuestionInput
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
@@ -795,6 +987,8 @@ export type QuestionUpdateWithoutBookmarksInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeBy?: Prisma.UserUpdateOneWithoutMarkedSafeQuestionsNestedInput
   translations?: Prisma.QuestionTranslationUpdateManyWithoutQuestionNestedInput
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
@@ -819,6 +1013,8 @@ export type QuestionUncheckedUpdateWithoutBookmarksInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   translations?: Prisma.QuestionTranslationUncheckedUpdateManyWithoutQuestionNestedInput
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
@@ -841,6 +1037,8 @@ export type QuestionCreateWithoutPassageInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeBy?: Prisma.UserCreateNestedOneWithoutMarkedSafeQuestionsInput
   translations?: Prisma.QuestionTranslationCreateNestedManyWithoutQuestionInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
@@ -864,6 +1062,8 @@ export type QuestionUncheckedCreateWithoutPassageInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
   translations?: Prisma.QuestionTranslationUncheckedCreateNestedManyWithoutQuestionInput
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
@@ -897,28 +1097,6 @@ export type QuestionUpdateManyWithWhereWithoutPassageInput = {
   data: Prisma.XOR<Prisma.QuestionUpdateManyMutationInput, Prisma.QuestionUncheckedUpdateManyWithoutPassageInput>
 }
 
-export type QuestionScalarWhereInput = {
-  AND?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
-  OR?: Prisma.QuestionScalarWhereInput[]
-  NOT?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
-  id?: Prisma.StringFilter<"Question"> | string
-  questionType?: Prisma.EnumQuestionTypeFilter<"Question"> | $Enums.QuestionType
-  text?: Prisma.StringFilter<"Question"> | string
-  imageUrl?: Prisma.StringNullableFilter<"Question"> | string | null
-  optionA?: Prisma.StringFilter<"Question"> | string
-  optionB?: Prisma.StringFilter<"Question"> | string
-  optionC?: Prisma.StringFilter<"Question"> | string
-  optionD?: Prisma.StringFilter<"Question"> | string
-  correctOption?: Prisma.StringFilter<"Question"> | string
-  subject?: Prisma.EnumSubjectFilter<"Question"> | $Enums.Subject
-  topic?: Prisma.StringNullableFilter<"Question"> | string | null
-  difficulty?: Prisma.EnumDifficultyFilter<"Question"> | $Enums.Difficulty
-  passageId?: Prisma.StringNullableFilter<"Question"> | string | null
-  structuredData?: Prisma.JsonNullableFilter<"Question">
-  solution?: Prisma.StringNullableFilter<"Question"> | string | null
-  fingerprint?: Prisma.StringNullableFilter<"Question"> | string | null
-}
-
 export type QuestionCreateWithoutReportsInput = {
   id?: string
   questionType?: $Enums.QuestionType
@@ -935,6 +1113,8 @@ export type QuestionCreateWithoutReportsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeBy?: Prisma.UserCreateNestedOneWithoutMarkedSafeQuestionsInput
   translations?: Prisma.QuestionTranslationCreateNestedManyWithoutQuestionInput
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
@@ -959,6 +1139,8 @@ export type QuestionUncheckedCreateWithoutReportsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
   translations?: Prisma.QuestionTranslationUncheckedCreateNestedManyWithoutQuestionInput
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
@@ -997,6 +1179,8 @@ export type QuestionUpdateWithoutReportsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeBy?: Prisma.UserUpdateOneWithoutMarkedSafeQuestionsNestedInput
   translations?: Prisma.QuestionTranslationUpdateManyWithoutQuestionNestedInput
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
@@ -1021,6 +1205,8 @@ export type QuestionUncheckedUpdateWithoutReportsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   translations?: Prisma.QuestionTranslationUncheckedUpdateManyWithoutQuestionNestedInput
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
@@ -1043,6 +1229,8 @@ export type QuestionCreateWithoutMockTestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeBy?: Prisma.UserCreateNestedOneWithoutMarkedSafeQuestionsInput
   translations?: Prisma.QuestionTranslationCreateNestedManyWithoutQuestionInput
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
@@ -1067,6 +1255,8 @@ export type QuestionUncheckedCreateWithoutMockTestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
   translations?: Prisma.QuestionTranslationUncheckedCreateNestedManyWithoutQuestionInput
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
@@ -1105,6 +1295,8 @@ export type QuestionUpdateWithoutMockTestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeBy?: Prisma.UserUpdateOneWithoutMarkedSafeQuestionsNestedInput
   translations?: Prisma.QuestionTranslationUpdateManyWithoutQuestionNestedInput
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
@@ -1129,6 +1321,8 @@ export type QuestionUncheckedUpdateWithoutMockTestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   translations?: Prisma.QuestionTranslationUncheckedUpdateManyWithoutQuestionNestedInput
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
@@ -1151,6 +1345,8 @@ export type QuestionCreateWithoutContestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeBy?: Prisma.UserCreateNestedOneWithoutMarkedSafeQuestionsInput
   translations?: Prisma.QuestionTranslationCreateNestedManyWithoutQuestionInput
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
@@ -1175,6 +1371,8 @@ export type QuestionUncheckedCreateWithoutContestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
   translations?: Prisma.QuestionTranslationUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
@@ -1213,6 +1411,8 @@ export type QuestionUpdateWithoutContestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeBy?: Prisma.UserUpdateOneWithoutMarkedSafeQuestionsNestedInput
   translations?: Prisma.QuestionTranslationUpdateManyWithoutQuestionNestedInput
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
@@ -1237,6 +1437,8 @@ export type QuestionUncheckedUpdateWithoutContestQuestionsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   translations?: Prisma.QuestionTranslationUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
@@ -1259,6 +1461,8 @@ export type QuestionCreateWithoutTranslationsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeBy?: Prisma.UserCreateNestedOneWithoutMarkedSafeQuestionsInput
   passage?: Prisma.PassageCreateNestedOneWithoutQuestionsInput
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionCreateNestedManyWithoutQuestionInput
@@ -1283,6 +1487,8 @@ export type QuestionUncheckedCreateWithoutTranslationsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedCreateNestedManyWithoutQuestionInput
   reports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutQuestionInput
@@ -1321,6 +1527,8 @@ export type QuestionUpdateWithoutTranslationsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeBy?: Prisma.UserUpdateOneWithoutMarkedSafeQuestionsNestedInput
   passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
@@ -1345,10 +1553,102 @@ export type QuestionUncheckedUpdateWithoutTranslationsInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutQuestionNestedInput
+}
+
+export type QuestionCreateManyMarkedSafeByInput = {
+  id?: string
+  questionType?: $Enums.QuestionType
+  text: string
+  imageUrl?: string | null
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctOption: string
+  subject: $Enums.Subject
+  topic?: string | null
+  difficulty?: $Enums.Difficulty
+  passageId?: string | null
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: string | null
+  fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+}
+
+export type QuestionUpdateWithoutMarkedSafeByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questionType?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionA?: Prisma.StringFieldUpdateOperationsInput | string
+  optionB?: Prisma.StringFieldUpdateOperationsInput | string
+  optionC?: Prisma.StringFieldUpdateOperationsInput | string
+  optionD?: Prisma.StringFieldUpdateOperationsInput | string
+  correctOption?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
+  topic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  translations?: Prisma.QuestionTranslationUpdateManyWithoutQuestionNestedInput
+  passage?: Prisma.PassageUpdateOneWithoutQuestionsNestedInput
+  contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
+  mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUpdateManyWithoutQuestionNestedInput
+  bookmarks?: Prisma.BookmarkUpdateManyWithoutQuestionNestedInput
+}
+
+export type QuestionUncheckedUpdateWithoutMarkedSafeByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questionType?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionA?: Prisma.StringFieldUpdateOperationsInput | string
+  optionB?: Prisma.StringFieldUpdateOperationsInput | string
+  optionC?: Prisma.StringFieldUpdateOperationsInput | string
+  optionD?: Prisma.StringFieldUpdateOperationsInput | string
+  correctOption?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
+  topic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
+  passageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  translations?: Prisma.QuestionTranslationUncheckedUpdateManyWithoutQuestionNestedInput
+  contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+  mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
+  reports?: Prisma.QuestionReportUncheckedUpdateManyWithoutQuestionNestedInput
+  bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutQuestionNestedInput
+}
+
+export type QuestionUncheckedUpdateManyWithoutMarkedSafeByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questionType?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionA?: Prisma.StringFieldUpdateOperationsInput | string
+  optionB?: Prisma.StringFieldUpdateOperationsInput | string
+  optionC?: Prisma.StringFieldUpdateOperationsInput | string
+  optionD?: Prisma.StringFieldUpdateOperationsInput | string
+  correctOption?: Prisma.StringFieldUpdateOperationsInput | string
+  subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
+  topic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.EnumDifficultyFieldUpdateOperationsInput | $Enums.Difficulty
+  passageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type QuestionCreateManyPassageInput = {
@@ -1367,6 +1667,8 @@ export type QuestionCreateManyPassageInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: string | null
   fingerprint?: string | null
+  markedSafeAt?: Date | string | null
+  markedSafeById?: string | null
 }
 
 export type QuestionUpdateWithoutPassageInput = {
@@ -1385,6 +1687,8 @@ export type QuestionUpdateWithoutPassageInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeBy?: Prisma.UserUpdateOneWithoutMarkedSafeQuestionsNestedInput
   translations?: Prisma.QuestionTranslationUpdateManyWithoutQuestionNestedInput
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUpdateManyWithoutQuestionNestedInput
@@ -1408,6 +1712,8 @@ export type QuestionUncheckedUpdateWithoutPassageInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   translations?: Prisma.QuestionTranslationUncheckedUpdateManyWithoutQuestionNestedInput
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   mockTestQuestions?: Prisma.MockTestQuestionUncheckedUpdateManyWithoutQuestionNestedInput
@@ -1431,6 +1737,8 @@ export type QuestionUncheckedUpdateManyWithoutPassageInput = {
   structuredData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   solution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fingerprint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markedSafeAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  markedSafeById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1517,6 +1825,9 @@ export type QuestionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   structuredData?: boolean
   solution?: boolean
   fingerprint?: boolean
+  markedSafeAt?: boolean
+  markedSafeById?: boolean
+  markedSafeBy?: boolean | Prisma.Question$markedSafeByArgs<ExtArgs>
   translations?: boolean | Prisma.Question$translationsArgs<ExtArgs>
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
   contestQuestions?: boolean | Prisma.Question$contestQuestionsArgs<ExtArgs>
@@ -1543,6 +1854,9 @@ export type QuestionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   structuredData?: boolean
   solution?: boolean
   fingerprint?: boolean
+  markedSafeAt?: boolean
+  markedSafeById?: boolean
+  markedSafeBy?: boolean | Prisma.Question$markedSafeByArgs<ExtArgs>
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
 }, ExtArgs["result"]["question"]>
 
@@ -1563,6 +1877,9 @@ export type QuestionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   structuredData?: boolean
   solution?: boolean
   fingerprint?: boolean
+  markedSafeAt?: boolean
+  markedSafeById?: boolean
+  markedSafeBy?: boolean | Prisma.Question$markedSafeByArgs<ExtArgs>
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
 }, ExtArgs["result"]["question"]>
 
@@ -1583,10 +1900,13 @@ export type QuestionSelectScalar = {
   structuredData?: boolean
   solution?: boolean
   fingerprint?: boolean
+  markedSafeAt?: boolean
+  markedSafeById?: boolean
 }
 
-export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "questionType" | "text" | "imageUrl" | "optionA" | "optionB" | "optionC" | "optionD" | "correctOption" | "subject" | "topic" | "difficulty" | "passageId" | "structuredData" | "solution" | "fingerprint", ExtArgs["result"]["question"]>
+export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "questionType" | "text" | "imageUrl" | "optionA" | "optionB" | "optionC" | "optionD" | "correctOption" | "subject" | "topic" | "difficulty" | "passageId" | "structuredData" | "solution" | "fingerprint" | "markedSafeAt" | "markedSafeById", ExtArgs["result"]["question"]>
 export type QuestionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  markedSafeBy?: boolean | Prisma.Question$markedSafeByArgs<ExtArgs>
   translations?: boolean | Prisma.Question$translationsArgs<ExtArgs>
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
   contestQuestions?: boolean | Prisma.Question$contestQuestionsArgs<ExtArgs>
@@ -1596,15 +1916,18 @@ export type QuestionInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   _count?: boolean | Prisma.QuestionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type QuestionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  markedSafeBy?: boolean | Prisma.Question$markedSafeByArgs<ExtArgs>
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
 }
 export type QuestionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  markedSafeBy?: boolean | Prisma.Question$markedSafeByArgs<ExtArgs>
   passage?: boolean | Prisma.Question$passageArgs<ExtArgs>
 }
 
 export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Question"
   objects: {
+    markedSafeBy: Prisma.$UserPayload<ExtArgs> | null
     translations: Prisma.$QuestionTranslationPayload<ExtArgs>[]
     passage: Prisma.$PassagePayload<ExtArgs> | null
     contestQuestions: Prisma.$ContestQuestionPayload<ExtArgs>[]
@@ -1629,6 +1952,8 @@ export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     structuredData: runtime.JsonValue | null
     solution: string | null
     fingerprint: string | null
+    markedSafeAt: Date | null
+    markedSafeById: string | null
   }, ExtArgs["result"]["question"]>
   composites: {}
 }
@@ -2023,6 +2348,7 @@ readonly fields: QuestionFieldRefs;
  */
 export interface Prisma__QuestionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  markedSafeBy<T extends Prisma.Question$markedSafeByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$markedSafeByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   translations<T extends Prisma.Question$translationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$translationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuestionTranslationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   passage<T extends Prisma.Question$passageArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$passageArgs<ExtArgs>>): Prisma.Prisma__PassageClient<runtime.Types.Result.GetResult<Prisma.$PassagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   contestQuestions<T extends Prisma.Question$contestQuestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$contestQuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContestQuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2074,6 +2400,8 @@ export interface QuestionFieldRefs {
   readonly structuredData: Prisma.FieldRef<"Question", 'Json'>
   readonly solution: Prisma.FieldRef<"Question", 'String'>
   readonly fingerprint: Prisma.FieldRef<"Question", 'String'>
+  readonly markedSafeAt: Prisma.FieldRef<"Question", 'DateTime'>
+  readonly markedSafeById: Prisma.FieldRef<"Question", 'String'>
 }
     
 
@@ -2472,6 +2800,25 @@ export type QuestionDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Questions to delete.
    */
   limit?: number
+}
+
+/**
+ * Question.markedSafeBy
+ */
+export type Question$markedSafeByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**

@@ -43,6 +43,7 @@ model User {
   notifications   Notification[]   @relation("NotificationRecipient")
   actedNotifications Notification[] @relation("NotificationActor")
   authTokens      AuthToken[]
+  markedSafeQuestions Question[] @relation("QuestionMarkedSafe")
 
   @@map("users")
 }
@@ -283,6 +284,12 @@ model Question {
   structuredData Json?        @map("structured_data") // for SYLLOGISM: { statements: string[], conclusions: string[] }
   solution       String?      // rich-text detailed solution / explanation (HTML)
   fingerprint    String?      // normalized hash of text + options, for exact-duplicate detection
+  // Set when an admin reviews a flagged question (a wrong option chosen more
+  // often than the key) and decides the key is right. Cleared when the text,
+  // options or key change, because the review was of the old version.
+  markedSafeAt   DateTime?    @map("marked_safe_at")
+  markedSafeById String?      @map("marked_safe_by_id")
+  markedSafeBy   User?        @relation("QuestionMarkedSafe", fields: [markedSafeById], references: [id], onDelete: SetNull)
 
   translations      QuestionTranslation[]
 

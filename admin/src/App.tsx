@@ -6,6 +6,7 @@ import Questions from './pages/Questions'
 import MockTests from './pages/MockTests'
 import MockTestDetail from './pages/MockTestDetail'
 import Reports from './pages/Reports'
+import FlaggedQuestions from './pages/FlaggedQuestions'
 import Community from './pages/Community'
 import ArticleDetail from './pages/ArticleDetail'
 import ArticleEditor from './pages/ArticleEditor'
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/mocks" element={<PrivateRoute><MockTests /></PrivateRoute>} />
         <Route path="/mocks/:id" element={<PrivateRoute><MockTestDetail /></PrivateRoute>} />
         <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
+        <Route path="/flagged" element={<PrivateRoute><FlaggedQuestions /></PrivateRoute>} />
         <Route path="/community" element={<PrivateRoute><Community /></PrivateRoute>} />
         {/* Static segment before the dynamic one so /community/new isn't read as an id. */}
         <Route path="/community/new" element={<PrivateRoute><ArticleEditor /></PrivateRoute>} />

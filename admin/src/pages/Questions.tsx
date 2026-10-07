@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useConfirm } from '../components/ConfirmDialog'
 import type { FormEvent } from 'react'
 import api from '../lib/api'
@@ -270,6 +271,19 @@ export default function Questions() {
   }
 
   useEffect(() => { load() }, [filterSubject, filterType, filterTopic, searchQuery, page])
+
+  // ?edit=<id> opens that question in the editor, so another page (Flagged
+  // questions) can link straight to the fix. The parameter is cleared once
+  // read, so closing the editor does not reopen it.
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    const id = searchParams.get('edit')
+    if (!id) return
+    setSearchParams({}, { replace: true })
+    api.get('/admin/questions', { params: { id } })
+      .then(res => { const q = res.data.questions[0]; if (q) editQuestion(q) })
+      .catch(() => {})
+  }, [searchParams, setSearchParams])
 
   // Debounce typing so the bank isn't queried on every keystroke.
   useEffect(() => {
