@@ -7,7 +7,7 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "node --test --require ts-node/register tests/*.test.ts",
+    "test": "node --test --test-concurrency=1 --require ts-node/register tests/*.test.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"

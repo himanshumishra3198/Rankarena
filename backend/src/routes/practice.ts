@@ -547,4 +547,84 @@ router.get("/problems/:id", async (req: AuthRequest, res: Response) => {
   });
 });
 
+/** The pool a daily challenge may be drawn from. */
+const DAILY_SUBJECTS = ["QUANT", "REASONING"] as const;
+
+/**
+ * Today's date in IST, as YYYY-MM-DD.
+ *
+ * The challenge has to roll over at a time that means "a new day" to the
+ * people sitting it. UTC midnight is 5:30am in India — halfway through the
+ * early-morning study slot — so the day is cut in Asia/Kolkata instead.
+ */
+function istDay(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(now);
+}
+
+/** FNV-1a over the date, so one day maps to one stable offset. */
+function seedFor(day: string) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < day.length; i++) {
+    h ^= day.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+// GET /practice/daily?language=
+//
+// One question a day, the same one for everybody.
+//
+// Chosen by hashing the IST date into an offset over the eligible pool
+// rather than stored in a table: the pick is then reproducible from the
+// date alone, needs no migration and no nightly job, and cannot drift if a
+// cron misses a night. The cost is that the pool changing reshuffles which
+// question a past date maps to — acceptable for something with no score
+// attached to it, and the reason this does not pretend to keep a history.
+//
+// It draws from the same ONLY_SAFE_TO_REVEAL archive as everything else
+// here. A challenge hands out an answer key, so picking at random from the
+// whole bank would eventually put a question from an unsat contest on the
+// front page of the site.
+router.get("/daily", async (req: AuthRequest, res: Response) => {
+  const language = parseLanguage(req.query.language);
+  const day = istDay();
+
+  const where: Prisma.QuestionWhereInput = {
+    ...ONLY_SAFE_TO_REVEAL,
+    subject: { in: [...DAILY_SUBJECTS] },
+  };
+
+  const total = await prisma.question.count({ where });
+  if (total === 0) {
+    res.json({ day, question: null });
+    return;
+  }
+
+  const question = await prisma.question.findFirst({
+    where,
+    select: cardSelect(language),
+    // Ordered by id so the offset means the same thing on every request.
+    orderBy: { id: "asc" },
+    skip: seedFor(day) % total,
+  });
+  if (!question) {
+    res.json({ day, question: null });
+    return;
+  }
+
+  const bookmark = await prisma.bookmark.findUnique({
+    where: { userId_questionId: { userId: req.user!.id, questionId: question.id } },
+    select: { id: true },
+  });
+
+  res.json({
+    day,
+    poolSize: total,
+    question: { ...localizeQuestion(question, language), bookmarked: !!bookmark },
+  });
+});
+
 export default router;

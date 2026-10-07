@@ -4243,3 +4243,17 @@ select.input { cursor: pointer; }
   .db-week { gap: 5px; }
   .db-day-dot { height: 26px; }
 }
+
+/* ── Daily challenge ──────────────────────────────────────────────── */
+.dc-card { border-color: rgba(167,139,250,.3); background: linear-gradient(150deg, rgba(167,139,250,.07), var(--lp-surface) 60%); }
+.dc-tags { display: inline-flex; align-items: center; gap: 9px; }
+.dc-subject { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.dc-verdict { padding: 10px 14px; border-radius: 10px; font-size: 13.5px; font-weight: 700; margin-bottom: 14px; }
+.dc-verdict.is-right { background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.3); color: #6ee7b7; }
+.dc-verdict.is-wrong { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.28); color: #fca5a5; }
+.dc-qtext { font-size: 15px; line-height: 1.6; color: var(--lp-heading); margin-bottom: 14px; }
+.dc-options { margin-bottom: 14px; }
+.dc-solution { margin-bottom: 14px; }
+.dc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--lp-muted); }
+.dc-done { color: var(--lp-up); font-weight: 650; }
+@media (max-width: 620px) { .dc-qtext { font-size: 14.5px; } }

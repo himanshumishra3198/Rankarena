@@ -16,6 +16,7 @@ import ActivityStreak from '../components/dashboard/ActivityStreak'
 import Achievements from '../components/dashboard/Achievements'
 import WhatsNew from '../components/dashboard/WhatsNew'
 import NewUserWelcome from '../components/dashboard/NewUserWelcome'
+import DailyChallenge from '../components/dashboard/DailyChallenge'
 import { isNewUser, type ProfileData } from '../components/dashboard/types'
 // Reused wholesale from the mock tests page rather than reimplemented.
 import ContinuePracticing from '../components/mocks/ContinuePracticing'
@@ -199,6 +200,8 @@ export default function Dashboard() {
             <StatsOverview p={profile} />
           </div>
         )}
+
+        <DailyChallenge />
 
         <ContinuePracticing drafts={drafts} mocks={mocks} onDiscard={() => setDrafts(readDrafts())} />
 
