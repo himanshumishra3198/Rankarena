@@ -72,14 +72,14 @@ export default function ContestList() {
   }
 
   const load = useCallback(() => {
-    const calls: Promise<unknown>[] = [api.get('/contests'), api.get('/ratings/leaderboard')]
+    const calls: Promise<unknown>[] = [api.get('/contests'), api.get('/ratings/leaderboard?limit=3')]
     if (signedIn) calls.push(api.get('/profile'))
     return Promise.allSettled(calls).then(([c, l, p]) => {
       if (c.status === 'fulfilled') {
         const d = (c.value as { data: { active?: Contest[]; past?: Contest[] } }).data
         setContests([...(d?.active ?? []), ...(d?.past ?? [])])
       }
-      if (l.status === 'fulfilled') setLeaders((l.value as { data: RankedUser[] }).data ?? [])
+      if (l.status === 'fulfilled') setLeaders((l.value as { data: { entries: RankedUser[] } }).data?.entries ?? [])
       if (p?.status === 'fulfilled') {
         const d = (p.value as { data: { ratingHistory?: RatingPoint[]; user?: { rating: number } } }).data
         setHistory(d?.ratingHistory ?? [])

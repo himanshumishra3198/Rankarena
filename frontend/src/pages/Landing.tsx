@@ -44,13 +44,13 @@ export default function Landing() {
 
     Promise.allSettled([
       api.get('/stats/public'),
-      api.get('/ratings/leaderboard'),
+      api.get('/ratings/leaderboard?limit=5'),
       api.get('/contests'),
     ]).then(([s, l, c]) => {
       if (cancelled) return
 
       if (s.status === 'fulfilled') setStats(s.value.data)
-      if (l.status === 'fulfilled') setLeaders(l.value.data ?? [])
+      if (l.status === 'fulfilled') setLeaders(l.value.data?.entries ?? [])
 
       if (c.status === 'fulfilled') {
         const all: Contest[] = [...(c.value.data?.active ?? []), ...(c.value.data?.past ?? [])]

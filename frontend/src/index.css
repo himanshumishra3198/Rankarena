@@ -4257,3 +4257,160 @@ select.input { cursor: pointer; }
 .dc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--lp-muted); }
 .dc-done { color: var(--lp-up); font-weight: 650; }
 @media (max-width: 620px) { .dc-qtext { font-size: 14.5px; } }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Leaderboard — inside .lp, inheriting the arena palette, shell, buttons,
+   chips, sheet and pager from the pages above.
+   ═══════════════════════════════════════════════════════════════════════ */
+.lb-page main { padding-top: 30px; padding-bottom: 92px; }
+.lb-section { padding: clamp(32px, 4.5vw, 54px) 0 0; }
+.lb-hero { max-width: 62ch; margin-bottom: 26px; }
+.lb-hero-count { font-size: 13.5px; color: var(--lp-muted); margin: 14px 0 0; }
+.lb-hero-count b { color: var(--lp-heading); font-weight: 800; }
+.lb-up { color: var(--lp-up); } .lb-down { color: #f87171; }
+
+/* ── My ranking ───────────────────────────────────────────────────── */
+.lb-mine {
+  position: relative; overflow: hidden;
+  background: linear-gradient(140deg, #16213b, #0a0f1c 72%);
+  border: 1px solid rgba(91,140,255,.3); border-radius: 18px; padding: 26px 28px;
+}
+.lb-mine-glow { position: absolute; width: 320px; height: 320px; border-radius: 50%; background: #3b52d4; filter: blur(110px); opacity: .28; top: -150px; right: -80px; pointer-events: none; }
+.lb-mine-guest { display: flex; align-items: center; justify-content: space-between; gap: 22px; flex-wrap: wrap; }
+.lb-mine-title { font-size: clamp(19px, 2.4vw, 25px); font-weight: 800; letter-spacing: -.022em; color: var(--lp-heading); margin: 0 0 8px; }
+.lb-mine-sub { font-size: 14px; line-height: 1.6; color: var(--lp-text); margin: 0; max-width: 54ch; }
+.lb-mine-main { position: relative; margin-bottom: 20px; }
+.lb-mine-label { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #93b4ff; margin-bottom: 6px; }
+.lb-mine-rank { font-size: clamp(34px, 5vw, 48px); font-weight: 860; letter-spacing: -.04em; color: var(--lp-heading); font-variant-numeric: tabular-nums; line-height: 1; }
+.lb-mine-of { display: block; margin-top: 6px; font-size: 13px; color: var(--lp-muted); }
+.lb-mine-grid { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--lp-border); border: 1px solid var(--lp-border); border-radius: 13px; overflow: hidden; margin-bottom: 20px; }
+.lb-mine-grid > div { background: #0c1222; padding: 14px 14px; }
+.lb-mine-grid span { display: block; font-size: 10.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--lp-muted); margin-bottom: 5px; }
+.lb-mine-grid b { font-size: 20px; font-weight: 840; color: var(--lp-heading); font-variant-numeric: tabular-nums; }
+.lb-mine-grid em { display: block; margin-top: 4px; font-style: normal; font-size: 11px; font-weight: 700; }
+
+.lb-pct { position: relative; margin-bottom: 18px; }
+.lb-pct-line { font-size: 14px; color: var(--lp-text); margin: 0 0 10px; }
+.lb-pct-line b { color: var(--lp-heading); font-weight: 840; font-size: 16px; }
+.lb-pct-track { position: relative; height: 8px; border-radius: 99px; background: rgba(148,163,184,.16); }
+.lb-pct-fill { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--lp-accent), var(--lp-accent-2)); width: 0; animation: db-bar 1s cubic-bezier(.22,1,.36,1) both; }
+.lb-pct-marker { position: absolute; top: -4px; width: 3px; height: 16px; border-radius: 2px; background: #fff; transform: translateX(-50%); box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
+.lb-pct-ends { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--lp-muted); }
+
+/* ── Podium ───────────────────────────────────────────────────────── */
+.lb-podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: end; margin-top: 26px; }
+.lb-pod {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  padding: 22px 16px; border-radius: 16px; background: var(--lp-surface);
+  border: 1px solid var(--lp-border); animation: lp-rowin .5s ease both;
+  animation-delay: calc(var(--i) * 110ms);
+}
+.lb-pod.is-gold { padding-top: 32px; padding-bottom: 30px; border-color: rgba(251,191,36,.42); background: linear-gradient(170deg, rgba(251,191,36,.1), var(--lp-surface) 62%); }
+.lb-pod.is-silver { border-color: rgba(203,213,225,.3); }
+.lb-pod.is-bronze { border-color: rgba(217,119,87,.32); }
+.lb-pod.is-me { box-shadow: 0 0 0 1px var(--lp-accent) inset; }
+.lb-pod-medal { font-size: 26px; line-height: 1; }
+.lb-pod.is-gold .lb-pod-medal { font-size: 32px; }
+.lb-pod-avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: #07101f; font-size: 18px; font-weight: 850; margin: 4px 0 2px; }
+.lb-pod.is-gold .lb-pod-avatar { width: 54px; height: 54px; font-size: 22px; }
+.lb-pod-name { font-size: 15px; font-weight: 780; text-decoration: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-pod-name:hover { text-decoration: underline; }
+.lb-pod-tier { font-size: 11px; font-weight: 700; color: var(--lp-muted); }
+.lb-pod-rating { font-size: clamp(22px, 2.6vw, 29px); font-weight: 860; color: var(--lp-heading); font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+.lb-pod-change { min-height: 18px; font-size: 12.5px; font-weight: 800; }
+.lb-pod-change.is-up { color: var(--lp-up); } .lb-pod-change.is-down { color: #f87171; }
+.lb-pod-meta { font-size: 11.5px; color: var(--lp-muted); }
+
+/* ── Tabs + table ─────────────────────────────────────────────────── */
+.lb-tabs { display: flex; gap: 8px; margin-bottom: 18px; overflow-x: auto; scrollbar-width: none; }
+.lb-tabs::-webkit-scrollbar { display: none; }
+.lb-tab-link { text-decoration: none; display: inline-flex; align-items: center; }
+
+.lb-table { padding: 0; overflow: hidden; }
+.lb-row {
+  display: grid; grid-template-columns: 76px minmax(0,1fr) 96px 110px 86px 76px;
+  gap: 12px; align-items: center; padding: 12px 20px;
+  border-top: 1px solid rgba(148,163,184,.08); font-size: 14px;
+}
+.lb-table .lb-head { border-top: none; }
+.lb-head { background: rgba(255,255,255,.02); font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--lp-muted); padding: 11px 20px; }
+.lb-row.is-me { background: rgba(91,140,255,.12); box-shadow: inset 3px 0 0 var(--lp-accent); }
+.lb-row:not(.lb-head):hover { background: var(--lp-surface-2); }
+.lb-rank { font-size: 15px; font-weight: 820; color: var(--lp-muted); font-variant-numeric: tabular-nums; }
+.lb-user { display: flex; align-items: center; gap: 10px; min-width: 0; text-decoration: none; }
+.lb-avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; color: #07101f; font-size: 12px; font-weight: 850; }
+.lb-name { font-weight: 720; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-name em { font-style: normal; font-size: 11.5px; color: var(--lp-muted); font-weight: 600; }
+.lb-user:hover .lb-name { text-decoration: underline; }
+.lb-tier { font-size: 11px; color: var(--lp-muted); white-space: nowrap; }
+.lb-rating { font-weight: 840; color: var(--lp-heading); font-variant-numeric: tabular-nums; }
+.lb-change { font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--lp-muted); }
+.lb-change.is-up { color: var(--lp-up); } .lb-change.is-down { color: #f87171; }
+.lb-change i, .lb-best i { font-style: normal; color: var(--lp-border-2); }
+.lb-contests, .lb-best { font-size: 13px; color: var(--lp-text); font-variant-numeric: tabular-nums; }
+.lb-state { padding: 46px 24px; text-align: center; color: var(--lp-muted); font-size: 13.5px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.lb-state .mk-empty-title { margin: 0; }
+.lb-table-compact .lb-row { padding-block: 10px; }
+
+/* ── Distribution ─────────────────────────────────────────────────── */
+.lb-dist { display: flex; flex-direction: column; gap: 12px; }
+.lb-dist-row { position: relative; display: grid; grid-template-columns: 150px minmax(0,1fr) 92px; gap: 14px; align-items: center; padding: 6px 8px; border-radius: 9px; }
+.lb-dist-row.is-mine { background: rgba(91,140,255,.1); box-shadow: inset 2px 0 0 var(--lp-accent); }
+.lb-dist-label { font-size: 13px; font-weight: 750; }
+.lb-dist-label i { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; color: var(--lp-muted); margin-top: 2px; }
+.lb-dist-track { height: 12px; border-radius: 99px; background: rgba(148,163,184,.12); overflow: hidden; }
+.lb-dist-fill { display: block; height: 100%; border-radius: 99px; width: 0; animation: db-bar .9s cubic-bezier(.22,1,.36,1) both; opacity: .82; }
+.lb-dist-count { font-size: 13px; font-weight: 780; color: var(--lp-heading); font-variant-numeric: tabular-nums; text-align: right; }
+.lb-dist-count i { font-style: normal; font-weight: 600; color: var(--lp-muted); font-size: 11.5px; }
+.lb-dist-you { position: absolute; right: -4px; top: -11px; font-size: 9.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--lp-accent); }
+
+/* ── Sticky "you are here" ────────────────────────────────────────── */
+.lb-sticky {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 55;
+  display: flex; align-items: center; gap: 16px; padding: 10px 14px 10px 18px;
+  max-width: calc(100vw - 24px);
+  background: rgba(13,20,34,.94); backdrop-filter: blur(14px);
+  border: 1px solid var(--lp-border-2); border-radius: 40px;
+  box-shadow: 0 18px 44px -14px rgba(0,0,0,.85);
+  animation: lb-rise .3s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes lb-rise { from { opacity: 0; transform: translate(-50%, 14px) } to { opacity: 1; transform: translate(-50%, 0) } }
+.lb-sticky-label { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--lp-muted); }
+.lb-sticky-rank { font-size: 16px; font-weight: 850; color: var(--lp-heading); font-variant-numeric: tabular-nums; }
+.lb-sticky-name { font-size: 13.5px; font-weight: 700; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-sticky-rating { font-size: 13.5px; font-weight: 800; color: var(--lp-heading); font-variant-numeric: tabular-nums; }
+.lb-sticky-gap { font-size: 11.5px; color: var(--lp-muted); white-space: nowrap; }
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 1040px) {
+  .lb-mine-grid { grid-template-columns: repeat(3, 1fr); }
+  .lb-row { grid-template-columns: 62px minmax(0,1fr) 84px 92px 70px; }
+  /* Best contest rank is the first column to go — it is the least used. */
+  .lb-row > :nth-child(6) { display: none; }
+  .lb-dist-row { grid-template-columns: 120px minmax(0,1fr) 78px; }
+}
+@media (max-width: 680px) {
+  .lb-page main { padding-bottom: 104px; }
+  .lb-mine { padding: 20px; }
+  .lb-mine-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Podium reads 1-2-3 down the page rather than silver-first. */
+  .lb-podium { grid-template-columns: 1fr; }
+  .lb-pod.is-gold { order: -1; }
+  .lb-pod.is-bronze { order: 1; }
+  .lb-pod { flex-direction: row; text-align: left; gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+  .lb-pod.is-gold { padding: 16px; }
+  .lb-pod-avatar, .lb-pod.is-gold .lb-pod-avatar { width: 38px; height: 38px; font-size: 16px; margin: 0; }
+  .lb-pod-rating { margin-left: auto; font-size: 22px; }
+  .lb-pod-tier, .lb-pod-meta { width: 100%; }
+  /* The table becomes rank + person + rating; the rest moves under the name. */
+  .lb-row { grid-template-columns: 48px minmax(0,1fr) 74px; gap: 10px; padding: 11px 14px; }
+  .lb-row > :nth-child(4), .lb-row > :nth-child(5) { display: none; }
+  .lb-head { font-size: 10px; }
+  .lb-tier { display: none; }
+  .lb-dist-row { grid-template-columns: 96px minmax(0,1fr) 62px; gap: 10px; }
+  .lb-dist-count i { display: none; }
+  .lb-sticky { left: 12px; right: 12px; transform: none; gap: 10px; padding: 9px 12px; border-radius: 14px; }
+  @keyframes lb-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+  .lb-sticky-label, .lb-sticky-gap { display: none; }
+  .lb-sticky .lp-btn { margin-left: auto; }
+}
