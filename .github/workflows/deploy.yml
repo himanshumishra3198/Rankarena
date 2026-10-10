@@ -179,6 +179,20 @@ jobs:
             docker compose -f docker-compose.prod.yml run --rm --no-deps backend \
               npx prisma migrate deploy
 
+            # ── Seed reference data ───────────────────────────────────────────
+            # The tag vocabulary each exam's syllabus is filed under. Idempotent
+            # — tags are matched by slug, so this adds nothing on a deploy where
+            # it has already run, and it does not undo a tag an admin renamed by
+            # hand. Running it every time is what keeps a rebuilt box from
+            # coming up with an empty tag picker.
+            #
+            # Deliberately non-fatal: these are labels, not schema. A deploy
+            # that is otherwise fine should not be blocked by them, but the
+            # warning has to be visible in the log rather than swallowed.
+            docker compose -f docker-compose.prod.yml run --rm -T --no-deps backend \
+              node dist/scripts/seedTags.js \
+              || echo "WARNING: tag seed failed — the question editor will start with no tags to pick from."
+
             # ── Rolling restart ───────────────────────────────────────────────
             docker compose -f docker-compose.prod.yml up -d \
               --no-deps \
