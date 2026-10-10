@@ -1,5 +1,6 @@
 import prisma from "./prisma";
 import redis from "./redis";
+import { MARKABLE_SELECT, evaluate, markableOf } from "./answers";
 import { Prisma } from "../generated/prisma/client";
 
 /**
@@ -51,18 +52,20 @@ export async function finalizeContest(contestId: string): Promise<void> {
 
   const cqs = await prisma.contestQuestion.findMany({
     where: { contestId },
-    select: { questionId: true, marks: true, negativeMarks: true, question: { select: { correctOption: true } } },
+    select: { questionId: true, marks: true, negativeMarks: true, question: { select: MARKABLE_SELECT } },
   });
 
   for (const p of attempted) {
-    const answers = (p.draftAnswers ?? {}) as Record<string, string>;
+    const answers = (p.draftAnswers ?? {}) as Record<string, unknown>;
 
+    // The same marker the submit route uses. This path scores a candidate who
+    // ran out of time without pressing submit, and it has to agree with the
+    // one that scores a candidate who did — a second copy of the comparison
+    // here is how a multiple-select question comes to be worth different
+    // marks depending on how the paper ended.
     let score = 0;
     for (const cq of cqs) {
-      const given = answers[cq.questionId];
-      if (!given) continue;
-      if (given === cq.question.correctOption) score += Number(cq.marks);
-      else score -= Number(cq.negativeMarks);
+      score += evaluate(markableOf(cq.question, cq.marks, cq.negativeMarks), answers[cq.questionId]).awarded;
     }
     score = Math.max(0, score);
 

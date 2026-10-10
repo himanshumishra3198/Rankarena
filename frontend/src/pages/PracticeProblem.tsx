@@ -11,6 +11,11 @@ import { getPreferredLanguage, setPreferredLanguage, type Language } from '../li
 import {
   PROBLEMS_PER_PAGE, SUBJECT_COLOR, SUBJECT_SHORT, markProblem, readMarks, titleCase,
 } from '../lib/practice'
+import {
+  type Answer, type AnswerKeyFields, hasOption, isAnswered, isKeyOption, isSingleChoice,
+  keyLabel, typedText, wasCorrect,
+} from '../lib/answers'
+import AnswerInput from '../components/AnswerInput'
 
 /**
  * One problem from the archive, with the answer behind your attempt.
@@ -27,16 +32,14 @@ import {
 
 const OPTIONS = ['A', 'B', 'C', 'D'] as const
 
-interface Problem {
+interface Problem extends AnswerKeyFields {
   id: string
   text: string
   imageUrl?: string | null
   optionA: string; optionB: string; optionC: string; optionD: string
-  correctOption: string
   subject: string
   topic: string | null
   difficulty: string
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: {
     id: string; title: string; content: string
@@ -71,7 +74,15 @@ export default function PracticeProblem() {
   const [problem, setProblem] = useState<Problem | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'none' | 'missing' | 'failed'>('none')
-  const [picked, setPicked] = useState<string | null>(null)
+  // `picked` is the answer that has been checked; null until then.
+  const [picked, setPicked] = useState<Answer | null>(null)
+  /**
+   * What is being built, for the formats that cannot be checked on a single
+   * click. A multiple-select question needs every tick before it can be
+   * judged, and a type-in needs the whole answer typed — checking either on
+   * the first keystroke would mark it wrong before it was finished.
+   */
+  const [draft, setDraft] = useState<Answer>('')
   const [bookmarked, setBookmarked] = useState(false)
   const [reporting, setReporting] = useState(false)
   const [neighbours, setNeighbours] = useState<Neighbours | null>(null)
@@ -108,6 +119,7 @@ export default function PracticeProblem() {
     setLoading(true)
     setError('none')
     setPicked(null)
+    setDraft('')
     api.get(`/practice/problems/${id}?language=${language}`)
       .then(r => {
         if (cancelled) return
@@ -142,10 +154,18 @@ export default function PracticeProblem() {
     return () => { cancelled = true }
   }, [id, index, hasPlace, language, listKey])
 
+  /** Single-choice: one click is the whole answer, so it checks immediately. */
   function choose(opt: string) {
     if (!problem || picked) return
     setPicked(opt)
-    markProblem(problem.id, opt === problem.correctOption ? 'SOLVED' : 'TRIED')
+    markProblem(problem.id, isKeyOption(problem, opt) ? 'SOLVED' : 'TRIED')
+  }
+
+  /** Multiple-select and type-in: check what has been built so far. */
+  function check() {
+    if (!problem || picked || !isAnswered(draft)) return
+    setPicked(draft)
+    markProblem(problem.id, wasCorrect(problem, draft) ? 'SOLVED' : 'TRIED')
   }
 
   async function toggleBookmark() {
@@ -287,28 +307,62 @@ export default function PracticeProblem() {
 
             {problem.text && <RichText as="div" className="pp-qtext" html={problem.text} />}
 
-            {!picked && <div className="practice-banner">Pick an answer to check yourself</div>}
+            {!picked && (
+              <div className="practice-banner">
+                {isSingleChoice(problem.questionType)
+                  ? 'Pick an answer to check yourself'
+                  : problem.questionType === 'TITA'
+                    ? 'Type your answer, then check yourself'
+                    : 'Tick every correct option, then check yourself'}
+              </div>
+            )}
 
-            <div className="review-options qd-options" style={{ marginTop: 12 }}>
-              {OPTIONS.map(opt => {
-                const isCorrect = opt === problem.correctOption
-                const isPicked = opt === picked
-                const cls = picked && isCorrect ? 'correct-opt' : picked && isPicked ? 'wrong-opt' : ''
-                return (
-                  <div
-                    key={opt}
-                    className={`review-option ${cls}`}
-                    style={{ cursor: picked ? 'default' : 'pointer' }}
-                    onClick={() => choose(opt)}
-                  >
-                    <span className="option-label">{opt}</span>
-                    <span><RichText html={optText(problem, opt)} /></span>
-                    {picked && isCorrect && <span className="opt-tag correct-tag">✓ Correct answer</span>}
-                    {picked && isPicked && !isCorrect && <span className="opt-tag wrong-tag">Your pick</span>}
+            {/* Single-choice checks on the click, so the options double as the
+                review. The other two formats have to be built first, so they
+                use the exam room's own input until they are checked. */}
+            {isSingleChoice(problem.questionType) || picked ? (
+              problem.questionType === 'TITA' ? (
+                <div className="qd-tita-review" style={{ marginTop: 12 }}>
+                  <div className={`qd-tita-row ${wasCorrect(problem, picked ?? undefined) ? 'correct-opt' : 'wrong-opt'}`}>
+                    <span className="option-label">You</span>
+                    <span>{typedText(picked ?? undefined) || <em>—</em>}</span>
                   </div>
-                )
-              })}
-            </div>
+                  <div className="qd-tita-row correct-opt">
+                    <span className="option-label">Key</span>
+                    <span>{keyLabel(problem)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="review-options qd-options" style={{ marginTop: 12 }}>
+                  {OPTIONS.map(opt => {
+                    const isCorrect = isKeyOption(problem, opt)
+                    const isPicked = hasOption(picked ?? undefined, opt)
+                    const cls = picked && isCorrect ? 'correct-opt' : picked && isPicked ? 'wrong-opt' : ''
+                    return (
+                      <div
+                        key={opt}
+                        className={`review-option ${cls}`}
+                        style={{ cursor: picked ? 'default' : 'pointer' }}
+                        onClick={() => { if (isSingleChoice(problem.questionType)) choose(opt) }}
+                      >
+                        <span className="option-label">{opt}</span>
+                        <span><RichText html={optText(problem, opt)} /></span>
+                        {picked && isCorrect && <span className="opt-tag correct-tag">✓ Correct answer</span>}
+                        {picked && isPicked && !isCorrect && <span className="opt-tag wrong-tag">Your pick</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            ) : (
+              <div style={{ marginTop: 12 }}>
+                <AnswerInput q={problem as never} value={draft} onChange={setDraft} />
+                <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }}
+                  disabled={!isAnswered(draft)} onClick={check}>
+                  Check answer
+                </button>
+              </div>
+            )}
 
             {picked && (
               <>
@@ -321,7 +375,8 @@ export default function PracticeProblem() {
                     : '✗ Not quite — the correct answer is highlighted.'}
                 </div>
                 <div className="qd-practice-actions">
-                  <button className="btn btn-ghost btn-sm" onClick={() => setPicked(null)}>Try again</button>
+                  <button className="btn btn-ghost btn-sm"
+                    onClick={() => { setPicked(null); setDraft('') }}>Try again</button>
                 </div>
                 {problem.solution ? (
                   <div className="qd-solution">

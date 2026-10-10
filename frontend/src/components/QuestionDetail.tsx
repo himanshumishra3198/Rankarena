@@ -3,6 +3,9 @@ import { QuestionContext } from './QuestionContent'
 import { RichText } from './RichText'
 import { fmtSecs, timeVerdict } from '../lib/time'
 import api from '../lib/api'
+import {
+  type Answer, type AnswerKeyFields, hasOption, isAnswered, isKeyOption, keyLabel, typedText, wasCorrect,
+} from '../lib/answers'
 
 /**
  * One attempted question, in full, rendered inline under the question map.
@@ -15,18 +18,16 @@ import api from '../lib/api'
  * whatever the map is currently showing.
  */
 
-export interface ReviewQuestion {
+export interface ReviewQuestion extends AnswerKeyFields {
   id: string
   text: string
   imageUrl?: string | null
   optionA: string; optionB: string; optionC: string; optionD: string
-  correctOption: string
   subject: string
   /** EASY | MEDIUM | HARD — lowercased into a badge class. */
   difficulty: string
   marks: number
   negativeMarks: number
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: {
     id: string; title: string; content: string
@@ -36,16 +37,14 @@ export interface ReviewQuestion {
   solution?: string | null
 }
 
-interface PracticeRecommendation {
+interface PracticeRecommendation extends AnswerKeyFields {
   id: string
   text: string
   imageUrl?: string | null
   optionA: string; optionB: string; optionC: string; optionD: string
-  correctOption: string
   subject: string
   topic: string | null
   difficulty: string
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: ReviewQuestion['passage']
   solution?: string | null
@@ -75,8 +74,11 @@ export default function QuestionDetail({
   q: ReviewQuestion
   /** Number in the paper, not in the filtered set. */
   qNum: number
-  /** The option the candidate picked, if any. */
-  given?: string
+  /**
+   * What the candidate answered, if anything: an option for single-choice, a
+   * list of them for multiple-select, the typed text for a type-in.
+   */
+  given?: Answer
   marked?: boolean
   timeSpent?: number
   avgTime?: number
@@ -153,8 +155,10 @@ export default function QuestionDetail({
     }
   }
 
-  const isCorrect = given === q.correctOption
-  const isWrong = !!given && given !== q.correctOption
+  // Judged by the shared marker, so the verdict shown here matches the one
+  // the score was computed from for every format.
+  const isCorrect = wasCorrect(q, given)
+  const isWrong = isAnswered(given) && !isCorrect
   const marksEarned = isCorrect ? q.marks : isWrong ? -q.negativeMarks : 0
   const verdict = timeSpent !== undefined && avgTime !== undefined && avgTime > 0
     ? timeVerdict(timeSpent, avgTime) : null
@@ -226,7 +230,7 @@ export default function QuestionDetail({
             <div className="practice-banner">🔄 Re-attempt mode — pick an answer (won't change your score)</div>
             <div className="review-options qd-options">
               {OPTIONS.map(opt => {
-                const isCorrectOpt = opt === q.correctOption
+                const isCorrectOpt = isKeyOption(q, opt)
                 const isPicked = opt === picked
                 const cls = picked && isCorrectOpt ? 'correct-opt' : picked && isPicked ? 'wrong-opt' : ''
                 return (
@@ -242,8 +246,8 @@ export default function QuestionDetail({
               })}
             </div>
             {picked && (
-              <div className="qd-practice-verdict" style={{ color: picked === q.correctOption ? '#16a34a' : '#dc2626' }}>
-                {picked === q.correctOption ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
+              <div className="qd-practice-verdict" style={{ color: isKeyOption(q, picked) ? '#16a34a' : '#dc2626' }}>
+                {isKeyOption(q, picked) ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted.'}
               </div>
             )}
             <div className="qd-practice-actions">
@@ -255,20 +259,38 @@ export default function QuestionDetail({
           </>
         ) : (
           <>
-            <div className="review-options qd-options">
-              {OPTIONS.map(opt => {
-                const isCorrectOpt = opt === q.correctOption
-                const isGivenOpt = opt === given
-                return (
-                  <div key={opt} className={`review-option ${isCorrectOpt ? 'correct-opt' : isGivenOpt ? 'wrong-opt' : ''}`}>
-                    <span className="option-label">{opt}</span>
-                    <span><RichText html={optText(q, opt)} /></span>
-                    {isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
-                    {isGivenOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your answer</span>}
-                  </div>
-                )
-              })}
-            </div>
+            {/* A type-in question has no options to lay out, so the review
+                shows what was typed against what would have been accepted. */}
+            {q.questionType === 'TITA' ? (
+              <div className="qd-tita-review">
+                <div className={`qd-tita-row ${isCorrect ? 'correct-opt' : isWrong ? 'wrong-opt' : ''}`}>
+                  <span className="option-label">You</span>
+                  <span>{isAnswered(given) ? typedText(given) : <em>Not answered</em>}</span>
+                </div>
+                <div className="qd-tita-row correct-opt">
+                  <span className="option-label">Key</span>
+                  <span>{keyLabel(q)}</span>
+                  <span className="opt-tag correct-tag">
+                    {(q.acceptedAnswers?.length ?? 0) > 1 ? '✓ Any of these' : '✓ Correct answer'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="review-options qd-options">
+                {OPTIONS.map(opt => {
+                  const isCorrectOpt = isKeyOption(q, opt)
+                  const isGivenOpt = hasOption(given, opt)
+                  return (
+                    <div key={opt} className={`review-option ${isCorrectOpt ? 'correct-opt' : isGivenOpt ? 'wrong-opt' : ''}`}>
+                      <span className="option-label">{opt}</span>
+                      <span><RichText html={optText(q, opt)} /></span>
+                      {isCorrectOpt && <span className="opt-tag correct-tag">✓ Correct answer</span>}
+                      {isGivenOpt && !isCorrectOpt && <span className="opt-tag wrong-tag">Your answer</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             <div className="qd-practice-actions">
               <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary)' }}
                 onClick={() => setPractice(true)}>

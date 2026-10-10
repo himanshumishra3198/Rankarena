@@ -403,6 +403,8 @@ export const ModelName = {
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
   RatingHistory: 'RatingHistory',
+  Tag: 'Tag',
+  QuestionTag: 'QuestionTag',
   QuestionTranslation: 'QuestionTranslation',
   PassageTranslation: 'PassageTranslation'
 } as const
@@ -420,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "authToken" | "notification" | "article" | "articleComment" | "articleVote" | "commentVote" | "bookmark" | "follow" | "contest" | "passage" | "question" | "questionReport" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory" | "questionTranslation" | "passageTranslation"
+    modelProps: "user" | "authToken" | "notification" | "article" | "articleComment" | "articleVote" | "commentVote" | "bookmark" | "follow" | "contest" | "passage" | "question" | "questionReport" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory" | "tag" | "questionTag" | "questionTranslation" | "passageTranslation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1830,6 +1832,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Tag: {
+      payload: Prisma.$TagPayload<ExtArgs>
+      fields: Prisma.TagFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TagFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TagFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        findFirst: {
+          args: Prisma.TagFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TagFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        findMany: {
+          args: Prisma.TagFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>[]
+        }
+        create: {
+          args: Prisma.TagCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        createMany: {
+          args: Prisma.TagCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TagCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>[]
+        }
+        delete: {
+          args: Prisma.TagDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        update: {
+          args: Prisma.TagUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        deleteMany: {
+          args: Prisma.TagDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TagUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TagUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>[]
+        }
+        upsert: {
+          args: Prisma.TagUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        aggregate: {
+          args: Prisma.TagAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTag>
+        }
+        groupBy: {
+          args: Prisma.TagGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TagGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TagCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TagCountAggregateOutputType> | number
+        }
+      }
+    }
+    QuestionTag: {
+      payload: Prisma.$QuestionTagPayload<ExtArgs>
+      fields: Prisma.QuestionTagFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.QuestionTagFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.QuestionTagFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>
+        }
+        findFirst: {
+          args: Prisma.QuestionTagFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.QuestionTagFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>
+        }
+        findMany: {
+          args: Prisma.QuestionTagFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>[]
+        }
+        create: {
+          args: Prisma.QuestionTagCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>
+        }
+        createMany: {
+          args: Prisma.QuestionTagCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.QuestionTagCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>[]
+        }
+        delete: {
+          args: Prisma.QuestionTagDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>
+        }
+        update: {
+          args: Prisma.QuestionTagUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>
+        }
+        deleteMany: {
+          args: Prisma.QuestionTagDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.QuestionTagUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.QuestionTagUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>[]
+        }
+        upsert: {
+          args: Prisma.QuestionTagUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTagPayload>
+        }
+        aggregate: {
+          args: Prisma.QuestionTagAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateQuestionTag>
+        }
+        groupBy: {
+          args: Prisma.QuestionTagGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionTagGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.QuestionTagCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionTagCountAggregateOutputType> | number
+        }
+      }
+    }
     QuestionTranslation: {
       payload: Prisma.$QuestionTranslationPayload<ExtArgs>
       fields: Prisma.QuestionTranslationFieldRefs
@@ -2143,6 +2293,7 @@ export const ContestScalarFieldEnum = {
   durationMinutes: 'durationMinutes',
   negativeMarks: 'negativeMarks',
   sectionLimits: 'sectionLimits',
+  exam: 'exam',
   status: 'status',
   announcedAt: 'announcedAt',
   createdAt: 'createdAt'
@@ -2173,6 +2324,8 @@ export const QuestionScalarFieldEnum = {
   optionC: 'optionC',
   optionD: 'optionD',
   correctOption: 'correctOption',
+  answerConfig: 'answerConfig',
+  exam: 'exam',
   subject: 'subject',
   topic: 'topic',
   difficulty: 'difficulty',
@@ -2203,6 +2356,7 @@ export type QuestionReportScalarFieldEnum = (typeof QuestionReportScalarFieldEnu
 export const MockTestScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  exam: 'exam',
   subject: 'subject',
   durationMinutes: 'durationMinutes',
   negativeMarks: 'negativeMarks',
@@ -2286,6 +2440,27 @@ export const RatingHistoryScalarFieldEnum = {
 } as const
 
 export type RatingHistoryScalarFieldEnum = (typeof RatingHistoryScalarFieldEnum)[keyof typeof RatingHistoryScalarFieldEnum]
+
+
+export const TagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  category: 'category',
+  exam: 'exam',
+  active: 'active',
+  createdAt: 'createdAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const QuestionTagScalarFieldEnum = {
+  questionId: 'questionId',
+  tagId: 'tagId'
+} as const
+
+export type QuestionTagScalarFieldEnum = (typeof QuestionTagScalarFieldEnum)[keyof typeof QuestionTagScalarFieldEnum]
 
 
 export const QuestionTranslationScalarFieldEnum = {
@@ -2501,6 +2676,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'Exam'
+ */
+export type EnumExamFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Exam'>
+    
+
+
+/**
+ * Reference to a field of type 'Exam[]'
+ */
+export type ListEnumExamFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Exam[]'>
+    
+
+
+/**
  * Reference to a field of type 'ContestStatus'
  */
 export type EnumContestStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ContestStatus'>
@@ -2609,6 +2798,20 @@ export type EnumLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'Language[]'
  */
 export type ListEnumLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Language[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TagCategory'
+ */
+export type EnumTagCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TagCategory'>
+    
+
+
+/**
+ * Reference to a field of type 'TagCategory[]'
+ */
+export type ListEnumTagCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TagCategory[]'>
     
 
 
@@ -2754,6 +2957,8 @@ export type GlobalOmitConfig = {
   contestQuestion?: Prisma.ContestQuestionOmit
   participation?: Prisma.ParticipationOmit
   ratingHistory?: Prisma.RatingHistoryOmit
+  tag?: Prisma.TagOmit
+  questionTag?: Prisma.QuestionTagOmit
   questionTranslation?: Prisma.QuestionTranslationOmit
   passageTranslation?: Prisma.PassageTranslationOmit
 }

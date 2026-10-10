@@ -12,9 +12,15 @@ import { SegmentedRadio } from '../components/SegmentedRadio'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
 import type { MockTest, MockTestQuestion, Question, Passage, QuestionType, Language } from '../lib/types'
 import { SECTION_LABELS, SECTIONS } from '../lib/types'
+import AnswerKeyEditor, {
+  EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload, answerLabel,
+} from '../components/AnswerKeyEditor'
+import TagPicker from '../components/TagPicker'
+import { useExams, specOf } from '../lib/exams'
 
 const TYPE_LABELS: Record<string, string> = {
   STANDARD: 'Standard', SYLLOGISM: 'Syllogism', PASSAGE: 'Passage', TABLE: 'Table',
+  MSQ: 'Multiple correct', TITA: 'Type the answer',
 }
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
 
@@ -22,8 +28,12 @@ const emptyCreate = {
   questionType: 'STANDARD' as QuestionType,
   text: '', imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
-  correctOption: '',
+  // The answer key in all three shapes; only the one matching the chosen
+  // format is sent. Single choice starts blank rather than at 'A', so the
+  // admin has to pick one consciously.
+  ...EMPTY_ANSWER_KEY, correctOption: '',
   topic: '',
+  tagIds: [] as string[],
   difficulty: 'MEDIUM',
   solution: '',
   hi: { text: '', optionA: '', optionB: '', optionC: '', optionD: '', solution: '' },
@@ -49,6 +59,13 @@ export default function MockTestDetail() {
   const confirm = useConfirm()
   const navigate = useNavigate()
   const [mock, setMock] = useState<MockTest | null>(null)
+
+  // The paper's examination decides which answer formats a new question may
+  // use and whether questions are filed by syllabus topic or by tag.
+  const { catalogue } = useExams()
+  const paperExam = mock?.exam ?? 'SSC_CGL'
+  const paperTypes: QuestionType[] =
+    specOf(catalogue, paperExam)?.questionTypes ?? ['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE']
   const [mtqs, setMtqs] = useState<MockTestQuestion[]>([])
   const [bank, setBank] = useState<Question[]>([])
   const [passages, setPassages] = useState<Passage[]>([])
@@ -127,7 +144,8 @@ export default function MockTestDetail() {
       questionType: q.questionType,
       text: q.text, imageUrl: q.imageUrl ?? '',
       optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
-      correctOption: q.correctOption,
+      ...answerKeyFrom(q),
+      tagIds: (q.tags ?? []).map(t => t.id),
       topic: q.topic ?? '',
       difficulty: q.difficulty,
       solution: q.solution ?? '',
@@ -154,10 +172,13 @@ export default function MockTestDetail() {
     const isSyll = cForm.questionType === 'SYLLOGISM'
     const needsPassage = cForm.questionType === 'PASSAGE' || cForm.questionType === 'TABLE'
     if (!isSyll && !hasContent(cForm.text)) { setError('Question text is required.'); return }
-    if ((['A', 'B', 'C', 'D'] as const).some(o => !hasContent(cForm[`option${o}` as keyof typeof emptyCreate] as string))) {
+    // A type-in question has no options to fill in.
+    if (cForm.questionType !== 'TITA'
+      && (['A', 'B', 'C', 'D'] as const).some(o => !hasContent(cForm[`option${o}` as keyof typeof emptyCreate] as string))) {
       setError('All four options are required (text or image).'); return
     }
-    if (!cForm.correctOption) { setError('Select the correct option.'); return }
+    const keyError = answerKeyError(cForm.questionType, cForm)
+    if (keyError) { setError(keyError); return }
     if (needsPassage && !cForm.passageId) { setError('Select a passage/table for this question (create it in the Questions tab first).'); return }
 
     // Caught here rather than left to the server, so the admin lands on the tab
@@ -173,10 +194,17 @@ export default function MockTestDetail() {
       questionType: cForm.questionType,
       text: cForm.text,
       imageUrl: cForm.imageUrl || null,
-      optionA: cForm.optionA, optionB: cForm.optionB, optionC: cForm.optionC, optionD: cForm.optionD,
-      correctOption: cForm.correctOption,
+      // A question written here belongs to this paper's examination and
+      // section — there is nothing to choose.
+      exam: paperExam,
+      optionA: cForm.questionType === 'TITA' ? '' : cForm.optionA,
+      optionB: cForm.questionType === 'TITA' ? '' : cForm.optionB,
+      optionC: cForm.questionType === 'TITA' ? '' : cForm.optionC,
+      optionD: cForm.questionType === 'TITA' ? '' : cForm.optionD,
+      ...answerKeyPayload(cForm.questionType, cForm),
       subject: mock.subject,
-      topic: cForm.topic || null,
+      topic: paperExam === 'SSC_CGL' ? (cForm.topic || null) : null,
+      tagIds: cForm.tagIds,
       difficulty: cForm.difficulty,
       solution: hasContent(cForm.solution) ? cForm.solution : null,
       translations: translationsPayload(cForm.hi),
@@ -402,7 +430,7 @@ export default function MockTestDetail() {
               <div className="form-group">
                 <label>Question Type</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 4 }}>
-                  {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
+                  {paperTypes.map(t => (
                     <label key={t} style={{
                       border: `2px solid ${cForm.questionType === t ? 'var(--primary)' : 'var(--border)'}`,
                       borderRadius: 8, padding: '8px 10px', cursor: 'pointer', textAlign: 'center',
@@ -516,21 +544,22 @@ export default function MockTestDetail() {
               </div>
 
 
+              <AnswerKeyEditor
+                type={cForm.questionType}
+                value={cForm}
+                onChange={patch => setCForm(f => ({ ...f, ...patch }))}
+              />
+
               <div className="form-row">
-                <div className="form-group">
-                  <label>Correct Option <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <SegmentedRadio value={cForm.correctOption}
-                    options={['A', 'B', 'C', 'D'].map(o => ({ value: o, label: o }))}
-                    onChange={v => setCForm(f => ({ ...f, correctOption: v }))} />
-                </div>
                 <div className="form-group">
                   <label>Difficulty</label>
                   <SegmentedRadio value={cForm.difficulty}
                     options={DIFFICULTIES.map(d => ({ value: d as string, label: d }))}
                     onChange={v => setCForm(f => ({ ...f, difficulty: v }))} />
                 </div>
-                <div className="form-group">
-                  {/* The mock fixes the subject, so the topic list follows it. */}
+                <div className="form-group" style={{ display: paperExam === 'SSC_CGL' ? undefined : 'none' }}>
+                  {/* The mock fixes the subject, so the topic list follows it.
+                      Only SSC files questions this way; other exams use tags. */}
                   <label>Topic <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
                   <select className="input" value={cForm.topic}
                     onChange={e => setCForm(f => ({ ...f, topic: e.target.value }))}>
@@ -541,6 +570,9 @@ export default function MockTestDetail() {
                   </select>
                 </div>
               </div>
+
+              <TagPicker exam={paperExam} value={cForm.tagIds}
+                onChange={ids => setCForm(f => ({ ...f, tagIds: ids }))} />
 
 
               <div style={{ display: 'flex', gap: 10 }}>
@@ -578,7 +610,9 @@ export default function MockTestDetail() {
                     </td>
                     <td style={{ fontSize: 12 }}>{TYPE_LABELS[mtq.question.questionType] ?? 'Standard'}</td>
                     <td style={{ fontSize: 13 }}>+{mtq.marks} / −{mtq.negativeMarks}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--success)' }}>{mtq.question.correctOption}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--success)', fontSize: 12.5 }}>
+                      {answerLabel(mtq.question)}
+                    </td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button className="btn btn-sm btn-ghost" onClick={() => editQuestion(mtq.question)}>Edit</button>

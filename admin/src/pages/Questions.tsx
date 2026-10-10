@@ -8,37 +8,53 @@ import { RichText, stripHtml } from '../components/RichText'
 import QuestionContentTabs, {
   hindiCompleteOf, hindiStartedOf, translationsPayload,
 } from '../components/QuestionContentTabs'
-import type { Question, Passage, QuestionType } from '../lib/types'
+import type { Exam, Question, Passage, QuestionType } from '../lib/types'
+import AnswerKeyEditor, {
+  EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload, answerLabel,
+} from '../components/AnswerKeyEditor'
+import TagPicker, { TagChip } from '../components/TagPicker'
+import { useExams, sectionsOf, specOf } from '../lib/exams'
 // Still used by the bank listing's Languages column, not by the editor.
-import { LANGUAGES, SECTIONS as SUBJECTS } from '../lib/types'
+import { LANGUAGES } from '../lib/types'
 import type { Language } from '../lib/types'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
 const SUBJECT_LABELS: Record<string, string> = {
   QUANT: 'Quantitative Aptitude', REASONING: 'Logical Reasoning',
   ENGLISH: 'English Language', GK: 'General Knowledge',
+  VARC: 'Verbal Ability & RC', DILR: 'Data Interpretation & LR',
+  QA: 'Quantitative Ability',
 }
+
 const TYPE_LABELS: Record<QuestionType, string> = {
   STANDARD: 'Standard MCQ',
   SYLLOGISM: 'Syllogism / Logic',
   PASSAGE: 'Passage-based',
   TABLE: 'Table-based',
+  MSQ: 'Multiple correct (MSQ)',
+  TITA: 'Type the answer (TITA)',
 }
 const TYPE_DESCRIPTIONS: Record<QuestionType, string> = {
   STANDARD: 'Regular question with text and 4 options',
   SYLLOGISM: 'Statements + Conclusions in bold format',
   PASSAGE: 'Question linked to a reading passage',
   TABLE: 'Question linked to a data table',
+  MSQ: 'Several options are correct; the candidate ticks each one',
+  TITA: 'No options — the candidate types a number or a word',
 }
 
 const emptyForm = {
   questionType: 'STANDARD' as QuestionType,
+  exam: 'SSC_CGL' as Exam,
   text: '',
   imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
-  correctOption: 'A' as Question['correctOption'],
+  // The answer key, in all three shapes. Only the one matching the chosen
+  // format is sent — see answerKeyPayload.
+  ...EMPTY_ANSWER_KEY,
   subject: 'REASONING' as Question['subject'],
   topic: '',
+  tagIds: [] as string[],
   difficulty: 'MEDIUM' as Question['difficulty'],
   passageId: '',
   solution: '',
@@ -189,9 +205,70 @@ export default function Questions() {
   const [uploading, setUploading] = useState(false)
   const [filterSubject, setFilterSubject] = useState('')
   const [filterType, setFilterType] = useState('')
+  // '' is every exam, so the bank still opens on the whole bank.
+  const [filterExam, setFilterExam] = useState<'' | Exam>('')
+  const [filterTagIds, setFilterTagIds] = useState<string[]>([])
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingPassageId, setEditingPassageId] = useState<string | null>(null)
+
+  // Sections and answer formats come from the API, so the panel cannot offer
+  // a combination the server will refuse.
+  const { catalogue, error: examError } = useExams()
+  const examSections = sectionsOf(catalogue, form.exam)
+  const allowedTypes: QuestionType[] =
+    specOf(catalogue, form.exam)?.questionTypes ?? ['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE']
+
+  /**
+   * The syllabus topic list for a section, which only SSC has.
+   *
+   * Returns nothing for a CAT section rather than throwing: TOPICS_BY_SUBJECT
+   * is keyed by the four SSC subjects, and indexing it with VARC used to be a
+   * type error and would now be an undefined at runtime.
+   */
+  /**
+   * The sections and formats the bank's filters offer.
+   *
+   * With an exam chosen, only that exam's. With none, every section of every
+   * exam — de-duplicated, because two exams could in principle share one.
+   */
+  const bankSections = (filterExam
+    ? sectionsOf(catalogue, filterExam)
+    : (catalogue?.exams ?? []).flatMap(e => e.sections)
+  ).filter((sec, i, all) => all.findIndex(x => x.key === sec.key) === i)
+
+  const bankTypes: QuestionType[] = [...new Set(
+    (filterExam
+      ? specOf(catalogue, filterExam)?.questionTypes ?? []
+      : (catalogue?.exams ?? []).flatMap(e => e.questionTypes)),
+  )]
+
+  function topicsFor(subject: string): string[] {
+    return (TOPICS_BY_SUBJECT as Record<string, string[] | undefined>)[subject] ?? []
+  }
+
+  /**
+   * Switching examination.
+   *
+   * Clears the section, topic, tags and — if it is not available on the new
+   * exam — the answer format, because none of them carry over. Leaving a VARC
+   * section selected on an SSC question would be rejected on save with an
+   * error about a field the admin cannot see they changed.
+   */
+  function pickExam(exam: Exam) {
+    const spec = catalogue?.exams.find(e => e.key === exam)
+    const firstSection = spec?.sections[0]?.key
+    setForm(f => ({
+      ...f,
+      exam,
+      subject: (firstSection ?? f.subject) as Question['subject'],
+      topic: '',
+      tagIds: [],
+      questionType: spec && !spec.questionTypes.includes(f.questionType)
+        ? 'STANDARD'
+        : f.questionType,
+    }))
+  }
 
   // Debounced near-duplicate check as the admin types the question text.
   useEffect(() => {
@@ -256,6 +333,10 @@ export default function Questions() {
           ...(filterSubject ? { subject: filterSubject } : {}),
           ...(filterTopic ? { topic: filterTopic } : {}),
           ...(filterType ? { questionType: filterType } : {}),
+          ...(filterExam ? { exam: filterExam } : {}),
+          // Comma-joined: the server accepts that as well as repeated keys,
+          // and it keeps the URL readable.
+          ...(filterTagIds.length ? { tagIds: filterTagIds.join(',') } : {}),
           ...(searchQuery ? { search: searchQuery } : {}),
           page,
           perPage: PER_PAGE,
@@ -269,7 +350,7 @@ export default function Questions() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [filterSubject, filterType, filterTopic, searchQuery, page])
+  useEffect(() => { load() }, [filterSubject, filterType, filterTopic, filterExam, filterTagIds, searchQuery, page])
 
   // Debounce typing so the bank isn't queried on every keystroke.
   useEffect(() => {
@@ -279,7 +360,7 @@ export default function Questions() {
 
   // Any change to what's being looked at starts again from page 1 — staying on
   // page 7 of a narrower result set lands on an empty screen.
-  useEffect(() => { setPage(1) }, [filterSubject, filterType, filterTopic, searchQuery])
+  useEffect(() => { setPage(1) }, [filterSubject, filterType, filterTopic, filterExam, filterTagIds, searchQuery])
 
   // ── Open / close / edit helpers ───────────────────────────────────────────
   function openCreateQuestion() {
@@ -292,12 +373,14 @@ export default function Questions() {
   function editQuestion(q: Question) {
     setForm({
       questionType: q.questionType,
+      exam: q.exam ?? 'SSC_CGL',
       text: q.text,
       imageUrl: q.imageUrl ?? '',
       optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
-      correctOption: q.correctOption as any,
+      ...answerKeyFrom(q),
       subject: q.subject,
       topic: q.topic ?? '',
+      tagIds: (q.tags ?? []).map(t => t.id),
       difficulty: q.difficulty,
       passageId: q.passageId ?? '',
       solution: q.solution ?? '',
@@ -344,9 +427,13 @@ export default function Questions() {
     if (form.questionType !== 'SYLLOGISM' && !filled(form.text)) {
       setActiveLang('EN'); setError('Question text is required.'); return
     }
-    if ((['A', 'B', 'C', 'D'] as const).some(o => !filled(form[`option${o}` as keyof typeof emptyForm] as string))) {
+    // A type-in question has no options to fill in.
+    if (form.questionType !== 'TITA'
+      && (['A', 'B', 'C', 'D'] as const).some(o => !filled(form[`option${o}` as keyof typeof emptyForm] as string))) {
       setError('All four options are required (text or image).'); return
     }
+    const keyError = answerKeyError(form.questionType, form)
+    if (keyError) { setError(keyError); return }
     // Caught here rather than left to the server, so the admin lands on the
     // tab holding the wrong fields instead of reading a 400 about them.
     if (hindiStarted && !hindiComplete) {
@@ -362,11 +449,18 @@ export default function Questions() {
         questionType: form.questionType,
         text: form.text,
         imageUrl: form.imageUrl || null,
-        optionA: form.optionA, optionB: form.optionB,
-        optionC: form.optionC, optionD: form.optionD,
-        correctOption: form.correctOption,
+        exam: form.exam,
+        // Blank rather than omitted for a type-in question, so switching a
+        // question to that format clears options it will never show again.
+        optionA: form.questionType === 'TITA' ? '' : form.optionA,
+        optionB: form.questionType === 'TITA' ? '' : form.optionB,
+        optionC: form.questionType === 'TITA' ? '' : form.optionC,
+        optionD: form.questionType === 'TITA' ? '' : form.optionD,
+        ...answerKeyPayload(form.questionType, form),
         subject: form.subject,
-        topic: form.topic || null,
+        // Only SSC files questions by syllabus topic; CAT uses tags.
+        topic: form.exam === 'SSC_CGL' ? (form.topic || null) : null,
+        tagIds: form.tagIds,
         difficulty: form.difficulty,
         passageId: (form.questionType === 'PASSAGE' || form.questionType === 'TABLE') && form.passageId
           ? form.passageId : null,
@@ -511,11 +605,40 @@ export default function Questions() {
                   and so a translator cannot accidentally change the
                   correct option or the difficulty. */}
               <div className="q-shared">
-                {/* Question type selector */}
+                {/* Which examination this question is written for. First,
+                    because it decides the sections and the answer formats
+                    everything below it offers. */}
+                <div className="form-group">
+                  <label>Examination</label>
+                  {examError && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{examError}</div>}
+                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                    {(catalogue?.exams ?? []).map(e => (
+                      <label key={e.key} style={{
+                        border: `2px solid ${form.exam === e.key ? 'var(--primary)' : 'var(--border)'}`,
+                        borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                        background: form.exam === e.key ? 'var(--primary-light)' : 'var(--surface)',
+                        color: form.exam === e.key ? 'var(--primary)' : 'var(--heading)',
+                      }}>
+                        <input type="radio" style={{ display: 'none' }} checked={form.exam === e.key}
+                          onChange={() => pickExam(e.key)} />
+                        {e.label}
+                      </label>
+                    ))}
+                  </div>
+                  {editingId && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                      Moving a question to another examination also clears its section and tags,
+                      because neither belongs to the new one.
+                    </div>
+                  )}
+                </div>
+
+                {/* Question type selector. Which formats are on offer comes
+                    from the exam — SSC has no type-in questions. */}
                 <div className="form-group">
                   <label>Question Type</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 4 }}>
-                    {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 8, marginTop: 4 }}>
+                    {allowedTypes.map(t => (
                       <label key={t} style={{
                         border: `2px solid ${form.questionType === t ? 'var(--primary)' : 'var(--border)'}`,
                         borderRadius: 8, padding: '10px 12px', cursor: 'pointer',
@@ -586,28 +709,28 @@ export default function Questions() {
 
 
 
+                {/* The answer key, in whichever shape this format needs. */}
+                <AnswerKeyEditor
+                  type={form.questionType}
+                  value={form}
+                  onChange={patch => setForm(f => ({ ...f, ...patch }))}
+                />
+
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Correct Option</label>
-                    <select className="input" value={form.correctOption}
-                      onChange={e => set('correctOption', e.target.value as any)}>
-                      {['A', 'B', 'C', 'D'].map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Subject</label>
+                    <label>Section</label>
                     <select className="input" value={form.subject}
                       onChange={e => {
                         const next = e.target.value as Question['subject']
                         setForm(f => ({
                           ...f,
                           subject: next,
-                          // A topic belongs to one subject, so switching subject
-                          // drops a tag that no longer applies.
-                          topic: TOPICS_BY_SUBJECT[next].includes(f.topic) ? f.topic : '',
+                          // A topic belongs to one subject, so switching
+                          // subject drops a tag that no longer applies.
+                          topic: topicsFor(next).includes(f.topic) ? f.topic : '',
                         }))
                       }}>
-                      {SUBJECTS.map(s => <option key={s} value={s}>{SUBJECT_LABELS[s]}</option>)}
+                      {examSections.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
@@ -619,23 +742,29 @@ export default function Questions() {
                   </div>
                 </div>
 
+                {/* The syllabus topic list only exists for SSC. Everything
+                    else is labelled with tags, which are renameable and
+                    shared across sections. */}
+                {form.exam === 'SSC_CGL' && (
+                  <div className="form-group">
+                    <label>
+                      Topic{' '}
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                        (optional — helps filter the bank and build topic-wise practice later)
+                      </span>
+                    </label>
+                    <select className="input" value={form.topic}
+                      onChange={e => set('topic', e.target.value)}>
+                      <option value="">— No topic —</option>
+                      {topicsFor(form.subject).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-                {/* Optional syllabus topic; the options follow the chosen subject. */}
-                <div className="form-group">
-                  <label>
-                    Topic{' '}
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                      (optional — helps filter the bank and build topic-wise practice later)
-                    </span>
-                  </label>
-                  <select className="input" value={form.topic}
-                    onChange={e => set('topic', e.target.value)}>
-                    <option value="">— No topic —</option>
-                    {TOPICS_BY_SUBJECT[form.subject].map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+                <TagPicker exam={form.exam} value={form.tagIds}
+                  onChange={ids => set('tagIds', ids)} />
 
               </div>
 
@@ -746,12 +875,14 @@ export default function Questions() {
             <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
               <button className={`tab-btn ${filterSubject === '' ? 'active' : ''}`}
                 onClick={() => { setFilterSubject(''); setFilterTopic('') }}>
-                All subjects
+                All sections
               </button>
-              {SUBJECTS.map(s => (
-                <button key={s} className={`tab-btn ${filterSubject === s ? 'active' : ''}`}
-                  onClick={() => { setFilterSubject(s); setFilterTopic('') }}>
-                  {SUBJECT_LABELS[s]}
+              {/* The sections on offer follow the exam filter; with no exam
+                  chosen, every section of every exam is listed. */}
+              {bankSections.map(sec => (
+                <button key={sec.key} className={`tab-btn ${filterSubject === sec.key ? 'active' : ''}`}
+                  onClick={() => { setFilterSubject(sec.key); setFilterTopic('') }}>
+                  {sec.short}
                 </button>
               ))}
             </div>
@@ -770,22 +901,39 @@ export default function Questions() {
                   <button className="qb-search-clear" onClick={() => setSearch('')} title="Clear search">×</button>
                 )}
               </div>
+              <select className="input" style={{ width: 'auto' }} value={filterExam}
+                onChange={e => {
+                  // The chosen section may not exist in the new exam, so it
+                  // is cleared rather than silently returning nothing.
+                  setFilterExam(e.target.value as '' | Exam)
+                  setFilterSubject(''); setFilterTopic(''); setFilterTagIds([])
+                }}>
+                <option value="">All exams</option>
+                {(catalogue?.exams ?? []).map(ex => (
+                  <option key={ex.key} value={ex.key}>{ex.label}</option>
+                ))}
+              </select>
               <select className="input" style={{ width: 'auto' }} value={filterType}
                 onChange={e => setFilterType(e.target.value)}>
                 <option value="">All types</option>
-                {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
+                {bankTypes.map(t => (
                   <option key={t} value={t}>{TYPE_LABELS[t]}</option>
                 ))}
               </select>
-              {filterSubject && (
+              {filterSubject && topicsFor(filterSubject).length > 0 && (
                 <select className="input" style={{ width: 'auto' }} value={filterTopic}
                   onChange={e => setFilterTopic(e.target.value)}>
                   <option value="">All topics</option>
                   <option value="__none">— Untagged —</option>
-                  {TOPICS_BY_SUBJECT[filterSubject as keyof typeof TOPICS_BY_SUBJECT].map(t => (
+                  {topicsFor(filterSubject).map(t => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
+              )}
+              {filterTagIds.length > 0 && (
+                <button className="btn btn-sm btn-ghost" onClick={() => setFilterTagIds([])}>
+                  Clear {filterTagIds.length} tag {filterTagIds.length === 1 ? 'filter' : 'filters'}
+                </button>
               )}
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                 {total} {total === 1 ? 'question' : 'questions'}
@@ -826,9 +974,11 @@ export default function Questions() {
                             ? <RichText as="span" html={q.text} />
                             : <em style={{ color: 'var(--text-muted)' }}>(syllogism question)</em>}
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                          A: <RichText html={q.optionA} /> · B: <RichText html={q.optionB} /> · C: <RichText html={q.optionC} /> · D: <RichText html={q.optionD} />
-                        </div>
+                        {q.questionType !== 'TITA' && (
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                            A: <RichText html={q.optionA} /> · B: <RichText html={q.optionB} /> · C: <RichText html={q.optionC} /> · D: <RichText html={q.optionD} />
+                          </div>
+                        )}
                       </td>
                       <td>
                         <span style={{
@@ -840,13 +990,33 @@ export default function Questions() {
                             q.questionType === 'SYLLOGISM' ? '#7c3aed' :
                             q.questionType === 'PASSAGE' ? '#2563eb' : '#16a34a',
                         }}>{TYPE_LABELS[q.questionType]}</span>
+                        {/* Only worth the row's width once a second exam
+                            exists — before that every question is SSC. */}
+                        {(catalogue?.exams.length ?? 0) > 1 && (
+                          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 3, fontWeight: 600 }}>
+                            {specOf(catalogue, q.exam ?? 'SSC_CGL')?.label ?? q.exam}
+                          </div>
+                        )}
                       </td>
-                      <td style={{ fontSize: 13 }}>{SUBJECT_LABELS[q.subject]}</td>
+                      <td style={{ fontSize: 13 }}>{SUBJECT_LABELS[q.subject] ?? q.subject}</td>
                       <td style={{ fontSize: 12.5, color: q.topic ? 'var(--heading)' : 'var(--text-muted)' }}>
-                        {q.topic || '—'}
+                        {q.topic || (q.tags?.length ? '' : '—')}
+                        {/* Clicking a tag narrows the bank to it, which is
+                            the quickest way to find the rest of a set. */}
+                        {q.tags && q.tags.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: q.topic ? 4 : 0 }}>
+                            {q.tags.map(t => (
+                              <button key={t.id} type="button" title={`Filter by ${t.name}`}
+                                onClick={() => setFilterTagIds(ids => ids.includes(t.id) ? ids : [...ids, t.id])}
+                                style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer' }}>
+                                <TagChip tag={t} />
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td><span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span></td>
-                      <td style={{ fontWeight: 700, color: 'var(--success)' }}>{q.correctOption}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--success)', fontSize: 12.5 }}>{answerLabel(q)}</td>
                       {/* At a glance: which languages this question exists in,
                           so untranslated ones are easy to pick out. */}
                       <td>

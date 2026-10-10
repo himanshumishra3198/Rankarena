@@ -1,4 +1,14 @@
-export type Section = 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+/** Every examination the platform runs papers for. */
+export type Exam = 'SSC_CGL' | 'CAT'
+
+/**
+ * Sections, across every exam. SECTIONS below is SSC's order, which is what
+ * the SSC exam room walks through; a CAT paper's sections come from the paper
+ * itself.
+ */
+export type Section =
+  | 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+  | 'VARC' | 'DILR' | 'QA'
 
 /**
  * The order the four sections are presented in — in the exam room, in the
@@ -15,6 +25,26 @@ export type Section = 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
  */
 export const SECTIONS: Section[] = ['REASONING', 'GK', 'QUANT', 'ENGLISH']
 
+/**
+ * The sequence each examination's sections are sat in.
+ *
+ * Mirrors `EXAMS[...].sections` in backend/src/lib/exams.ts, which is the
+ * source of truth — the same arrangement as SECTIONS above, which the admin
+ * panel also keeps in step. The exam room needs it synchronously, before any
+ * request has returned, so that the first section can be opened on the first
+ * render rather than after a round trip.
+ *
+ * A paper whose exam is not listed falls back to SSC's order.
+ */
+export const EXAM_SECTIONS: Record<Exam, Section[]> = {
+  SSC_CGL: SECTIONS,
+  CAT: ['VARC', 'DILR', 'QA'],
+}
+
+export function sectionOrder(exam: Exam | undefined): Section[] {
+  return EXAM_SECTIONS[exam ?? 'SSC_CGL'] ?? SECTIONS
+}
+
 export interface User {
   id: string
   name: string
@@ -30,6 +60,7 @@ export interface Contest {
   durationMinutes: number
   negativeMarks: number
   sectionLimits: Record<string, number> | null
+  exam?: Exam
   status: 'SCHEDULED' | 'LIVE' | 'ENDED'
   hasJoined?: boolean
   hasSubmitted?: boolean
@@ -78,10 +109,13 @@ export interface MockTestListItem {
   rankOutOf?: number | null
 }
 
+export type QuestionType = 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE' | 'MSQ' | 'TITA'
+
 export interface MockTestData {
   id: string
   title: string
   subject: string
+  exam?: Exam
   durationMinutes: number
   negativeMarks: number
   questions: Question[]
@@ -102,7 +136,8 @@ export interface Question {
   /** Every language this question exists in — what the instructions sheet promises. */
   availableLanguages?: ('EN' | 'HI')[]
   id: string
-  questionType: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+  questionType: QuestionType
+  exam?: Exam
   text: string
   imageUrl?: string
   optionA: string
@@ -113,7 +148,17 @@ export interface Question {
   difficulty: string
   marks: number
   negativeMarks: number
-  correctOption?: string
+  /**
+   * Which keyboard a type-in question wants. Present only for TITA, and the
+   * only thing about its answer the server will tell a candidate mid-paper.
+   */
+  inputKind?: 'NUMERIC' | 'TEXT' | null
+  /** Single-choice key. Only ever present once a paper is over. */
+  correctOption?: string | null
+  /** Multiple-select key, on a review screen. */
+  correctOptions?: string[] | null
+  /** Every accepted type-in answer, on a review screen. */
+  acceptedAnswers?: string[] | null
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: Passage | null
 }

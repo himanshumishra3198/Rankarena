@@ -6,6 +6,7 @@ import {
   parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion, DEFAULT_LANGUAGE,
 } from "../lib/i18n";
 import { authenticate, requireVerifiedEmail, AuthRequest } from "../middleware/auth";
+import { MARKABLE_SELECT, evaluate, judge, markableOf, revealAnswer, stripAnswerKey, submittedAnswersSchema } from "../lib/answers";
 
 const router = Router();
 
@@ -194,8 +195,12 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
     include: {
       question: {
         select: {
-          id: true, text: true, questionType: true,
+          id: true, text: true, questionType: true, exam: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
+          // Selected only so `stripAnswerKey` can derive which keyboard a
+          // type-in question wants. It is removed before the response — it
+          // holds the answers.
+          answerConfig: true,
           subject: true, difficulty: true, imageUrl: true, structuredData: true,
           translations: translationSelect(language),
           passage: {
@@ -210,16 +215,17 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
     orderBy: { displayOrder: "asc" },
   });
 
-  const questions = mtqs.map((mtq) => localizeQuestion({
+  const questions = mtqs.map((mtq) => stripAnswerKey(localizeQuestion({
     ...mtq.question,
     marks: Number(mtq.marks),
     negativeMarks: Number(mtq.negativeMarks),
-  }, language));
+  }, language)));
 
   res.json({
     id: mock.id,
     title: mock.title,
     subject: mock.subject,
+    exam: mock.exam,
     durationMinutes: mock.durationMinutes,
     negativeMarks: Number(mock.negativeMarks),
     questions,
@@ -229,8 +235,7 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
 // Submit a mock attempt — scored server-side, retakeable (upsert).
 router.post("/:id/submit", requireVerifiedEmail, async (req: AuthRequest, res: Response) => {
   const mockTestId = req.params.id as string;
-  const answersSchema = z.record(z.string(), z.enum(["A", "B", "C", "D"]));
-  const parsed = answersSchema.safeParse(req.body.answers);
+  const parsed = submittedAnswersSchema.safeParse(req.body.answers);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid answers format" });
     return;
@@ -248,22 +253,18 @@ router.post("/:id/submit", requireVerifiedEmail, async (req: AuthRequest, res: R
 
   const mtqs = await prisma.mockTestQuestion.findMany({
     where: { mockTestId },
-    include: { question: { select: { id: true, correctOption: true } } },
+    include: { question: { select: MARKABLE_SELECT } },
   });
 
   const answers = parsed.data;
   let score = 0, totalMarks = 0, correct = 0, wrong = 0, skipped = 0;
   for (const mtq of mtqs) {
     totalMarks += Number(mtq.marks);
-    const given = answers[mtq.questionId];
-    if (!given) { skipped++; continue; }
-    if (given === mtq.question.correctOption) {
-      score += Number(mtq.marks);
-      correct++;
-    } else {
-      score -= Number(mtq.negativeMarks);
-      wrong++;
-    }
+    const verdict = evaluate(markableOf(mtq.question, mtq.marks, mtq.negativeMarks), answers[mtq.questionId]);
+    score += verdict.awarded;
+    if (!verdict.answered) skipped++;
+    else if (verdict.correct) correct++;
+    else wrong++;
   }
   score = Math.max(0, score);
 
@@ -316,7 +317,7 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
           id: true, text: true, questionType: true, imageUrl: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
           correctOption: true, subject: true, difficulty: true, structuredData: true,
-          solution: true,
+          solution: true, exam: true, answerConfig: true,
           translations: translationSelect(resultLanguage),
           passage: {
             select: {
@@ -330,11 +331,17 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
     orderBy: { displayOrder: "asc" },
   });
 
-  const questions = mtqs.map((mtq) => localizeQuestion({
-    ...mtq.question,
-    marks: Number(mtq.marks),
-    negativeMarks: Number(mtq.negativeMarks),
-  }, resultLanguage));
+  // The review screen is allowed the key — the paper is over. MSQ and TITA
+  // have no single correct letter, so `revealAnswer` supplies the shapes the
+  // client needs alongside `correctOption`, which stays for single-choice.
+  const questions = mtqs.map((mtq) => ({
+    ...localizeQuestion({
+      ...mtq.question,
+      marks: Number(mtq.marks),
+      negativeMarks: Number(mtq.negativeMarks),
+    }, resultLanguage),
+    ...revealAnswer(mtq.question),
+  }));
 
   // ── Rank / percentile + per-question aggregates across all submitted attempts ──
   const allAttempts = await prisma.mockAttempt.findMany({
@@ -355,17 +362,20 @@ router.get("/:id/result", async (req: AuthRequest, res: Response) => {
       : 100;
 
   // Per-question: how many answered, how many correct, total time (for averages).
-  const correctMap = new Map(mtqs.map((m) => [m.questionId, m.question.correctOption]));
+  // Judged rather than compared, so the "how many got this right" figure
+  // under a multiple-select question is not permanently zero.
+  const markableMap = new Map(mtqs.map((m) => [m.questionId, m.question]));
   const qStats: Record<string, { answered: number; correct: number; timeSum: number; timeCount: number }> = {};
   for (const m of mtqs) qStats[m.questionId] = { answered: 0, correct: 0, timeSum: 0, timeCount: 0 };
   for (const a of allAttempts) {
-    const ans = (a.answers ?? {}) as Record<string, string>;
+    const ans = (a.answers ?? {}) as Record<string, unknown>;
     const ts = (a.timeSpent ?? {}) as Record<string, number>;
     for (const qid of Object.keys(qStats)) {
-      const given = ans[qid];
-      if (given) {
+      const q = markableMap.get(qid);
+      const verdict = q ? judge(q, ans[qid]) : { answered: false, correct: false };
+      if (verdict.answered) {
         qStats[qid].answered++;
-        if (given === correctMap.get(qid)) qStats[qid].correct++;
+        if (verdict.correct) qStats[qid].correct++;
       }
       const t = ts[qid];
       if (typeof t === "number" && t > 0) { qStats[qid].timeSum += t; qStats[qid].timeCount++; }

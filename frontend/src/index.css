@@ -3023,6 +3023,47 @@ select.input { cursor: pointer; }
 .xs-opt-letter { flex-shrink: 0; }
 .xs-hint { margin-top: 14px; font-size: 11.5px; color: #888; display: flex; gap: 14px; flex-wrap: wrap; }
 
+/* Multiple-select and type-in questions, in either exam room.
+   Prefixed xa- because both rooms share them: everything else about an option
+   list differs between the two (the contest room draws borders, the mock room
+   does not), but the guidance line and the type-in box are the same in both.
+   Deliberately the same type and spacing as the options around them — the only
+   thing that should look different mid-paper is the control itself. */
+.xa-multi-hint {
+  font-size: 13px; color: #2f4bc7; background: #eef1fc;
+  border-left: 3px solid #2f4bc7; padding: 7px 10px; border-radius: 3px;
+  margin: 0 12px 12px; line-height: 1.5;
+}
+.xa-multi-hint strong { font-weight: 700; }
+/* A square box reads as "pick several" where a circle reads as "pick one". */
+.xa-opt-multi input { border-radius: 2px; }
+
+.xa-tita { max-width: 420px; margin: 0 12px 14px; }
+.xa-tita-label {
+  display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px;
+}
+.xa-tita-input {
+  width: 100%; font-size: 17px; padding: 10px 12px; border: 1.5px solid #c7ccdb;
+  border-radius: 4px; background: #fff; color: #111;
+  /* Tabular figures so a typed number does not shift as it is edited. */
+  font-variant-numeric: tabular-nums;
+}
+.xa-tita-input:focus { outline: none; border-color: #2f4bc7; box-shadow: 0 0 0 3px #2f4bc733; }
+.xa-tita-input:disabled { background: #f5f6f8; color: #666; }
+.xa-tita-hint { font-size: 11.5px; color: #888; margin: 8px 0 0; line-height: 1.5; }
+
+/* Reviewing a type-in answer. There are no options to lay out, so what was
+   typed is shown against what would have been accepted — reusing the option
+   row's correct/wrong colours so a verdict reads the same way here as it does
+   on a four-option question. */
+.qd-tita-review { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.qd-tita-row {
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px;
+  font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.qd-tita-row .option-label { min-width: 34px; }
+
 /* ── Palette and analytics ───────────────────────────────────────────── */
 .xs-side { padding: 4px 14px 40px; background: #fff; }
 .xs-side-head {

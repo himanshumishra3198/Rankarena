@@ -6,14 +6,13 @@ import { getPreferredLanguage, setPreferredLanguage, type Language } from '../li
 import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import type { MockTestData, Question } from '../lib/types'
 import { QuestionContent } from '../components/QuestionContent'
-import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
 import ExamShellSSC from '../components/ExamShellSSC'
 import type { PaletteCell } from '../components/ExamShell'
+import AnswerInput from '../components/AnswerInput'
+import { type Answer, isAnswered as answered } from '../lib/answers'
 import { unlockAudio, playLowTimeAlert, playTick, playTimeUp } from '../lib/sound'
 
-const OPTIONS = ['A', 'B', 'C', 'D'] as const
-type Option = typeof OPTIONS[number]
 type Phase = 'loading' | 'instructions' | 'active' | 'submitting'
 
 const SUBJECT_LABELS: Record<string, string> = {
@@ -28,18 +27,17 @@ const ZOOM_KEY = 'examZoom'
 
 type QState = 'not-visited' | 'not-answered' | 'answered' | 'marked' | 'answered-marked'
 
-function getQState(qId: string, answers: Record<string, Option>, marked: Set<string>, visited: Set<string>): QState {
-  const isAnswered = !!answers[qId]
+function getQState(qId: string, answers: Record<string, Answer>, marked: Set<string>, visited: Set<string>): QState {
+  // Not `!!answers[qId]`: an empty list is what clearing every tick on a
+  // multiple-select question leaves behind, and the palette has to show that
+  // as unanswered rather than green.
+  const isAnswered = answered(answers[qId])
   const isMarked = marked.has(qId)
   if (!visited.has(qId)) return 'not-visited'
   if (isAnswered && isMarked) return 'answered-marked'
   if (isAnswered) return 'answered'
   if (isMarked) return 'marked'
   return 'not-answered'
-}
-
-function optionText(q: Question, opt: Option) {
-  return { A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD }[opt]
 }
 
 function formatTime(secs: number) {
@@ -162,7 +160,7 @@ export default function MockRoom() {
   const [language, setLanguage] = useState<Language>(getPreferredLanguage())
   const [phase, setPhase] = useState<Phase>('loading')
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, Option>>({})
+  const [answers, setAnswers] = useState<Record<string, Answer>>({})
   const [marked, setMarked] = useState<Set<string>>(new Set())
   const [visited, setVisited] = useState<Set<string>>(new Set())
   const [timeLeft, setTimeLeft] = useState(0)
@@ -531,8 +529,8 @@ export default function MockRoom() {
     setCurrentIdx(idx)
     setVisited(v => new Set(v).add(q.id))
   }
-  function selectAnswer(opt: Option) {
-    setAnswers(a => ({ ...a, [currentQ.id]: opt }))
+  function setAnswer(next: Answer) {
+    setAnswers(a => ({ ...a, [currentQ.id]: next }))
   }
   function clearAnswer() {
     setAnswers(a => { const n = { ...a }; delete n[currentQ.id]; return n })
@@ -621,7 +619,7 @@ export default function MockRoom() {
               title="Mark this question for review and move to the next">
               <span className="lbl-long">Mark for Review</span><span className="lbl-short">Mark</span>
             </button>
-            <button className="xs-btn" disabled={!answers[currentQ.id]} onClick={clearAnswer}>
+            <button className="xs-btn" disabled={!answered(answers[currentQ.id])} onClick={clearAnswer}>
               <span className="lbl-long">Clear Response</span><span className="lbl-short">Clear</span>
             </button>
             <button className="xs-btn" disabled={currentIdx === questions.length - 1} onClick={saveAndNext}>
@@ -662,20 +660,7 @@ export default function MockRoom() {
       >
         <QuestionContent q={currentQ} />
 
-        <div className="xs-opts">
-          {OPTIONS.map((opt, i) => (
-            <label key={opt} className={`xs-opt ${answers[currentQ.id] === opt ? 'sel' : ''}`}>
-              <input
-                type="radio"
-                name={`q-${currentQ.id}`}
-                checked={answers[currentQ.id] === opt}
-                onChange={() => selectAnswer(opt)}
-              />
-              <span className="xs-opt-letter">{'abcd'[i]})</span>
-              <span><RichText html={optionText(currentQ, opt)} /></span>
-            </label>
-          ))}
-        </div>
+        <AnswerInput q={currentQ} value={answers[currentQ.id]} onChange={setAnswer} />
       </ExamShellSSC>
 
       {/* Instructions, re-openable mid-test */}

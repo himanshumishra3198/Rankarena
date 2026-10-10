@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import prisma from "../lib/prisma";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { revealAnswer } from "../lib/answers";
 
 const router = Router();
 router.use(authenticate);
@@ -25,13 +26,13 @@ router.get("/", async (req: AuthRequest, res: Response) => {
           id: true, text: true, questionType: true, imageUrl: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
           correctOption: true, subject: true, difficulty: true,
-          structuredData: true, solution: true,
+          structuredData: true, solution: true, exam: true, answerConfig: true,
           passage: { select: { id: true, title: true, content: true, type: true, tableData: true } },
         },
       },
     },
   });
-  res.json(rows.map((r) => ({ bookmarkedAt: r.createdAt, ...r.question })));
+  res.json(rows.map((r) => ({ bookmarkedAt: r.createdAt, ...r.question, ...revealAnswer(r.question) })));
 });
 
 // Toggle a bookmark for a question. Returns { bookmarked: boolean }.

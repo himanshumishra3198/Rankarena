@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
-import { SECTIONS, type Contest, type Question } from '../lib/types'
+import { sectionOrder, type Contest, type Question } from '../lib/types'
 import ContestInstructions, { type SectionRow } from '../components/ContestInstructions'
 import { getPreferredLanguage, setPreferredLanguage, LANGUAGES, type Language } from '../lib/language'
 import ExamShell, { type SectionTab } from '../components/ExamShell'
@@ -11,12 +11,12 @@ import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import SectionCompleteModal from '../components/SectionCompleteModal'
 import { useConfirm } from '../components/ConfirmDialog'
 import { QuestionContent } from '../components/QuestionContent'
-import { RichText } from '../components/RichText'
 import ReportModal from '../components/ReportModal'
+import AnswerInput from '../components/AnswerInput'
+import { type Answer, isAnswered as answered } from '../lib/answers'
 import { unlockAudio, playLowTimeAlert, playTick } from '../lib/sound'
 
-const OPTIONS = ['A', 'B', 'C', 'D'] as const
-type Option = typeof OPTIONS[number]
+
 type Phase = 'loading' | 'waiting' | 'active' | 'ended'
 
 const SECTION_LABELS: Record<string, string> = {
@@ -31,18 +31,17 @@ const SECTION_LABELS_FULL: Record<string, string> = {
 
 type QState = 'not-visited' | 'not-answered' | 'answered' | 'marked' | 'answered-marked'
 
-function getQState(qId: string, answers: Record<string, Option>, marked: Set<string>, visited: Set<string>): QState {
-  const isAnswered = !!answers[qId]
+function getQState(qId: string, answers: Record<string, Answer>, marked: Set<string>, visited: Set<string>): QState {
+  // Not `!!answers[qId]`: an empty list is what clearing every tick on a
+  // multiple-select question leaves behind, and the palette has to show that
+  // as unanswered rather than green.
+  const isAnswered = answered(answers[qId])
   const isMarked = marked.has(qId)
   if (!visited.has(qId)) return 'not-visited'
   if (isAnswered && isMarked) return 'answered-marked'
   if (isAnswered) return 'answered'
   if (isMarked) return 'marked'
   return 'not-answered'
-}
-
-function optionText(q: Question, opt: Option) {
-  return { A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD }[opt]
 }
 
 function formatTime(secs: number) {
@@ -60,7 +59,7 @@ export default function ContestRoom() {
   // ── Core exam state ───────────────────────────────────────────────────
   const [contest, setContest] = useState<Contest | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
-  const [answers, setAnswers] = useState<Record<string, Option>>({})
+  const [answers, setAnswers] = useState<Record<string, Answer>>({})
   const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set())
   const [visited, setVisited] = useState<Set<string>>(new Set())
   const [submittedSections, setSubmittedSections] = useState<Set<string>>(new Set())
@@ -139,9 +138,13 @@ export default function ContestRoom() {
   markedForReviewRef.current = markedForReview
 
   // ── Derived: group questions by section ───────────────────────────────
+  // Ordered by the paper's own examination, not by SSC's four sections: a CAT
+  // paper is VARC, DILR, QA, and filtering its questions through SSC's list
+  // would leave the room with no sections at all.
+  const paperSections = sectionOrder(contest?.exam)
   const sectionQuestions: Record<string, Question[]> = {}
-  for (const s of SECTIONS) sectionQuestions[s] = questions.filter(q => q.subject === s)
-  const availableSections = SECTIONS.filter(s => sectionQuestions[s].length > 0)
+  for (const s of paperSections) sectionQuestions[s] = questions.filter(q => q.subject === s)
+  const availableSections = paperSections.filter(s => sectionQuestions[s].length > 0)
 
   // Per-section time: use explicit sectionLimits from contest if set, else equal split
   function getSectionTimeSecs(section: string): number {
@@ -226,7 +229,7 @@ export default function ContestRoom() {
         setQuestions(qs)
 
         const backendDraft = draftRes?.data?.answers
-        let initialAnswers: Record<string, Option> = {}
+        let initialAnswers: Record<string, Answer> = {}
         if (backendDraft && Object.keys(backendDraft).length > 0) {
           initialAnswers = backendDraft
           localStorage.setItem(`draft-${contestId}`, JSON.stringify(backendDraft))
@@ -243,7 +246,10 @@ export default function ContestRoom() {
           if (savedSections) setSubmittedSections(new Set(JSON.parse(savedSections)))
         } catch { /* corrupted localStorage — start fresh */ }
 
-        const firstSec = (SECTIONS.find(s => qs.some(q => q.subject === s)) ?? 'QUANT') as string
+        // The contest has just loaded, so read its exam from the response
+        // rather than from state that has not been set yet.
+        const order = sectionOrder(contestRes.data?.exam)
+        const firstSec = (order.find(s => qs.some(q => q.subject === s)) ?? qs[0]?.subject ?? 'QUANT') as string
         const firstQ = qs.find(q => q.subject === firstSec)
         if (firstQ) {
           setCurrentSection(firstSec)
@@ -447,11 +453,11 @@ export default function ContestRoom() {
   }
 
   // ── Answer, mark, clear ───────────────────────────────────────────────
-  function selectAnswer(questionId: string, opt: Option) {
+  function setAnswer(questionId: string, value: Answer) {
     const q = questions.find(q => q.id === questionId)
     if (!q || submittedSections.has(q.subject)) return
     setAnswers(prev => {
-      const next = { ...prev, [questionId]: opt }
+      const next = { ...prev, [questionId]: value }
       localStorage.setItem(`draft-${contestId}`, JSON.stringify(next))
       return next
     })
@@ -487,7 +493,7 @@ export default function ContestRoom() {
 
   async function submitSection(section: string) {
     const qs = sectionQuestions[section] ?? []
-    const unanswered = qs.filter(q => !answers[q.id]).length
+    const unanswered = qs.filter(q => !answered(answers[q.id])).length
     const label = SECTION_LABELS[section] ?? section
     const ok = await confirm({
       title: `Submit ${label}?`,
@@ -766,7 +772,7 @@ export default function ContestRoom() {
                   title="Mark this question for review and move to the next">
                   <span className="lbl-long">Mark for Review</span><span className="lbl-short">Mark</span>
                 </button>
-                <button className="xr-btn xr-btn-plain" disabled={!answers[currentQ.id]}
+                <button className="xr-btn xr-btn-plain" disabled={!answered(answers[currentQ.id])}
                   onClick={() => clearAnswer(currentQ.id)}>
                   <span className="lbl-long">Clear Response</span><span className="lbl-short">Clear</span>
                 </button>
@@ -791,21 +797,13 @@ export default function ContestRoom() {
           <QuestionContent q={currentQ} />
         </div>
 
-        <div className="xr-opts">
-          {OPTIONS.map(opt => (
-            <label key={opt} className={`xr-opt ${answers[currentQ.id] === opt ? 'sel' : ''} ${isSectionLocked ? 'locked' : ''}`}>
-              <input
-                type="radio"
-                name={`q-${currentQ.id}`}
-                checked={answers[currentQ.id] === opt}
-                disabled={isSectionLocked || phase !== 'active'}
-                onChange={() => selectAnswer(currentQ.id, opt)}
-              />
-              <span>{opt}.</span>
-              <span><RichText html={optionText(currentQ, opt)} /></span>
-            </label>
-          ))}
-        </div>
+        <AnswerInput
+          q={currentQ}
+          variant="xr"
+          value={answers[currentQ.id]}
+          disabled={isSectionLocked || phase !== 'active'}
+          onChange={next => setAnswer(currentQ.id, next)}
+        />
       </ExamShell>
 
       {/* ── Instructions sheet (feature 1) ───────────────────────── */}

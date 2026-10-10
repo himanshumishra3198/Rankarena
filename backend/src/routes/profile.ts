@@ -4,6 +4,8 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 import { verifyUnsubscribeToken } from "../lib/unsubscribe";
 import { z } from "zod";
 import { settleEndedContests } from "../lib/settleContest";
+import { judge } from "../lib/answers";
+import type { Exam, QuestionType, Subject } from "../generated/prisma/enums";
 
 const router = Router();
 
@@ -76,10 +78,21 @@ async function buildProfileData(userId: string) {
   const topicStats: Record<string, { subject: string; correct: number; wrong: number; skipped: number }> = {};
   let totalCorrect = 0, totalWrong = 0, totalSkipped = 0;
 
-  type QMeta = { subject: string; topic: string | null; correctOption: string };
+  type QMeta = {
+    subject: Subject;
+    topic: string | null;
+    questionType: QuestionType;
+    exam: Exam;
+    correctOption: string | null;
+    answerConfig: unknown;
+  };
 
-  function record(meta: QMeta, given: string | undefined) {
-    const verdict = !given ? "skipped" : given === meta.correctOption ? "correct" : "wrong";
+  // Verdicts come from the shared marker, not a comparison here, so that a
+  // multiple-select or type-in answer counts the same way on a profile as it
+  // did when the paper was scored.
+  function record(meta: QMeta, given: unknown) {
+    const { answered, correct } = judge(meta, given);
+    const verdict = !answered ? "skipped" : correct ? "correct" : "wrong";
 
     if (!subjectStats[meta.subject]) subjectStats[meta.subject] = { correct: 0, wrong: 0, skipped: 0 };
     subjectStats[meta.subject][verdict]++;
@@ -96,7 +109,10 @@ async function buildProfileData(userId: string) {
     else totalSkipped++;
   }
 
-  const questionSelect = { subject: true, topic: true, correctOption: true } as const;
+  const questionSelect = {
+    subject: true, topic: true, correctOption: true,
+    questionType: true, exam: true, answerConfig: true,
+  } as const;
 
   const contestIds = [...new Set(participations.map((p) => p.contestId))];
   const mockIds = [...new Set(mockAttempts.map((a) => a.mockTestId))];

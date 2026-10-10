@@ -8,6 +8,7 @@ import { Prisma } from "../generated/prisma/client";
 import { Language } from "../generated/prisma/enums";
 import { finalizeContest } from "../lib/finalizeContest";
 import { settleContest, settleEndedContests } from "../lib/settleContest";
+import { MARKABLE_SELECT, evaluate, markableOf, revealAnswer, stripAnswerKey, submittedAnswersSchema } from "../lib/answers";
 import {
   parseLanguage, translationSelect, passageTranslationSelect, localizeQuestion, DEFAULT_LANGUAGE,
 } from "../lib/i18n";
@@ -33,7 +34,7 @@ router.get("/", async (req, res: Response) => {
 
   const contestSelect = {
     id: true, title: true, startTime: true, durationMinutes: true,
-    negativeMarks: true, status: true, sectionLimits: true,
+    negativeMarks: true, status: true, sectionLimits: true, exam: true,
     _count: {
       select: {
         participations: { where: { isTest: false } },
@@ -275,8 +276,12 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
     include: {
       question: {
         select: {
-          id: true, text: true, questionType: true,
+          id: true, text: true, questionType: true, exam: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
+          // Selected only so `stripAnswerKey` can derive which keyboard a
+          // type-in question wants. It is removed before the response — it
+          // holds the answers.
+          answerConfig: true,
           subject: true, difficulty: true, imageUrl: true,
           structuredData: true,
           translations: translationSelect(language),
@@ -308,7 +313,9 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
   const seed = req.user!.id;
   const questions = cqs
     .map((cq) => ({
-      ...localizeQuestion({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }, language),
+      ...stripAnswerKey(
+        localizeQuestion({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }, language),
+      ),
       availableLanguages: [DEFAULT_LANGUAGE, ...(byQuestion.get(cq.questionId) ?? [])],
     }))
     .sort((a, b) => simpleHash(seed + a.id) - simpleHash(seed + b.id));
@@ -319,8 +326,7 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
 // Autosave draft answers
 router.patch("/:id/draft", authenticate, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
-  const answersSchema = z.record(z.string(), z.enum(["A", "B", "C", "D"]));
-  const parsed = answersSchema.safeParse(req.body.answers);
+  const parsed = submittedAnswersSchema.safeParse(req.body.answers);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid answers format" });
     return;
@@ -379,8 +385,7 @@ router.get("/:id/draft", authenticate, async (req: AuthRequest, res: Response) =
 // Final submit
 router.post("/:id/submit", authenticate, requireVerifiedEmail, async (req: AuthRequest, res: Response) => {
   const contestId = req.params.id as string;
-  const answersSchema = z.record(z.string(), z.enum(["A", "B", "C", "D"]));
-  const parsed = answersSchema.safeParse(req.body.answers);
+  const parsed = submittedAnswersSchema.safeParse(req.body.answers);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid answers format" });
     return;
@@ -411,20 +416,17 @@ router.post("/:id/submit", authenticate, requireVerifiedEmail, async (req: AuthR
   // Score server-side
   const cqs = await prisma.contestQuestion.findMany({
     where: { contestId },
-    include: { question: { select: { id: true, correctOption: true } } },
+    include: { question: { select: MARKABLE_SELECT } },
   });
 
   let score = 0;
   const submittedAnswers = parsed.data;
 
+  // Marking is delegated so that a multiple-select or type-in question is
+  // scored the same here as on a mock test and on a profile breakdown.
   for (const cq of cqs) {
-    const given = submittedAnswers[cq.questionId];
-    if (!given) continue;
-    if (given === cq.question.correctOption) {
-      score += Number(cq.marks);
-    } else {
-      score -= Number(cq.negativeMarks);
-    }
+    const markable = markableOf(cq.question, cq.marks, cq.negativeMarks);
+    score += evaluate(markable, submittedAnswers[cq.questionId]).awarded;
   }
   score = Math.max(0, score);
 
@@ -624,7 +626,7 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
           id: true, text: true, imageUrl: true, questionType: true,
           optionA: true, optionB: true, optionC: true, optionD: true,
           correctOption: true, subject: true, difficulty: true,
-          structuredData: true, solution: true,
+          structuredData: true, solution: true, exam: true, answerConfig: true,
           translations: translationSelect(resultLanguage),
           passage: {
             select: {
@@ -667,11 +669,16 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     avgTimePerQuestion[qId] = Math.round(sum / count);
   }
 
-  const questions = cqs.map((cq) => localizeQuestion({
-    ...cq.question,
-    marks: Number(cq.marks),
-    negativeMarks: Number(cq.negativeMarks),
-  }, resultLanguage));
+  // The paper is over, so the key is fair game. MSQ and TITA have no single
+  // correct letter, so their keys come through `revealAnswer` instead.
+  const questions = cqs.map((cq) => ({
+    ...localizeQuestion({
+      ...cq.question,
+      marks: Number(cq.marks),
+      negativeMarks: Number(cq.negativeMarks),
+    }, resultLanguage),
+    ...revealAnswer(cq.question),
+  }));
 
   const totalMaxMarks = cqs.reduce((sum, cq) => sum + Number(cq.marks), 0);
 

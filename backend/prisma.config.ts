@@ -11,5 +11,10 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // Only needed by `prisma migrate dev` and `migrate diff --from-migrations`,
+    // which replay the migrations directory into a throwaway database to work
+    // out what has changed. Unset in normal use — and it must never point at a
+    // database holding real data, because replaying wipes it.
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

@@ -9,6 +9,7 @@ import {
 import { excerptFromHtml } from "../lib/excerpt";
 import { ONLY_SAFE_TO_REVEAL } from "../lib/questionSafety";
 import { SUBJECTS, TOPICS_BY_SUBJECT, ALL_TOPICS, type Subject } from "../lib/topics";
+import { revealAnswer } from "../lib/answers";
 
 const router = Router();
 router.use(authenticate);
@@ -27,6 +28,10 @@ function cardSelect(language: Language) {
     optionC: true,
     optionD: true,
     correctOption: true,
+    // Practice only ever serves questions whose paper has finished, so the
+    // key is revealable here by design — see lib/questionSafety.ts.
+    answerConfig: true,
+    exam: true,
     subject: true,
     topic: true,
     difficulty: true,
@@ -199,7 +204,9 @@ router.get("/recommendations", async (req: AuthRequest, res: Response) => {
   res.json({
     subject: original.subject,
     topic: original.topic,
-    questions: results.map((r) => ({ ...localizeQuestion(r, language), bookmarked: bookmarked.has(r.id) })),
+    questions: results.map((r) => ({
+      ...localizeQuestion(r, language), ...revealAnswer(r), bookmarked: bookmarked.has(r.id),
+    })),
   });
 });
 
@@ -542,6 +549,7 @@ router.get("/problems/:id", async (req: AuthRequest, res: Response) => {
 
   res.json({
     ...localizeQuestion(question, language),
+    ...revealAnswer(question),
     bookmarked: !!bookmark,
     source: sources.get(id) ?? null,
   });
@@ -623,7 +631,7 @@ router.get("/daily", async (req: AuthRequest, res: Response) => {
   res.json({
     day,
     poolSize: total,
-    question: { ...localizeQuestion(question, language), bookmarked: !!bookmark },
+    question: { ...localizeQuestion(question, language), ...revealAnswer(question), bookmarked: !!bookmark },
   });
 });
 

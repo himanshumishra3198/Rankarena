@@ -12,17 +12,27 @@ import { SegmentedRadio } from '../components/SegmentedRadio'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
 import type { Contest, Question, ContestQuestion, Section, Passage, QuestionType, Language } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
+import AnswerKeyEditor, {
+  EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload,
+} from '../components/AnswerKeyEditor'
+import TagPicker from '../components/TagPicker'
+import { useExams, sectionsOf, specOf } from '../lib/exams'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
 const TYPE_LABELS: Record<string, string> = {
   STANDARD: 'Standard', SYLLOGISM: 'Syllogism', PASSAGE: 'Passage', TABLE: 'Table',
+  MSQ: 'Multiple correct', TITA: 'Type the answer',
 }
 
 const emptyQ = {
   questionType: 'STANDARD' as QuestionType,
   text: '', imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
-  correctOption: '', subject: 'QUANT', topic: '', difficulty: 'MEDIUM',
+  // The answer key in all three shapes; only the one matching the chosen
+  // format is sent. Single choice starts blank here rather than at 'A', so
+  // the admin has to pick one consciously.
+  ...EMPTY_ANSWER_KEY, correctOption: '',
+  subject: 'QUANT', topic: '', difficulty: 'MEDIUM', tagIds: [] as string[],
   solution: '', passageId: '',
   hi: { text: '', optionA: '', optionB: '', optionC: '', optionD: '', solution: '' },
   statements: ['', '', ''] as string[],
@@ -143,9 +153,21 @@ export default function ContestDetail() {
   const [savingDetails, setSavingDetails] = useState(false)
   const [detailsError, setDetailsError] = useState('')
 
+  // Everything on this page is scoped to the contest's examination: the
+  // sections it can hold, the answer formats a new question may use, and
+  // whether questions are filed by syllabus topic or by tag.
+  const { catalogue } = useExams()
+  const paperExam = contest?.exam ?? 'SSC_CGL'
+  const paperSections = sectionsOf(catalogue, paperExam)
+  // SSC's four stand in until the catalogue arrives, which is what every
+  // existing contest uses anyway.
+  const paperSectionKeys: Section[] = paperSections.length ? paperSections.map(sec => sec.key) : SECTIONS
+  const paperTypes: QuestionType[] =
+    specOf(catalogue, paperExam)?.questionTypes ?? ['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE']
+
   // Section config editing
   const [editingConfig, setEditingConfig] = useState(false)
-  const [draftLimits, setDraftLimits] = useState<Record<Section, number>>({ QUANT: 0, REASONING: 0, ENGLISH: 0, GK: 0 })
+  const [draftLimits, setDraftLimits] = useState<Partial<Record<Section, number>>>({})
   const [draftNegMarks, setDraftNegMarks] = useState(0.5)
   const [savingConfig, setSavingConfig] = useState(false)
   const [configError, setConfigError] = useState('')
@@ -183,10 +205,15 @@ export default function ContestDetail() {
     setBank(bankRes.data.questions)
     setPassages(pRes.data)
     // seed draft config from current values
+    // Seeded from the contest's own exam, so a CAT paper with no limits set
+    // yet divides into three sections rather than SSC's four.
+    const seedSections = (catalogue?.exams.find(e => e.key === (c.exam ?? 'SSC_CGL'))?.sections ?? [])
+      .map(sec => sec.key)
+    const keys: Section[] = seedSections.length ? seedSections : SECTIONS
     const limits = c.sectionLimits ?? Object.fromEntries(
-      SECTIONS.map(s => [s, Math.floor(c.durationMinutes / SECTIONS.length)])
-    ) as Record<Section, number>
-    setDraftLimits(limits as Record<Section, number>)
+      keys.map(k => [k, Math.floor(c.durationMinutes / keys.length)])
+    )
+    setDraftLimits(limits as Partial<Record<Section, number>>)
     setDraftNegMarks(Number(c.negativeMarks))
     setLoading(false)
   }
@@ -296,9 +323,10 @@ export default function ContestDetail() {
       questionType: q.questionType,
       text: q.text, imageUrl: q.imageUrl ?? '',
       optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
-      correctOption: q.correctOption,
+      ...answerKeyFrom(q),
       subject: q.subject,
       topic: q.topic ?? '',
+      tagIds: (q.tags ?? []).map(t => t.id),
       difficulty: q.difficulty,
       solution: q.solution ?? '',
       hi: (() => {
@@ -323,10 +351,13 @@ export default function ContestDetail() {
     const isSyll = newQ.questionType === 'SYLLOGISM'
     const needsPassage = newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE'
     if (!isSyll && !hasContent(newQ.text)) { setCreateError('Question text is required.'); return }
-    if ((['A', 'B', 'C', 'D'] as const).some(o => !hasContent(newQ[`option${o}` as keyof typeof emptyQ] as string))) {
+    // A type-in question has no options to fill in.
+    if (newQ.questionType !== 'TITA'
+      && (['A', 'B', 'C', 'D'] as const).some(o => !hasContent(newQ[`option${o}` as keyof typeof emptyQ] as string))) {
       setCreateError('All four options are required (text or image).'); return
     }
-    if (!newQ.correctOption) { setCreateError('Select the correct option.'); return }
+    const keyError = answerKeyError(newQ.questionType, newQ)
+    if (keyError) { setCreateError(keyError); return }
     if (needsPassage && !newQ.passageId) { setCreateError('Select a passage/table for this question (create it in the Questions tab first).'); return }
 
     // Caught here rather than left to the server, so the admin lands on the tab
@@ -342,10 +373,17 @@ export default function ContestDetail() {
       questionType: newQ.questionType,
       text: newQ.text,
       imageUrl: newQ.imageUrl || null,
-      optionA: newQ.optionA, optionB: newQ.optionB, optionC: newQ.optionC, optionD: newQ.optionD,
-      correctOption: newQ.correctOption,
+      // A question written here belongs to the paper's examination — it is
+      // being added to this contest, so there is nothing to choose.
+      exam: paperExam,
+      optionA: newQ.questionType === 'TITA' ? '' : newQ.optionA,
+      optionB: newQ.questionType === 'TITA' ? '' : newQ.optionB,
+      optionC: newQ.questionType === 'TITA' ? '' : newQ.optionC,
+      optionD: newQ.questionType === 'TITA' ? '' : newQ.optionD,
+      ...answerKeyPayload(newQ.questionType, newQ),
       subject: newQ.subject,
-      topic: newQ.topic || null,
+      topic: paperExam === 'SSC_CGL' ? (newQ.topic || null) : null,
+      tagIds: newQ.tagIds,
       difficulty: newQ.difficulty,
       solution: hasContent(newQ.solution) ? newQ.solution : null,
       translations: translationsPayload(newQ.hi),
@@ -407,7 +445,7 @@ export default function ContestDetail() {
 
   // Section breakdown from current questions
   const sectionCounts = Object.fromEntries(
-    SECTIONS.map(s => [s, cqs.filter(cq => cq.question.subject === s).length])
+    paperSectionKeys.map(s => [s, cqs.filter(cq => cq.question.subject === s).length])
   ) as Record<Section, number>
 
   const draftTotal = Object.values(draftLimits).reduce((a, b) => a + b, 0)
@@ -542,7 +580,7 @@ export default function ContestDetail() {
                   )}
                 </div>
                 <div className="section-limits-grid">
-                  {SECTIONS.map(sec => (
+                  {paperSectionKeys.map(sec => (
                     <div key={sec} className="section-limit-item">
                       <div className="section-limit-label">{SECTION_LABELS[sec]}</div>
                       <input
@@ -561,8 +599,8 @@ export default function ContestDetail() {
           ) : (
             /* Read-only view */
             <div className="section-config-grid">
-              {SECTIONS.map(sec => {
-                const limitMins = contest?.sectionLimits?.[sec] ?? Math.floor((contest?.durationMinutes ?? 0) / SECTIONS.length)
+              {paperSectionKeys.map(sec => {
+                const limitMins = contest?.sectionLimits?.[sec] ?? Math.floor((contest?.durationMinutes ?? 0) / paperSectionKeys.length)
                 return (
                   <div key={sec} className="section-config-card">
                     <div className="section-config-name">{SECTION_LABELS[sec]}</div>
@@ -656,8 +694,8 @@ export default function ContestDetail() {
                 {/* Question type selector */}
                 <div className="form-group">
                   <label>Question Type</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 4 }}>
-                    {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginTop: 4 }}>
+                    {paperTypes.map(t => (
                       <label key={t} style={{
                         border: `2px solid ${newQ.questionType === t ? 'var(--primary)' : 'var(--border)'}`,
                         borderRadius: 8, padding: '8px 10px', cursor: 'pointer', textAlign: 'center',
@@ -773,16 +811,15 @@ export default function ContestDetail() {
                 </div>
 
 
+                <AnswerKeyEditor
+                  type={newQ.questionType}
+                  value={newQ}
+                  onChange={patch => setNewQ(f => ({ ...f, ...patch }))}
+                />
                 <div className="form-group">
-                  <label>Correct Option <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <SegmentedRadio value={newQ.correctOption}
-                    options={['A', 'B', 'C', 'D'].map(o => ({ value: o, label: o }))}
-                    onChange={v => setNewQ(f => ({ ...f, correctOption: v }))} />
-                </div>
-                <div className="form-group">
-                  <label>Subject</label>
+                  <label>Section</label>
                   <SegmentedRadio value={newQ.subject}
-                    options={SECTIONS.map(s => ({ value: s as string, label: SECTION_LABELS[s] }))}
+                    options={paperSections.map(sec => ({ value: sec.key as string, label: sec.short }))}
                     onChange={v => setNewQ(f => ({
                       ...f,
                       subject: v,
@@ -797,16 +834,23 @@ export default function ContestDetail() {
                     options={DIFFICULTIES.map(d => ({ value: d as string, label: d }))}
                     onChange={v => setNewQ(f => ({ ...f, difficulty: v }))} />
                 </div>
-                <div className="form-group">
-                  <label>Topic <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                  <select className="input" value={newQ.topic}
-                    onChange={e => setNewQ(f => ({ ...f, topic: e.target.value }))}>
-                    <option value="">— No topic —</option>
-                    {(TOPICS_BY_SUBJECT[newQ.subject as keyof typeof TOPICS_BY_SUBJECT] ?? []).map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+                {/* The syllabus topic list only exists for SSC; other exams
+                    label questions with tags. */}
+                {paperExam === 'SSC_CGL' && (
+                  <div className="form-group">
+                    <label>Topic <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                    <select className="input" value={newQ.topic}
+                      onChange={e => setNewQ(f => ({ ...f, topic: e.target.value }))}>
+                      <option value="">— No topic —</option>
+                      {(TOPICS_BY_SUBJECT[newQ.subject as keyof typeof TOPICS_BY_SUBJECT] ?? []).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <TagPicker exam={paperExam} value={newQ.tagIds}
+                  onChange={ids => setNewQ(f => ({ ...f, tagIds: ids }))} />
 
 
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -834,7 +878,7 @@ export default function ContestDetail() {
                   onClick={() => setReviewSubject('')}>
                   All ({cqs.length})
                 </button>
-                {SECTIONS.map(sec => {
+                {paperSectionKeys.map(sec => {
                   const n = cqs.filter(c => c.question.subject === sec).length
                   return (
                     <button key={sec} disabled={n === 0}

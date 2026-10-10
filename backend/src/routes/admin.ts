@@ -6,6 +6,10 @@ import { LANGUAGES, DEFAULT_LANGUAGE } from "../lib/i18n";
 import redis from "../lib/redis";
 import { computeFingerprint } from "../lib/fingerprint";
 import { isValidTopic } from "../lib/topics";
+import { DEFAULT_EXAM, EXAMS, examSections, examSpec, isExamQuestionType, isExamSection, parseExam, parseExamOrNull } from "../lib/exams";
+import { parseAnswerConfig } from "../lib/answers";
+import type { Exam, QuestionType, Subject } from "../generated/prisma/enums";
+import { TAG_INCLUDE, ensureTags, flattenTags, missingTagIds, parseTagCategory, setQuestionTags, slugify, TAG_CATEGORIES } from "../lib/tags";
 import { computeContestRatings } from "../lib/settleContest";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 
@@ -16,8 +20,15 @@ const router = Router();
 function toQuestionData(d: Record<string, any>) {
   const out: Record<string, any> = {};
   for (const k of ["questionType", "text", "optionA", "optionB", "optionC",
-    "optionD", "correctOption", "subject", "difficulty"] as const) {
+    "optionD", "subject", "difficulty", "exam"] as const) {
     if (d[k] !== undefined) out[k] = d[k];
+  }
+  // Both halves of the answer key are written together by the validator
+  // below, so that a question can never keep a stale `correctOption` from
+  // before it was switched to multiple-select.
+  if (d.correctOption !== undefined) out.correctOption = d.correctOption ?? null;
+  if (d.answerConfig !== undefined) {
+    out.answerConfig = d.answerConfig ?? Prisma.JsonNull;
   }
   if (d.imageUrl !== undefined) out.imageUrl = d.imageUrl ?? null;
   // Empty string from an unselected dropdown means "untagged", same as null.
@@ -30,6 +41,27 @@ function toQuestionData(d: Record<string, any>) {
   return out;
 }
 
+/**
+ * Drops the fields a client did not actually send.
+ *
+ * `schema.partial()` does not remove a field's `.default()` in zod, so a
+ * body that omits `questionType` still parses as STANDARD. Passed straight to
+ * an update that means an edit to a question's text silently resets its type
+ * to STANDARD and its difficulty to MEDIUM — and, now that questions carry
+ * one, moves a CAT question to SSC CGL.
+ *
+ * The request body is the authority on what was sent, so every partial
+ * update is filtered through here before it becomes an update payload.
+ */
+function onlySent<T extends object>(parsed: T, body: unknown): Partial<T> {
+  const sent = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(parsed)) {
+    if (Object.prototype.hasOwnProperty.call(sent, k)) out[k] = v;
+  }
+  return out as Partial<T>;
+}
+
 // Compute a question's exact-duplicate fingerprint from a payload.
 function fingerprintOf(d: Record<string, any>): string {
   return computeFingerprint(d.text ?? "", [d.optionA ?? "", d.optionB ?? "", d.optionC ?? "", d.optionD ?? ""]);
@@ -38,18 +70,41 @@ router.use(authenticate, requireAdmin);
 
 // ── Contests ─────────────────────────────────────────────
 
-const sectionLimitsSchema = z.record(
-  z.enum(["QUANT", "REASONING", "ENGLISH", "GK"]),
+// Every section of every exam. Which of them are legal on a given paper
+// depends on that paper's exam and is checked by `checkSectionLimits`.
+// `partialRecord`, not `record`: in zod 4 a record keyed by an enum requires
+// every member of that enum to be present, so a plain record here would mean
+// a CAT paper had to name SSC's four sections as well as its own three.
+const sectionLimitsSchema = z.partialRecord(
+  z.enum(["QUANT", "REASONING", "ENGLISH", "GK", "VARC", "DILR", "QA"]),
   z.number().int().min(1)
 ).optional();
 
 const contestSchema = z.object({
   title: z.string().min(1),
+  exam: z.enum(["SSC_CGL", "CAT"]).default("SSC_CGL"),
   startTime: z.iso.datetime(),
   durationMinutes: z.number().int().min(1).max(1440),
   negativeMarks: z.number().min(0).default(0.5),
   sectionLimits: sectionLimitsSchema,
 });
+
+/**
+ * Refuses section limits that name a section the exam does not have.
+ *
+ * Without this a CAT paper could be given a GK section, which would then ask
+ * the question bank for SSC questions and quietly produce a paper no CAT
+ * candidate was prepared for.
+ */
+function checkSectionLimits(exam: Exam, limits: Record<string, number> | undefined): string | null {
+  if (!limits) return null;
+  const legal = examSections(exam) as string[];
+  const stray = Object.keys(limits).filter((k) => !legal.includes(k));
+  if (stray.length) {
+    return `${stray.join(", ")} ${stray.length === 1 ? "is not a section" : "are not sections"} of ${examSpec(exam).label}.`;
+  }
+  return null;
+}
 
 // List all contests (admin sees all statuses)
 router.get("/contests", async (_req, res: Response) => {
@@ -65,26 +120,40 @@ router.post("/contests", async (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
+  const limitError = checkSectionLimits(parsed.data.exam, parsed.data.sectionLimits);
+  if (limitError) { res.status(400).json({ error: limitError }); return; }
+
   const contest = await prisma.contest.create({ data: parsed.data });
   res.status(201).json(contest);
 });
 
 router.put("/contests/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const parsed = contestSchema.partial().safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues });
+  const raw = contestSchema.partial().safeParse(req.body);
+  if (!raw.success) {
+    res.status(400).json({ error: raw.error.issues });
     return;
   }
+  const parsed = { data: onlySent(raw.data, req.body) };
 
   const existing = await prisma.contest.findUnique({
     where: { id },
-    select: { startTime: true, durationMinutes: true },
+    select: { startTime: true, durationMinutes: true, exam: true, sectionLimits: true },
   });
   if (!existing) {
     res.status(404).json({ error: "Contest not found" });
     return;
   }
+
+  // Checked against the pair the contest will end up with: changing only the
+  // exam has to be rejected if the sections already on the paper do not
+  // belong to the new one.
+  const nextExam = parsed.data.exam ?? existing.exam;
+  const nextLimits = parsed.data.sectionLimits !== undefined
+    ? parsed.data.sectionLimits
+    : (existing.sectionLimits as Record<string, number> | null) ?? undefined;
+  const limitError = checkSectionLimits(nextExam, nextLimits);
+  if (limitError) { res.status(400).json({ error: limitError }); return; }
 
   // Moving a contest has to move its status with it. `status` is derived from
   // the schedule, but it is stored, so an edit that changed only the start
@@ -235,8 +304,9 @@ router.post("/passages", async (req: AuthRequest, res: Response) => {
 
 router.put("/passages/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const parsed = passageSchema.partial().safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  const raw = passageSchema.partial().safeParse(req.body);
+  if (!raw.success) { res.status(400).json({ error: raw.error.issues }); return; }
+  const parsed = { data: onlySent(raw.data, req.body) };
   const passage = await prisma.passage.update({
     where: { id },
     data: toPassageData(parsed.data) as Prisma.PassageUncheckedUpdateInput,
@@ -253,15 +323,30 @@ router.delete("/passages/:id", async (req: AuthRequest, res: Response) => {
 // ── Questions ─────────────────────────────────────────────
 
 const questionSchema = z.object({
-  questionType: z.enum(["STANDARD", "SYLLOGISM", "PASSAGE", "TABLE"]).default("STANDARD"),
+  questionType: z.enum(["STANDARD", "SYLLOGISM", "PASSAGE", "TABLE", "MSQ", "TITA"]).default("STANDARD"),
+  // Which examination the question is written for. Defaulted rather than
+  // required so that every existing admin client, which does not send it,
+  // keeps creating SSC CGL questions exactly as before.
+  exam: z.enum(["SSC_CGL", "CAT"]).default("SSC_CGL"),
   text: z.string().min(1),
   imageUrl: z.url().max(500).optional().nullable(),
-  optionA: z.string().min(1),
-  optionB: z.string().min(1),
-  optionC: z.string().min(1),
-  optionD: z.string().min(1),
-  correctOption: z.enum(["A", "B", "C", "D"]),
-  subject: z.enum(["QUANT", "REASONING", "ENGLISH", "GK"]),
+  // A type-in question has no options, so these may be blank. Whether they
+  // are required is a function of the question type and is enforced by
+  // `validateAnswerShape` below, where the type is known.
+  optionA: z.string().default(""),
+  optionB: z.string().default(""),
+  optionC: z.string().default(""),
+  optionD: z.string().default(""),
+  // Single-choice only. Multiple-select and type-in questions carry their
+  // key in `answerConfig` instead.
+  correctOption: z.enum(["A", "B", "C", "D"]).optional().nullable(),
+  // Shape depends on the type and is parsed by `parseAnswerConfig`, which is
+  // also what scoring reads it back through.
+  answerConfig: z.record(z.string(), z.any()).optional().nullable(),
+  // Normalized labels, replacing the free-text topic for new exams. Ids, so
+  // that renaming a tag does not touch the questions carrying it.
+  tagIds: z.array(z.string().uuid()).max(30).optional(),
+  subject: z.enum(["QUANT", "REASONING", "ENGLISH", "GK", "VARC", "DILR", "QA"]),
   // Optional. Checked against the subject's topic list in the handlers, where
   // the effective subject is known (an edit may change only one of the two).
   topic: z.string().max(120).optional().nullable(),
@@ -328,14 +413,71 @@ function splitTranslations(
   return { writes, deletes };
 }
 
+/**
+ * The rules that involve more than one field, and so cannot live in the zod
+ * schema.
+ *
+ * An exam decides which sections and which answer formats are legal, and the
+ * answer format decides whether the four options are required and where the
+ * key is stored. Checked in one place for create and edit alike, because the
+ * two paths disagreeing is how a question gets saved that can never be
+ * marked correct.
+ */
+function validateQuestionShape(d: {
+  exam: Exam;
+  subject: Subject;
+  questionType: QuestionType;
+  optionA: string; optionB: string; optionC: string; optionD: string;
+  correctOption?: string | null;
+  answerConfig?: unknown;
+}): { ok: false; error: string } | { ok: true; correctOption: string | null; answerConfig: unknown } {
+  const spec = examSpec(d.exam);
+
+  if (!isExamSection(d.exam, d.subject)) {
+    return { ok: false, error: `${d.subject} is not a section of ${spec.label}. Its sections are ${examSections(d.exam).join(", ")}.` };
+  }
+  if (!isExamQuestionType(d.exam, d.questionType)) {
+    return { ok: false, error: `${spec.label} questions cannot be of type ${d.questionType}.` };
+  }
+
+  // Everything except type-in is answered by picking from the four options,
+  // so all four have to be there.
+  if (d.questionType !== "TITA") {
+    const blank = (["optionA", "optionB", "optionC", "optionD"] as const)
+      .filter((k) => !(d[k] ?? "").trim())
+      .map((k) => k.slice(-1));
+    if (blank.length) {
+      return { ok: false, error: `Option ${blank.join(", ")} cannot be blank on a ${d.questionType} question.` };
+    }
+  }
+
+  const key = parseAnswerConfig(d.questionType, d.correctOption, d.answerConfig);
+  if (!key.ok) return { ok: false, error: key.error ?? "The answer key is not valid." };
+  return { ok: true, correctOption: key.value!.correctOption, answerConfig: key.value!.answerConfig };
+}
+
 router.post("/questions", async (req: AuthRequest, res: Response) => {
   const parsed = questionSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues });
     return;
   }
-  if (!isValidTopic(parsed.data.subject, parsed.data.topic)) {
+  const shape = validateQuestionShape(parsed.data as never);
+  if (!shape.ok) { res.status(400).json({ error: shape.error }); return; }
+  parsed.data.correctOption = shape.correctOption as never;
+  (parsed.data as Record<string, unknown>).answerConfig = shape.answerConfig;
+
+  // SSC questions are still filed under a topic from the hard-coded syllabus
+  // list. Newer exams use tags instead, so there is nothing to check against.
+  if (parsed.data.exam === "SSC_CGL" && !isValidTopic(parsed.data.subject as never, parsed.data.topic)) {
     res.status(400).json({ error: `"${parsed.data.topic}" is not a topic of ${parsed.data.subject}.` });
+    return;
+  }
+
+  const tagIds = parsed.data.tagIds ?? [];
+  const unknownTags = await missingTagIds(tagIds);
+  if (unknownTags.length) {
+    res.status(400).json({ error: `No such tag: ${unknownTags.join(", ")}.` });
     return;
   }
 
@@ -359,6 +501,7 @@ router.post("/questions", async (req: AuthRequest, res: Response) => {
   const question = await prisma.question.create({
     data: {
       ...toQuestionData(parsed.data),
+      ...(tagIds.length ? { tags: { create: tagIds.map((tagId) => ({ tagId })) } } : {}),
       fingerprint,
       // The fingerprint is computed from the English text only, so a
       // translation can never make two distinct questions look identical.
@@ -366,9 +509,9 @@ router.post("/questions", async (req: AuthRequest, res: Response) => {
         ? { create: writes.map((w) => ({ ...w.data, language: w.language as never })) }
         : undefined,
     } as Prisma.QuestionUncheckedCreateInput,
-    include: { translations: { select: { language: true } } },
+    include: { translations: { select: { language: true } }, tags: TAG_INCLUDE },
   });
-  res.status(201).json(question);
+  res.status(201).json({ ...question, tags: flattenTags(question.tags) });
 });
 
 // Similar (near-duplicate) questions via trigram similarity.
@@ -403,6 +546,18 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
   const difficulty = req.query.difficulty as string | undefined;
   const topic = req.query.topic as string | undefined;
   const search = (req.query.search as string | undefined)?.trim();
+  // Absent means "every exam", so the bank still opens on everything for a
+  // client that does not know about exams.
+  const exam = parseExamOrNull(req.query.exam);
+  const questionType = req.query.questionType as string | undefined;
+
+  // Repeated ?tagIds=, or one comma-separated value — both are what a URL
+  // built by hand and one built by URLSearchParams look like.
+  const tagIds = [req.query.tagIds, req.query.tagId]
+    .flatMap((v) => (Array.isArray(v) ? v : v === undefined ? [] : [v]))
+    .flatMap((v) => String(v).split(","))
+    .map((v) => v.trim())
+    .filter(Boolean);
 
   const paged = req.query.page !== undefined;
   const page = Math.max(1, Number(req.query.page) || 1);
@@ -419,10 +574,18 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
     : {};
 
   const where = {
+    ...(exam ? { exam } : {}),
     ...(subject ? { subject: subject as any } : {}),
     ...(difficulty ? { difficulty: difficulty as any } : {}),
+    ...(questionType ? { questionType: questionType as any } : {}),
     // "__none" filters to questions nobody has tagged yet.
     ...(topic ? (topic === "__none" ? { topic: null } : { topic }) : {}),
+    // AND rather than OR: picking two tags narrows to questions carrying
+    // both, which is what a filter panel implies and what makes stacking
+    // "Geometry" + "Hard" useful.
+    ...(tagIds.length
+      ? { AND: tagIds.map((tagId) => ({ tags: { some: { tagId } } })) }
+      : {}),
     ...searchWhere,
   };
 
@@ -432,7 +595,7 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
       where,
       // Full translations, because the same rows populate the editor when a
       // question is opened — one round trip rather than a fetch per edit.
-      include: { passage: true, translations: true },
+      include: { passage: true, translations: true, tags: TAG_INCLUDE },
       orderBy: { subject: "asc" },
       ...(paged ? { skip: (page - 1) * perPage, take: perPage } : {}),
     }),
@@ -445,6 +608,7 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
       // Precomputed so the list can render a status column without the client
       // having to know that the base row counts as a language.
       languages: [DEFAULT_LANGUAGE, ...q.translations.map((t) => t.language)],
+      tags: flattenTags(q.tags),
     })),
     total,
     page: paged ? page : 1,
@@ -454,34 +618,67 @@ router.get("/questions", async (req: AuthRequest, res: Response) => {
 
 router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const parsed = questionSchema.partial().safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues });
+  const raw = questionSchema.partial().safeParse(req.body);
+  if (!raw.success) {
+    res.status(400).json({ error: raw.error.issues });
+    return;
+  }
+  const parsed = { data: onlySent(raw.data, req.body) };
+
+  // An edit is validated as the question it will produce, not as the patch
+  // that produces it: a request that changes only the type still has to end
+  // up with an answer key that fits that type, and the fields it leaves
+  // alone are the ones already stored.
+  const current = await prisma.question.findUnique({ where: { id } });
+  if (!current) {
+    res.status(404).json({ error: "Question not found" });
     return;
   }
 
-  // A partial edit may change the subject, the topic, or only one of them, so
-  // validate the pair that the question will actually end up with. Moving a
-  // question to a new subject silently clears a topic that doesn't exist
-  // there, rather than rejecting the edit or leaving a mismatched tag behind.
-  if (parsed.data.subject !== undefined || parsed.data.topic !== undefined) {
-    const current = await prisma.question.findUnique({
-      where: { id },
-      select: { subject: true, topic: true },
-    });
-    if (!current) {
-      res.status(404).json({ error: "Question not found" });
-      return;
-    }
-    const nextSubject = parsed.data.subject ?? current.subject;
-    const nextTopic = parsed.data.topic !== undefined ? parsed.data.topic : current.topic;
+  const pick = <K extends keyof typeof current>(k: K) =>
+    (parsed.data as Record<string, unknown>)[k as string] !== undefined
+      ? ((parsed.data as Record<string, unknown>)[k as string] as (typeof current)[K])
+      : current[k];
 
-    if (parsed.data.topic !== undefined && !isValidTopic(nextSubject, nextTopic)) {
-      res.status(400).json({ error: `"${nextTopic}" is not a topic of ${nextSubject}.` });
+  const next = {
+    exam: pick("exam"),
+    subject: pick("subject"),
+    questionType: pick("questionType"),
+    optionA: pick("optionA") ?? "",
+    optionB: pick("optionB") ?? "",
+    optionC: pick("optionC") ?? "",
+    optionD: pick("optionD") ?? "",
+    correctOption: pick("correctOption"),
+    answerConfig: pick("answerConfig"),
+  };
+
+  const shape = validateQuestionShape(next as never);
+  if (!shape.ok) { res.status(400).json({ error: shape.error }); return; }
+  // Written unconditionally, so switching a question from single-choice to
+  // multiple-select clears the letter it used to carry instead of leaving a
+  // key that two different code paths could each believe.
+  (parsed.data as Record<string, unknown>).correctOption = shape.correctOption;
+  (parsed.data as Record<string, unknown>).answerConfig = shape.answerConfig;
+
+  // Moving a question to a new subject silently clears a topic that doesn't
+  // exist there, rather than rejecting the edit or leaving a mismatched tag
+  // behind. Only SSC files questions by topic; newer exams use tags.
+  if (next.exam === "SSC_CGL") {
+    const nextTopic = parsed.data.topic !== undefined ? parsed.data.topic : current.topic;
+    if (parsed.data.topic !== undefined && !isValidTopic(next.subject as never, nextTopic)) {
+      res.status(400).json({ error: `"${nextTopic}" is not a topic of ${next.subject}.` });
       return;
     }
-    if (parsed.data.topic === undefined && !isValidTopic(nextSubject, nextTopic)) {
+    if (parsed.data.topic === undefined && !isValidTopic(next.subject as never, nextTopic)) {
       (parsed.data as Record<string, any>).topic = null;
+    }
+  }
+
+  if (parsed.data.tagIds !== undefined) {
+    const unknownTags = await missingTagIds(parsed.data.tagIds);
+    if (unknownTags.length) {
+      res.status(400).json({ error: `No such tag: ${unknownTags.join(", ")}.` });
+      return;
     }
   }
 
@@ -491,8 +688,7 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
   const p = parsed.data as Record<string, any>;
   if (p.text !== undefined || p.optionA !== undefined || p.optionB !== undefined ||
       p.optionC !== undefined || p.optionD !== undefined) {
-    const current = await prisma.question.findUnique({ where: { id } });
-    if (current) {
+    {
       const fingerprint = computeFingerprint(
         p.text ?? current.text,
         [p.optionA ?? current.optionA, p.optionB ?? current.optionB,
@@ -512,8 +708,10 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
 
   const { writes, deletes, error } = splitTranslations(p.translations);
   if (error) { res.status(400).json({ error }); return; }
-  // `translations` is not a column, so it must not reach the update payload.
+  // Neither of these is a column on `questions`, so they must not reach the
+  // update payload — tags are a join table, written below.
   delete (data as Record<string, unknown>).translations;
+  delete (data as Record<string, unknown>).tagIds;
 
   // One transaction: a half-applied edit would leave a question whose Hindi
   // text no longer matches its English one.
@@ -533,10 +731,24 @@ router.put("/questions/:id", async (req: AuthRequest, res: Response) => {
     }
     return tx.question.findUnique({
       where: { id },
-      include: { translations: { select: { language: true } } },
+      include: { translations: { select: { language: true } }, tags: TAG_INCLUDE },
     });
   });
-  res.json(question);
+
+  // Outside the transaction above: the tag set is independent of the question
+  // body, and a failure here leaves the edit applied rather than rolling back
+  // a correct translation because a label did not stick.
+  if (parsed.data.tagIds !== undefined) {
+    await setQuestionTags(id, parsed.data.tagIds);
+  }
+
+  const withTags = parsed.data.tagIds !== undefined
+    ? await prisma.question.findUnique({
+        where: { id },
+        include: { translations: { select: { language: true } }, tags: TAG_INCLUDE },
+      })
+    : question;
+  res.json({ ...withTags, tags: flattenTags(withTags?.tags) });
 });
 
 router.delete("/questions/:id", async (req: AuthRequest, res: Response) => {
@@ -593,7 +805,8 @@ router.delete("/contests/:id/questions/:qid", async (req: AuthRequest, res: Resp
 
 const mockTestSchema = z.object({
   title: z.string().min(1),
-  subject: z.enum(["QUANT", "REASONING", "ENGLISH", "GK"]),
+  exam: z.enum(["SSC_CGL", "CAT"]).default("SSC_CGL"),
+  subject: z.enum(["QUANT", "REASONING", "ENGLISH", "GK", "VARC", "DILR", "QA"]),
   durationMinutes: z.number().int().min(1).max(600),
   negativeMarks: z.number().min(0).default(0.5),
   isPublished: z.boolean().default(false),
@@ -611,14 +824,37 @@ router.get("/mocks", async (_req, res: Response) => {
 router.post("/mocks", async (req: AuthRequest, res: Response) => {
   const parsed = mockTestSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  if (!isExamSection(parsed.data.exam, parsed.data.subject)) {
+    res.status(400).json({
+      error: `${parsed.data.subject} is not a section of ${examSpec(parsed.data.exam).label}.`,
+    });
+    return;
+  }
   const mock = await prisma.mockTest.create({ data: parsed.data });
   res.status(201).json(mock);
 });
 
 router.put("/mocks/:id", async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const parsed = mockTestSchema.partial().safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+  const raw = mockTestSchema.partial().safeParse(req.body);
+  if (!raw.success) { res.status(400).json({ error: raw.error.issues }); return; }
+  const parsed = { data: onlySent(raw.data, req.body) };
+
+  if (parsed.data.exam !== undefined || parsed.data.subject !== undefined) {
+    const current = await prisma.mockTest.findUnique({
+      where: { id }, select: { exam: true, subject: true },
+    });
+    if (!current) { res.status(404).json({ error: "Mock test not found" }); return; }
+    const nextExam = parsed.data.exam ?? current.exam;
+    const nextSubject = parsed.data.subject ?? current.subject;
+    if (!isExamSection(nextExam, nextSubject)) {
+      res.status(400).json({
+        error: `${nextSubject} is not a section of ${examSpec(nextExam).label}.`,
+      });
+      return;
+    }
+  }
+
   const mock = await prisma.mockTest.update({ where: { id }, data: parsed.data });
   res.json(mock);
 });
@@ -696,6 +932,9 @@ router.get("/reports", async (req: AuthRequest, res: Response) => {
             id: true, text: true, imageUrl: true, subject: true, difficulty: true,
             optionA: true, optionB: true, optionC: true, optionD: true,
             correctOption: true, solution: true, questionType: true, structuredData: true,
+            // An admin reviewing a report on a multiple-select or type-in
+            // question needs to see the key it is being reported for.
+            exam: true, answerConfig: true,
             passage: { select: { id: true, title: true, content: true, type: true, tableData: true } },
           },
         },
@@ -723,6 +962,145 @@ router.patch("/reports/:id", async (req: AuthRequest, res: Response) => {
     },
   });
   res.json(report);
+});
+
+// ── Examinations ─────────────────────────────────────────
+
+/**
+ * What the admin panel needs to know about each examination.
+ *
+ * Served rather than duplicated in the client, so adding an exam is one
+ * entry in src/lib/exams.ts and not a matching edit in two codebases that
+ * can drift. The panel reads sections, legal answer formats and the defaults
+ * for a new paper from here.
+ */
+router.get("/exams", async (_req, res: Response) => {
+  res.json({
+    exams: Object.values(EXAMS).map((e) => ({
+      key: e.key,
+      label: e.label,
+      sections: e.sections,
+      questionTypes: e.questionTypes,
+      defaults: e.defaults,
+      noPenaltyTypes: e.noPenaltyTypes,
+    })),
+    defaultExam: DEFAULT_EXAM,
+    tagCategories: TAG_CATEGORIES,
+  });
+});
+
+// ── Tags ─────────────────────────────────────────────────
+
+router.get("/tags", async (req: AuthRequest, res: Response) => {
+  const exam = parseExamOrNull(req.query.exam);
+  const category = parseTagCategory(req.query.category);
+  const search = (req.query.search as string | undefined)?.trim();
+  // Retired tags are hidden by default but still fetchable, so an admin can
+  // see what an old question is carrying and reinstate it.
+  const includeInactive = req.query.includeInactive === "true";
+
+  const tags = await prisma.tag.findMany({
+    where: {
+      // A tag with no exam applies to all of them, so an exam filter has to
+      // keep those as well as the ones named for this exam.
+      ...(exam ? { OR: [{ exam }, { exam: null }] } : {}),
+      ...(category ? { category } : {}),
+      ...(includeInactive ? {} : { active: true }),
+      ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
+    },
+    orderBy: [{ category: "asc" }, { name: "asc" }],
+    include: { _count: { select: { questions: true } } },
+  });
+
+  res.json(tags.map((t) => ({ ...t, questionCount: t._count.questions, _count: undefined })));
+});
+
+const tagSchema = z.object({
+  name: z.string().min(1).max(120),
+  category: z.enum(["TOPIC", "SUBTOPIC", "DIFFICULTY", "SKILL", "QUESTION_TYPE", "CUSTOM"]).default("TOPIC"),
+  exam: z.enum(["SSC_CGL", "CAT"]).optional().nullable(),
+  active: z.boolean().default(true),
+});
+
+router.post("/tags", async (req: AuthRequest, res: Response) => {
+  const parsed = tagSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+
+  const slug = slugify(parsed.data.name);
+  if (!slug) {
+    res.status(400).json({ error: "A tag needs at least one letter or digit in its name." });
+    return;
+  }
+
+  const clash = await prisma.tag.findUnique({
+    where: { category_slug: { category: parsed.data.category, slug } },
+    select: { id: true, name: true },
+  });
+  if (clash) {
+    // 409 with the existing row, so the client can select it instead of
+    // showing an error the admin can do nothing about.
+    res.status(409).json({ error: `"${clash.name}" already exists.`, duplicate: clash });
+    return;
+  }
+
+  const tag = await prisma.tag.create({
+    data: { ...parsed.data, slug, exam: parsed.data.exam ?? null },
+  });
+  res.status(201).json(tag);
+});
+
+router.put("/tags/:id", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const raw = tagSchema.partial().safeParse(req.body);
+  if (!raw.success) { res.status(400).json({ error: raw.error.issues }); return; }
+  const parsed = { data: onlySent(raw.data, req.body) };
+
+  const current = await prisma.tag.findUnique({ where: { id } });
+  if (!current) { res.status(404).json({ error: "Tag not found" }); return; }
+
+  // Renaming re-slugs, which is the whole point of normalising: the questions
+  // carrying this tag are untouched because they reference its id.
+  const data: Record<string, unknown> = { ...parsed.data };
+  if (parsed.data.name !== undefined) {
+    const slug = slugify(parsed.data.name);
+    if (!slug) {
+      res.status(400).json({ error: "A tag needs at least one letter or digit in its name." });
+      return;
+    }
+    const category = parsed.data.category ?? current.category;
+    const clash = await prisma.tag.findFirst({
+      where: { category, slug, id: { not: id } },
+      select: { id: true, name: true },
+    });
+    if (clash) {
+      res.status(409).json({ error: `"${clash.name}" already uses that name.`, duplicate: clash });
+      return;
+    }
+    data.slug = slug;
+  }
+
+  const tag = await prisma.tag.update({ where: { id }, data });
+  res.json(tag);
+});
+
+/**
+ * Retires a tag, or deletes it outright if nothing carries it.
+ *
+ * Deleting a tag in use would silently strip a label off every question
+ * holding it and break any saved filter, so one that is in use is
+ * deactivated instead: it stops being offered on new questions and stays
+ * attached to the old ones.
+ */
+router.delete("/tags/:id", async (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const used = await prisma.questionTag.count({ where: { tagId: id } });
+  if (used > 0) {
+    const tag = await prisma.tag.update({ where: { id }, data: { active: false } });
+    res.json({ ok: true, deactivated: true, questionCount: used, tag });
+    return;
+  }
+  await prisma.tag.delete({ where: { id } });
+  res.json({ ok: true, deactivated: false });
 });
 
 export default router;

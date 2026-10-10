@@ -1,4 +1,14 @@
-export type Section = 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+/** Every examination the panel can author for. */
+export type Exam = 'SSC_CGL' | 'CAT'
+
+/**
+ * Sections, across every exam. Which of them are legal on a given paper
+ * depends on its exam — the panel reads that from GET /admin/exams rather
+ * than hard-coding it, so adding an exam is a backend change only.
+ */
+export type Section =
+  | 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+  | 'VARC' | 'DILR' | 'QA'
 
 /**
  * The order sections are presented in, admin side. Must match the student
@@ -12,11 +22,15 @@ export const SECTION_LABELS: Record<Section, string> = {
   REASONING: 'Logical Reasoning',
   ENGLISH: 'English Language',
   GK: 'General Knowledge',
+  VARC: 'Verbal Ability & Reading Comprehension',
+  DILR: 'Data Interpretation & Logical Reasoning',
+  QA: 'Quantitative Ability',
 }
 
 export interface MockTest {
   id: string
   title: string
+  exam: Exam
   subject: Section
   durationMinutes: number
   negativeMarks: number
@@ -37,14 +51,44 @@ export interface MockTestQuestion {
 export interface Contest {
   id: string
   title: string
+  exam: Exam
   startTime: string
   durationMinutes: number
   negativeMarks: number
-  sectionLimits: Record<Section, number> | null
+  sectionLimits: Partial<Record<Section, number>> | null
   status: 'SCHEDULED' | 'LIVE' | 'ENDED'
 }
 
-export type QuestionType = 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+export type QuestionType =
+  | 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+  /** Several correct options, selected together. */
+  | 'MSQ'
+  /** Type In The Answer: no options, the candidate types a number or a word. */
+  | 'TITA'
+
+export type TagCategory = 'TOPIC' | 'SUBTOPIC' | 'DIFFICULTY' | 'SKILL' | 'QUESTION_TYPE' | 'CUSTOM'
+
+/**
+ * A reusable label for a question.
+ *
+ * Referenced by id, so renaming one does not touch the questions carrying it.
+ * `exam` is null for a tag that applies to every examination.
+ */
+export interface Tag {
+  id: string
+  name: string
+  slug: string
+  category: TagCategory
+  exam: Exam | null
+  active: boolean
+  /** How many questions carry it. Present on the tag list, not on a question. */
+  questionCount?: number
+}
+
+/** The answer key for the formats that do not fit in a single letter. */
+export interface MsqConfig { correct: string[]; partial?: boolean }
+export interface TitaConfig { kind: 'NUMERIC' | 'TEXT'; accepted: string[]; tolerance?: number }
+export type AnswerConfig = MsqConfig | TitaConfig
 export type PassageType = 'TEXT' | 'TABLE'
 
 export interface Passage {
@@ -58,14 +102,18 @@ export interface Passage {
 export interface Question {
   id: string
   questionType: QuestionType
+  exam: Exam
   text: string
   imageUrl?: string | null
   optionA: string
   optionB: string
   optionC: string
   optionD: string
-  correctOption: string
-  subject: 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+  /** Null for MSQ and TITA, whose keys live in `answerConfig`. */
+  correctOption: string | null
+  answerConfig?: AnswerConfig | null
+  tags?: Tag[]
+  subject: Section
   topic?: string | null
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   passageId?: string | null
