@@ -16,6 +16,9 @@ import AnswerKeyEditor, {
   EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload,
 } from '../components/AnswerKeyEditor'
 import TagPicker from '../components/TagPicker'
+import PassagePicker from '../components/PassagePicker'
+import { DragHandle, MoveButtons, useRowDrag } from '../components/OrderableRows'
+import { moveTo, saveOrder, splitPassageSets } from '../lib/reorder'
 import QuestionPreview from '../components/QuestionPreview'
 import { useExams, sectionsOf, specOf } from '../lib/exams'
 
@@ -316,7 +319,20 @@ export default function ContestDetail() {
     }
   }
 
-  function resetForm() { setNewQ(emptyQ); setEditingQid(null); setSimilar([]); setCreateError('') }
+  /**
+   * Clears the form for the next question.
+   *
+   * `keepSet` holds on to the passage, its question type and its section, so
+   * a comprehension with six questions is written in one pass instead of
+   * picking the same passage out of a list six times. Everything a question
+   * owns — its text, options, key, tags — is cleared either way.
+   */
+  function resetForm(keepSet = false) {
+    setNewQ(f => keepSet
+      ? { ...emptyQ, questionType: f.questionType, passageId: f.passageId, topic: f.topic }
+      : emptyQ)
+    setEditingQid(null); setSimilar([]); setCreateError('')
+  }
 
   // Load an existing (linked) question into the form for editing.
   function editQuestion(q: Question) {
@@ -405,7 +421,12 @@ export default function ContestDetail() {
           negativeMarks: Number(negMarks),
         })
       }
-      resetForm(); load()
+      // A passage question almost never comes alone, so the set is kept
+      // loaded and the next question goes straight onto the same passage.
+      const inSet = !editingQid
+        && (newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE')
+        && !!newQ.passageId
+      resetForm(inSet); load()
     } catch (err: any) {
       const dup = err?.response?.data?.duplicate
       if (err?.response?.status === 409 && dup) {
@@ -442,6 +463,32 @@ export default function ContestDetail() {
   }
 
   const addedIds = new Set(cqs.map(cq => cq.questionId))
+
+  const [orderError, setOrderError] = useState('')
+  // Dragging inside a filtered view would move a question past rows that are
+  // not on screen, so reordering is offered only on the whole paper.
+  const canReorder = !reviewSubject
+  const splitSets = splitPassageSets(cqs)
+
+  /**
+   * Reorders optimistically, then persists; puts the old order back if the
+   * write fails, so the screen never disagrees with the database.
+   */
+  async function moveQuestion(from: number, to: number) {
+    const before = cqs
+    const next = moveTo(cqs, from, to)
+    if (next === before) return
+    setCqs(next)
+    setOrderError('')
+    try {
+      await saveOrder('contests', id!, next.map(c => c.questionId))
+    } catch (err: any) {
+      setCqs(before)
+      setOrderError(errStr(err, 'Could not save the new order.'))
+    }
+  }
+
+  const drag = useRowDrag((from, to) => { void moveQuestion(from, to) })
   const availableBank = bank.filter(q => !addedIds.has(q.id))
 
   // Section breakdown from current questions
@@ -715,20 +762,32 @@ export default function ContestDetail() {
                 {/* Passage/Table selector */}
                 {(newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE') && (
                   <div className="form-group">
-                    <label>Link to Passage / Table</label>
-                    {passages.filter(p => newQ.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                        No {newQ.questionType === 'TABLE' ? 'tables' : 'passages'} yet — create one in the Questions tab first.
-                      </p>
-                    ) : (
-                      <select className="input" value={newQ.passageId}
-                        onChange={e => setNewQ(f => ({ ...f, passageId: e.target.value }))} required>
-                        <option value="">-- Select --</option>
-                        {passages.filter(p => newQ.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').map(p => (
-                          <option key={p.id} value={p.id}>{p.type === 'TABLE' ? '📊' : '📄'} {p.title || stripHtml(p.content).slice(0, 60)}</option>
-                        ))}
-                      </select>
-                    )}
+                    {/* The set being written, and how far along it is. Without
+                      this the form looks identical whether the passage
+                      carried over from the last save or not. */}
+                  {newQ.passageId && !editingQid && (() => {
+                    const already = cqs.filter(r => r.question.passage?.id === newQ.passageId).length
+                    return (
+                      <div className="set-banner">
+                        <span>
+                          Adding to <strong>{passages.find(p => p.id === newQ.passageId)?.title || 'this passage'}</strong>
+                          {' — '}
+                          <span className="set-count">{already} question{already === 1 ? '' : 's'}</span> on it so far.
+                        </span>
+                        <button type="button" className="btn btn-sm btn-ghost"
+                          onClick={() => setNewQ(f => ({ ...f, passageId: '' }))}>
+                          Finish set
+                        </button>
+                      </div>
+                    )
+                  })()}
+                  <label>Link to Passage / Table</label>
+                    <PassagePicker
+                      passages={passages}
+                      type={newQ.questionType === 'TABLE' ? 'TABLE' : 'TEXT'}
+                      value={newQ.passageId}
+                      onChange={id => setNewQ(f => ({ ...f, passageId: id }))}
+                    />
                   </div>
                 )}
 
@@ -870,7 +929,7 @@ export default function ContestDetail() {
                     {creating ? 'Saving…' : editingQid ? 'Update Question' : 'Create & Add to Contest'}
                   </button>
                   {editingQid && (
-                    <button type="button" className="btn btn-ghost" onClick={resetForm}>Cancel edit</button>
+                    <button type="button" className="btn btn-ghost" onClick={() => resetForm()}>Cancel edit</button>
                   )}
                 </div>
               </form>
@@ -903,6 +962,24 @@ export default function ContestDetail() {
               </div>
             )}
           </div>
+          {orderError && <div className="alert alert-error">{orderError}</div>}
+          {cqs.length > 1 && (
+            <p className="ord-hint">
+              {canReorder
+                ? 'Drag a row, or use ↑ ↓, to set the order. A contest reshuffles per candidate, but the questions on one passage always stay together and in this order.'
+                : 'Showing one section — switch to all sections to reorder.'}
+            </p>
+          )}
+          {splitSets.length > 0 && (
+            <div className="ord-warn">
+              {splitSets.map(ss => (
+                <div key={ss.id}>
+                  The {ss.count} questions on <strong>{ss.title}</strong> are not together in this list.
+                  They are still served as one block, but keeping them adjacent here makes the paper easier to read.
+                </div>
+              ))}
+            </div>
+          )}
           {cqs.length === 0
             ? <p className="empty">No questions added yet. Use the form above to add some.</p>
             : visibleCqs.length === 0
@@ -911,6 +988,7 @@ export default function ContestDetail() {
               <table>
                 <thead>
                   <tr>
+                    {canReorder && <th></th>}
                     <th>#</th>
                     <th>Question</th>
                     <th>Type</th>
@@ -921,8 +999,14 @@ export default function ContestDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleCqs.map((cq) => (
-                    <tr key={cq.questionId}>
+                  {visibleCqs.map((cq, i) => (
+                    <tr key={cq.questionId} {...(canReorder ? drag.rowProps(i) : {})}>
+                      {canReorder && (
+                        <td className="ord-cell">
+                          <DragHandle />
+                          <MoveButtons index={i} total={cqs.length} onMove={moveQuestion} />
+                        </td>
+                      )}
                       <td style={{ color: 'var(--text-muted)', width: 36 }}>
                         {cqs.findIndex(c => c.questionId === cq.questionId) + 1}
                       </td>

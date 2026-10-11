@@ -14,6 +14,7 @@ import AnswerKeyEditor, {
 } from '../components/AnswerKeyEditor'
 import TagPicker, { TagChip } from '../components/TagPicker'
 import QuestionPreview from '../components/QuestionPreview'
+import PassagePicker from '../components/PassagePicker'
 import { useExams, sectionsOf, specOf } from '../lib/exams'
 // Still used by the bank listing's Languages column, not by the editor.
 import { LANGUAGES } from '../lib/types'
@@ -559,8 +560,20 @@ export default function Questions() {
                 </div>
                 <div className="form-group" style={{ flex: 2 }}>
                   <label>Title / Description (shown above the passage)</label>
-                  <input className="input" value={passageForm.title} placeholder="e.g. Q 66-70 refer to the following table..."
+                  <input className="input" value={passageForm.title} placeholder="e.g. RC — the Indian monsoon"
                     onChange={e => setPassageForm(f => ({ ...f, title: e.target.value }))} />
+                  {/* Optional, because it is shown to candidates and a bad
+                      title is worse than none. But an untitled passage is
+                      identified only by its opening words, and cloze and RC
+                      passages all open with the same instruction — which is
+                      how a passage list comes to read "5", "A", "T5". */}
+                  {!passageForm.title.trim() && stripHtml(passageForm.content).trim().length > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.6 }}>
+                      Without a title this passage is listed by its opening words. Two passages that
+                      begin “In the following passage, some words have been deleted…” will look
+                      identical when you attach a question to one of them.
+                    </div>
+                  )}
                 </div>
               </div>
               {passageForm.type === 'TEXT' ? (
@@ -661,23 +674,13 @@ export default function Questions() {
                 {(form.questionType === 'PASSAGE' || form.questionType === 'TABLE') && (
                   <div className="form-group">
                     <label>Link to Passage / Table</label>
-                    {passages.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                        No passages yet. Create one first using "+ Passage / Table" above.
-                      </p>
-                    ) : (
-                      <select className="input" value={form.passageId}
-                        onChange={e => set('passageId', e.target.value)} required>
-                        <option value="">-- Select a passage --</option>
-                        {passages
-                          .filter(p => form.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT')
-                          .map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.type === 'TABLE' ? '📊' : '📄'} {p.title || p.content.slice(0, 60)}
-                            </option>
-                          ))}
-                      </select>
-                    )}
+                    <PassagePicker
+                      passages={passages}
+                      type={form.questionType === 'TABLE' ? 'TABLE' : 'TEXT'}
+                      value={form.passageId}
+                      onChange={id => set('passageId', id)}
+                      onCreateNew={openCreatePassage}
+                    />
                     {form.passageId && passageMap[form.passageId] && (
                       <div style={{ marginTop: 8 }}>
                         <PassagePreview passage={passageMap[form.passageId]} />

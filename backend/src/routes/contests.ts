@@ -311,16 +311,15 @@ router.get("/:id/questions", authenticate, async (req: AuthRequest, res: Respons
   }
 
   const seed = req.user!.id;
-  const questions = cqs
-    .map((cq) => ({
-      ...stripAnswerKey(
-        localizeQuestion({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }, language),
-      ),
-      availableLanguages: [DEFAULT_LANGUAGE, ...(byQuestion.get(cq.questionId) ?? [])],
-    }))
-    .sort((a, b) => simpleHash(seed + a.id) - simpleHash(seed + b.id));
+  // `cqs` is already in displayOrder, which is the order the admin arranged.
+  const inOrder = cqs.map((cq) => ({
+    ...stripAnswerKey(
+      localizeQuestion({ ...cq.question, marks: cq.marks, negativeMarks: cq.negativeMarks }, language),
+    ),
+    availableLanguages: [DEFAULT_LANGUAGE, ...(byQuestion.get(cq.questionId) ?? [])],
+  }));
 
-  res.json(questions);
+  res.json(shuffleBlocks(inOrder, seed));
 });
 
 // Autosave draft answers
@@ -707,6 +706,42 @@ router.get("/:id/result", authenticate, async (req: AuthRequest, res: Response) 
     avgTimePerQuestion,
   });
 });
+
+/**
+ * Shuffles a paper for one candidate without breaking up a passage set.
+ *
+ * The shuffle exists so that two people sitting side by side do not see the
+ * same question at the same position. Applied question by question, though,
+ * it scattered the questions that share a passage: a candidate could meet
+ * question 4 and question 19 on the same comprehension, read it twice, and
+ * never see them as the set they are. For a CAT DILR or VARC set, where four
+ * to six questions hang off one caselet, that is not a nuisance — it is a
+ * different, harder exam than the one that was set.
+ *
+ * So the unit shuffled is the block, not the question: every question sharing
+ * a passage moves together and keeps the order the admin arranged it in,
+ * while a standalone question is a block of one and shuffles as before.
+ *
+ * A paper with no passages comes out exactly as it did before this change,
+ * because a standalone block is keyed by the question's own id.
+ */
+function shuffleBlocks<T extends { id: string; passage?: { id: string } | null }>(
+  questions: T[],
+  seed: string,
+): T[] {
+  const blocks = new Map<string, T[]>();
+  for (const q of questions) {
+    // "p:" cannot collide with a uuid, so a set and a lone question can never
+    // land in the same bucket.
+    const key = q.passage?.id ? `p:${q.passage.id}` : q.id;
+    const bucket = blocks.get(key);
+    if (bucket) bucket.push(q);
+    else blocks.set(key, [q]);
+  }
+  return [...blocks.entries()]
+    .sort(([a], [b]) => simpleHash(seed + a) - simpleHash(seed + b))
+    .flatMap(([, qs]) => qs);
+}
 
 function simpleHash(str: string): number {
   let hash = 0;

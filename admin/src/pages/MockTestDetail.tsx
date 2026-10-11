@@ -16,6 +16,9 @@ import AnswerKeyEditor, {
   EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload, answerLabel,
 } from '../components/AnswerKeyEditor'
 import TagPicker from '../components/TagPicker'
+import PassagePicker from '../components/PassagePicker'
+import { DragHandle, MoveButtons, useRowDrag } from '../components/OrderableRows'
+import { moveTo, saveOrder, splitPassageSets } from '../lib/reorder'
 import QuestionPreview from '../components/QuestionPreview'
 import { useExams, specOf } from '../lib/exams'
 
@@ -137,7 +140,20 @@ export default function MockTestDetail() {
     } finally { setAdding(false) }
   }
 
-  function resetForm() { setCForm(emptyCreate); setEditingQid(null); setSimilar([]); setError('') }
+  /**
+   * Clears the form for the next question.
+   *
+   * `keepSet` holds on to the passage, its question type and its section, so
+   * a comprehension with six questions is written in one pass instead of
+   * picking the same passage out of a list six times. Everything a question
+   * owns — its text, options, key, tags — is cleared either way.
+   */
+  function resetForm(keepSet = false) {
+    setCForm(f => keepSet
+      ? { ...emptyCreate, questionType: f.questionType, passageId: f.passageId, topic: f.topic }
+      : emptyCreate)
+    setEditingQid(null); setSimilar([]); setError('')
+  }
 
   // Load an existing (linked) question into the form for editing.
   function editQuestion(q: Question) {
@@ -223,7 +239,12 @@ export default function MockTestDetail() {
           questionId: qRes.data.id, marks: Number(marks), negativeMarks: Number(negMarks),
         })
       }
-      resetForm(); load()
+      // A passage question almost never comes alone, so the set is kept
+      // loaded and the next question goes straight onto the same passage.
+      const inSet = !editingQid
+        && (cForm.questionType === 'PASSAGE' || cForm.questionType === 'TABLE')
+        && !!cForm.passageId
+      resetForm(inSet); load()
     } catch (err: any) {
       // Surface exact-duplicate acknowledgment clearly.
       const dup = err?.response?.data?.duplicate
@@ -245,6 +266,32 @@ export default function MockTestDetail() {
     } catch (err: any) {
       setError(errStr(err, 'Image upload failed'))
     } finally { setUploading(false) }
+  }
+
+  const [orderError, setOrderError] = useState('')
+  const drag = useRowDrag((from, to) => { void moveQuestion(from, to) })
+  // Called out because a mock is served in exactly this order.
+  const splitSets = splitPassageSets(mtqs)
+
+  /**
+   * Reorders optimistically, then persists.
+   *
+   * The list is what the admin is looking at, so it moves immediately; if
+   * the write fails the previous order is put back and the reason shown,
+   * rather than leaving the screen disagreeing with the database.
+   */
+  async function moveQuestion(from: number, to: number) {
+    const before = mtqs
+    const next = moveTo(mtqs, from, to)
+    if (next === before) return
+    setMtqs(next)
+    setOrderError('')
+    try {
+      await saveOrder('mocks', id!, next.map(m => m.questionId))
+    } catch (err: any) {
+      setMtqs(before)
+      setOrderError(errStr(err, 'Could not save the new order.'))
+    }
   }
 
   async function removeQuestion(qid: string) {
@@ -450,20 +497,32 @@ export default function MockTestDetail() {
               {/* Passage/Table selector */}
               {(cForm.questionType === 'PASSAGE' || cForm.questionType === 'TABLE') && (
                 <div className="form-group">
+                  {/* The set being written, and how far along it is. Without
+                      this the form looks identical whether the passage
+                      carried over from the last save or not. */}
+                  {cForm.passageId && !editingQid && (() => {
+                    const already = mtqs.filter(r => r.question.passage?.id === cForm.passageId).length
+                    return (
+                      <div className="set-banner">
+                        <span>
+                          Adding to <strong>{passages.find(p => p.id === cForm.passageId)?.title || 'this passage'}</strong>
+                          {' — '}
+                          <span className="set-count">{already} question{already === 1 ? '' : 's'}</span> on it so far.
+                        </span>
+                        <button type="button" className="btn btn-sm btn-ghost"
+                          onClick={() => setCForm(f => ({ ...f, passageId: '' }))}>
+                          Finish set
+                        </button>
+                      </div>
+                    )
+                  })()}
                   <label>Link to Passage / Table</label>
-                  {passages.filter(p => cForm.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                      No {cForm.questionType === 'TABLE' ? 'tables' : 'passages'} yet — create one in the Questions tab first.
-                    </p>
-                  ) : (
-                    <select className="input" value={cForm.passageId}
-                      onChange={e => setCForm(f => ({ ...f, passageId: e.target.value }))} required>
-                      <option value="">-- Select --</option>
-                      {passages.filter(p => cForm.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').map(p => (
-                        <option key={p.id} value={p.id}>{p.type === 'TABLE' ? '📊' : '📄'} {p.title || stripHtml(p.content).slice(0, 60)}</option>
-                      ))}
-                    </select>
-                  )}
+                  <PassagePicker
+                    passages={passages}
+                    type={cForm.questionType === 'TABLE' ? 'TABLE' : 'TEXT'}
+                    value={cForm.passageId}
+                    onChange={id => setCForm(f => ({ ...f, passageId: id }))}
+                  />
                 </div>
               )}
 
@@ -592,7 +651,7 @@ export default function MockTestDetail() {
                   {creating ? 'Saving…' : editingQid ? 'Update Question' : 'Create & Add to Mock'}
                 </button>
                 {editingQid && (
-                  <button type="button" className="btn btn-ghost" onClick={resetForm}>Cancel edit</button>
+                  <button type="button" className="btn btn-ghost" onClick={() => resetForm()}>Cancel edit</button>
                 )}
               </div>
             </form>
@@ -601,16 +660,36 @@ export default function MockTestDetail() {
 
         {/* Added questions */}
         <div className="card">
-          <h2 style={{ marginBottom: 12 }}>Questions ({mtqs.length})</h2>
+          <h2 style={{ marginBottom: 4 }}>Questions ({mtqs.length})</h2>
+          {mtqs.length > 1 && (
+            <p className="ord-hint">
+              Drag a row, or use ↑ ↓, to set the order candidates meet them in.
+            </p>
+          )}
+          {orderError && <div className="alert alert-error">{orderError}</div>}
+          {splitSets.length > 0 && (
+            <div className="ord-warn">
+              {splitSets.map(s => (
+                <div key={s.id}>
+                  The {s.count} questions on <strong>{s.title}</strong> are not together.
+                  A mock test is served in exactly this order, so the passage would be read twice.
+                </div>
+              ))}
+            </div>
+          )}
           {mtqs.length === 0 && <p className="empty">No questions added yet.</p>}
           {mtqs.length > 0 && (
             <table>
               <thead>
-                <tr><th>#</th><th>Question</th><th>Type</th><th>Marks</th><th>Ans</th><th></th></tr>
+                <tr><th></th><th>#</th><th>Question</th><th>Type</th><th>Marks</th><th>Ans</th><th></th></tr>
               </thead>
               <tbody>
                 {mtqs.map((mtq, i) => (
-                  <tr key={mtq.questionId}>
+                  <tr key={mtq.questionId} {...drag.rowProps(i)}>
+                    <td className="ord-cell">
+                      <DragHandle />
+                      <MoveButtons index={i} total={mtqs.length} onMove={moveQuestion} />
+                    </td>
                     <td style={{ color: 'var(--text-muted)', width: 36 }}>{i + 1}</td>
                     <td style={{ maxWidth: 420 }}>
                       {mtq.question.passage && (

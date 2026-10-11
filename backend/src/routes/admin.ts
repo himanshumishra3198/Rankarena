@@ -280,9 +280,78 @@ function toPassageData(d: Record<string, any>) {
   return out;
 }
 
+/**
+ * Rewrites the order of a paper's questions.
+ *
+ * Takes the full ordered list of question ids rather than a pair to swap:
+ * a drag can move a question past several others, and sending the whole
+ * order makes the write idempotent and impossible to half-apply.
+ *
+ * Only the questions already on the paper are touched. An id that is not on
+ * it is refused rather than ignored, because a reorder that silently drops a
+ * question is indistinguishable from one that worked.
+ */
+function reorderHandler(kind: "mock" | "contest") {
+  return async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string;
+    const parsed = z.object({ questionIds: z.array(z.string().uuid()).min(1) }).safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: parsed.error.issues }); return; }
+    const { questionIds } = parsed.data;
+
+    if (new Set(questionIds).size !== questionIds.length) {
+      res.status(400).json({ error: "The same question appears twice in the new order." });
+      return;
+    }
+
+    const where = kind === "mock" ? { mockTestId: id } : { contestId: id };
+    const existing = kind === "mock"
+      ? await prisma.mockTestQuestion.findMany({ where, select: { questionId: true } })
+      : await prisma.contestQuestion.findMany({ where, select: { questionId: true } });
+
+    const onPaper = new Set(existing.map((r) => r.questionId));
+    const stray = questionIds.filter((q) => !onPaper.has(q));
+    if (stray.length) {
+      res.status(400).json({ error: `Not on this paper: ${stray.join(", ")}.` });
+      return;
+    }
+    if (questionIds.length !== onPaper.size) {
+      res.status(400).json({
+        error: `The new order lists ${questionIds.length} questions but the paper has ${onPaper.size}.`,
+      });
+      return;
+    }
+
+    // One transaction: a half-written order would leave two questions
+    // claiming the same position, and the paper reads by that column.
+    await prisma.$transaction(
+      questionIds.map((questionId, i) =>
+        kind === "mock"
+          ? prisma.mockTestQuestion.update({
+              where: { mockTestId_questionId: { mockTestId: id, questionId } },
+              data: { displayOrder: i + 1 },
+            })
+          : prisma.contestQuestion.update({
+              where: { contestId_questionId: { contestId: id, questionId } },
+              data: { displayOrder: i + 1 },
+            }),
+      ),
+    );
+    res.json({ ok: true, count: questionIds.length });
+  };
+}
+
+router.patch("/mocks/:id/questions/order", reorderHandler("mock"));
+router.patch("/contests/:id/questions/order", reorderHandler("contest"));
+
 router.get("/passages", async (_req, res: Response) => {
-  const passages = await prisma.passage.findMany({ orderBy: { createdAt: "desc" } });
-  res.json(passages);
+  // The question count is what lets the picker tell two near-identical
+  // passages apart — "Cloze, 5 questions" against "Cloze, unused" — which a
+  // dropdown of truncated titles never could.
+  const passages = await prisma.passage.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { questions: true } } },
+  });
+  res.json(passages.map(({ _count, ...p }) => ({ ...p, questionCount: _count.questions })));
 });
 
 router.post("/passages", async (req: AuthRequest, res: Response) => {

@@ -97,6 +97,9 @@ export interface Passage {
   content: string
   type: PassageType
   tableData?: { headers: string[]; rows: string[][] } | null
+  createdAt?: string
+  /** How many questions hang off it — what tells two similar passages apart. */
+  questionCount?: number
 }
 
 export interface Question {
