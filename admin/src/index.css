@@ -513,3 +513,83 @@ tr:hover td { background: var(--surface-raised); }
 .qp-sol { margin-top: 14px; font-size: 14px; }
 .qp-sol summary { cursor: pointer; font-weight: 600; color: var(--primary); }
 .qp-sol > div { margin-top: 8px; line-height: 1.7; color: var(--text); }
+
+/* ── Maths syntax reference ───────────────────────────────────────────────
+   Wider than a confirm dialog because it is a reference table, not a
+   question. Every "Shows as" cell is rendered by the same pipeline as a real
+   question, so the sheet cannot drift from what the exam room does. */
+.lx-box { max-width: 820px; }
+.lx-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 10px;
+}
+.lx-title { margin: 0; font-size: 19px; color: var(--heading); }
+.lx-lead { margin: 0 0 16px; font-size: 14px; line-height: 1.65; color: var(--text-muted); }
+
+.lx-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.lx-table th {
+  text-align: left; font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--text-muted); font-weight: 700; padding: 6px 10px; border-bottom: 1px solid var(--border);
+}
+.lx-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.lx-table tr:last-child td { border-bottom: 0; }
+.lx-what { color: var(--text-muted); width: 34%; }
+.lx-out { color: var(--heading); }
+.lx-delims { margin-bottom: 16px; background: var(--bg); border-radius: 8px; }
+
+/* The snippet is a button because clicking it copies — with the delimiters
+   included, since pasting the bare formula is the commonest way to get
+   nothing on the page. */
+.lx-code {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  border-radius: 6px; padding: 3px 8px; cursor: pointer; font: inherit; text-align: left;
+}
+.lx-code:hover { border-color: var(--primary); }
+.lx-code code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px; white-space: pre-wrap; word-break: break-word;
+}
+.lx-copy {
+  flex-shrink: 0; font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-muted); font-weight: 700;
+}
+.lx-code:hover .lx-copy { color: var(--primary); }
+
+.lx-warn {
+  border-left: 3px solid var(--danger); background: var(--danger-light);
+  padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 18px;
+  font-size: 13.5px; line-height: 1.7; color: var(--text);
+}
+.lx-warn strong { display: block; margin-bottom: 4px; color: var(--heading); }
+.lx-warn ul { margin: 0; padding-left: 18px; }
+.lx-warn li + li { margin-top: 6px; }
+.lx-warn code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px; background: var(--surface); padding: 1px 5px; border-radius: 4px;
+}
+
+.lx-group { margin-bottom: 18px; }
+.lx-group-title {
+  margin: 0 0 4px; font-size: 13px; color: var(--primary);
+  letter-spacing: .03em; text-transform: uppercase;
+}
+.lx-foot { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.lx-err { color: var(--danger); font-weight: 600; }
+
+/* The help trigger, next to the syntax hint under the question field. */
+.lx-open {
+  border: 1px solid var(--border); background: var(--surface); color: var(--primary);
+  border-radius: 999px; padding: 1px 9px; font-size: 11.5px; font-weight: 700;
+  cursor: pointer; margin-left: 6px; white-space: nowrap;
+}
+.lx-open:hover { border-color: var(--primary); background: var(--primary-light); }
+
+@media (max-width: 640px) {
+  .lx-what { width: auto; }
+  /* The three columns stop fitting; the reference reads fine stacked. */
+  .lx-table, .lx-table tbody, .lx-table tr, .lx-table td { display: block; width: 100%; }
+  .lx-table thead { display: none; }
+  .lx-table tr { border-bottom: 1px solid var(--border); padding: 6px 0; }
+  .lx-table td { border-bottom: 0; padding: 3px 0; }
+}
