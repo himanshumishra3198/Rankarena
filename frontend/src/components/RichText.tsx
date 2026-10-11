@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import DOMPurify from 'dompurify'
+import { renderMathToHtml } from '../lib/math'
 
 // Allowlist: inline formatting + inline images the admin editor can produce.
 const CONFIG = {
@@ -45,6 +47,13 @@ function blocksToBr(html: string): string {
 }
 
 // Render admin-authored rich text safely (sanitized HTML) in the student app.
+//
+// Mathematics is rendered after sanitising, and into the html string rather
+// than into the mounted element: KaTeX emits markup DOMPurify's allowlist
+// would strip, while the formula source is plain text the sanitiser leaves
+// alone. Doing it during render rather than in an effect is what keeps it —
+// a dangerouslySetInnerHTML subtree belongs to React, and any later commit
+// resets it to whatever string it was last given.
 export function RichText({ html, as = 'span', className, style }: {
   html: string
   as?: 'span' | 'div' | 'p'
@@ -52,6 +61,10 @@ export function RichText({ html, as = 'span', className, style }: {
   style?: React.CSSProperties
 }) {
   const clean = DOMPurify.sanitize(blocksToBr(html ?? ''), CONFIG)
+  // Memoised because this parses and walks the fragment: the exam room
+  // re-renders every second, and the clock must not drag a KaTeX pass behind
+  // it on every question on the page.
+  const withMath = useMemo(() => renderMathToHtml(clean), [clean])
   const Tag = as as any
-  return <Tag className={className} style={style} dangerouslySetInnerHTML={{ __html: clean }} />
+  return <Tag className={className} style={style} dangerouslySetInnerHTML={{ __html: withMath }} />
 }

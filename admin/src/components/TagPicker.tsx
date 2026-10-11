@@ -108,7 +108,9 @@ export default function TagPicker({ exam, value, onChange }: {
       // for new ones.
       .filter(t => t.active !== false)
       .filter(t => !q || t.name.toLowerCase().includes(q))
-      .slice(0, 40)
+      // Capped: with a seeded syllabus this is dozens of chips, and the list
+      // is a shortcut, not a browser.
+      .slice(0, q ? 40 : 14)
   }, [tags, query, value])
 
   // Only offer to create when nothing already matches what was typed — the
@@ -139,6 +141,11 @@ export default function TagPicker({ exam, value, onChange }: {
     }
   }
 
+  // The name is shown truncated wherever it appears: an admin can paste a
+  // whole sentence in here, and letting it size a button stretched the row
+  // across the form.
+  const shortTyped = typed.length > 32 ? `${typed.slice(0, 32)}…` : typed
+
   return (
     <div className="form-group">
       <label>
@@ -156,38 +163,79 @@ export default function TagPicker({ exam, value, onChange }: {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input className="input" value={query} onChange={e => setQuery(e.target.value)}
-          placeholder={loading ? 'Loading tags…' : 'Search tags, or type a new one'} />
-        {canCreate && (
-          <>
-            <select className="input" style={{ maxWidth: 150 }} value={category}
-              onChange={e => setCategory(e.target.value as TagCategory)}>
-              {(Object.keys(CATEGORY_LABELS) as TagCategory[]).map(c => (
-                <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
-              ))}
-            </select>
-            <button type="button" className="btn btn-sm" disabled={creating} onClick={create}>
-              {creating ? 'Creating…' : `Create "${typed}"`}
-            </button>
-          </>
-        )}
-      </div>
+      {/* The field gets the whole row. The create controls sit underneath, so
+          a long name can never widen them. */}
+      <input
+        className="input"
+        value={query}
+        maxLength={120}
+        onChange={e => setQuery(e.target.value)}
+        placeholder={loading ? 'Loading tags…' : 'Search tags, or type a new one'}
+      />
 
-      {error && <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 6 }}>{error}</div>}
-
-      {query.trim() !== '' && matches.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-          {matches.map(t => (
-            <button key={t.id} type="button" onClick={() => { onChange([...value, t.id]); setQuery('') }}
-              style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer' }}>
-              <TagChip tag={t} />
-            </button>
-          ))}
+      {canCreate && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap',
+        }}>
+          <select
+            className="input"
+            style={{ width: 'auto', minWidth: 130, flex: '0 0 auto' }}
+            value={category}
+            onChange={e => setCategory(e.target.value as TagCategory)}
+          >
+            {(Object.keys(CATEGORY_LABELS) as TagCategory[]).map(c => (
+              <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={creating}
+            onClick={create}
+            style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
+          >
+            {creating ? 'Creating…' : '+ Create tag'}
+          </button>
+          <span
+            title={typed}
+            style={{
+              fontSize: 12, color: 'var(--text-muted)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              minWidth: 0, flex: '1 1 160px',
+            }}
+          >
+            as “{shortTyped}”
+          </span>
         </div>
       )}
 
-      {query.trim() === '' && !loading && tags.length === 0 && (
+      {error && <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 6 }}>{error}</div>}
+
+      {/* Suggestions show even before anything is typed: with a seeded
+          syllabus there are dozens to pick from, and an empty box gave no
+          hint that they existed. */}
+      {matches.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          {!typed && (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>
+              Suggestions
+            </div>
+          )}
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: 6,
+            maxHeight: 128, overflowY: 'auto',
+          }}>
+            {matches.map(t => (
+              <button key={t.id} type="button" onClick={() => { onChange([...value, t.id]); setQuery('') }}
+                style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer' }}>
+                <TagChip tag={t} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && tags.length === 0 && (
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
           No tags yet for this exam. Type a name above to create the first one.
         </div>

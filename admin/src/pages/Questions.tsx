@@ -13,6 +13,7 @@ import AnswerKeyEditor, {
   EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload, answerLabel,
 } from '../components/AnswerKeyEditor'
 import TagPicker, { TagChip } from '../components/TagPicker'
+import QuestionPreview from '../components/QuestionPreview'
 import { useExams, sectionsOf, specOf } from '../lib/exams'
 // Still used by the bank listing's Languages column, not by the editor.
 import { LANGUAGES } from '../lib/types'
@@ -851,6 +852,21 @@ export default function Questions() {
                   </>
                 }
               />
+
+              {/* Sits between the content and the save button on purpose: it
+                  is the last thing an author looks at before committing, and
+                  a mangled formula or an empty option is obvious here in a
+                  way it is not in the fields above. */}
+              <div style={{ margin: '18px 0' }}>
+                <QuestionPreview
+                  value={form}
+                  passage={
+                    (form.questionType === 'PASSAGE' || form.questionType === 'TABLE') && form.passageId
+                      ? passageMap[form.passageId]
+                      : null
+                  }
+                />
+              </div>
 
               <button className="btn btn-primary" type="submit" disabled={saving}>
                 {saving ? 'Saving...' : editingId ? 'Update Question' : 'Save Question'}

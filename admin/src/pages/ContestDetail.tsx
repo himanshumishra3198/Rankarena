@@ -16,6 +16,7 @@ import AnswerKeyEditor, {
   EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload,
 } from '../components/AnswerKeyEditor'
 import TagPicker from '../components/TagPicker'
+import QuestionPreview from '../components/QuestionPreview'
 import { useExams, sectionsOf, specOf } from '../lib/exams'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
@@ -852,6 +853,17 @@ export default function ContestDetail() {
                 <TagPicker exam={paperExam} value={newQ.tagIds}
                   onChange={ids => setNewQ(f => ({ ...f, tagIds: ids }))} />
 
+                {/* The last thing an author looks at before committing. */}
+                <div style={{ margin: '18px 0' }}>
+                  <QuestionPreview
+                    value={newQ}
+                    passage={
+                      (newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE') && newQ.passageId
+                        ? passages.find(p => p.id === newQ.passageId) ?? null
+                        : null
+                    }
+                  />
+                </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-primary" type="submit" disabled={creating}>

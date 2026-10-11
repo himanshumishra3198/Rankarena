@@ -423,3 +423,93 @@ tr:hover td { background: var(--surface-raised); }
 }
 [data-theme="dark"] .kd-banner { color: #fcd34d; border-color: rgba(217,119,6,.5); }
 .kd-banner > div { flex: 1; min-width: 200px; }
+
+/* ── Question preview ─────────────────────────────────────────────────────
+   The question as a candidate meets it, built from the form as it is typed.
+   Styled to read like the exam room rather than like the form beside it, so
+   the author is looking at the finished article; the one deliberate
+   difference is that the answer key is marked, which the real room never
+   does. Uses the panel's own tokens, so it follows light and dark with
+   everything else. */
+.qp {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.qp-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 12px; background: var(--bg); border-bottom: 1px solid var(--border);
+}
+.qp-title { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: .04em; text-transform: uppercase; }
+.qp-langs { display: flex; gap: 4px; }
+.qp-lang {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-muted);
+  border-radius: 999px; padding: 2px 10px; font-size: 12px; cursor: pointer;
+}
+.qp-lang.on { border-color: var(--primary); color: var(--primary); background: var(--primary-light); font-weight: 600; }
+.qp-body { padding: 14px 16px 16px; }
+.qp-empty { color: var(--text-muted); font-size: 13px; line-height: 1.7; margin: 0; }
+.qp-hint { font-size: 12px; }
+
+.qp-qtext { font-size: 15.5px; line-height: 1.75; color: var(--heading); margin-bottom: 14px; }
+.qp-image { max-height: 220px; max-width: 100%; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 14px; }
+
+.qp-passage {
+  border-left: 3px solid var(--primary); background: var(--bg);
+  padding: 10px 12px; border-radius: 0 6px 6px 0; margin-bottom: 14px;
+}
+.qp-passage-title { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+.qp-passage-text { font-size: 14px; line-height: 1.7; color: var(--text); }
+/* A wide data table scrolls inside the preview instead of stretching the form. */
+.qp-tablewrap { overflow-x: auto; }
+.qp-table { border-collapse: collapse; font-size: 13px; }
+.qp-table th, .qp-table td { border: 1px solid var(--border); padding: 4px 10px; text-align: left; white-space: nowrap; }
+.qp-table th { background: var(--surface-raised); font-weight: 700; }
+
+.qp-syll { margin-bottom: 14px; font-size: 15px; line-height: 1.8; color: var(--heading); }
+.qp-syll-head { font-weight: 700; margin-top: 8px; }
+.qp-syll-line { padding-left: 14px; }
+.qp-syll-n { color: var(--text-muted); }
+
+.qp-multi {
+  font-size: 13px; color: var(--primary); background: var(--primary-light);
+  border-left: 3px solid var(--primary); padding: 6px 10px; border-radius: 3px;
+  margin: 0 0 10px; line-height: 1.5;
+}
+.qp-opts { display: flex; flex-direction: column; gap: 6px; }
+.qp-opt {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 15px; line-height: 1.6; color: var(--text);
+  padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+}
+.qp-opt.key { border-color: var(--success); background: var(--success-light); }
+/* A drawn control rather than a real input: the preview must not be
+   clickable, or an author would try to answer their own question. */
+.qp-box {
+  width: 14px; height: 14px; flex-shrink: 0; margin-top: 4px;
+  border: 1.5px solid var(--border); border-radius: 50%; background: var(--surface);
+}
+.qp-box.sq { border-radius: 3px; }
+.qp-box.on { border-color: var(--success); background: var(--success); box-shadow: inset 0 0 0 2.5px var(--surface); }
+.qp-box.sq.on { box-shadow: none; }
+.qp-opt-letter { flex-shrink: 0; color: var(--text-muted); }
+.qp-blank { color: var(--text-muted); }
+.qp-tag {
+  margin-left: auto; flex-shrink: 0; align-self: center;
+  font-size: 11px; font-weight: 700; color: var(--success); text-transform: uppercase; letter-spacing: .04em;
+}
+
+.qp-tita { max-width: 380px; }
+.qp-tita-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+.qp-tita-input {
+  width: 100%; font-size: 15px; padding: 9px 11px; border: 1.5px solid var(--border);
+  border-radius: 6px; background: var(--bg); color: var(--text-muted);
+}
+.qp-key { margin-top: 10px; font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.qp-key strong { color: var(--success); }
+.qp-warn { color: var(--danger); }
+
+.qp-sol { margin-top: 14px; font-size: 14px; }
+.qp-sol summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+.qp-sol > div { margin-top: 8px; line-height: 1.7; color: var(--text); }

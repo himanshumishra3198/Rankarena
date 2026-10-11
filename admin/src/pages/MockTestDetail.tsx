@@ -16,6 +16,7 @@ import AnswerKeyEditor, {
   EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload, answerLabel,
 } from '../components/AnswerKeyEditor'
 import TagPicker from '../components/TagPicker'
+import QuestionPreview from '../components/QuestionPreview'
 import { useExams, specOf } from '../lib/exams'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -574,6 +575,17 @@ export default function MockTestDetail() {
               <TagPicker exam={paperExam} value={cForm.tagIds}
                 onChange={ids => setCForm(f => ({ ...f, tagIds: ids }))} />
 
+              {/* The last thing an author looks at before committing. */}
+              <div style={{ margin: '18px 0' }}>
+                <QuestionPreview
+                  value={cForm}
+                  passage={
+                    (cForm.questionType === 'PASSAGE' || cForm.questionType === 'TABLE') && cForm.passageId
+                      ? passages.find(p => p.id === cForm.passageId) ?? null
+                      : null
+                  }
+                />
+              </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button className="btn btn-primary" type="submit" disabled={creating}>
