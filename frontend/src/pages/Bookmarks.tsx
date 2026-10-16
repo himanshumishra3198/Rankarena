@@ -5,12 +5,12 @@ import { QuestionContext } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import { usePageMeta } from '../lib/seo'
 import { SECTIONS } from '../lib/types'
+import { type AnswerKeyFields, isKeyOption, keyLabel } from '../lib/answers'
 
-interface BQuestion {
+interface BQuestion extends AnswerKeyFields {
   id: string; text: string; imageUrl?: string
   optionA: string; optionB: string; optionC: string; optionD: string
-  correctOption: string; subject: string; difficulty: string
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+  subject: string; difficulty: string
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: { id: string; title: string; content: string; type: 'TEXT' | 'TABLE'; tableData?: { headers: string[]; rows: string[][] } | null } | null
   solution?: string | null
@@ -83,9 +83,19 @@ export default function Bookmarks() {
                       </div>
                     )}
                     {q.text && <RichText as="p" className="review-qtext" html={q.text} />}
+                    {/* A type-in question has no options, so its accepted
+                        answers are listed instead. */}
+                    {q.questionType === 'TITA' ? (
+                      <div className="qd-tita-review" style={{ marginTop: 10 }}>
+                        <div className="qd-tita-row correct-opt">
+                          <span className="option-label">Key</span>
+                          <span>{keyLabel(q)}</span>
+                        </div>
+                      </div>
+                    ) : (
                     <div className="options" style={{ marginTop: 10 }}>
                       {(['A', 'B', 'C', 'D'] as const).map(opt => {
-                        const isCorrect = opt === q.correctOption
+                        const isCorrect = isKeyOption(q, opt)
                         return (
                           <div key={opt} className="option" style={{
                             cursor: 'default',
@@ -99,6 +109,7 @@ export default function Bookmarks() {
                         )
                       })}
                     </div>
+                    )}
                     {q.solution && (
                       <div className="sol-explain">
                         <button className="sol-explain-toggle"

@@ -3,6 +3,8 @@ import { RichEditor } from './RichEditor'
 import { stripHtml } from './RichText'
 import { LANGUAGES, type Language } from '../lib/types'
 import { convertHtml, looksLikeKrutiDev } from '../lib/krutidev'
+import { MATH_HINT } from '../lib/math'
+import LatexHelp from './LatexHelp'
 
 /**
  * The per-language half of a question: text, four options, solution.
@@ -68,6 +70,7 @@ export default function QuestionContentTabs({
   onLangChange?: (l: Language) => void
 }) {
   const [internal, setInternal] = useState<Language>('EN')
+  const [latexHelp, setLatexHelp] = useState(false)
   const lang = activeLang ?? internal
   const setLang = onLangChange ?? setInternal
 
@@ -116,6 +119,17 @@ export default function QuestionContentTabs({
               <RichEditor value={value.text} minHeight={70}
                 onChange={v => onChange({ text: v })}
                 placeholder="Type the question…" />
+              {/* Stated once, here, rather than against every field: the same
+                  syntax works in the options and the solution, and the
+                  preview below shows immediately whether it took. The full
+                  reference is a click away rather than inline, because most
+                  questions contain no maths at all. */}
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.6 }}>
+                {MATH_HINT}
+                <button type="button" className="lx-open" onClick={() => setLatexHelp(true)}>
+                  Maths syntax
+                </button>
+              </div>
             </div>
             <div className="form-row">
               {(['A', 'B', 'C', 'D'] as const).map(opt => (
@@ -181,6 +195,8 @@ export default function QuestionContentTabs({
           </>
         )}
       </div>
+
+      <LatexHelp open={latexHelp} onClose={() => setLatexHelp(false)} />
     </>
   )
 }

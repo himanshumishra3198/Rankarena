@@ -16,6 +16,7 @@ import ActivityStreak from '../components/dashboard/ActivityStreak'
 import Achievements from '../components/dashboard/Achievements'
 import WhatsNew from '../components/dashboard/WhatsNew'
 import NewUserWelcome from '../components/dashboard/NewUserWelcome'
+import DailyChallenge from '../components/dashboard/DailyChallenge'
 import { isNewUser, type ProfileData } from '../components/dashboard/types'
 // Reused wholesale from the mock tests page rather than reimplemented.
 import ContinuePracticing from '../components/mocks/ContinuePracticing'
@@ -60,7 +61,7 @@ export default function Dashboard() {
   const load = useCallback(() => {
     setLoading(true)
     return Promise.allSettled([
-      api.get('/profile'), api.get('/contests'), api.get('/mocks'), api.get('/ratings/leaderboard'),
+      api.get('/profile'), api.get('/contests'), api.get('/mocks'), api.get('/ratings/leaderboard?limit=5'),
     ]).then(([p, c, m, l]) => {
       const bad: Record<string, boolean> = {}
       if (p.status === 'fulfilled') setProfile(p.value.data); else bad.profile = true
@@ -69,7 +70,7 @@ export default function Dashboard() {
         setContests([...(d?.active ?? []), ...(d?.past ?? [])])
       } else bad.contests = true
       if (m.status === 'fulfilled') setMocks(m.value.data ?? []); else bad.mocks = true
-      if (l.status === 'fulfilled') setLeaders(l.value.data ?? []); else bad.leaders = true
+      if (l.status === 'fulfilled') setLeaders(l.value.data?.entries ?? []); else bad.leaders = true
       setFailed(bad)
       setLoading(false)
     })
@@ -199,6 +200,8 @@ export default function Dashboard() {
             <StatsOverview p={profile} />
           </div>
         )}
+
+        <DailyChallenge />
 
         <ContinuePracticing drafts={drafts} mocks={mocks} onDiscard={() => setDrafts(readDrafts())} />
 

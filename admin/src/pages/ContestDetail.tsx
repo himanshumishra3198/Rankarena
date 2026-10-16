@@ -12,17 +12,31 @@ import { SegmentedRadio } from '../components/SegmentedRadio'
 import { TOPICS_BY_SUBJECT } from '../lib/topics'
 import type { Contest, Question, ContestQuestion, Section, Passage, QuestionType, Language } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
+import AnswerKeyEditor, {
+  EMPTY_ANSWER_KEY, answerKeyError, answerKeyFrom, answerKeyPayload,
+} from '../components/AnswerKeyEditor'
+import TagPicker from '../components/TagPicker'
+import PassagePicker from '../components/PassagePicker'
+import { DragHandle, MoveButtons, useRowDrag } from '../components/OrderableRows'
+import { moveTo, saveOrder, splitPassageSets } from '../lib/reorder'
+import QuestionPreview from '../components/QuestionPreview'
+import { useExams, sectionsOf, specOf } from '../lib/exams'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const
 const TYPE_LABELS: Record<string, string> = {
   STANDARD: 'Standard', SYLLOGISM: 'Syllogism', PASSAGE: 'Passage', TABLE: 'Table',
+  MSQ: 'Multiple correct', TITA: 'Type the answer',
 }
 
 const emptyQ = {
   questionType: 'STANDARD' as QuestionType,
   text: '', imageUrl: '',
   optionA: '', optionB: '', optionC: '', optionD: '',
-  correctOption: '', subject: 'QUANT', topic: '', difficulty: 'MEDIUM',
+  // The answer key in all three shapes; only the one matching the chosen
+  // format is sent. Single choice starts blank here rather than at 'A', so
+  // the admin has to pick one consciously.
+  ...EMPTY_ANSWER_KEY, correctOption: '',
+  subject: 'QUANT', topic: '', difficulty: 'MEDIUM', tagIds: [] as string[],
   solution: '', passageId: '',
   hi: { text: '', optionA: '', optionB: '', optionC: '', optionD: '', solution: '' },
   statements: ['', '', ''] as string[],
@@ -143,9 +157,21 @@ export default function ContestDetail() {
   const [savingDetails, setSavingDetails] = useState(false)
   const [detailsError, setDetailsError] = useState('')
 
+  // Everything on this page is scoped to the contest's examination: the
+  // sections it can hold, the answer formats a new question may use, and
+  // whether questions are filed by syllabus topic or by tag.
+  const { catalogue } = useExams()
+  const paperExam = contest?.exam ?? 'SSC_CGL'
+  const paperSections = sectionsOf(catalogue, paperExam)
+  // SSC's four stand in until the catalogue arrives, which is what every
+  // existing contest uses anyway.
+  const paperSectionKeys: Section[] = paperSections.length ? paperSections.map(sec => sec.key) : SECTIONS
+  const paperTypes: QuestionType[] =
+    specOf(catalogue, paperExam)?.questionTypes ?? ['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE']
+
   // Section config editing
   const [editingConfig, setEditingConfig] = useState(false)
-  const [draftLimits, setDraftLimits] = useState<Record<Section, number>>({ QUANT: 0, REASONING: 0, ENGLISH: 0, GK: 0 })
+  const [draftLimits, setDraftLimits] = useState<Partial<Record<Section, number>>>({})
   const [draftNegMarks, setDraftNegMarks] = useState(0.5)
   const [savingConfig, setSavingConfig] = useState(false)
   const [configError, setConfigError] = useState('')
@@ -183,10 +209,15 @@ export default function ContestDetail() {
     setBank(bankRes.data.questions)
     setPassages(pRes.data)
     // seed draft config from current values
+    // Seeded from the contest's own exam, so a CAT paper with no limits set
+    // yet divides into three sections rather than SSC's four.
+    const seedSections = (catalogue?.exams.find(e => e.key === (c.exam ?? 'SSC_CGL'))?.sections ?? [])
+      .map(sec => sec.key)
+    const keys: Section[] = seedSections.length ? seedSections : SECTIONS
     const limits = c.sectionLimits ?? Object.fromEntries(
-      SECTIONS.map(s => [s, Math.floor(c.durationMinutes / SECTIONS.length)])
-    ) as Record<Section, number>
-    setDraftLimits(limits as Record<Section, number>)
+      keys.map(k => [k, Math.floor(c.durationMinutes / keys.length)])
+    )
+    setDraftLimits(limits as Partial<Record<Section, number>>)
     setDraftNegMarks(Number(c.negativeMarks))
     setLoading(false)
   }
@@ -288,7 +319,20 @@ export default function ContestDetail() {
     }
   }
 
-  function resetForm() { setNewQ(emptyQ); setEditingQid(null); setSimilar([]); setCreateError('') }
+  /**
+   * Clears the form for the next question.
+   *
+   * `keepSet` holds on to the passage, its question type and its section, so
+   * a comprehension with six questions is written in one pass instead of
+   * picking the same passage out of a list six times. Everything a question
+   * owns — its text, options, key, tags — is cleared either way.
+   */
+  function resetForm(keepSet = false) {
+    setNewQ(f => keepSet
+      ? { ...emptyQ, questionType: f.questionType, passageId: f.passageId, topic: f.topic }
+      : emptyQ)
+    setEditingQid(null); setSimilar([]); setCreateError('')
+  }
 
   // Load an existing (linked) question into the form for editing.
   function editQuestion(q: Question) {
@@ -296,9 +340,10 @@ export default function ContestDetail() {
       questionType: q.questionType,
       text: q.text, imageUrl: q.imageUrl ?? '',
       optionA: q.optionA, optionB: q.optionB, optionC: q.optionC, optionD: q.optionD,
-      correctOption: q.correctOption,
+      ...answerKeyFrom(q),
       subject: q.subject,
       topic: q.topic ?? '',
+      tagIds: (q.tags ?? []).map(t => t.id),
       difficulty: q.difficulty,
       solution: q.solution ?? '',
       hi: (() => {
@@ -323,10 +368,13 @@ export default function ContestDetail() {
     const isSyll = newQ.questionType === 'SYLLOGISM'
     const needsPassage = newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE'
     if (!isSyll && !hasContent(newQ.text)) { setCreateError('Question text is required.'); return }
-    if ((['A', 'B', 'C', 'D'] as const).some(o => !hasContent(newQ[`option${o}` as keyof typeof emptyQ] as string))) {
+    // A type-in question has no options to fill in.
+    if (newQ.questionType !== 'TITA'
+      && (['A', 'B', 'C', 'D'] as const).some(o => !hasContent(newQ[`option${o}` as keyof typeof emptyQ] as string))) {
       setCreateError('All four options are required (text or image).'); return
     }
-    if (!newQ.correctOption) { setCreateError('Select the correct option.'); return }
+    const keyError = answerKeyError(newQ.questionType, newQ)
+    if (keyError) { setCreateError(keyError); return }
     if (needsPassage && !newQ.passageId) { setCreateError('Select a passage/table for this question (create it in the Questions tab first).'); return }
 
     // Caught here rather than left to the server, so the admin lands on the tab
@@ -342,10 +390,17 @@ export default function ContestDetail() {
       questionType: newQ.questionType,
       text: newQ.text,
       imageUrl: newQ.imageUrl || null,
-      optionA: newQ.optionA, optionB: newQ.optionB, optionC: newQ.optionC, optionD: newQ.optionD,
-      correctOption: newQ.correctOption,
+      // A question written here belongs to the paper's examination — it is
+      // being added to this contest, so there is nothing to choose.
+      exam: paperExam,
+      optionA: newQ.questionType === 'TITA' ? '' : newQ.optionA,
+      optionB: newQ.questionType === 'TITA' ? '' : newQ.optionB,
+      optionC: newQ.questionType === 'TITA' ? '' : newQ.optionC,
+      optionD: newQ.questionType === 'TITA' ? '' : newQ.optionD,
+      ...answerKeyPayload(newQ.questionType, newQ),
       subject: newQ.subject,
-      topic: newQ.topic || null,
+      topic: paperExam === 'SSC_CGL' ? (newQ.topic || null) : null,
+      tagIds: newQ.tagIds,
       difficulty: newQ.difficulty,
       solution: hasContent(newQ.solution) ? newQ.solution : null,
       translations: translationsPayload(newQ.hi),
@@ -366,7 +421,12 @@ export default function ContestDetail() {
           negativeMarks: Number(negMarks),
         })
       }
-      resetForm(); load()
+      // A passage question almost never comes alone, so the set is kept
+      // loaded and the next question goes straight onto the same passage.
+      const inSet = !editingQid
+        && (newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE')
+        && !!newQ.passageId
+      resetForm(inSet); load()
     } catch (err: any) {
       const dup = err?.response?.data?.duplicate
       if (err?.response?.status === 409 && dup) {
@@ -403,11 +463,37 @@ export default function ContestDetail() {
   }
 
   const addedIds = new Set(cqs.map(cq => cq.questionId))
+
+  const [orderError, setOrderError] = useState('')
+  // Dragging inside a filtered view would move a question past rows that are
+  // not on screen, so reordering is offered only on the whole paper.
+  const canReorder = !reviewSubject
+  const splitSets = splitPassageSets(cqs)
+
+  /**
+   * Reorders optimistically, then persists; puts the old order back if the
+   * write fails, so the screen never disagrees with the database.
+   */
+  async function moveQuestion(from: number, to: number) {
+    const before = cqs
+    const next = moveTo(cqs, from, to)
+    if (next === before) return
+    setCqs(next)
+    setOrderError('')
+    try {
+      await saveOrder('contests', id!, next.map(c => c.questionId))
+    } catch (err: any) {
+      setCqs(before)
+      setOrderError(errStr(err, 'Could not save the new order.'))
+    }
+  }
+
+  const drag = useRowDrag((from, to) => { void moveQuestion(from, to) })
   const availableBank = bank.filter(q => !addedIds.has(q.id))
 
   // Section breakdown from current questions
   const sectionCounts = Object.fromEntries(
-    SECTIONS.map(s => [s, cqs.filter(cq => cq.question.subject === s).length])
+    paperSectionKeys.map(s => [s, cqs.filter(cq => cq.question.subject === s).length])
   ) as Record<Section, number>
 
   const draftTotal = Object.values(draftLimits).reduce((a, b) => a + b, 0)
@@ -542,7 +628,7 @@ export default function ContestDetail() {
                   )}
                 </div>
                 <div className="section-limits-grid">
-                  {SECTIONS.map(sec => (
+                  {paperSectionKeys.map(sec => (
                     <div key={sec} className="section-limit-item">
                       <div className="section-limit-label">{SECTION_LABELS[sec]}</div>
                       <input
@@ -561,8 +647,8 @@ export default function ContestDetail() {
           ) : (
             /* Read-only view */
             <div className="section-config-grid">
-              {SECTIONS.map(sec => {
-                const limitMins = contest?.sectionLimits?.[sec] ?? Math.floor((contest?.durationMinutes ?? 0) / SECTIONS.length)
+              {paperSectionKeys.map(sec => {
+                const limitMins = contest?.sectionLimits?.[sec] ?? Math.floor((contest?.durationMinutes ?? 0) / paperSectionKeys.length)
                 return (
                   <div key={sec} className="section-config-card">
                     <div className="section-config-name">{SECTION_LABELS[sec]}</div>
@@ -656,8 +742,8 @@ export default function ContestDetail() {
                 {/* Question type selector */}
                 <div className="form-group">
                   <label>Question Type</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 4 }}>
-                    {(['STANDARD', 'SYLLOGISM', 'PASSAGE', 'TABLE'] as QuestionType[]).map(t => (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginTop: 4 }}>
+                    {paperTypes.map(t => (
                       <label key={t} style={{
                         border: `2px solid ${newQ.questionType === t ? 'var(--primary)' : 'var(--border)'}`,
                         borderRadius: 8, padding: '8px 10px', cursor: 'pointer', textAlign: 'center',
@@ -676,20 +762,32 @@ export default function ContestDetail() {
                 {/* Passage/Table selector */}
                 {(newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE') && (
                   <div className="form-group">
-                    <label>Link to Passage / Table</label>
-                    {passages.filter(p => newQ.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                        No {newQ.questionType === 'TABLE' ? 'tables' : 'passages'} yet — create one in the Questions tab first.
-                      </p>
-                    ) : (
-                      <select className="input" value={newQ.passageId}
-                        onChange={e => setNewQ(f => ({ ...f, passageId: e.target.value }))} required>
-                        <option value="">-- Select --</option>
-                        {passages.filter(p => newQ.questionType === 'TABLE' ? p.type === 'TABLE' : p.type === 'TEXT').map(p => (
-                          <option key={p.id} value={p.id}>{p.type === 'TABLE' ? '📊' : '📄'} {p.title || stripHtml(p.content).slice(0, 60)}</option>
-                        ))}
-                      </select>
-                    )}
+                    {/* The set being written, and how far along it is. Without
+                      this the form looks identical whether the passage
+                      carried over from the last save or not. */}
+                  {newQ.passageId && !editingQid && (() => {
+                    const already = cqs.filter(r => r.question.passage?.id === newQ.passageId).length
+                    return (
+                      <div className="set-banner">
+                        <span>
+                          Adding to <strong>{passages.find(p => p.id === newQ.passageId)?.title || 'this passage'}</strong>
+                          {' — '}
+                          <span className="set-count">{already} question{already === 1 ? '' : 's'}</span> on it so far.
+                        </span>
+                        <button type="button" className="btn btn-sm btn-ghost"
+                          onClick={() => setNewQ(f => ({ ...f, passageId: '' }))}>
+                          Finish set
+                        </button>
+                      </div>
+                    )
+                  })()}
+                  <label>Link to Passage / Table</label>
+                    <PassagePicker
+                      passages={passages}
+                      type={newQ.questionType === 'TABLE' ? 'TABLE' : 'TEXT'}
+                      value={newQ.passageId}
+                      onChange={id => setNewQ(f => ({ ...f, passageId: id }))}
+                    />
                   </div>
                 )}
 
@@ -773,16 +871,15 @@ export default function ContestDetail() {
                 </div>
 
 
+                <AnswerKeyEditor
+                  type={newQ.questionType}
+                  value={newQ}
+                  onChange={patch => setNewQ(f => ({ ...f, ...patch }))}
+                />
                 <div className="form-group">
-                  <label>Correct Option <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <SegmentedRadio value={newQ.correctOption}
-                    options={['A', 'B', 'C', 'D'].map(o => ({ value: o, label: o }))}
-                    onChange={v => setNewQ(f => ({ ...f, correctOption: v }))} />
-                </div>
-                <div className="form-group">
-                  <label>Subject</label>
+                  <label>Section</label>
                   <SegmentedRadio value={newQ.subject}
-                    options={SECTIONS.map(s => ({ value: s as string, label: SECTION_LABELS[s] }))}
+                    options={paperSections.map(sec => ({ value: sec.key as string, label: sec.short }))}
                     onChange={v => setNewQ(f => ({
                       ...f,
                       subject: v,
@@ -797,24 +894,42 @@ export default function ContestDetail() {
                     options={DIFFICULTIES.map(d => ({ value: d as string, label: d }))}
                     onChange={v => setNewQ(f => ({ ...f, difficulty: v }))} />
                 </div>
-                <div className="form-group">
-                  <label>Topic <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                  <select className="input" value={newQ.topic}
-                    onChange={e => setNewQ(f => ({ ...f, topic: e.target.value }))}>
-                    <option value="">— No topic —</option>
-                    {(TOPICS_BY_SUBJECT[newQ.subject as keyof typeof TOPICS_BY_SUBJECT] ?? []).map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+                {/* The syllabus topic list only exists for SSC; other exams
+                    label questions with tags. */}
+                {paperExam === 'SSC_CGL' && (
+                  <div className="form-group">
+                    <label>Topic <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                    <select className="input" value={newQ.topic}
+                      onChange={e => setNewQ(f => ({ ...f, topic: e.target.value }))}>
+                      <option value="">— No topic —</option>
+                      {(TOPICS_BY_SUBJECT[newQ.subject as keyof typeof TOPICS_BY_SUBJECT] ?? []).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
+                <TagPicker exam={paperExam} value={newQ.tagIds}
+                  onChange={ids => setNewQ(f => ({ ...f, tagIds: ids }))} />
+
+                {/* The last thing an author looks at before committing. */}
+                <div style={{ margin: '18px 0' }}>
+                  <QuestionPreview
+                    value={newQ}
+                    passage={
+                      (newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE') && newQ.passageId
+                        ? passages.find(p => p.id === newQ.passageId) ?? null
+                        : null
+                    }
+                  />
+                </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-primary" type="submit" disabled={creating}>
                     {creating ? 'Saving…' : editingQid ? 'Update Question' : 'Create & Add to Contest'}
                   </button>
                   {editingQid && (
-                    <button type="button" className="btn btn-ghost" onClick={resetForm}>Cancel edit</button>
+                    <button type="button" className="btn btn-ghost" onClick={() => resetForm()}>Cancel edit</button>
                   )}
                 </div>
               </form>
@@ -834,7 +949,7 @@ export default function ContestDetail() {
                   onClick={() => setReviewSubject('')}>
                   All ({cqs.length})
                 </button>
-                {SECTIONS.map(sec => {
+                {paperSectionKeys.map(sec => {
                   const n = cqs.filter(c => c.question.subject === sec).length
                   return (
                     <button key={sec} disabled={n === 0}
@@ -847,6 +962,24 @@ export default function ContestDetail() {
               </div>
             )}
           </div>
+          {orderError && <div className="alert alert-error">{orderError}</div>}
+          {cqs.length > 1 && (
+            <p className="ord-hint">
+              {canReorder
+                ? 'Drag a row, or use ↑ ↓, to set the order. A contest reshuffles per candidate, but the questions on one passage always stay together and in this order.'
+                : 'Showing one section — switch to all sections to reorder.'}
+            </p>
+          )}
+          {splitSets.length > 0 && (
+            <div className="ord-warn">
+              {splitSets.map(ss => (
+                <div key={ss.id}>
+                  The {ss.count} questions on <strong>{ss.title}</strong> are not together in this list.
+                  They are still served as one block, but keeping them adjacent here makes the paper easier to read.
+                </div>
+              ))}
+            </div>
+          )}
           {cqs.length === 0
             ? <p className="empty">No questions added yet. Use the form above to add some.</p>
             : visibleCqs.length === 0
@@ -855,6 +988,7 @@ export default function ContestDetail() {
               <table>
                 <thead>
                   <tr>
+                    {canReorder && <th></th>}
                     <th>#</th>
                     <th>Question</th>
                     <th>Type</th>
@@ -865,8 +999,14 @@ export default function ContestDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleCqs.map((cq) => (
-                    <tr key={cq.questionId}>
+                  {visibleCqs.map((cq, i) => (
+                    <tr key={cq.questionId} {...(canReorder ? drag.rowProps(i) : {})}>
+                      {canReorder && (
+                        <td className="ord-cell">
+                          <DragHandle />
+                          <MoveButtons index={i} total={cqs.length} onMove={moveQuestion} />
+                        </td>
+                      )}
                       <td style={{ color: 'var(--text-muted)', width: 36 }}>
                         {cqs.findIndex(c => c.questionId === cq.questionId) + 1}
                       </td>

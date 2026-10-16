@@ -4,8 +4,9 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import type { Contest, Section } from '../lib/types'
+import type { Contest, Exam, Section } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
+import { useExams, sectionsOf } from '../lib/exams'
 
 type EffectivePhase = 'scheduled' | 'live' | 'ended'
 
@@ -59,9 +60,15 @@ function toDatetimeLocal(isoOrEmpty?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function defaultSectionLimits(totalMinutes: number): Record<Section, number> {
-  const perSection = Math.floor(totalMinutes / SECTIONS.length)
-  return { QUANT: perSection, REASONING: perSection, ENGLISH: perSection, GK: perSection }
+/**
+ * An even split of the paper's time across whichever sections its exam has.
+ *
+ * Driven by the exam rather than SSC's four sections, so a CAT paper divides
+ * into three and not into four with three of them unusable.
+ */
+function defaultSectionLimits(totalMinutes: number, sections: Section[]): Partial<Record<Section, number>> {
+  const perSection = Math.floor(totalMinutes / (sections.length || 1))
+  return Object.fromEntries(sections.map(sec => [sec, perSection]))
 }
 
 export default function Contests() {
@@ -93,7 +100,33 @@ export default function Contests() {
   const [startTime, setStartTime] = useState('')
   const [duration, setDuration] = useState(90)
   const [negMarks, setNegMarks] = useState(0.5)
-  const [sectionLimits, setSectionLimits] = useState<Record<Section, number>>(defaultSectionLimits(90))
+  const [exam, setExam] = useState<Exam>('SSC_CGL')
+  const [sectionLimits, setSectionLimits] = useState<Partial<Record<Section, number>>>(
+    defaultSectionLimits(90, SECTIONS),
+  )
+
+  const { catalogue, error: examError } = useExams()
+  const examSections = sectionsOf(catalogue, exam)
+  // Until the catalogue arrives, SSC's four sections stand in — they are what
+  // the form opens on and what the default limits were built from.
+  const sectionKeys: Section[] = examSections.length ? examSections.map(sec => sec.key) : SECTIONS
+
+  /**
+   * Switching examination rebuilds the whole paper's defaults.
+   *
+   * The sections change, so the old limits name sections the new exam does
+   * not have — which the API refuses. Duration and negative marking follow
+   * the new exam's conventions too.
+   */
+  function pickExam(next: Exam) {
+    setExam(next)
+    const spec = catalogue?.exams.find(e => e.key === next)
+    const keys = (spec?.sections ?? []).map(sec => sec.key)
+    const mins = spec?.defaults.durationMinutes ?? duration
+    setDuration(mins)
+    if (spec) setNegMarks(spec.defaults.negativeMarks)
+    setSectionLimits(defaultSectionLimits(mins, keys.length ? keys : SECTIONS))
+  }
 
   async function load() {
     try {
@@ -109,14 +142,14 @@ export default function Contests() {
   // Auto-distribute total duration across sections when duration changes
   function handleDurationChange(mins: number) {
     setDuration(mins)
-    setSectionLimits(defaultSectionLimits(mins))
+    setSectionLimits(defaultSectionLimits(mins, sectionKeys))
   }
 
   function setSectionLimit(sec: Section, val: number) {
     setSectionLimits(prev => ({ ...prev, [sec]: val }))
   }
 
-  const sectionTotal = Object.values(sectionLimits).reduce((a, b) => a + b, 0)
+  const sectionTotal = Object.values(sectionLimits).reduce((a, b) => a + (b ?? 0), 0)
   const timeMismatch = sectionTotal !== duration
 
   async function createContest(e: FormEvent) {
@@ -126,6 +159,7 @@ export default function Contests() {
     try {
       await api.post('/admin/contests', {
         title,
+        exam,
         startTime: new Date(startTime).toISOString(),
         durationMinutes: Number(duration),
         negativeMarks: Number(negMarks),
@@ -133,7 +167,8 @@ export default function Contests() {
       })
       setShowForm(false)
       setTitle(''); setStartTime(''); setDuration(90); setNegMarks(0.5)
-      setSectionLimits(defaultSectionLimits(90))
+      setExam('SSC_CGL')
+      setSectionLimits(defaultSectionLimits(90, SECTIONS))
       load()
     } catch (err: any) {
       setError('Failed to create contest')
@@ -201,6 +236,27 @@ export default function Contests() {
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={createContest}>
 
+              {/* First, because it decides the sections below and the
+                  defaults for duration and negative marking. */}
+              <div className="form-group">
+                <label>Examination</label>
+                {examError && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{examError}</div>}
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  {(catalogue?.exams ?? []).map(e => (
+                    <label key={e.key} style={{
+                      border: `2px solid ${exam === e.key ? 'var(--primary)' : 'var(--border)'}`,
+                      borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                      background: exam === e.key ? 'var(--primary-light)' : 'var(--surface)',
+                      color: exam === e.key ? 'var(--primary)' : 'var(--heading)',
+                    }}>
+                      <input type="radio" style={{ display: 'none' }} checked={exam === e.key}
+                        onChange={() => pickExam(e.key)} />
+                      {e.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="form-group">
                 <label>Title</label>
                 <input className="input" value={title} onChange={e => setTitle(e.target.value)} required placeholder="SSC CGL Mock Test 1" />
@@ -237,14 +293,14 @@ export default function Contests() {
                   )}
                 </label>
                 <div className="section-limits-grid">
-                  {SECTIONS.map(sec => (
+                  {sectionKeys.map(sec => (
                     <div key={sec} className="section-limit-item">
                       <div className="section-limit-label">{SECTION_LABELS[sec]}</div>
                       <input
                         className="input"
                         type="number"
                         min={1}
-                        value={sectionLimits[sec]}
+                        value={sectionLimits[sec] ?? 0}
                         onChange={e => setSectionLimit(sec, Number(e.target.value))}
                         required
                       />

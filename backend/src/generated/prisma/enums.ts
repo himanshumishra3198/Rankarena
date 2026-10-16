@@ -38,7 +38,10 @@ export const Subject = {
   QUANT: 'QUANT',
   REASONING: 'REASONING',
   ENGLISH: 'ENGLISH',
-  GK: 'GK'
+  GK: 'GK',
+  VARC: 'VARC',
+  DILR: 'DILR',
+  QA: 'QA'
 } as const
 
 export type Subject = (typeof Subject)[keyof typeof Subject]
@@ -57,10 +60,32 @@ export const QuestionType = {
   STANDARD: 'STANDARD',
   SYLLOGISM: 'SYLLOGISM',
   PASSAGE: 'PASSAGE',
-  TABLE: 'TABLE'
+  TABLE: 'TABLE',
+  MSQ: 'MSQ',
+  TITA: 'TITA'
 } as const
 
 export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
+
+
+export const Exam = {
+  SSC_CGL: 'SSC_CGL',
+  CAT: 'CAT'
+} as const
+
+export type Exam = (typeof Exam)[keyof typeof Exam]
+
+
+export const TagCategory = {
+  TOPIC: 'TOPIC',
+  SUBTOPIC: 'SUBTOPIC',
+  DIFFICULTY: 'DIFFICULTY',
+  SKILL: 'SKILL',
+  QUESTION_TYPE: 'QUESTION_TYPE',
+  CUSTOM: 'CUSTOM'
+} as const
+
+export type TagCategory = (typeof TagCategory)[keyof typeof TagCategory]
 
 
 export const ReportReason = {

@@ -232,7 +232,11 @@ model Contest {
   startTime       DateTime      @map("start_time")
   durationMinutes Int           @map("duration_minutes")
   negativeMarks   Decimal       @default(0.5) @map("negative_marks")
-  sectionLimits   Json?         @map("section_limits") // { QUANT: 25, REASONING: 20, ENGLISH: 25, GK: 20 }
+  // Keyed by Subject, so a CAT paper is { VARC: 24, DILR: 20, QA: 22 } and an
+  // SSC one { QUANT: 25, REASONING: 20, ENGLISH: 25, GK: 20 }. The sections
+  // legal for a given exam come from examSections().
+  sectionLimits   Json?         @map("section_limits")
+  exam            Exam          @default(SSC_CGL)
   status          ContestStatus @default(SCHEDULED)
   // When the "a new contest is scheduled" mail went out. Null means it has not
   // been announced yet, which is what the sweep looks for — so a crash halfway
@@ -269,11 +273,23 @@ model Question {
   questionType   QuestionType @default(STANDARD) @map("question_type")
   text           String
   imageUrl       String?      @map("image_url")
-  optionA        String       @map("option_a")
-  optionB        String       @map("option_b")
-  optionC        String       @map("option_c")
-  optionD        String       @map("option_d")
-  correctOption  String       @map("correct_option")
+  // Options are blank for TITA, which has none. They stay non-null so that
+  // every existing row, query and translation keeps working untouched.
+  optionA        String       @default("") @map("option_a")
+  optionB        String       @default("") @map("option_b")
+  optionC        String       @default("") @map("option_c")
+  optionD        String       @default("") @map("option_d")
+  // The key for single-choice questions, and null for MSQ and TITA, whose
+  // answers do not fit in one letter and live in `answerConfig` instead.
+  // Nullable rather than overloaded: a comma-joined "A,C" here would be read
+  // as a literal option by every comparison already written against it.
+  correctOption  String?      @map("correct_option")
+  // MSQ: { correct: ["A","C"], partial: false }
+  // TITA: { kind: "NUMERIC"|"TEXT", accepted: ["12","12.0"], tolerance: 0.01 }
+  // Null for single-choice. Shapes are parsed and validated in
+  // src/lib/answers.ts — nothing reads this Json directly.
+  answerConfig   Json?        @map("answer_config")
+  exam           Exam         @default(SSC_CGL)
   subject        Subject
   // Optional syllabus topic, validated against src/lib/topics.ts rather than
   // an enum so the list can change without a migration.
@@ -291,9 +307,11 @@ model Question {
   mockTestQuestions MockTestQuestion[]
   reports           QuestionReport[]
   bookmarks         Bookmark[]
+  tags              QuestionTag[]
 
   @@index([fingerprint])
   @@index([subject, topic])
+  @@index([exam, subject])
   @@map("questions")
 }
 
@@ -321,6 +339,7 @@ model QuestionReport {
 model MockTest {
   id              String   @id @default(uuid())
   title           String
+  exam            Exam     @default(SSC_CGL)
   subject         Subject
   durationMinutes Int      @map("duration_minutes")
   negativeMarks   Decimal  @default(0.5) @map("negative_marks")
@@ -443,11 +462,67 @@ enum ContestStatus {
   ENDED
 }
 
+/**
+ * A reusable label for a question.
+ *
+ * Normalized on purpose. Topics used to be a free string on `questions`
+ * checked against a hard-coded list, which meant renaming one was a data
+ * migration and "Time & Work" / "Time and Work" were different topics. A tag
+ * is a row: it is renamed in one place, and the join table makes
+ * "every question tagged X" an index lookup rather than a LIKE scan.
+ *
+ * `exam` is null for a tag that applies to any examination (difficulty bands,
+ * say); set, for one that only makes sense within a single exam's syllabus.
+ */
+model Tag {
+  id        String      @id @default(uuid())
+  name      String
+  // Lowercased, hyphenated, unique within a category — the identity used to
+  // dedupe on import, so "Time & Work" cannot be created twice.
+  slug      String
+  category  TagCategory @default(TOPIC)
+  exam      Exam?
+  // Retired tags stop being offered on new questions but stay attached to the
+  // ones that already carry them, so historical filters keep working.
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  questions QuestionTag[]
+
+  @@unique([category, slug])
+  @@index([exam, category, active])
+  @@map("tags")
+}
+
+model QuestionTag {
+  questionId String @map("question_id")
+  tagId      String @map("tag_id")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, tagId])
+  @@index([tagId])
+  @@map("question_tags")
+}
+
+// Sections, across every examination the platform supports. One enum rather
+// than one per exam: a question belongs to exactly one section, and keeping
+// them together means `sectionLimits`, subject filters and the per-subject
+// stats on a profile work for CAT without a parallel code path.
+//
+// Which members are legal is a function of the exam — see `examSections()` in
+// src/lib/exams.ts, which is what validation actually consults.
 enum Subject {
+  // SSC CGL
   QUANT
   REASONING
   ENGLISH
   GK
+  // CAT
+  VARC
+  DILR
+  QA
 }
 
 enum Difficulty {
@@ -456,11 +531,35 @@ enum Difficulty {
   HARD
 }
 
+// How a question is answered, which decides how it is rendered and how it is
+// marked. STANDARD/SYLLOGISM/PASSAGE/TABLE are all single-choice and store
+// their key in `correctOption`; MSQ and TITA store theirs in `answerConfig`.
 enum QuestionType {
   STANDARD
   SYLLOGISM
   PASSAGE
   TABLE
+  // Multiple correct options. CAT marks these all-or-nothing by default.
+  MSQ
+  // Type In The Answer: no options at all, the candidate types a number or
+  // a word. CAT's non-MCQs carry no negative marking.
+  TITA
+}
+
+enum Exam {
+  SSC_CGL
+  CAT
+}
+
+// The facet a tag describes. A tag is only ever offered where its category
+// fits, so a difficulty tag cannot end up in the topic picker.
+enum TagCategory {
+  TOPIC
+  SUBTOPIC
+  DIFFICULTY
+  SKILL
+  QUESTION_TYPE
+  CUSTOM
 }
 
 enum ReportReason {

@@ -135,6 +135,26 @@ export type Participation = Prisma.ParticipationModel
  */
 export type RatingHistory = Prisma.RatingHistoryModel
 /**
+ * Model Tag
+ * *
+ *  * A reusable label for a question.
+ *  *
+ *  * Normalized on purpose. Topics used to be a free string on `questions`
+ *  * checked against a hard-coded list, which meant renaming one was a data
+ *  * migration and "Time & Work" / "Time and Work" were different topics. A tag
+ *  * is a row: it is renamed in one place, and the join table makes
+ *  * "every question tagged X" an index lookup rather than a LIKE scan.
+ *  *
+ *  * `exam` is null for a tag that applies to any examination (difficulty bands,
+ *  * say); set, for one that only makes sense within a single exam's syllabus.
+ */
+export type Tag = Prisma.TagModel
+/**
+ * Model QuestionTag
+ * 
+ */
+export type QuestionTag = Prisma.QuestionTagModel
+/**
  * Model QuestionTranslation
  * 
  */

@@ -39,6 +39,7 @@ export type MockTestSumAggregateOutputType = {
 export type MockTestMinAggregateOutputType = {
   id: string | null
   title: string | null
+  exam: $Enums.Exam | null
   subject: $Enums.Subject | null
   durationMinutes: number | null
   negativeMarks: runtime.Decimal | null
@@ -49,6 +50,7 @@ export type MockTestMinAggregateOutputType = {
 export type MockTestMaxAggregateOutputType = {
   id: string | null
   title: string | null
+  exam: $Enums.Exam | null
   subject: $Enums.Subject | null
   durationMinutes: number | null
   negativeMarks: runtime.Decimal | null
@@ -59,6 +61,7 @@ export type MockTestMaxAggregateOutputType = {
 export type MockTestCountAggregateOutputType = {
   id: number
   title: number
+  exam: number
   subject: number
   durationMinutes: number
   negativeMarks: number
@@ -81,6 +84,7 @@ export type MockTestSumAggregateInputType = {
 export type MockTestMinAggregateInputType = {
   id?: true
   title?: true
+  exam?: true
   subject?: true
   durationMinutes?: true
   negativeMarks?: true
@@ -91,6 +95,7 @@ export type MockTestMinAggregateInputType = {
 export type MockTestMaxAggregateInputType = {
   id?: true
   title?: true
+  exam?: true
   subject?: true
   durationMinutes?: true
   negativeMarks?: true
@@ -101,6 +106,7 @@ export type MockTestMaxAggregateInputType = {
 export type MockTestCountAggregateInputType = {
   id?: true
   title?: true
+  exam?: true
   subject?: true
   durationMinutes?: true
   negativeMarks?: true
@@ -198,6 +204,7 @@ export type MockTestGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type MockTestGroupByOutputType = {
   id: string
   title: string
+  exam: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks: runtime.Decimal
@@ -231,6 +238,7 @@ export type MockTestWhereInput = {
   NOT?: Prisma.MockTestWhereInput | Prisma.MockTestWhereInput[]
   id?: Prisma.StringFilter<"MockTest"> | string
   title?: Prisma.StringFilter<"MockTest"> | string
+  exam?: Prisma.EnumExamFilter<"MockTest"> | $Enums.Exam
   subject?: Prisma.EnumSubjectFilter<"MockTest"> | $Enums.Subject
   durationMinutes?: Prisma.IntFilter<"MockTest"> | number
   negativeMarks?: Prisma.DecimalFilter<"MockTest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -243,6 +251,7 @@ export type MockTestWhereInput = {
 export type MockTestOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
   subject?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   negativeMarks?: Prisma.SortOrder
@@ -258,6 +267,7 @@ export type MockTestWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.MockTestWhereInput[]
   NOT?: Prisma.MockTestWhereInput | Prisma.MockTestWhereInput[]
   title?: Prisma.StringFilter<"MockTest"> | string
+  exam?: Prisma.EnumExamFilter<"MockTest"> | $Enums.Exam
   subject?: Prisma.EnumSubjectFilter<"MockTest"> | $Enums.Subject
   durationMinutes?: Prisma.IntFilter<"MockTest"> | number
   negativeMarks?: Prisma.DecimalFilter<"MockTest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -270,6 +280,7 @@ export type MockTestWhereUniqueInput = Prisma.AtLeast<{
 export type MockTestOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
   subject?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   negativeMarks?: Prisma.SortOrder
@@ -288,6 +299,7 @@ export type MockTestScalarWhereWithAggregatesInput = {
   NOT?: Prisma.MockTestScalarWhereWithAggregatesInput | Prisma.MockTestScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"MockTest"> | string
   title?: Prisma.StringWithAggregatesFilter<"MockTest"> | string
+  exam?: Prisma.EnumExamWithAggregatesFilter<"MockTest"> | $Enums.Exam
   subject?: Prisma.EnumSubjectWithAggregatesFilter<"MockTest"> | $Enums.Subject
   durationMinutes?: Prisma.IntWithAggregatesFilter<"MockTest"> | number
   negativeMarks?: Prisma.DecimalWithAggregatesFilter<"MockTest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -298,6 +310,7 @@ export type MockTestScalarWhereWithAggregatesInput = {
 export type MockTestCreateInput = {
   id?: string
   title: string
+  exam?: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -310,6 +323,7 @@ export type MockTestCreateInput = {
 export type MockTestUncheckedCreateInput = {
   id?: string
   title: string
+  exam?: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -322,6 +336,7 @@ export type MockTestUncheckedCreateInput = {
 export type MockTestUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -334,6 +349,7 @@ export type MockTestUpdateInput = {
 export type MockTestUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -346,6 +362,7 @@ export type MockTestUncheckedUpdateInput = {
 export type MockTestCreateManyInput = {
   id?: string
   title: string
+  exam?: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -356,6 +373,7 @@ export type MockTestCreateManyInput = {
 export type MockTestUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -366,6 +384,7 @@ export type MockTestUpdateManyMutationInput = {
 export type MockTestUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -376,6 +395,7 @@ export type MockTestUncheckedUpdateManyInput = {
 export type MockTestCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
   subject?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   negativeMarks?: Prisma.SortOrder
@@ -391,6 +411,7 @@ export type MockTestAvgOrderByAggregateInput = {
 export type MockTestMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
   subject?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   negativeMarks?: Prisma.SortOrder
@@ -401,6 +422,7 @@ export type MockTestMaxOrderByAggregateInput = {
 export type MockTestMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
   subject?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   negativeMarks?: Prisma.SortOrder
@@ -449,6 +471,7 @@ export type MockTestUpdateOneRequiredWithoutAttemptsNestedInput = {
 export type MockTestCreateWithoutMockTestQuestionsInput = {
   id?: string
   title: string
+  exam?: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -460,6 +483,7 @@ export type MockTestCreateWithoutMockTestQuestionsInput = {
 export type MockTestUncheckedCreateWithoutMockTestQuestionsInput = {
   id?: string
   title: string
+  exam?: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -487,6 +511,7 @@ export type MockTestUpdateToOneWithWhereWithoutMockTestQuestionsInput = {
 export type MockTestUpdateWithoutMockTestQuestionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -498,6 +523,7 @@ export type MockTestUpdateWithoutMockTestQuestionsInput = {
 export type MockTestUncheckedUpdateWithoutMockTestQuestionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -509,6 +535,7 @@ export type MockTestUncheckedUpdateWithoutMockTestQuestionsInput = {
 export type MockTestCreateWithoutAttemptsInput = {
   id?: string
   title: string
+  exam?: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -520,6 +547,7 @@ export type MockTestCreateWithoutAttemptsInput = {
 export type MockTestUncheckedCreateWithoutAttemptsInput = {
   id?: string
   title: string
+  exam?: $Enums.Exam
   subject: $Enums.Subject
   durationMinutes: number
   negativeMarks?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -547,6 +575,7 @@ export type MockTestUpdateToOneWithWhereWithoutAttemptsInput = {
 export type MockTestUpdateWithoutAttemptsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -558,6 +587,7 @@ export type MockTestUpdateWithoutAttemptsInput = {
 export type MockTestUncheckedUpdateWithoutAttemptsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   subject?: Prisma.EnumSubjectFieldUpdateOperationsInput | $Enums.Subject
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   negativeMarks?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -609,6 +639,7 @@ export type MockTestCountOutputTypeCountAttemptsArgs<ExtArgs extends runtime.Typ
 export type MockTestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  exam?: boolean
   subject?: boolean
   durationMinutes?: boolean
   negativeMarks?: boolean
@@ -622,6 +653,7 @@ export type MockTestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type MockTestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  exam?: boolean
   subject?: boolean
   durationMinutes?: boolean
   negativeMarks?: boolean
@@ -632,6 +664,7 @@ export type MockTestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type MockTestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  exam?: boolean
   subject?: boolean
   durationMinutes?: boolean
   negativeMarks?: boolean
@@ -642,6 +675,7 @@ export type MockTestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type MockTestSelectScalar = {
   id?: boolean
   title?: boolean
+  exam?: boolean
   subject?: boolean
   durationMinutes?: boolean
   negativeMarks?: boolean
@@ -649,7 +683,7 @@ export type MockTestSelectScalar = {
   createdAt?: boolean
 }
 
-export type MockTestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "subject" | "durationMinutes" | "negativeMarks" | "isPublished" | "createdAt", ExtArgs["result"]["mockTest"]>
+export type MockTestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "exam" | "subject" | "durationMinutes" | "negativeMarks" | "isPublished" | "createdAt", ExtArgs["result"]["mockTest"]>
 export type MockTestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   mockTestQuestions?: boolean | Prisma.MockTest$mockTestQuestionsArgs<ExtArgs>
   attempts?: boolean | Prisma.MockTest$attemptsArgs<ExtArgs>
@@ -667,6 +701,7 @@ export type $MockTestPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     title: string
+    exam: $Enums.Exam
     subject: $Enums.Subject
     durationMinutes: number
     negativeMarks: runtime.Decimal
@@ -1099,6 +1134,7 @@ export interface Prisma__MockTestClient<T, Null = never, ExtArgs extends runtime
 export interface MockTestFieldRefs {
   readonly id: Prisma.FieldRef<"MockTest", 'String'>
   readonly title: Prisma.FieldRef<"MockTest", 'String'>
+  readonly exam: Prisma.FieldRef<"MockTest", 'Exam'>
   readonly subject: Prisma.FieldRef<"MockTest", 'Subject'>
   readonly durationMinutes: Prisma.FieldRef<"MockTest", 'Int'>
   readonly negativeMarks: Prisma.FieldRef<"MockTest", 'Decimal'>

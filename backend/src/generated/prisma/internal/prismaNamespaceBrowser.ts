@@ -70,6 +70,8 @@ export const ModelName = {
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
   RatingHistory: 'RatingHistory',
+  Tag: 'Tag',
+  QuestionTag: 'QuestionTag',
   QuestionTranslation: 'QuestionTranslation',
   PassageTranslation: 'PassageTranslation'
 } as const
@@ -216,6 +218,7 @@ export const ContestScalarFieldEnum = {
   durationMinutes: 'durationMinutes',
   negativeMarks: 'negativeMarks',
   sectionLimits: 'sectionLimits',
+  exam: 'exam',
   status: 'status',
   announcedAt: 'announcedAt',
   createdAt: 'createdAt'
@@ -246,6 +249,8 @@ export const QuestionScalarFieldEnum = {
   optionC: 'optionC',
   optionD: 'optionD',
   correctOption: 'correctOption',
+  answerConfig: 'answerConfig',
+  exam: 'exam',
   subject: 'subject',
   topic: 'topic',
   difficulty: 'difficulty',
@@ -276,6 +281,7 @@ export type QuestionReportScalarFieldEnum = (typeof QuestionReportScalarFieldEnu
 export const MockTestScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  exam: 'exam',
   subject: 'subject',
   durationMinutes: 'durationMinutes',
   negativeMarks: 'negativeMarks',
@@ -359,6 +365,27 @@ export const RatingHistoryScalarFieldEnum = {
 } as const
 
 export type RatingHistoryScalarFieldEnum = (typeof RatingHistoryScalarFieldEnum)[keyof typeof RatingHistoryScalarFieldEnum]
+
+
+export const TagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  category: 'category',
+  exam: 'exam',
+  active: 'active',
+  createdAt: 'createdAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const QuestionTagScalarFieldEnum = {
+  questionId: 'questionId',
+  tagId: 'tagId'
+} as const
+
+export type QuestionTagScalarFieldEnum = (typeof QuestionTagScalarFieldEnum)[keyof typeof QuestionTagScalarFieldEnum]
 
 
 export const QuestionTranslationScalarFieldEnum = {

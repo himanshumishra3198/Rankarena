@@ -8,13 +8,13 @@ import LanguageToggle from '../components/LanguageToggle'
 import { DEFAULT_LANGUAGE, type Language } from '../lib/language'
 import { fmtSecs } from '../lib/time'
 import DOMPurify from 'dompurify'
+import { type Answer, type AnswerKeyFields, isAnswered, wasCorrect } from '../lib/answers'
 
-interface ResultQuestion {
+interface ResultQuestion extends AnswerKeyFields {
   id: string; text: string; imageUrl?: string
   optionA: string; optionB: string; optionC: string; optionD: string
-  correctOption: string; subject: string; difficulty: string
+  subject: string; difficulty: string
   marks: number; negativeMarks: number
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: { id: string; title: string; content: string; type: 'TEXT' | 'TABLE'; tableData?: { headers: string[]; rows: string[][] } | null } | null
   solution?: string | null
@@ -25,7 +25,7 @@ interface MockResultData {
   mockTitle: string; subject: string; durationMinutes: number
   score: number; totalMarks: number
   correct: number; wrong: number; skipped: number
-  answers: Record<string, string>
+  answers: Record<string, Answer>
   timeSpent: Record<string, number>
   markedForReview: string[]
   submittedAt: string
@@ -189,8 +189,11 @@ export default function MockResult() {
 
   function verdict(q: ResultQuestion): Verdict {
     const given = data!.answers[q.id]
-    if (!given) return 'skipped'
-    return given === q.correctOption ? 'correct' : 'wrong'
+    // Judged by the shared marker rather than compared here, so a
+    // multiple-select or type-in answer is not reported as wrong on a paper
+    // it scored full marks on.
+    if (!isAnswered(given)) return 'skipped'
+    return wasCorrect(q, given) ? 'correct' : 'wrong'
   }
 
   const verdicts = new Map(data.questions.map(q => [q.id, verdict(q)]))

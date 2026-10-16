@@ -4,11 +4,13 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import Navbar from '../components/Navbar'
-import type { MockTest } from '../lib/types'
+import type { Exam, MockTest, Section } from '../lib/types'
 import { SECTIONS, SECTION_LABELS } from '../lib/types'
+import { useExams, sectionsOf } from '../lib/exams'
 
 const emptyForm = {
   title: '',
+  exam: 'SSC_CGL' as Exam,
   subject: 'REASONING' as MockTest['subject'],
   durationMinutes: 15,
   negativeMarks: 0.5,
@@ -24,6 +26,27 @@ export default function MockTests() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterSubject, setFilterSubject] = useState('')
+
+  // The sections a paper can be about come from its exam, so the panel
+  // cannot offer a combination the API will refuse.
+  const { catalogue, error: examError } = useExams()
+  const formSections = sectionsOf(catalogue, form.exam)
+  const formSectionKeys: Section[] = formSections.length ? formSections.map(sec => sec.key) : SECTIONS
+
+  /**
+   * Switching examination moves the paper to that exam's first section and
+   * takes on its marking conventions. The old section does not carry over —
+   * it belongs to the other syllabus.
+   */
+  function pickExam(exam: Exam) {
+    const spec = catalogue?.exams.find(e => e.key === exam)
+    setForm(f => ({
+      ...f,
+      exam,
+      subject: (spec?.sections[0]?.key ?? f.subject) as MockTest['subject'],
+      negativeMarks: spec?.defaults.negativeMarks ?? f.negativeMarks,
+    }))
+  }
 
   function errMsg(err: any, fallback: string): string {
     const e = err?.response?.data?.error
@@ -45,6 +68,7 @@ export default function MockTests() {
     try {
       const res = await api.post('/admin/mocks', {
         title: form.title,
+        exam: form.exam,
         subject: form.subject,
         durationMinutes: Number(form.durationMinutes),
         negativeMarks: Number(form.negativeMarks),
@@ -74,6 +98,12 @@ export default function MockTests() {
 
   const filtered = filterSubject ? mocks.filter(m => m.subject === filterSubject) : mocks
   const countFor = (s: string) => mocks.filter(m => m.subject === s).length
+  // Only the sections that actually have papers, so the tab strip does not
+  // list three empty CAT sections on an SSC-only install.
+  const listedSections: Section[] = [
+    ...SECTIONS,
+    ...(catalogue?.exams ?? []).flatMap(e => e.sections.map(sec => sec.key)),
+  ].filter((sec, i, all) => all.indexOf(sec) === i && (SECTIONS.includes(sec) || countFor(sec) > 0))
 
   return (
     <>
@@ -103,12 +133,32 @@ export default function MockTests() {
                   placeholder="e.g. General Intelligence and Reasoning Sectional Test - 1"
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
               </div>
+              {/* First, because it decides which sections the paper can be
+                  about and the defaults for duration and marking. */}
+              <div className="form-group">
+                <label>Examination</label>
+                {examError && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{examError}</div>}
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  {(catalogue?.exams ?? []).map(e => (
+                    <label key={e.key} style={{
+                      border: `2px solid ${form.exam === e.key ? 'var(--primary)' : 'var(--border)'}`,
+                      borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                      background: form.exam === e.key ? 'var(--primary-light)' : 'var(--surface)',
+                      color: form.exam === e.key ? 'var(--primary)' : 'var(--heading)',
+                    }}>
+                      <input type="radio" style={{ display: 'none' }} checked={form.exam === e.key}
+                        onChange={() => pickExam(e.key)} />
+                      {e.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Section</label>
                   <select className="input" value={form.subject}
                     onChange={e => setForm(f => ({ ...f, subject: e.target.value as any }))}>
-                    {SECTIONS.map(s => <option key={s} value={s}>{SECTION_LABELS[s]}</option>)}
+                    {formSectionKeys.map(s => <option key={s} value={s}>{SECTION_LABELS[s]}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -135,7 +185,7 @@ export default function MockTests() {
               onClick={() => setFilterSubject('')}>
               All sections <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({mocks.length})</span>
             </button>
-            {SECTIONS.map(s => (
+            {listedSections.map(s => (
               <button key={s} className={`tab-btn ${filterSubject === s ? 'active' : ''}`}
                 onClick={() => setFilterSubject(s)}>
                 {SECTION_LABELS[s]} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({countFor(s)})</span>

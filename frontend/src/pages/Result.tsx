@@ -10,14 +10,14 @@ import LanguageToggle from '../components/LanguageToggle'
 import { DEFAULT_LANGUAGE, type Language } from '../lib/language'
 import { fmtSecs } from '../lib/time'
 import { SECTIONS } from '../lib/types'
+import { type Answer, type AnswerKeyFields, isAnswered, wasCorrect } from '../lib/answers'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface RichQuestion {
+interface RichQuestion extends AnswerKeyFields {
   id: string; text: string; imageUrl?: string
   optionA: string; optionB: string; optionC: string; optionD: string
-  correctOption: string; subject: string; difficulty: 'EASY' | 'MEDIUM' | 'HARD'
+  subject: string; difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   marks: number; negativeMarks: number
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: { id: string; title: string; content: string; type: 'TEXT' | 'TABLE'; tableData?: { headers: string[]; rows: string[][] } | null } | null
   solution?: string | null
@@ -25,7 +25,7 @@ interface RichQuestion {
 
 interface ResultData {
   score: number; rank: number | null; totalParticipants: number; isTest?: boolean
-  submittedAt: string; answers: Record<string, string>
+  submittedAt: string; answers: Record<string, Answer>
   markedForReview: string[]
   questions: RichQuestion[]; totalMaxMarks: number
   contestTitle: string; durationMinutes: number
@@ -325,8 +325,8 @@ export default function Result() {
   const numScore = Number(score)
 
   // ── Overall derived stats ────────────────────────────────────────────────
-  const correct  = questions.filter(q => answers[q.id] === q.correctOption).length
-  const wrong    = questions.filter(q => answers[q.id] && answers[q.id] !== q.correctOption).length
+  const correct  = questions.filter(q => wasCorrect(q, answers[q.id])).length
+  const wrong    = questions.filter(q => isAnswered(answers[q.id]) && !wasCorrect(q, answers[q.id])).length
   const skipped  = questions.filter(q => !answers[q.id]).length
   const attempted = correct + wrong
   const accuracy  = attempted > 0 ? (correct / attempted) * 100 : 0
@@ -336,8 +336,8 @@ export default function Result() {
   // ── Per-section stats ────────────────────────────────────────────────────
   const sectionStats = SECTIONS.map(sec => {
     const qs  = questions.filter(q => q.subject === sec)
-    const cor = qs.filter(q => answers[q.id] === q.correctOption)
-    const wrg = qs.filter(q => answers[q.id] && answers[q.id] !== q.correctOption)
+    const cor = qs.filter(q => wasCorrect(q, answers[q.id]))
+    const wrg = qs.filter(q => isAnswered(answers[q.id]) && !wasCorrect(q, answers[q.id]))
     const skp = qs.filter(q => !answers[q.id])
     const maxM  = qs.reduce((s, q) => s + q.marks, 0)
     const earned = Math.max(0,
@@ -352,8 +352,8 @@ export default function Result() {
   // ── Difficulty breakdown ─────────────────────────────────────────────────
   const diffStats = (['EASY','MEDIUM','HARD'] as const).map(d => {
     const qs  = questions.filter(q => q.difficulty === d)
-    const cor = qs.filter(q => answers[q.id] === q.correctOption).length
-    const wrg = qs.filter(q => answers[q.id] && answers[q.id] !== q.correctOption).length
+    const cor = qs.filter(q => wasCorrect(q, answers[q.id])).length
+    const wrg = qs.filter(q => isAnswered(answers[q.id]) && !wasCorrect(q, answers[q.id])).length
     const skp = qs.filter(q => !answers[q.id]).length
     return { d, total: qs.length, cor, wrg, skp }
   })
@@ -375,8 +375,8 @@ export default function Result() {
   // ── Question review filtering ────────────────────────────────────────────
   const reviewQs = questions.filter(q => {
     if (activeSection !== 'all' && q.subject !== activeSection) return false
-    if (reviewFilter === 'correct') return answers[q.id] === q.correctOption
-    if (reviewFilter === 'wrong')   return answers[q.id] && answers[q.id] !== q.correctOption
+    if (reviewFilter === 'correct') return wasCorrect(q, answers[q.id])
+    if (reviewFilter === 'wrong')   return isAnswered(answers[q.id]) && !wasCorrect(q, answers[q.id])
     if (reviewFilter === 'skipped') return !answers[q.id]
     if (reviewFilter === 'marked')  return markedSet.has(q.id)
     return true
@@ -566,8 +566,8 @@ export default function Result() {
                   <div className="time-q-list">
                     {items.length === 0 && <p className="time-q-empty">Not enough questions to compare.</p>}
                     {items.map(q => {
-                      const isCorr = answers[q.id] === q.correctOption
-                      const isWrng = answers[q.id] && answers[q.id] !== q.correctOption
+                      const isCorr = wasCorrect(q, answers[q.id])
+                      const isWrng = isAnswered(answers[q.id]) && !wasCorrect(q, answers[q.id])
                       const qNum = questions.indexOf(q) + 1
                       const verdict = isCorr ? 'cor' : isWrng ? 'wrg' : 'skp'
                       const verdictIcon = isCorr ? '✓' : isWrng ? '✗' : '—'
@@ -678,8 +678,8 @@ export default function Result() {
             <div className="result-palette">
               {reviewQs.map(q => {
                 const given = answers[q.id]
-                const isCorr = given === q.correctOption
-                const isWrng = given && given !== q.correctOption
+                const isCorr = wasCorrect(q, given)
+                const isWrng = isAnswered(given) && !wasCorrect(q, given)
                 const filled = isCorr || isWrng
                 const bg = isCorr ? '#16a34a' : isWrng ? '#dc2626' : 'var(--surface)'
                 return (

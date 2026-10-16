@@ -2,6 +2,7 @@
 // or syllogism statements/conclusions — above the question text itself.
 // Shared between ContestRoom (live exam) and Result (review) pages.
 import { RichText } from './RichText'
+import type { QuestionType } from '../lib/types'
 
 interface PassageLike {
   id: string
@@ -17,7 +18,10 @@ interface QuestionLike {
   language?: string
   text: string
   imageUrl?: string | null
-  questionType?: 'STANDARD' | 'SYLLOGISM' | 'PASSAGE' | 'TABLE'
+  // Every format, not only the four that carry special stems. A
+  // multiple-select or type-in question has an ordinary stem and falls
+  // through to the default branch below.
+  questionType?: QuestionType
   structuredData?: { statements: string[]; conclusions: string[] } | null
   passage?: PassageLike | null
 }

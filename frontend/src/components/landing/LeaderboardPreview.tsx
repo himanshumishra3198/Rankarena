@@ -9,10 +9,10 @@ const MEDAL = ['🥇', '🥈', '🥉']
  * The top of the real ranking.
  *
  * Shows each aspirant's actual rating and the tier it puts them in, using
- * the same colours as every other rating on the site. There are no
- * "+42 ↑" deltas here because /ratings/leaderboard does not return one —
- * inventing movement on named real users would be a lie about a person,
- * not just about a number.
+ * the same colours as every other rating on the site. Deltas are left to
+ * the leaderboard page: a marketing panel wants the shortest row it can
+ * get away with, and the tier already says more to a stranger than a
+ * number that moved.
  */
 export default function LeaderboardPreview({ leaders, loading }: { leaders: RankedUser[]; loading: boolean }) {
   const ref = useReveal<HTMLElement>()
