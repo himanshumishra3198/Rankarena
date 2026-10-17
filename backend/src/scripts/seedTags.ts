@@ -76,7 +76,11 @@ const SKILLS: string[] = [
 
 const DIFFICULTY_BANDS: string[] = ["Sitter", "Moderate", "Tough", "Exam-level"];
 
-async function main() {
+/**
+ * Creates any tag in the vocabulary that does not exist yet. Exported so the
+ * local development seed loads the same vocabulary rather than a copy of it.
+ */
+export async function seedTagVocabulary(): Promise<{ requested: number; resolved: number; created: number; total: number }> {
   const inputs: TagInput[] = [];
 
   for (const topics of Object.values(CAT_TOPICS)) {
@@ -91,15 +95,19 @@ async function main() {
   const before = await prisma.tag.count();
   const ids = await ensureTags(inputs);
   const after = await prisma.tag.count();
-
-  console.log(
-    `Tags: ${inputs.length} requested, ${ids.length} resolved, ${after - before} created, ${after} total.`,
-  );
+  return { requested: inputs.length, resolved: ids.length, created: after - before, total: after };
 }
 
-main()
-  .catch((err) => {
-    console.error(err);
-    process.exitCode = 1;
-  })
-  .finally(() => prisma.$disconnect());
+// Run only when invoked directly (npm run db:seed-tags, or the deploy step),
+// not when imported by the development seed.
+if (require.main === module) {
+  seedTagVocabulary()
+    .then((r) => {
+      console.log(`Tags: ${r.requested} requested, ${r.resolved} resolved, ${r.created} created, ${r.total} total.`);
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exitCode = 1;
+    })
+    .finally(() => prisma.$disconnect());
+}
