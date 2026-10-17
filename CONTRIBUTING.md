@@ -142,13 +142,17 @@ All passwords are `password123`.
 | ------------------------------------------------------- | ------- | -------------------------------------------------------- |
 | `admin@rankarena.local`                                 | Admin   | Log in at http://localhost:5174                          |
 | `student1@rankarena.local`                              | Student | Strongest student; has bookmarks and follows             |
-| `student2@rankarena.local` … `student8@rankarena.local` | Student | Skill decreases from 2 to 8; 3 and 6 sit papers in Hindi |
+| `student2@rankarena.local` … `student8@rankarena.local` | Student | Skill decreases from 2 to 8; 3 and 6 sit SSC papers in Hindi |
 
 ### Contests
 
-Contests follow the SSC CGL Tier 1 pattern: sections in the order Reasoning,
+SSC CGL contests follow the Tier 1 pattern: sections in the order Reasoning,
 General Awareness, Quantitative Aptitude, English, at +2 / −0.5 marks per
 question.
+
+CAT contests have three sections in the order VARC, DILR, QA, at +3 / −1, with
+no negative marking on type-in (TITA) questions. The time is split equally
+between the sections.
 
 | Contest           | Questions               | Time   | State                                        |
 | ----------------- | ----------------------- | ------ | -------------------------------------------- |
@@ -157,6 +161,8 @@ question.
 | Rapid Contest 1   | 40 (10 per subject)     | 24 min | Ended 2 days ago, ranked and rated           |
 | SSC CGL Contest 3 | 100 (25 per subject)    | 60 min | **Live** — started 5 minutes before seeding  |
 | SSC CGL Contest 4 | 100 (25 per subject)    | 60 min | **Scheduled** for 2 days from now            |
+| CAT Contest 1     | 24 (8 per section)      | 45 min | Ended 1 day ago, ranked and rated            |
+| CAT Contest 2     | 24 (8 per section)      | 45 min | **Scheduled** for 3 days from now            |
 
 ### Mocks
 
@@ -172,9 +178,14 @@ English Language) has:
 That is 12 published mocks. A 13th, **Logical Reasoning Sectional Test - 3**,
 is unpublished, as a draft would be.
 
+CAT has one sectional mock per section, each with 8 questions in 15 minutes:
+**CAT VARC Sectional Test - 1**, **CAT DILR Sectional Test - 1** and **CAT QA
+Sectional Test - 1**. A fourth, **CAT QA Sectional Test - 2** (6 questions), is
+unpublished.
+
 ### Questions
 
-About 745 questions, and no question appears in more than one paper. About 40
+**SSC CGL:** about 745 questions, and no question appears in more than one paper. About 40
 are in no paper at all, like new questions waiting in the bank. Quant and
 Reasoning questions are generated from templates with computed answers, so the
 answer keys are right by construction. English and GK questions come from fact
@@ -182,18 +193,39 @@ lists, with wrong options taken from other entries in the same list. Around 290
 have Hindi translations (most Quant and numeric Reasoning). The English section
 stays in English, as in the real exam. About 1 in 12 questions has no topic tag.
 
+**CAT:** 89 questions (27 VARC, 28 DILR, 34 QA), again with no question in more
+than one paper and 11 in no paper at all. They cover every CAT answer format:
+
+- **VARC:** reading passages with four questions each, para summaries, and
+  para jumbles and odd-sentence-out as type-in questions. Hand-written.
+- **DILR:** sets of four questions on one data table or caselet (revenue
+  tables, Venn diagrams, round-robin leagues, a road network). The data is
+  generated and the answers are computed from it.
+- **QA:** generated from templates with computed answers, about a third of
+  them type-in. Some use LaTeX, to exercise the maths renderer.
+- **Multiple-select:** 2 questions, one in the QA mock and one in the bank.
+  They are kept out of contests because they are not part of the current CAT
+  pattern.
+
+CAT questions are filed under tags, not the SSC topic string. The seed loads
+the same tag vocabulary as `npm run db:seed-tags`, so you do not need to run
+that separately. One CAT question is left untagged. CAT is English-only, so
+there are no translations, and every CAT attempt is in English.
+
 ### Everything else
 
-- **Attempts:** submitted contest and mock attempts in English and Hindi; one
+- **Attempts:** submitted contest and mock attempts in English and Hindi, for
+  both exams, scored with the app's own marking code; one
   contest attempt that was never submitted and was scored automatically when
   the contest was settled; admin test attempts, which are excluded from ranks.
 - **Other:** question reports (open and resolved), bookmarks, follows, a
-  notification, and community articles with comments and votes.
+  notification, and community articles with comments and votes. Each exam has
+  at least one report and one bookmark.
 
 ### Deliberate test cases
 
-- **The live and upcoming contests and the unpublished mock** contain questions
-  that appear nowhere else. Practice must never show them. Their answer keys
+- **The live and upcoming contests and the unpublished mocks** (SSC and CAT)
+  contain questions that appear nowhere else. Practice must never show them. Their answer keys
   are the ones a leak would expose.
 - **"What is 30% of 150?"** in SSC CGL Contest 3 (live) is worded almost exactly
   like "What is 20% of 150?" in SSC CGL Contest 1. It tests that

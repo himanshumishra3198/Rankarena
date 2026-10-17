@@ -2,7 +2,7 @@
 // passages and data tables, syllogisms with translations, a deliberately
 // mis-keyed question, and questions reserved for the live and upcoming
 // contests and the unpublished mock.
-import { p, type Four, type SeedQuestion } from "./lib";
+import { p, paras, type Four, type SeedQuestion } from "./lib";
 
 const SYLLOGISM_OPTIONS: Four = [
   "Only conclusion I follows",
@@ -395,7 +395,7 @@ export const FIXED_QUESTIONS: SeedQuestion[] = [
 export const PASSAGES = {
   "table-sales": {
     title: "Sales of a company (₹ lakh)",
-    content: p("The table shows the annual sales of two products of a company."),
+    content: "The table shows the annual sales of two products of a company.",
     type: "TABLE" as const,
     tableData: {
       headers: ["Year", "Product A", "Product B"],
@@ -403,7 +403,7 @@ export const PASSAGES = {
     },
     hi: {
       title: "एक कंपनी की बिक्री (₹ लाख)",
-      content: p("तालिका एक कंपनी के दो उत्पादों की वार्षिक बिक्री दर्शाती है।"),
+      content: "तालिका एक कंपनी के दो उत्पादों की वार्षिक बिक्री दर्शाती है।",
       tableData: {
         headers: ["वर्ष", "उत्पाद A", "उत्पाद B"],
         rows: [["2021", "35", "20"], ["2022", "40", "25"], ["2023", "45", "30"], ["2024", "50", "40"]],
@@ -412,18 +412,20 @@ export const PASSAGES = {
   },
   "passage-bees": {
     title: "Why bees matter",
-    content:
-      p("Bees are among the most important insects on the planet. As they move from flower to flower collecting nectar, they carry pollen that allows plants to produce fruit and seeds. A large share of the crops that farmers grow depend on this pollination.") +
-      p("In recent decades, bee populations have fallen sharply. Scientists point to the widespread use of pesticides, the loss of wild flowers and disease as the main causes. If the decline continues, food prices could rise and many crops could fail."),
+    content: paras(
+      "Bees are among the most important insects on the planet. As they move from flower to flower collecting nectar, they carry pollen that allows plants to produce fruit and seeds. A large share of the crops that farmers grow depend on this pollination.",
+      "In recent decades, bee populations have fallen sharply. Scientists point to the widespread use of pesticides, the loss of wild flowers and disease as the main causes. If the decline continues, food prices could rise and many crops could fail."
+    ),
     type: "TEXT" as const,
     tableData: null,
     hi: null,
   },
   "passage-upi": {
     title: "Paying by phone",
-    content:
-      p("Over the last decade, digital payments have changed how India shops. With a smartphone and a bank account, a person can now pay a street vendor in seconds. The Unified Payments Interface, launched in 2016, made this possible by linking bank accounts to simple mobile apps.") +
-      p("Small traders benefit because they no longer need to keep large amounts of change. However, experts warn that many elderly and rural users still find the technology confusing, and that fraud through fake payment requests is rising. Awareness, they argue, is as important as access."),
+    content: paras(
+      "Over the last decade, digital payments have changed how India shops. With a smartphone and a bank account, a person can now pay a street vendor in seconds. The Unified Payments Interface, launched in 2016, made this possible by linking bank accounts to simple mobile apps.",
+      "Small traders benefit because they no longer need to keep large amounts of change. However, experts warn that many elderly and rural users still find the technology confusing, and that fraud through fake payment requests is rising. Awareness, they argue, is as important as access."
+    ),
     type: "TEXT" as const,
     tableData: null,
     hi: null,

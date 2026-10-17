@@ -30,6 +30,47 @@ export interface SeedQuestion {
 /** A generated question before it is given a key and subject. */
 export type Draft = Omit<SeedQuestion, "key" | "subject">;
 
+/**
+ * A CAT question. Unlike SSC's, its answer is not always one of four letters:
+ * MSQ keys several options and TITA has no options at all, so exactly one of
+ * `correct`, `msq` and `tita` is set, matching `type`. CAT questions are filed
+ * under tags (by name, resolved to ids when seeded) rather than a topic string.
+ */
+export interface CatQuestion {
+  key: string;
+  subject: "VARC" | "DILR" | "QA";
+  type: QuestionType;
+  difficulty: Difficulty;
+  text: string;
+  /** Blank for TITA. */
+  options?: Four;
+  correct?: Option;
+  msq?: Option[];
+  tita?: { kind: "NUMERIC" | "TEXT"; accepted: string[]; tolerance?: number };
+  solution?: string;
+  passage?: string;
+  /** TOPIC tag. Null leaves the question untagged. */
+  topic: string | null;
+  subtopic?: string;
+  skill?: string;
+}
+
+export type CatDraft = Omit<CatQuestion, "key" | "subject">;
+
+/** A passage or data table. Content is plain text, blank lines between paragraphs. */
+export interface SeedPassage {
+  title: string;
+  content: string;
+  type: "TEXT" | "TABLE";
+  tableData: { headers: string[]; rows: string[][] } | null;
+}
+
+/** Questions that share one passage and sit together on a paper. */
+export interface CatSet {
+  passage: SeedPassage;
+  questions: CatDraft[];
+}
+
 // ── Deterministic randomness ────────────────────────────────────────────────
 // Seeded so every developer gets the same questions, answers, scores and ranks.
 
@@ -57,6 +98,11 @@ export function shuffle<T>(xs: readonly T[]): T[] {
 // ── Formatting ──────────────────────────────────────────────────────────────
 
 export const p = (s: string) => `<p>${s}</p>`;
+/**
+ * Passage bodies are plain text, as the admin textarea writes them: the
+ * student app splits paragraphs on blank lines and does not render HTML.
+ */
+export const paras = (...ps: string[]) => ps.join("\n\n");
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 export const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 export const lcm = (a: number, b: number) => (a / gcd(a, b)) * b;
@@ -122,8 +168,8 @@ export function numeric(
 }
 
 /** Calls `make` until it has produced `count` distinct questions. */
-export function unique(count: number, make: () => Draft): Draft[] {
-  const out: Draft[] = [];
+export function unique<T extends { text: string; structuredData?: unknown }>(count: number, make: () => T): T[] {
+  const out: T[] = [];
   const seen = new Set<string>();
   for (let tries = 0; out.length < count && tries < count * 50; tries++) {
     const d = make();

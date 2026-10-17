@@ -4,6 +4,7 @@
  * Fills an empty database with synthetic data shaped like the real thing:
  * SSC CGL style contests of 100 questions (25 per subject, 60 minutes), a
  * rapid contest, sectional and rapid mocks per subject, and attempts on them.
+ * CAT contests, mocks and attempts are added by cat.ts, at the end.
  * It covers every state the app branches on — contests that have ended, one
  * running now and one still to come; published and unpublished mocks; tagged
  * and untagged questions; English and Hindi; passages, data tables and
@@ -34,18 +35,22 @@ import redis from "../../src/lib/redis";
 import { settleContest } from "../../src/lib/settleContest";
 import { computeFingerprint, normalizeText } from "../../src/lib/fingerprint";
 import { Prisma } from "../../src/generated/prisma/client";
-import type { Language, Subject } from "../../src/generated/prisma/enums";
+import type { Language, Subject as AnySubject } from "../../src/generated/prisma/enums";
 import { between, interleave, OPTIONS, pick, rand, type Draft, type Option, type SeedQuestion } from "./lib";
 import { FIXED_QUESTIONS, PASSAGES } from "./fixed";
 import { quantFamilies } from "./quant";
 import { reasoningFamilies } from "./reasoning";
 import { englishFamilies } from "./english";
 import { gkFamilies } from "./gk";
+import { seedCat } from "./cat";
 
 const PASSWORD = "password123";
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
+
+/** SSC CGL's sections. CAT's are seeded by cat.ts. */
+type Subject = Extract<AnySubject, "QUANT" | "REASONING" | "ENGLISH" | "GK">;
 
 /** Section order of the SSC CGL Tier 1 paper. */
 const SUBJECTS: Subject[] = ["REASONING", "GK", "QUANT", "ENGLISH"];
@@ -480,9 +485,15 @@ async function main() {
     data: { articleId: technique.id, authorId: students[1].id, parentId: comment.id, body: "<p>Glad it helped!</p>" },
   });
 
+  // CAT runs last: its ended contest is the most recent one, so its rating
+  // change has to apply after the SSC ones, and drawing its random numbers
+  // after SSC's leaves the SSC data the same as before CAT was added.
+  const cat = await seedCat({ admin, students, skills: STUDENTS.map((s) => s.skill), at });
+
   console.log(`
-Seeded ${qIds.size} questions (${extras.length} of them in no paper yet), ${CONTESTS.length} contests,
-${MOCKS.length} mocks, ${students.length} students and 1 admin.
+Seeded ${qIds.size} SSC CGL questions (${extras.length} of them in no paper yet), ${CONTESTS.length} contests and ${MOCKS.length} mocks;
+${cat.questions} CAT questions (${cat.extras} in no paper yet), ${cat.contests} contests and ${cat.mocks} mocks;
+${students.length} students and 1 admin.
 
   Admin panel   http://localhost:5174   admin@rankarena.local    / ${PASSWORD}
   Student app   http://localhost:5173   student1@rankarena.local / ${PASSWORD}
