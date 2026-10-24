@@ -402,6 +402,7 @@ export const ModelName = {
   MockAttempt: 'MockAttempt',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
+  UserRating: 'UserRating',
   RatingHistory: 'RatingHistory',
   Tag: 'Tag',
   QuestionTag: 'QuestionTag',
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "authToken" | "notification" | "article" | "articleComment" | "articleVote" | "commentVote" | "bookmark" | "follow" | "contest" | "passage" | "question" | "questionReport" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "ratingHistory" | "tag" | "questionTag" | "questionTranslation" | "passageTranslation"
+    modelProps: "user" | "authToken" | "notification" | "article" | "articleComment" | "articleVote" | "commentVote" | "bookmark" | "follow" | "contest" | "passage" | "question" | "questionReport" | "mockTest" | "mockTestQuestion" | "mockAttempt" | "contestQuestion" | "participation" | "userRating" | "ratingHistory" | "tag" | "questionTag" | "questionTranslation" | "passageTranslation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1758,6 +1759,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UserRating: {
+      payload: Prisma.$UserRatingPayload<ExtArgs>
+      fields: Prisma.UserRatingFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserRatingFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserRatingFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>
+        }
+        findFirst: {
+          args: Prisma.UserRatingFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserRatingFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>
+        }
+        findMany: {
+          args: Prisma.UserRatingFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>[]
+        }
+        create: {
+          args: Prisma.UserRatingCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>
+        }
+        createMany: {
+          args: Prisma.UserRatingCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserRatingCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>[]
+        }
+        delete: {
+          args: Prisma.UserRatingDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>
+        }
+        update: {
+          args: Prisma.UserRatingUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserRatingDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserRatingUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserRatingUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserRatingUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserRatingPayload>
+        }
+        aggregate: {
+          args: Prisma.UserRatingAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserRating>
+        }
+        groupBy: {
+          args: Prisma.UserRatingGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserRatingGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserRatingCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserRatingCountAggregateOutputType> | number
+        }
+      }
+    }
     RatingHistory: {
       payload: Prisma.$RatingHistoryPayload<ExtArgs>
       fields: Prisma.RatingHistoryFieldRefs
@@ -2428,6 +2503,16 @@ export const ParticipationScalarFieldEnum = {
 export type ParticipationScalarFieldEnum = (typeof ParticipationScalarFieldEnum)[keyof typeof ParticipationScalarFieldEnum]
 
 
+export const UserRatingScalarFieldEnum = {
+  userId: 'userId',
+  exam: 'exam',
+  rating: 'rating',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserRatingScalarFieldEnum = (typeof UserRatingScalarFieldEnum)[keyof typeof UserRatingScalarFieldEnum]
+
+
 export const RatingHistoryScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -2436,7 +2521,8 @@ export const RatingHistoryScalarFieldEnum = {
   newRating: 'newRating',
   rank: 'rank',
   totalParticipants: 'totalParticipants',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  exam: 'exam'
 } as const
 
 export type RatingHistoryScalarFieldEnum = (typeof RatingHistoryScalarFieldEnum)[keyof typeof RatingHistoryScalarFieldEnum]
@@ -2956,6 +3042,7 @@ export type GlobalOmitConfig = {
   mockAttempt?: Prisma.MockAttemptOmit
   contestQuestion?: Prisma.ContestQuestionOmit
   participation?: Prisma.ParticipationOmit
+  userRating?: Prisma.UserRatingOmit
   ratingHistory?: Prisma.RatingHistoryOmit
   tag?: Prisma.TagOmit
   questionTag?: Prisma.QuestionTagOmit

@@ -69,6 +69,7 @@ export const ModelName = {
   MockAttempt: 'MockAttempt',
   ContestQuestion: 'ContestQuestion',
   Participation: 'Participation',
+  UserRating: 'UserRating',
   RatingHistory: 'RatingHistory',
   Tag: 'Tag',
   QuestionTag: 'QuestionTag',
@@ -353,6 +354,16 @@ export const ParticipationScalarFieldEnum = {
 export type ParticipationScalarFieldEnum = (typeof ParticipationScalarFieldEnum)[keyof typeof ParticipationScalarFieldEnum]
 
 
+export const UserRatingScalarFieldEnum = {
+  userId: 'userId',
+  exam: 'exam',
+  rating: 'rating',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserRatingScalarFieldEnum = (typeof UserRatingScalarFieldEnum)[keyof typeof UserRatingScalarFieldEnum]
+
+
 export const RatingHistoryScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -361,7 +372,8 @@ export const RatingHistoryScalarFieldEnum = {
   newRating: 'newRating',
   rank: 'rank',
   totalParticipants: 'totalParticipants',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  exam: 'exam'
 } as const
 
 export type RatingHistoryScalarFieldEnum = (typeof RatingHistoryScalarFieldEnum)[keyof typeof RatingHistoryScalarFieldEnum]

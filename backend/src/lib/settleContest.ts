@@ -56,6 +56,15 @@ export async function computeContestRatings(contestId: string): Promise<void> {
   const existing = await prisma.ratingHistory.count({ where: { contestId } });
   if (existing > 0) return;
 
+  // Which ladder this contest moves. A CAT result must not touch an SSC
+  // rating: the two are different fields sitting different papers, and a
+  // number that mixes them ranks nobody against anybody.
+  const paper = await prisma.contest.findUnique({
+    where: { id: contestId },
+    select: { exam: true },
+  });
+  const exam = paper?.exam ?? "SSC_CGL";
+
   // Test attempts are excluded before ranking, not after. The delta formula
   // divides by the participant count, so leaving an admin in the set would
   // change n and shift the rating of every genuine participant.
@@ -69,11 +78,13 @@ export async function computeContestRatings(contestId: string): Promise<void> {
   if (n === 0) return;
 
   const userIds = participations.map((p) => p.userId);
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: { id: true, rating: true },
+  // Starting ratings come from this exam's ladder. A candidate who has never
+  // sat this exam has no row yet and starts where everyone does.
+  const existingRatings = await prisma.userRating.findMany({
+    where: { exam, userId: { in: userIds } },
+    select: { userId: true, rating: true },
   });
-  const ratingMap = new Map(users.map((u) => [u.id, u.rating]));
+  const ratingMap = new Map(existingRatings.map((r) => [r.userId, r.rating]));
 
   const updates = participations.map((p, i) => {
     const rank = i + 1;
@@ -89,6 +100,7 @@ export async function computeContestRatings(contestId: string): Promise<void> {
       data: updates.map((u) => ({
         userId: u.userId,
         contestId,
+        exam,
         oldRating: u.oldRating,
         newRating: u.newRating,
         rank: u.rank,
@@ -97,6 +109,16 @@ export async function computeContestRatings(contestId: string): Promise<void> {
       skipDuplicates: true,
     });
     for (const u of updates) {
+      // The ladder this contest belongs to.
+      await tx.userRating.upsert({
+        where: { userId_exam: { userId: u.userId, exam } },
+        create: { userId: u.userId, exam, rating: u.newRating },
+        update: { rating: u.newRating },
+      });
+      // And the one number shown beside a name in a comment or a follower
+      // list. It tracks the most recent result, whichever exam that was —
+      // "where this candidate currently stands" rather than a second ladder
+      // that would need its own explanation.
       await tx.user.update({ where: { id: u.userId }, data: { rating: u.newRating } });
     }
   });

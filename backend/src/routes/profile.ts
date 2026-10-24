@@ -204,6 +204,35 @@ async function buildProfileData(userId: string) {
    * position after everyone who beat them, which is how the contest
    * standings read too.
    */
+  const examRatingRows = await prisma.userRating.findMany({
+    where: { userId },
+    select: { exam: true, rating: true },
+  });
+
+  /**
+   * Where this candidate stands in each exam they have a rating in.
+   *
+   * Ranked within the exam, because that is the only ranking that means
+   * anything: a CAT result and an SSC result are not the same achievement
+   * and were not earned against the same field.
+   */
+  const examRatings = user.role === "STUDENT"
+    ? await Promise.all(examRatingRows.map(async (r) => ({
+        exam: r.exam,
+        rating: r.rating,
+        rank: (await prisma.userRating.count({
+          where: { exam: r.exam, rating: { gt: r.rating }, user: { role: "STUDENT" } },
+        })) + 1,
+        total: await prisma.userRating.count({
+          where: { exam: r.exam, user: { role: "STUDENT" } },
+        }),
+        contests: await prisma.ratingHistory.count({ where: { userId, exam: r.exam } }),
+      })))
+    : [];
+
+  // The headline placing stays whole-platform, on the display rating, so the
+  // profile still opens with one number rather than making a candidate who
+  // has only ever sat SSC read a table to find theirs.
   const globalRank = user.role === "STUDENT"
     ? (await prisma.user.count({ where: { role: "STUDENT", rating: { gt: user.rating } } })) + 1
     : null;
@@ -216,9 +245,11 @@ async function buildProfileData(userId: string) {
 
   return {
     user: { ...user, createdAt: user.createdAt.toISOString(), followerCount, followingCount },
+    examRatings,
     ratingHistory: ratingHistory.map((r) => ({
       contestId: r.contestId,
       contestTitle: r.contest.title,
+      exam: r.exam,
       // When the rating actually changed, not when the contest was scheduled.
       // These are minutes apart for a normal contest, but a contest that is
       // rescheduled after it has been rated keeps its rating history and gains

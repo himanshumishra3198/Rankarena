@@ -49,6 +49,7 @@ export type RatingHistoryMinAggregateOutputType = {
   rank: number | null
   totalParticipants: number | null
   createdAt: Date | null
+  exam: $Enums.Exam | null
 }
 
 export type RatingHistoryMaxAggregateOutputType = {
@@ -60,6 +61,7 @@ export type RatingHistoryMaxAggregateOutputType = {
   rank: number | null
   totalParticipants: number | null
   createdAt: Date | null
+  exam: $Enums.Exam | null
 }
 
 export type RatingHistoryCountAggregateOutputType = {
@@ -71,6 +73,7 @@ export type RatingHistoryCountAggregateOutputType = {
   rank: number
   totalParticipants: number
   createdAt: number
+  exam: number
   _all: number
 }
 
@@ -98,6 +101,7 @@ export type RatingHistoryMinAggregateInputType = {
   rank?: true
   totalParticipants?: true
   createdAt?: true
+  exam?: true
 }
 
 export type RatingHistoryMaxAggregateInputType = {
@@ -109,6 +113,7 @@ export type RatingHistoryMaxAggregateInputType = {
   rank?: true
   totalParticipants?: true
   createdAt?: true
+  exam?: true
 }
 
 export type RatingHistoryCountAggregateInputType = {
@@ -120,6 +125,7 @@ export type RatingHistoryCountAggregateInputType = {
   rank?: true
   totalParticipants?: true
   createdAt?: true
+  exam?: true
   _all?: true
 }
 
@@ -218,6 +224,7 @@ export type RatingHistoryGroupByOutputType = {
   rank: number
   totalParticipants: number
   createdAt: Date
+  exam: $Enums.Exam
   _count: RatingHistoryCountAggregateOutputType | null
   _avg: RatingHistoryAvgAggregateOutputType | null
   _sum: RatingHistorySumAggregateOutputType | null
@@ -252,6 +259,7 @@ export type RatingHistoryWhereInput = {
   rank?: Prisma.IntFilter<"RatingHistory"> | number
   totalParticipants?: Prisma.IntFilter<"RatingHistory"> | number
   createdAt?: Prisma.DateTimeFilter<"RatingHistory"> | Date | string
+  exam?: Prisma.EnumExamFilter<"RatingHistory"> | $Enums.Exam
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   contest?: Prisma.XOR<Prisma.ContestScalarRelationFilter, Prisma.ContestWhereInput>
 }
@@ -265,6 +273,7 @@ export type RatingHistoryOrderByWithRelationInput = {
   rank?: Prisma.SortOrder
   totalParticipants?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   contest?: Prisma.ContestOrderByWithRelationInput
 }
@@ -282,6 +291,7 @@ export type RatingHistoryWhereUniqueInput = Prisma.AtLeast<{
   rank?: Prisma.IntFilter<"RatingHistory"> | number
   totalParticipants?: Prisma.IntFilter<"RatingHistory"> | number
   createdAt?: Prisma.DateTimeFilter<"RatingHistory"> | Date | string
+  exam?: Prisma.EnumExamFilter<"RatingHistory"> | $Enums.Exam
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   contest?: Prisma.XOR<Prisma.ContestScalarRelationFilter, Prisma.ContestWhereInput>
 }, "id" | "userId_contestId">
@@ -295,6 +305,7 @@ export type RatingHistoryOrderByWithAggregationInput = {
   rank?: Prisma.SortOrder
   totalParticipants?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
   _count?: Prisma.RatingHistoryCountOrderByAggregateInput
   _avg?: Prisma.RatingHistoryAvgOrderByAggregateInput
   _max?: Prisma.RatingHistoryMaxOrderByAggregateInput
@@ -314,6 +325,7 @@ export type RatingHistoryScalarWhereWithAggregatesInput = {
   rank?: Prisma.IntWithAggregatesFilter<"RatingHistory"> | number
   totalParticipants?: Prisma.IntWithAggregatesFilter<"RatingHistory"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"RatingHistory"> | Date | string
+  exam?: Prisma.EnumExamWithAggregatesFilter<"RatingHistory"> | $Enums.Exam
 }
 
 export type RatingHistoryCreateInput = {
@@ -323,6 +335,7 @@ export type RatingHistoryCreateInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
   user: Prisma.UserCreateNestedOneWithoutRatingHistoryInput
   contest: Prisma.ContestCreateNestedOneWithoutRatingHistoryInput
 }
@@ -336,6 +349,7 @@ export type RatingHistoryUncheckedCreateInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
 }
 
 export type RatingHistoryUpdateInput = {
@@ -345,6 +359,7 @@ export type RatingHistoryUpdateInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   user?: Prisma.UserUpdateOneRequiredWithoutRatingHistoryNestedInput
   contest?: Prisma.ContestUpdateOneRequiredWithoutRatingHistoryNestedInput
 }
@@ -358,6 +373,7 @@ export type RatingHistoryUncheckedUpdateInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
 }
 
 export type RatingHistoryCreateManyInput = {
@@ -369,6 +385,7 @@ export type RatingHistoryCreateManyInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
 }
 
 export type RatingHistoryUpdateManyMutationInput = {
@@ -378,6 +395,7 @@ export type RatingHistoryUpdateManyMutationInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
 }
 
 export type RatingHistoryUncheckedUpdateManyInput = {
@@ -389,6 +407,7 @@ export type RatingHistoryUncheckedUpdateManyInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
 }
 
 export type RatingHistoryListRelationFilter = {
@@ -415,6 +434,7 @@ export type RatingHistoryCountOrderByAggregateInput = {
   rank?: Prisma.SortOrder
   totalParticipants?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
 }
 
 export type RatingHistoryAvgOrderByAggregateInput = {
@@ -433,6 +453,7 @@ export type RatingHistoryMaxOrderByAggregateInput = {
   rank?: Prisma.SortOrder
   totalParticipants?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
 }
 
 export type RatingHistoryMinOrderByAggregateInput = {
@@ -444,6 +465,7 @@ export type RatingHistoryMinOrderByAggregateInput = {
   rank?: Prisma.SortOrder
   totalParticipants?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  exam?: Prisma.SortOrder
 }
 
 export type RatingHistorySumOrderByAggregateInput = {
@@ -544,6 +566,7 @@ export type RatingHistoryCreateWithoutUserInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
   contest: Prisma.ContestCreateNestedOneWithoutRatingHistoryInput
 }
 
@@ -555,6 +578,7 @@ export type RatingHistoryUncheckedCreateWithoutUserInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
 }
 
 export type RatingHistoryCreateOrConnectWithoutUserInput = {
@@ -595,6 +619,7 @@ export type RatingHistoryScalarWhereInput = {
   rank?: Prisma.IntFilter<"RatingHistory"> | number
   totalParticipants?: Prisma.IntFilter<"RatingHistory"> | number
   createdAt?: Prisma.DateTimeFilter<"RatingHistory"> | Date | string
+  exam?: Prisma.EnumExamFilter<"RatingHistory"> | $Enums.Exam
 }
 
 export type RatingHistoryCreateWithoutContestInput = {
@@ -604,6 +629,7 @@ export type RatingHistoryCreateWithoutContestInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
   user: Prisma.UserCreateNestedOneWithoutRatingHistoryInput
 }
 
@@ -615,6 +641,7 @@ export type RatingHistoryUncheckedCreateWithoutContestInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
 }
 
 export type RatingHistoryCreateOrConnectWithoutContestInput = {
@@ -651,6 +678,7 @@ export type RatingHistoryCreateManyUserInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
 }
 
 export type RatingHistoryUpdateWithoutUserInput = {
@@ -660,6 +688,7 @@ export type RatingHistoryUpdateWithoutUserInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   contest?: Prisma.ContestUpdateOneRequiredWithoutRatingHistoryNestedInput
 }
 
@@ -671,6 +700,7 @@ export type RatingHistoryUncheckedUpdateWithoutUserInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
 }
 
 export type RatingHistoryUncheckedUpdateManyWithoutUserInput = {
@@ -681,6 +711,7 @@ export type RatingHistoryUncheckedUpdateManyWithoutUserInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
 }
 
 export type RatingHistoryCreateManyContestInput = {
@@ -691,6 +722,7 @@ export type RatingHistoryCreateManyContestInput = {
   rank: number
   totalParticipants: number
   createdAt?: Date | string
+  exam?: $Enums.Exam
 }
 
 export type RatingHistoryUpdateWithoutContestInput = {
@@ -700,6 +732,7 @@ export type RatingHistoryUpdateWithoutContestInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   user?: Prisma.UserUpdateOneRequiredWithoutRatingHistoryNestedInput
 }
 
@@ -711,6 +744,7 @@ export type RatingHistoryUncheckedUpdateWithoutContestInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
 }
 
 export type RatingHistoryUncheckedUpdateManyWithoutContestInput = {
@@ -721,6 +755,7 @@ export type RatingHistoryUncheckedUpdateManyWithoutContestInput = {
   rank?: Prisma.IntFieldUpdateOperationsInput | number
   totalParticipants?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
 }
 
 
@@ -734,6 +769,7 @@ export type RatingHistorySelect<ExtArgs extends runtime.Types.Extensions.Interna
   rank?: boolean
   totalParticipants?: boolean
   createdAt?: boolean
+  exam?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   contest?: boolean | Prisma.ContestDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ratingHistory"]>
@@ -747,6 +783,7 @@ export type RatingHistorySelectCreateManyAndReturn<ExtArgs extends runtime.Types
   rank?: boolean
   totalParticipants?: boolean
   createdAt?: boolean
+  exam?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   contest?: boolean | Prisma.ContestDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ratingHistory"]>
@@ -760,6 +797,7 @@ export type RatingHistorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   rank?: boolean
   totalParticipants?: boolean
   createdAt?: boolean
+  exam?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   contest?: boolean | Prisma.ContestDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ratingHistory"]>
@@ -773,9 +811,10 @@ export type RatingHistorySelectScalar = {
   rank?: boolean
   totalParticipants?: boolean
   createdAt?: boolean
+  exam?: boolean
 }
 
-export type RatingHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "contestId" | "oldRating" | "newRating" | "rank" | "totalParticipants" | "createdAt", ExtArgs["result"]["ratingHistory"]>
+export type RatingHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "contestId" | "oldRating" | "newRating" | "rank" | "totalParticipants" | "createdAt" | "exam", ExtArgs["result"]["ratingHistory"]>
 export type RatingHistoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   contest?: boolean | Prisma.ContestDefaultArgs<ExtArgs>
@@ -804,6 +843,7 @@ export type $RatingHistoryPayload<ExtArgs extends runtime.Types.Extensions.Inter
     rank: number
     totalParticipants: number
     createdAt: Date
+    exam: $Enums.Exam
   }, ExtArgs["result"]["ratingHistory"]>
   composites: {}
 }
@@ -1237,6 +1277,7 @@ export interface RatingHistoryFieldRefs {
   readonly rank: Prisma.FieldRef<"RatingHistory", 'Int'>
   readonly totalParticipants: Prisma.FieldRef<"RatingHistory", 'Int'>
   readonly createdAt: Prisma.FieldRef<"RatingHistory", 'DateTime'>
+  readonly exam: Prisma.FieldRef<"RatingHistory", 'Exam'>
 }
     
 

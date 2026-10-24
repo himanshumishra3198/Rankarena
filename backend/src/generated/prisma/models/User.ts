@@ -266,6 +266,7 @@ export type UserWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   participations?: Prisma.ParticipationListRelationFilter
   ratingHistory?: Prisma.RatingHistoryListRelationFilter
+  examRatings?: Prisma.UserRatingListRelationFilter
   mockAttempts?: Prisma.MockAttemptListRelationFilter
   questionReports?: Prisma.QuestionReportListRelationFilter
   bookmarks?: Prisma.BookmarkListRelationFilter
@@ -294,6 +295,7 @@ export type UserOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   participations?: Prisma.ParticipationOrderByRelationAggregateInput
   ratingHistory?: Prisma.RatingHistoryOrderByRelationAggregateInput
+  examRatings?: Prisma.UserRatingOrderByRelationAggregateInput
   mockAttempts?: Prisma.MockAttemptOrderByRelationAggregateInput
   questionReports?: Prisma.QuestionReportOrderByRelationAggregateInput
   bookmarks?: Prisma.BookmarkOrderByRelationAggregateInput
@@ -325,6 +327,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   participations?: Prisma.ParticipationListRelationFilter
   ratingHistory?: Prisma.RatingHistoryListRelationFilter
+  examRatings?: Prisma.UserRatingListRelationFilter
   mockAttempts?: Prisma.MockAttemptListRelationFilter
   questionReports?: Prisma.QuestionReportListRelationFilter
   bookmarks?: Prisma.BookmarkListRelationFilter
@@ -389,6 +392,7 @@ export type UserCreateInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -417,6 +421,7 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -445,6 +450,7 @@ export type UserUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -473,6 +479,7 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -801,6 +808,20 @@ export type UserUpdateOneRequiredWithoutParticipationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutParticipationsInput, Prisma.UserUpdateWithoutParticipationsInput>, Prisma.UserUncheckedUpdateWithoutParticipationsInput>
 }
 
+export type UserCreateNestedOneWithoutExamRatingsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutExamRatingsInput, Prisma.UserUncheckedCreateWithoutExamRatingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutExamRatingsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutExamRatingsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutExamRatingsInput, Prisma.UserUncheckedCreateWithoutExamRatingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutExamRatingsInput
+  upsert?: Prisma.UserUpsertWithoutExamRatingsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutExamRatingsInput, Prisma.UserUpdateWithoutExamRatingsInput>, Prisma.UserUncheckedUpdateWithoutExamRatingsInput>
+}
+
 export type UserCreateNestedOneWithoutRatingHistoryInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutRatingHistoryInput, Prisma.UserUncheckedCreateWithoutRatingHistoryInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutRatingHistoryInput
@@ -829,6 +850,7 @@ export type UserCreateWithoutAuthTokensInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -856,6 +878,7 @@ export type UserUncheckedCreateWithoutAuthTokensInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -899,6 +922,7 @@ export type UserUpdateWithoutAuthTokensInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -926,6 +950,7 @@ export type UserUncheckedUpdateWithoutAuthTokensInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -953,6 +978,7 @@ export type UserCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -980,6 +1006,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1012,6 +1039,7 @@ export type UserCreateWithoutActedNotificationsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -1039,6 +1067,7 @@ export type UserUncheckedCreateWithoutActedNotificationsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1082,6 +1111,7 @@ export type UserUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -1109,6 +1139,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -1147,6 +1178,7 @@ export type UserUpdateWithoutActedNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -1174,6 +1206,7 @@ export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -1201,6 +1234,7 @@ export type UserCreateWithoutArticlesInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -1228,6 +1262,7 @@ export type UserUncheckedCreateWithoutArticlesInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1271,6 +1306,7 @@ export type UserUpdateWithoutArticlesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -1298,6 +1334,7 @@ export type UserUncheckedUpdateWithoutArticlesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -1325,6 +1362,7 @@ export type UserCreateWithoutArticleCommentsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -1352,6 +1390,7 @@ export type UserUncheckedCreateWithoutArticleCommentsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1395,6 +1434,7 @@ export type UserUpdateWithoutArticleCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -1422,6 +1462,7 @@ export type UserUncheckedUpdateWithoutArticleCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -1449,6 +1490,7 @@ export type UserCreateWithoutArticleVotesInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -1476,6 +1518,7 @@ export type UserUncheckedCreateWithoutArticleVotesInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1519,6 +1562,7 @@ export type UserUpdateWithoutArticleVotesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -1546,6 +1590,7 @@ export type UserUncheckedUpdateWithoutArticleVotesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -1573,6 +1618,7 @@ export type UserCreateWithoutCommentVotesInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -1600,6 +1646,7 @@ export type UserUncheckedCreateWithoutCommentVotesInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1643,6 +1690,7 @@ export type UserUpdateWithoutCommentVotesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -1670,6 +1718,7 @@ export type UserUncheckedUpdateWithoutCommentVotesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -1697,6 +1746,7 @@ export type UserCreateWithoutBookmarksInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
@@ -1724,6 +1774,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -1767,6 +1818,7 @@ export type UserUpdateWithoutBookmarksInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
@@ -1794,6 +1846,7 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -1821,6 +1874,7 @@ export type UserCreateWithoutFollowingInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -1848,6 +1902,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1880,6 +1935,7 @@ export type UserCreateWithoutFollowersInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -1907,6 +1963,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1950,6 +2007,7 @@ export type UserUpdateWithoutFollowingInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -1977,6 +2035,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -2015,6 +2074,7 @@ export type UserUpdateWithoutFollowersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -2042,6 +2102,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -2069,6 +2130,7 @@ export type UserCreateWithoutQuestionReportsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
@@ -2096,6 +2158,7 @@ export type UserUncheckedCreateWithoutQuestionReportsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -2139,6 +2202,7 @@ export type UserUpdateWithoutQuestionReportsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
@@ -2166,6 +2230,7 @@ export type UserUncheckedUpdateWithoutQuestionReportsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -2193,6 +2258,7 @@ export type UserCreateWithoutMockAttemptsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
@@ -2220,6 +2286,7 @@ export type UserUncheckedCreateWithoutMockAttemptsInput = {
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -2263,6 +2330,7 @@ export type UserUpdateWithoutMockAttemptsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
@@ -2290,6 +2358,7 @@ export type UserUncheckedUpdateWithoutMockAttemptsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -2316,6 +2385,7 @@ export type UserCreateWithoutParticipationsInput = {
   rating?: number
   createdAt?: Date | string
   ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -2343,6 +2413,7 @@ export type UserUncheckedCreateWithoutParticipationsInput = {
   rating?: number
   createdAt?: Date | string
   ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -2386,6 +2457,7 @@ export type UserUpdateWithoutParticipationsInput = {
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -2412,6 +2484,135 @@ export type UserUncheckedUpdateWithoutParticipationsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUncheckedUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUncheckedUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutExamRatingsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  contestEmails?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutExamRatingsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  googleId?: string | null
+  avatarUrl?: string | null
+  emailVerified?: boolean
+  contestEmails?: boolean
+  role?: $Enums.Role
+  rating?: number
+  createdAt?: Date | string
+  participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
+  ratingHistory?: Prisma.RatingHistoryUncheckedCreateNestedManyWithoutUserInput
+  mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
+  questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
+  bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  articles?: Prisma.ArticleUncheckedCreateNestedManyWithoutAuthorInput
+  articleComments?: Prisma.ArticleCommentUncheckedCreateNestedManyWithoutAuthorInput
+  articleVotes?: Prisma.ArticleVoteUncheckedCreateNestedManyWithoutUserInput
+  commentVotes?: Prisma.CommentVoteUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  authTokens?: Prisma.AuthTokenUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutExamRatingsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutExamRatingsInput, Prisma.UserUncheckedCreateWithoutExamRatingsInput>
+}
+
+export type UserUpsertWithoutExamRatingsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutExamRatingsInput, Prisma.UserUncheckedUpdateWithoutExamRatingsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutExamRatingsInput, Prisma.UserUncheckedCreateWithoutExamRatingsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutExamRatingsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutExamRatingsInput, Prisma.UserUncheckedUpdateWithoutExamRatingsInput>
+}
+
+export type UserUpdateWithoutExamRatingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
+  ratingHistory?: Prisma.RatingHistoryUpdateManyWithoutUserNestedInput
+  mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
+  questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
+  bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  articles?: Prisma.ArticleUpdateManyWithoutAuthorNestedInput
+  articleComments?: Prisma.ArticleCommentUpdateManyWithoutAuthorNestedInput
+  articleVotes?: Prisma.ArticleVoteUpdateManyWithoutUserNestedInput
+  commentVotes?: Prisma.CommentVoteUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  authTokens?: Prisma.AuthTokenUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutExamRatingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contestEmails?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  rating?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
   ratingHistory?: Prisma.RatingHistoryUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
@@ -2440,6 +2641,7 @@ export type UserCreateWithoutRatingHistoryInput = {
   rating?: number
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkCreateNestedManyWithoutUserInput
@@ -2467,6 +2669,7 @@ export type UserUncheckedCreateWithoutRatingHistoryInput = {
   rating?: number
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutUserInput
+  examRatings?: Prisma.UserRatingUncheckedCreateNestedManyWithoutUserInput
   mockAttempts?: Prisma.MockAttemptUncheckedCreateNestedManyWithoutUserInput
   questionReports?: Prisma.QuestionReportUncheckedCreateNestedManyWithoutUserInput
   bookmarks?: Prisma.BookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -2510,6 +2713,7 @@ export type UserUpdateWithoutRatingHistoryInput = {
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUpdateManyWithoutUserNestedInput
@@ -2537,6 +2741,7 @@ export type UserUncheckedUpdateWithoutRatingHistoryInput = {
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutUserNestedInput
+  examRatings?: Prisma.UserRatingUncheckedUpdateManyWithoutUserNestedInput
   mockAttempts?: Prisma.MockAttemptUncheckedUpdateManyWithoutUserNestedInput
   questionReports?: Prisma.QuestionReportUncheckedUpdateManyWithoutUserNestedInput
   bookmarks?: Prisma.BookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -2559,6 +2764,7 @@ export type UserUncheckedUpdateWithoutRatingHistoryInput = {
 export type UserCountOutputType = {
   participations: number
   ratingHistory: number
+  examRatings: number
   mockAttempts: number
   questionReports: number
   bookmarks: number
@@ -2576,6 +2782,7 @@ export type UserCountOutputType = {
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   participations?: boolean | UserCountOutputTypeCountParticipationsArgs
   ratingHistory?: boolean | UserCountOutputTypeCountRatingHistoryArgs
+  examRatings?: boolean | UserCountOutputTypeCountExamRatingsArgs
   mockAttempts?: boolean | UserCountOutputTypeCountMockAttemptsArgs
   questionReports?: boolean | UserCountOutputTypeCountQuestionReportsArgs
   bookmarks?: boolean | UserCountOutputTypeCountBookmarksArgs
@@ -2612,6 +2819,13 @@ export type UserCountOutputTypeCountParticipationsArgs<ExtArgs extends runtime.T
  */
 export type UserCountOutputTypeCountRatingHistoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.RatingHistoryWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountExamRatingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserRatingWhereInput
 }
 
 /**
@@ -2713,6 +2927,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   participations?: boolean | Prisma.User$participationsArgs<ExtArgs>
   ratingHistory?: boolean | Prisma.User$ratingHistoryArgs<ExtArgs>
+  examRatings?: boolean | Prisma.User$examRatingsArgs<ExtArgs>
   mockAttempts?: boolean | Prisma.User$mockAttemptsArgs<ExtArgs>
   questionReports?: boolean | Prisma.User$questionReportsArgs<ExtArgs>
   bookmarks?: boolean | Prisma.User$bookmarksArgs<ExtArgs>
@@ -2774,6 +2989,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   participations?: boolean | Prisma.User$participationsArgs<ExtArgs>
   ratingHistory?: boolean | Prisma.User$ratingHistoryArgs<ExtArgs>
+  examRatings?: boolean | Prisma.User$examRatingsArgs<ExtArgs>
   mockAttempts?: boolean | Prisma.User$mockAttemptsArgs<ExtArgs>
   questionReports?: boolean | Prisma.User$questionReportsArgs<ExtArgs>
   bookmarks?: boolean | Prisma.User$bookmarksArgs<ExtArgs>
@@ -2796,6 +3012,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     participations: Prisma.$ParticipationPayload<ExtArgs>[]
     ratingHistory: Prisma.$RatingHistoryPayload<ExtArgs>[]
+    examRatings: Prisma.$UserRatingPayload<ExtArgs>[]
     mockAttempts: Prisma.$MockAttemptPayload<ExtArgs>[]
     questionReports: Prisma.$QuestionReportPayload<ExtArgs>[]
     bookmarks: Prisma.$BookmarkPayload<ExtArgs>[]
@@ -3217,6 +3434,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   participations<T extends Prisma.User$participationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$participationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ParticipationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ratingHistory<T extends Prisma.User$ratingHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ratingHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RatingHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  examRatings<T extends Prisma.User$examRatingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$examRatingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserRatingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   mockAttempts<T extends Prisma.User$mockAttemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$mockAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MockAttemptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   questionReports<T extends Prisma.User$questionReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$questionReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuestionReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bookmarks<T extends Prisma.User$bookmarksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bookmarksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookmarkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3707,6 +3925,30 @@ export type User$ratingHistoryArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.RatingHistoryScalarFieldEnum | Prisma.RatingHistoryScalarFieldEnum[]
+}
+
+/**
+ * User.examRatings
+ */
+export type User$examRatingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserRating
+   */
+  select?: Prisma.UserRatingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserRating
+   */
+  omit?: Prisma.UserRatingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserRatingInclude<ExtArgs> | null
+  where?: Prisma.UserRatingWhereInput
+  orderBy?: Prisma.UserRatingOrderByWithRelationInput | Prisma.UserRatingOrderByWithRelationInput[]
+  cursor?: Prisma.UserRatingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserRatingScalarFieldEnum | Prisma.UserRatingScalarFieldEnum[]
 }
 
 /**

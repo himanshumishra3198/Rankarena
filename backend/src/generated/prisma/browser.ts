@@ -108,6 +108,22 @@ export type ContestQuestion = Prisma.ContestQuestionModel
  */
 export type Participation = Prisma.ParticipationModel
 /**
+ * Model UserRating
+ * *
+ *  * A candidate's standing in one examination.
+ *  *
+ *  * The competitive rating, and the source of truth for leaderboards and the
+ *  * rating graph. Separate rows per exam because the two ladders are not
+ *  * comparable: CAT and SSC CGL score differently, draw different fields, and
+ *  * ranking a candidate's CAT result against someone's SSC result would be a
+ *  * number that means nothing.
+ *  *
+ *  * `users.rating` still exists and is still what appears beside a name in a
+ *  * comment or a follower list — one number for one person. This table is what
+ *  * a leaderboard reads.
+ */
+export type UserRating = Prisma.UserRatingModel
+/**
  * Model RatingHistory
  * 
  */

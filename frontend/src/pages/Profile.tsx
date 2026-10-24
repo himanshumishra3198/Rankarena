@@ -6,7 +6,9 @@ import { TIERS, getTier } from '../lib/tiers'
 import { RatingChart } from '../components/RatingChart'
 import type { RatingPoint } from '../components/RatingChart'
 import { ActivityHeatmap } from '../components/ActivityHeatmap'
-import { ALL_SECTIONS } from '../lib/types'
+import { ALL_SECTIONS, type Exam } from '../lib/types'
+import { Link } from 'react-router-dom'
+import { examLabel } from '../components/ExamBadge'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -18,6 +20,8 @@ interface ProfileData {
   user: {
     id: string; name: string; email: string; role: string; rating: number; createdAt: string
     followerCount: number; followingCount: number; contestEmails?: boolean }
+  /** Where this candidate stands in each exam they have a rating in. */
+  examRatings?: { exam: Exam; rating: number; rank: number; total: number; contests: number }[]
   ratingHistory: RatingPoint[]
   heatmap: Record<string, number>
   stats: { totalContests: number; totalMocks?: number; totalSolved?: number; activeDays?: number; bestRank: number | null; maxRating: number; maxStreak: number; currentStreak: number }
@@ -238,6 +242,7 @@ export default function Profile() {
     catch { setContestEmails(!next) }
     finally { setPrefBusy(false) }
   }
+  const examRatings = data.examRatings ?? []
   const tier    = getTier(user.rating)
   const maxTier = getTier(stats.maxRating)
 
@@ -294,6 +299,24 @@ export default function Profile() {
                   </span>
                 )}
               </div>
+
+              {/* One line per exam the candidate has a rating in, shown only
+                  when there are two to tell apart. With a single ladder the
+                  headline rating above already says everything. */}
+              {examRatings.length > 1 && (
+                <div className="profile-exam-ratings">
+                  {examRatings.map(er => (
+                    <Link key={er.exam} to={`/leaderboard?exam=${er.exam}`} className="profile-exam-rating">
+                      <span className={`exam-badge exam-${er.exam.toLowerCase()}`}>{examLabel(er.exam)}</span>
+                      <strong style={{ color: getTier(er.rating).fg }}>{er.rating}</strong>
+                      <span className="profile-exam-rank">
+                        #{er.rank.toLocaleString('en-IN')} of {er.total.toLocaleString('en-IN')}
+                        {' · '}{er.contests} contest{er.contests === 1 ? '' : 's'}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
               <div className="profile-meta-row" style={{ marginTop: 6 }}>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                   Registered {sinceLabel(user.createdAt)}

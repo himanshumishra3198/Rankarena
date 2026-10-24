@@ -16,6 +16,8 @@ import { TIERS } from '../lib/tiers'
 import { useReveal } from '../components/landing/hooks'
 import type { LeaderEntry, LeaderPage, Period } from '../components/leaderboard/types'
 import type { ProfileData } from '../components/dashboard/types'
+import { EXAM_KEYS, type Exam } from '../lib/types'
+import { examLabel } from '../components/ExamBadge'
 
 const PAGE = 25
 const BANDS = TIERS.map(t => `${t.min}:${t.max}`).join(',')
@@ -64,6 +66,10 @@ export default function Leaderboard() {
   const rawPeriod = (params.get('period') ?? 'all') as Period
   const period: Period = PERIODS.some(p => p.k === rawPeriod) ? rawPeriod : 'all'
   const minRating = Number(params.get('min')) || 0
+  // Which ladder. In the URL so a board is a link, and defaulting to SSC so
+  // an existing bookmark still opens the board it always did.
+  const rawExam = (params.get('exam') ?? 'SSC_CGL') as Exam
+  const exam: Exam = EXAM_KEYS.includes(rawExam) ? rawExam : 'SSC_CGL'
   const search = params.get('q') ?? ''
   const page = Math.max(Number(params.get('page')) || 1, 1)
   const [draft, setDraft] = useState(search)
@@ -71,9 +77,10 @@ export default function Leaderboard() {
 
   function setUrl(next: Record<string, string>) {
     const merged: Record<string, string> = {
-      period, min: String(minRating), q: search, page: '1', ...next,
+      period, min: String(minRating), q: search, page: '1', exam, ...next,
     }
     const p = new URLSearchParams()
+    if (merged.exam && merged.exam !== 'SSC_CGL') p.set('exam', merged.exam)
     if (merged.period !== 'all') p.set('period', merged.period)
     if (merged.min && merged.min !== '0') p.set('min', merged.min)
     if (merged.q) p.set('q', merged.q)
@@ -90,11 +97,11 @@ export default function Leaderboard() {
   }, [draft])
 
   const query = useMemo(() => {
-    const p = new URLSearchParams({ limit: String(PAGE), page: String(page), period })
+    const p = new URLSearchParams({ limit: String(PAGE), page: String(page), period, exam })
     if (minRating > 0) p.set('minRating', String(minRating))
     if (search) p.set('q', search)
     return p.toString()
-  }, [page, period, minRating, search])
+  }, [page, period, minRating, search, exam])
 
   useEffect(() => {
     let cancelled = false
@@ -164,11 +171,25 @@ export default function Leaderboard() {
           <span className="mk-badge">LIVE RANKINGS</span>
           <h1 className="mk-title">The Arena <span className="lp-grad">Leaderboard</span></h1>
           <p className="mk-sub">
-            See where you stand among RankArena aspirants and compete your way to the top.
+            See where you stand among {examLabel(exam)} aspirants and compete your way to the top.
           </p>
+          {/* One board per exam, because the two are not comparable: a CAT
+              rating and an SSC rating were earned against different fields
+              sitting different papers. */}
+          <div className="exam-switch" role="group" aria-label="Examination" style={{ marginTop: 14 }}>
+            {EXAM_KEYS.map(e => (
+              <button
+                key={e}
+                className={`exam-switch-btn exam-${e.toLowerCase()} ${exam === e ? 'is-active' : ''}`}
+                onClick={() => setUrl({ exam: e, page: '1' })}
+              >
+                {examLabel(e)}
+              </button>
+            ))}
+          </div>
           {data && (
             <p className="lb-hero-count">
-              <b>{data.rankedTotal.toLocaleString('en-IN')}</b> rated {data.rankedTotal === 1 ? 'aspirant' : 'aspirants'}
+              <b>{data.rankedTotal.toLocaleString('en-IN')}</b> rated {data.rankedTotal === 1 ? 'aspirant' : 'aspirants'} on {examLabel(exam)}
             </p>
           )}
         </header>

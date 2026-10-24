@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import prisma from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { parseExam } from "../lib/exams";
 
 const router = Router();
 
@@ -64,10 +65,17 @@ router.get("/leaderboard", async (req, res: Response) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 60) : "";
   const minRating = Number(req.query.minRating) || 0;
 
+  // Which ladder. Defaulted rather than required, so a client that predates
+  // CAT keeps getting the SSC board it has always got, with the same people
+  // in the same order.
+  const exam = parseExam(req.query.exam);
+
   // Only students are ranked; a period narrows the field to people who were
   // actually rated inside it, which is what makes a weekly board weekly.
   const periodFilter = since
-    ? Prisma.sql`AND EXISTS (SELECT 1 FROM rating_history rh WHERE rh.user_id = u.id AND rh.created_at >= ${since})`
+    ? Prisma.sql`AND EXISTS (
+        SELECT 1 FROM rating_history rh
+         WHERE rh.user_id = u.id AND rh.exam = ${exam}::"Exam" AND rh.created_at >= ${since})`
     : Prisma.empty;
   const searchFilter = q ? Prisma.sql`AND r.name ILIKE ${"%" + q + "%"}` : Prisma.empty;
   const ratingFilter = minRating > 0 ? Prisma.sql`AND r.rating >= ${minRating}` : Prisma.empty;
@@ -77,8 +85,9 @@ router.get("/leaderboard", async (req, res: Response) => {
 
   const ranked = Prisma.sql`
     WITH base AS (
-      SELECT u.id, u.name, u.rating
+      SELECT u.id, u.name, ur.rating
       FROM users u
+      JOIN user_ratings ur ON ur.user_id = u.id AND ur.exam = ${exam}::"Exam"
       WHERE u.role = 'STUDENT' ${periodFilter}
     ),
     ranked AS (
@@ -93,11 +102,13 @@ router.get("/leaderboard", async (req, res: Response) => {
     }[]>`
       ${ranked}
       SELECT r.id, r.name, r.rating, r.rank,
-        (SELECT COUNT(*) FROM rating_history rh WHERE rh.user_id = r.id)::int AS contests,
-        (SELECT MIN(rh.rank) FROM rating_history rh WHERE rh.user_id = r.id)::int AS best_rank,
+        (SELECT COUNT(*) FROM rating_history rh
+          WHERE rh.user_id = r.id AND rh.exam = ${exam}::"Exam")::int AS contests,
+        (SELECT MIN(rh.rank) FROM rating_history rh
+          WHERE rh.user_id = r.id AND rh.exam = ${exam}::"Exam")::int AS best_rank,
         (SELECT COALESCE(SUM(rh.new_rating - rh.old_rating), 0)
            FROM rating_history rh
-          WHERE rh.user_id = r.id ${changeWindow})::int AS change
+          WHERE rh.user_id = r.id AND rh.exam = ${exam}::"Exam" ${changeWindow})::int AS change
       FROM ranked r
       WHERE TRUE ${searchFilter} ${ratingFilter}
       ORDER BY r.rank ASC, r.name ASC
@@ -153,14 +164,19 @@ router.get("/distribution", async (req, res: Response) => {
     return;
   }
 
+  // Counted on the same ladder the leaderboard beside it ranks, or the
+  // histogram would describe a different population from the table.
+  const exam = parseExam(req.query.exam);
   const counts = await Promise.all(
     bands.map((b) =>
-      prisma.user.count({
-        where: { role: "STUDENT", rating: { gte: b.min, lt: b.max } },
+      prisma.userRating.count({
+        where: { exam, rating: { gte: b.min, lt: b.max }, user: { role: "STUDENT" } },
       }),
     ),
   );
-  const total = await prisma.user.count({ where: { role: "STUDENT" } });
+  const total = await prisma.userRating.count({
+    where: { exam, user: { role: "STUDENT" } },
+  });
 
   res.json({ total, buckets: bands.map((b, i) => ({ ...b, count: counts[i] })) });
 });
