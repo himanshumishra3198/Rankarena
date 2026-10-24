@@ -45,6 +45,47 @@ export function sectionOrder(exam: Exam | undefined): Section[] {
   return EXAM_SECTIONS[exam ?? 'SSC_CGL'] ?? SECTIONS
 }
 
+/**
+ * Every section the platform has, in exam order.
+ *
+ * The list a catalogue validates against — a URL asking for `?subject=QA` is
+ * asking for a real section, even though it is not one of SSC's. Pages that
+ * group content should prefer `sectionsPresent` over this, so a candidate is
+ * not shown three empty CAT columns on a site that only runs SSC papers.
+ */
+export const ALL_SECTIONS: Section[] = [...SECTIONS, ...EXAM_SECTIONS.CAT]
+
+export function isSection(value: string): value is Section {
+  return (ALL_SECTIONS as string[]).includes(value)
+}
+
+/**
+ * The sections that actually occur in a list, in exam order.
+ *
+ * Catalogues and breakdowns use this rather than a fixed list, so the tabs on
+ * a page match the content behind them. It is what stops a CAT mock sitting
+ * under no tab, and equally what stops an SSC-only account growing three
+ * empty CAT tabs the day the enum gained them.
+ */
+export function sectionsPresent<T>(items: T[], subjectOf: (item: T) => string): Section[] {
+  const seen = new Set(items.map(subjectOf))
+  return ALL_SECTIONS.filter(s => seen.has(s))
+}
+
+/**
+ * SSC's four, plus any other section that actually has content.
+ *
+ * For the surfaces that have always shown an empty section rather than
+ * hiding it — the subject cards, the subject tabs, the dashboard breakdown.
+ * Keeping the baseline means an SSC account sees exactly what it saw before,
+ * while a CAT section appears the moment there is something in it, instead
+ * of three permanently empty columns appearing for everyone.
+ */
+export function sectionsWithBaseline<T>(items: T[], subjectOf: (item: T) => string): Section[] {
+  const extra = sectionsPresent(items, subjectOf).filter(s => !SECTIONS.includes(s))
+  return [...SECTIONS, ...extra]
+}
+
 export interface User {
   id: string
   name: string

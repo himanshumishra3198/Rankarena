@@ -6,7 +6,7 @@ import { TIERS, getTier } from '../lib/tiers'
 import { RatingChart } from '../components/RatingChart'
 import type { RatingPoint } from '../components/RatingChart'
 import { ActivityHeatmap } from '../components/ActivityHeatmap'
-import { SECTIONS } from '../lib/types'
+import { ALL_SECTIONS } from '../lib/types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -246,7 +246,9 @@ export default function Profile() {
   const streakYear      = longestStreak(heatmap, 365)
   const streakMonth     = longestStreak(heatmap, 30)
 
-  const subjectsWithData = SECTIONS.filter(s => subjectStats[s])
+  // Driven by the stats themselves, so a CAT candidate sees VARC/DILR/QA and
+  // an SSC one still sees only their four.
+  const subjectsWithData = ALL_SECTIONS.filter(s => subjectStats[s])
 
   // A topic needs a few attempts before its accuracy means anything: one
   // question answered wrong is 0%, which would otherwise top a "weakest"

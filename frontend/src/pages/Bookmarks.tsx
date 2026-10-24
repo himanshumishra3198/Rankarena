@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar'
 import { QuestionContext } from '../components/QuestionContent'
 import { RichText } from '../components/RichText'
 import { usePageMeta } from '../lib/seo'
-import { SECTIONS } from '../lib/types'
+import { sectionsPresent } from '../lib/types'
 import { type AnswerKeyFields, isKeyOption, keyLabel } from '../lib/answers'
 
 interface BQuestion extends AnswerKeyFields {
@@ -61,7 +61,7 @@ export default function Bookmarks() {
               <button className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setFilter('all')}>
                 All ({items.length})
               </button>
-              {SECTIONS.filter(s => items.some(q => q.subject === s)).map(s => (
+              {sectionsPresent(items, q => q.subject).map(s => (
                 <button key={s} className={`btn btn-sm ${filter === s ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setFilter(s)}>
                   {SECTION_LABELS[s]} ({items.filter(q => q.subject === s).length})
                 </button>

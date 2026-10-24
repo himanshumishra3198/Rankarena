@@ -1,4 +1,4 @@
-import { SECTIONS } from '../../lib/types'
+import { sectionsWithBaseline } from '../../lib/types'
 import { SUBJECT_COLOR, SUBJECT_LABEL } from '../../lib/practice'
 import { useReveal } from '../landing/hooks'
 import type { MockTestListItem } from '../../lib/types'
@@ -25,6 +25,23 @@ const ICONS: Record<string, React.ReactNode> = {
       <circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18" />
     </svg>
   ),
+  // CAT. Drawn in the same weight and box as the four above so a mixed grid
+  // reads as one set rather than two.
+  VARC: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4.5h7v15H4zM13 4.5h7v15h-7z" /><path d="M6 8.5h3M6 12h3M15 8.5h3M15 12h3" />
+    </svg>
+  ),
+  DILR: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20V10M9.5 20V4M15 20v-7M20.5 20V7" />
+    </svg>
+  ),
+  QA: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h7M7.5 3.5v7M13.5 7h6.5M13.5 17h6.5M13.5 20.5 20 14M4.5 14.5l5 5M9.5 14.5l-5 5" />
+    </svg>
+  ),
 }
 
 /**
@@ -43,7 +60,7 @@ export default function SubjectCards({
   return (
     <section className="mk-section lp-reveal" ref={ref}>
       <div className="mk-subject-grid">
-        {SECTIONS.map(s => {
+        {sectionsWithBaseline(mocks, m => m.subject).map(s => {
           const mine = mocks.filter(m => m.subject === s)
           const questions = mine.reduce((n, m) => n + m.questionCount, 0)
           const scored = mine.filter(m => m.attempted && m.lastTotal)

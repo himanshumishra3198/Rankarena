@@ -14,7 +14,7 @@ import FullLengthTests from '../components/mocks/FullLengthTests'
 import MocksCTA from '../components/mocks/MocksCTA'
 import FilterPanel, { DEFAULT_FILTERS, type Filters } from '../components/mocks/FilterPanel'
 import { readDrafts, type MockDraft } from '../lib/mockDrafts'
-import { SECTIONS, type Contest, type MockTestListItem } from '../lib/types'
+import { isSection, type Contest, type MockTestListItem } from '../lib/types'
 
 const PAGE = 9
 const DIFF_ORDER: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 }
@@ -50,7 +50,9 @@ export default function MockTests() {
 
   // Subject and search live in the URL so a filtered view is a link.
   const rawSubject = (params.get('subject') ?? 'ALL').toUpperCase()
-  const subject = (SECTIONS as string[]).includes(rawSubject) ? rawSubject : 'ALL'
+  // Any real section, not just SSC's four — otherwise ?subject=QA silently
+  // became "ALL" and a CAT candidate could not filter to their own paper.
+  const subject = isSection(rawSubject) ? rawSubject : 'ALL'
   const search = params.get('q') ?? ''
   const [draft, setDraft] = useState(search)
   useEffect(() => setDraft(search), [search])

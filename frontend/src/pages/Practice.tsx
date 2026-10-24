@@ -4,7 +4,7 @@ import api from '../lib/api'
 import Navbar from '../components/Navbar'
 import LanguageToggle from '../components/LanguageToggle'
 import { usePageMeta } from '../lib/seo'
-import { SECTIONS } from '../lib/types'
+import { ALL_SECTIONS, isSection } from '../lib/types'
 import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
 import {
   DIFFICULTIES, PROBLEMS_PER_PAGE, SUBJECT_COLOR, SUBJECT_LABEL, SUBJECT_SHORT,
@@ -99,7 +99,8 @@ export default function Practice() {
   // Everything the list is looking at lives in the URL, so a reload, the back
   // button and a shared link all land on the same page of the same filter.
   const rawSubject = (params.get('subject') ?? 'ALL').toUpperCase()
-  const subject = (SECTIONS as string[]).includes(rawSubject) ? rawSubject : 'ALL'
+  // Any real section: a CAT candidate's ?subject=DILR is as valid as ?subject=GK.
+  const subject = isSection(rawSubject) ? rawSubject : 'ALL'
   const rawDifficulty = (params.get('difficulty') ?? '').toUpperCase()
   const difficulty = (DIFFICULTIES as readonly string[]).includes(rawDifficulty) ? rawDifficulty : ''
   const source = params.get('source') ?? ''
@@ -415,7 +416,7 @@ export default function Practice() {
                   <span className="ps-facet-name">Everything</span>
                   {filters && <span className="ps-facet-count">{bankTotal}</span>}
                 </button>
-                {SECTIONS.map(s => {
+                {ALL_SECTIONS.map(s => {
                   const f = filters?.subjects.find(x => x.subject === s)
                   if (filters && !f) return null
                   return (

@@ -9,18 +9,34 @@
  */
 
 export const SUBJECT_LABEL: Record<string, string> = {
+  // SSC CGL
   QUANT: 'Quantitative Aptitude',
   REASONING: 'General Intelligence & Reasoning',
   ENGLISH: 'English Language',
   GK: 'General Awareness',
+  // CAT
+  VARC: 'Verbal Ability & Reading Comprehension',
+  DILR: 'Data Interpretation & Logical Reasoning',
+  QA: 'Quantitative Ability',
 }
 
 export const SUBJECT_SHORT: Record<string, string> = {
   QUANT: 'Quant', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'GK',
+  // CAT names its own sections by their initials, and candidates say them
+  // that way too, so there is no shorter form to give.
+  VARC: 'VARC', DILR: 'DILR', QA: 'QA',
 }
 
+/**
+ * One colour per section, distinct enough to tell apart in a legend.
+ *
+ * CAT's three are deliberately not reusing SSC's hues: a candidate who sits
+ * both should never see Quantitative Aptitude and Quantitative Ability in
+ * the same colour on a profile, because they are different ladders.
+ */
 export const SUBJECT_COLOR: Record<string, string> = {
   QUANT: '#7c3aed', REASONING: '#0ea5e9', ENGLISH: '#16a34a', GK: '#f59e0b',
+  VARC: '#e11d48', DILR: '#0d9488', QA: '#4f46e5',
 }
 
 export const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const

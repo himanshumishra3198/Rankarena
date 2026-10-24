@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { SECTIONS } from '../../lib/types'
+import { sectionsWithBaseline } from '../../lib/types'
 import { SUBJECT_COLOR, SUBJECT_LABEL } from '../../lib/practice'
 import type { ProfileData } from './types'
 
@@ -12,7 +12,8 @@ import type { ProfileData } from './types'
  * means anything, so thin ones are shown but never named as the weak spot.
  */
 export default function SubjectPerformance({ p }: { p: ProfileData }) {
-  const rows = SECTIONS.map(s => {
+  // SSC's four always, plus any CAT section this candidate has answered in.
+  const rows = sectionsWithBaseline(Object.keys(p.subjectStats), s => s).map(s => {
     const v = p.subjectStats[s] ?? { correct: 0, wrong: 0, skipped: 0 }
     const answered = v.correct + v.wrong
     return {

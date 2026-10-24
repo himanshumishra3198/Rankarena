@@ -9,8 +9,9 @@ import QuestionDetail from '../components/QuestionDetail'
 import LanguageToggle from '../components/LanguageToggle'
 import { DEFAULT_LANGUAGE, type Language } from '../lib/language'
 import { fmtSecs } from '../lib/time'
-import { SECTIONS } from '../lib/types'
+import { sectionsPresent } from '../lib/types'
 import { type Answer, type AnswerKeyFields, isAnswered, wasCorrect } from '../lib/answers'
+import { SUBJECT_COLOR, SUBJECT_LABEL, SUBJECT_SHORT } from '../lib/practice'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RichQuestion extends AnswerKeyFields {
@@ -40,16 +41,13 @@ interface LeaderboardEntry {
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const SECTION_LABELS: Record<string, string> = {
-  QUANT: 'Quantitative Aptitude', REASONING: 'General Intelligence & Reasoning',
-  ENGLISH: 'English Comprehension', GK: 'General Awareness',
-}
-const SECTION_SHORT: Record<string, string> = {
-  QUANT: 'Quant', REASONING: 'Reasoning', ENGLISH: 'English', GK: 'GK',
-}
-const SECTION_COLORS: Record<string, string> = {
-  QUANT: '#7c3aed', REASONING: '#0ea5e9', ENGLISH: '#16a34a', GK: '#f59e0b',
-}
+// Section names and colours come from lib/practice.ts, which every other
+// surface already reads. This page carried its own copies, keyed to SSC's
+// four — so a CAT result rendered unnamed, uncoloured sections even once the
+// rest of the app understood them.
+const SECTION_LABELS = SUBJECT_LABEL
+const SECTION_SHORT = SUBJECT_SHORT
+const SECTION_COLORS = SUBJECT_COLOR
 const DIFF_COLORS = { EASY: '#16a34a', MEDIUM: '#d97706', HARD: '#dc2626' }
 
 type ReviewFilter = 'all' | 'correct' | 'wrong' | 'skipped' | 'marked'
@@ -334,7 +332,9 @@ export default function Result() {
     ? ((totalParticipants - rank) / totalParticipants) * 100 : null
 
   // ── Per-section stats ────────────────────────────────────────────────────
-  const sectionStats = SECTIONS.map(sec => {
+  // The paper's own sections: a CAT result breaks down into VARC/DILR/QA,
+  // an SSC one into its four, and neither shows a section it does not have.
+  const sectionStats = sectionsPresent(questions, q => q.subject).map(sec => {
     const qs  = questions.filter(q => q.subject === sec)
     const cor = qs.filter(q => wasCorrect(q, answers[q.id]))
     const wrg = qs.filter(q => isAnswered(answers[q.id]) && !wasCorrect(q, answers[q.id]))
@@ -657,7 +657,9 @@ export default function Result() {
               <LanguageToggle value={reviewLang} onChange={switchLanguage} busy={langBusy} />
               <select className="input" style={{ width: 'auto', fontSize: 13, padding: '4px 10px' }} value={activeSection} onChange={e => setActiveSection(e.target.value)}>
                 <option value="all">All Sections</option>
-                {SECTIONS.map(s => <option key={s} value={s}>{SECTION_SHORT[s]}</option>)}
+                {sectionsPresent(questions, q => q.subject).map(s => (
+                  <option key={s} value={s}>{SECTION_SHORT[s] ?? s}</option>
+                ))}
               </select>
               {(['all','correct','wrong','skipped', ...(markedSet.size > 0 ? ['marked' as ReviewFilter] : [])] as ReviewFilter[]).map(f => (
                 <button key={f} className={`review-filter-btn ${reviewFilter === f ? 'active' : ''} filter-${f}`} onClick={() => setReviewFilter(f)}>

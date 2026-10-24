@@ -1,4 +1,4 @@
-import { SECTIONS } from '../../lib/types'
+import { sectionsWithBaseline } from '../../lib/types'
 import { SUBJECT_COLOR, SUBJECT_SHORT } from '../../lib/practice'
 
 /** Horizontally scrollable on a phone; the active pill carries the subject's colour. */
@@ -10,6 +10,9 @@ export default function SubjectTabs({
   onChange: (subject: string) => void
 }) {
   const total = Object.values(counts).reduce((n, v) => n + v, 0)
+  // Derived from the catalogue's own counts, so a CAT section gets a tab as
+  // soon as there is a paper behind it.
+  const sections = sectionsWithBaseline(Object.keys(counts), s => s)
   return (
     <div className="mk-tabs" role="tablist" aria-label="Subject">
       <button
@@ -19,7 +22,7 @@ export default function SubjectTabs({
       >
         All <span className="mk-tab-n">{total}</span>
       </button>
-      {SECTIONS.map(s => (
+      {sections.map(s => (
         <button
           key={s} role="tab" aria-selected={value === s}
           className={`mk-tab ${value === s ? 'is-active' : ''}`}
