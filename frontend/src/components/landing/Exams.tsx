@@ -37,13 +37,20 @@ function Card({ e }: { e: ExamStats }) {
             <div><dt>Contests</dt><dd>{e.contests}</dd></div>
             <div><dt>Questions</dt><dd>{e.questions.toLocaleString('en-IN')}</dd></div>
           </dl>
+          {/* A link per thing that exists. Offering "Mock tests →" on an exam
+              with none sends the reader to an empty page, which costs more
+              than the link was worth. */}
           <div className="lp-exam-links">
-            <Link className="lp-link-arrow" to={`/mocks?exam=${e.exam}`}>
-              Mock tests <span aria-hidden="true">→</span>
-            </Link>
-            <Link className="lp-link-arrow" to={`/contests?exam=${e.exam}`}>
-              Contests <span aria-hidden="true">→</span>
-            </Link>
+            {e.mockTests > 0 && (
+              <Link className="lp-link-arrow" to={`/mocks?exam=${e.exam}`}>
+                Mock tests <span aria-hidden="true">→</span>
+              </Link>
+            )}
+            {e.contests > 0 && (
+              <Link className="lp-link-arrow" to={`/contests?exam=${e.exam}`}>
+                Contests <span aria-hidden="true">→</span>
+              </Link>
+            )}
           </div>
         </>
       ) : (

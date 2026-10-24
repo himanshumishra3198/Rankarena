@@ -33,7 +33,12 @@ router.get("/public", async (_req, res: Response) => {
       sections: examSpec(exam).sections.map((s) => s.short),
       mockTests: await prisma.mockTest.count({ where: { exam, isPublished: true } }),
       questions: await prisma.question.count({ where: { exam } }),
-      contests: await prisma.contest.count({ where: { exam } }),
+      // Only contests a candidate could actually sit. An empty shell
+      // scheduled for next year is not something to advertise, and counting
+      // it made the front page offer links into nothing.
+      contests: await prisma.contest.count({
+        where: { exam, contestQuestions: { some: {} } },
+      }),
     })),
   );
 
