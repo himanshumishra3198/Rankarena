@@ -10,7 +10,7 @@ import Calculator from '../components/Calculator'
 import SubmitModal, { type SectionSummary } from '../components/SubmitModal'
 import SectionCompleteModal from '../components/SectionCompleteModal'
 import { useConfirm } from '../components/ConfirmDialog'
-import { QuestionContent } from '../components/QuestionContent'
+import PassageSplit, { setPositionOf } from '../components/PassageSplit'
 import ReportModal from '../components/ReportModal'
 import AnswerInput from '../components/AnswerInput'
 import { type Answer, isAnswered as answered } from '../lib/answers'
@@ -794,16 +794,18 @@ export default function ContestRoom() {
         ) : undefined}
       >
         <div className="xr-qtext">
-          <QuestionContent q={currentQ} />
+          {/* The set's questions are served together, so the passage is held
+              in its own pane and only the question changes. */}
+          <PassageSplit q={currentQ} position={setPositionOf(sectionQuestions[currentSection] ?? questions, currentQ)}>
+            <AnswerInput
+              q={currentQ}
+              variant="xr"
+              value={answers[currentQ.id]}
+              disabled={isSectionLocked || phase !== 'active'}
+              onChange={next => setAnswer(currentQ.id, next)}
+            />
+          </PassageSplit>
         </div>
-
-        <AnswerInput
-          q={currentQ}
-          variant="xr"
-          value={answers[currentQ.id]}
-          disabled={isSectionLocked || phase !== 'active'}
-          onChange={next => setAnswer(currentQ.id, next)}
-        />
       </ExamShell>
 
       {/* ── Instructions sheet (feature 1) ───────────────────────── */}

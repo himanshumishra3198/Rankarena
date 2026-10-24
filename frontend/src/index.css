@@ -4455,3 +4455,77 @@ select.input { cursor: pointer; }
   .lb-sticky-label, .lb-sticky-gap { display: none; }
   .lb-sticky .lp-btn { margin-left: auto; }
 }
+
+/* ── A question beside its passage ────────────────────────────────────────
+   Questions sharing a passage are served together, so the passage is given
+   its own pane and held still while the candidate works through the set.
+   Sticky rather than a fixed-height scroller: the exam room already owns the
+   page's scrolling, and a second nested scroll container fights it. */
+.qsplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.qsplit-passage {
+  position: sticky;
+  top: 8px;
+  max-height: calc(100vh - 190px);
+  overflow-y: auto;
+  border-right: 1px solid #e2e6f0;
+  padding-right: 18px;
+  min-width: 0;
+}
+.qsplit-passage-inner { padding-bottom: 4px; }
+/* The pane is always open on a wide screen; the control only earns its
+   place where the two panes have to stack. */
+.qsplit-summary { display: none; }
+.qsplit-question { min-width: 0; }
+
+.qsplit-pos {
+  font-size: 12.5px;
+  color: #5a6478;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #d9dfea;
+}
+.qsplit-pos strong { color: #2f4bc7; font-weight: 700; }
+
+@media (max-width: 900px) {
+  /* One column: the passage goes back above the question, but collapsible,
+     so rereading the options does not mean scrolling past the whole
+     comprehension every time. */
+  .qsplit { grid-template-columns: 1fr; gap: 12px; }
+  .qsplit-passage {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid #e2e6f0;
+    padding-right: 0;
+    padding-bottom: 10px;
+  }
+  .qsplit-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #2f4bc7;
+    padding: 4px 0;
+    list-style: none;
+  }
+  .qsplit-summary::-webkit-details-marker { display: none; }
+  .qsplit-summary::before { content: '▾'; font-size: 10px; }
+  .qsplit-passage:not([open]) .qsplit-summary::before { content: '▸'; }
+  .qsplit-summary-hint {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #8b93a5;
+    font-size: 11px;
+  }
+}

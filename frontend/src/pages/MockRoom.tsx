@@ -5,7 +5,7 @@ import LanguagePicker from '../components/LanguagePicker'
 import { getPreferredLanguage, setPreferredLanguage, type Language } from '../lib/language'
 import { useConfirm, useNotify } from '../components/ConfirmDialog'
 import type { MockTestData, Question } from '../lib/types'
-import { QuestionContent } from '../components/QuestionContent'
+import PassageSplit, { setPositionOf } from '../components/PassageSplit'
 import ReportModal from '../components/ReportModal'
 import ExamShellSSC from '../components/ExamShellSSC'
 import type { PaletteCell } from '../components/ExamShell'
@@ -658,9 +658,11 @@ export default function MockRoom() {
           </div>
         }
       >
-        <QuestionContent q={currentQ} />
-
-        <AnswerInput q={currentQ} value={answers[currentQ.id]} onChange={setAnswer} />
+        {/* Beside its passage when it has one, so a set is read once rather
+            than once per question. */}
+        <PassageSplit q={currentQ} position={setPositionOf(questions, currentQ)}>
+          <AnswerInput q={currentQ} value={answers[currentQ.id]} onChange={setAnswer} />
+        </PassageSplit>
       </ExamShellSSC>
 
       {/* Instructions, re-openable mid-test */}

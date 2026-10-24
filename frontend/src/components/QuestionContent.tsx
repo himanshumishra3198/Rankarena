@@ -66,6 +66,36 @@ function DataTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   )
 }
 
+/**
+ * The passage or data table a question hangs off.
+ *
+ * Its own component so it can be rendered beside a question rather than
+ * above it. When several questions share a passage, the exam room keeps one
+ * of these mounted across the whole set — so the text does not redraw, and a
+ * candidate who has scrolled halfway down a comprehension does not lose
+ * their place every time they answer.
+ */
+export function PassageBlock({ passage }: { passage: NonNullable<QuestionLike['passage']> }) {
+  return (
+    <section className="qc-context" aria-label="Passage for this question">
+      {/* A label makes it obvious this block is shared context and not the
+          question itself — the two used to be easy to confuse. */}
+      <div className="qc-context-label">
+        {passage.type === 'TABLE' ? '📊 Data table' : '📄 Passage'}
+      </div>
+      {passage.title && <div className="qc-context-title">{passage.title}</div>}
+      {passage.type === 'TABLE' && passage.tableData ? (
+        <>
+          {passage.content && <PassageBody content={passage.content} />}
+          <DataTable headers={passage.tableData.headers} rows={passage.tableData.rows} />
+        </>
+      ) : (
+        <PassageBody content={passage.content} />
+      )}
+    </section>
+  )
+}
+
 // Context-only: passage / table / syllogism. No image or question text.
 // Use this when the host page renders its own image + text styling (e.g. Result review).
 export function QuestionContext({ q }: { q: QuestionLike }) {
@@ -82,25 +112,7 @@ export function QuestionContext({ q }: { q: QuestionLike }) {
           <span>This question is currently available only in English.</span>
         </div>
       )}
-      {/* Passage / Table context block */}
-      {q.passage && (
-        <section className="qc-context" aria-label="Passage for this question">
-          {/* A label makes it obvious this block is shared context and not the
-              question itself — the two used to be easy to confuse. */}
-          <div className="qc-context-label">
-            {q.passage.type === 'TABLE' ? '📊 Data table' : '📄 Passage'}
-          </div>
-          {q.passage.title && <div className="qc-context-title">{q.passage.title}</div>}
-          {q.passage.type === 'TABLE' && q.passage.tableData ? (
-            <>
-              {q.passage.content && <PassageBody content={q.passage.content} />}
-              <DataTable headers={q.passage.tableData.headers} rows={q.passage.tableData.rows} />
-            </>
-          ) : (
-            <PassageBody content={q.passage.content} />
-          )}
-        </section>
-      )}
+      {q.passage && <PassageBlock passage={q.passage} />}
 
       {/* Syllogism: statements + conclusions */}
       {type === 'SYLLOGISM' && q.structuredData && (
