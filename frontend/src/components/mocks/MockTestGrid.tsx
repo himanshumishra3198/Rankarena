@@ -2,10 +2,12 @@ import MockTestCard from './MockTestCard'
 import type { MockTestListItem } from '../../lib/types'
 
 export default function MockTestGrid({
-  items, loading, emptyTitle, emptyBody, onClear, clearLabel,
+  items, loading, emptyTitle, emptyBody, onClear, clearLabel, showExam,
 }: {
   items: MockTestListItem[]
   loading: boolean
+  /** Passed down to each card; set when the catalogue spans several exams. */
+  showExam?: boolean
   emptyTitle: string
   emptyBody: string
   onClear?: () => void
@@ -32,7 +34,7 @@ export default function MockTestGrid({
 
   return (
     <div className="mk-grid">
-      {items.map(m => <MockTestCard key={m.id} m={m} />)}
+      {items.map(m => <MockTestCard key={m.id} m={m} showExam={showExam} />)}
     </div>
   )
 }

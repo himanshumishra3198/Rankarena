@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import ExamBadge from '../ExamBadge'
 import { SUBJECT_COLOR, SUBJECT_SHORT, titleCase } from '../../lib/practice'
 import type { MockTestListItem } from '../../lib/types'
 
@@ -15,7 +16,12 @@ import type { MockTestListItem } from '../../lib/types'
  * the same fact and "locked" would be a lie. Inventing the distinction in
  * the UI would promise something the data cannot keep.
  */
-export default function MockTestCard({ m, cta }: { m: MockTestListItem; cta?: string }) {
+export default function MockTestCard({ m, cta, showExam }: {
+  m: MockTestListItem
+  cta?: string
+  /** Set by a catalogue holding more than one exam; noise otherwise. */
+  showExam?: boolean
+}) {
   const navigate = useNavigate()
   const colour = SUBJECT_COLOR[m.subject]
   const pct = m.attempted && m.lastTotal ? Math.max(0, Math.min(100, (m.lastScore! / m.lastTotal) * 100)) : null
@@ -28,6 +34,7 @@ export default function MockTestCard({ m, cta }: { m: MockTestListItem; cta?: st
     <article className="mk-card" style={{ ['--subject' as string]: colour }}>
       <div className="mk-card-top">
         <span className="mk-card-subject">{SUBJECT_SHORT[m.subject] ?? m.subject}</span>
+        <ExamBadge exam={m.exam} show={showExam} />
         {m.difficulty && (
           <span className={`mk-diff mk-diff-${m.difficulty.toLowerCase()}`} title={`${m.difficultyMix.EASY} easy · ${m.difficultyMix.MEDIUM} medium · ${m.difficultyMix.HARD} hard`}>
             {titleCase(m.difficulty)}

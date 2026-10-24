@@ -8,6 +8,7 @@ import ContestHero from '../components/contests/ContestHero'
 import ContestTabs, { type Tab } from '../components/contests/ContestTabs'
 import FeaturedContest from '../components/contests/FeaturedContest'
 import ContestCard from '../components/contests/ContestCard'
+import { examLabel } from '../components/ExamBadge'
 import ContestCalendar from '../components/contests/ContestCalendar'
 import MyContestPerformance from '../components/contests/MyContestPerformance'
 import RatingExplanation from '../components/contests/RatingExplanation'
@@ -16,7 +17,7 @@ import ContestsCTA from '../components/contests/ContestsCTA'
 import ContestFilters, { DEFAULT_FILTERS, type Filters } from '../components/contests/ContestFilters'
 import type { RatingPoint } from '../components/RatingChart'
 import type { RankedUser } from '../components/landing/types'
-import { contestPhase, type Contest } from '../lib/types'
+import { EXAM_KEYS, contestPhase, type Contest, type Exam } from '../lib/types'
 
 /**
  * The contests page.
@@ -32,7 +33,7 @@ import { contestPhase, type Contest } from '../lib/types'
 export default function ContestList() {
   usePageMeta(
     'Contests — RankArena',
-    'Timed, rated SSC CGL contests with live leaderboards. Register, compete and build your rating.',
+    'Timed, rated SSC CGL and CAT contests with live leaderboards. Register, compete and build your rating.',
   )
   const navigate = useNavigate()
   const signedIn = Boolean(localStorage.getItem('token'))
@@ -48,6 +49,15 @@ export default function ContestList() {
   const [sheet, setSheet] = useState(false)
   const [day, setDay] = useState<string | null>(null)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  const [examFilter, setExamFilter] = useState<'ALL' | Exam>('ALL')
+
+  // The exams actually running contests. One of them means the switch is
+  // hidden and the hero can name it; more than one means neither.
+  const exams = useMemo(
+    () => EXAM_KEYS.filter(e => contests.some(c => (c.exam ?? 'SSC_CGL') === e)),
+    [contests],
+  )
+  const soleExam = exams.length === 1 ? exams[0] : null
   // One clock for every countdown and phase check on the page.
   const [, setNow] = useState(Date.now())
   useEffect(() => {
@@ -120,6 +130,7 @@ export default function ContestList() {
     const limit = endOf(filters.date)
 
     const out = byPhase[tab].filter(c => {
+      if (examFilter !== 'ALL' && (c.exam ?? 'SSC_CGL') !== examFilter) return false
       if (q && !c.title.toLowerCase().includes(q)) return false
       if (day && new Date(c.startTime).toDateString() !== day) return false
       // Date windows only constrain things that have not happened yet.
@@ -168,7 +179,7 @@ export default function ContestList() {
     <div className="lp ct-page">
       <LandingNav active="Contests" />
 
-      <ContestHero contest={heroContest} leaders={leaders} loading={loading} />
+      <ContestHero contest={heroContest} leaders={leaders} loading={loading} soleExam={soleExam} />
 
       <main className="lp-shell">
         {notice && <div className="ct-notice" role="status">{notice}</div>}
@@ -182,6 +193,38 @@ export default function ContestList() {
               <h2 className="mk-h2">{liveNow ? 'Live Now' : 'Contests'}</h2>
             </div>
           </header>
+
+          {/* Only where there is a choice to make. */}
+
+          {exams.length > 1 && (
+
+            <div className="exam-switch" role="group" aria-label="Examination" style={{ marginBottom: 14 }}>
+
+              <button
+
+                className={`exam-switch-btn exam-all ${examFilter === 'ALL' ? 'is-active' : ''}`}
+
+                onClick={() => setExamFilter('ALL')}
+
+              >All exams</button>
+
+              {exams.map(e => (
+
+                <button
+
+                  key={e}
+
+                  className={`exam-switch-btn exam-${e.toLowerCase()} ${examFilter === e ? 'is-active' : ''}`}
+
+                  onClick={() => setExamFilter(e)}
+
+                >{examLabel(e)}</button>
+
+              ))}
+
+            </div>
+
+          )}
 
           <ContestTabs value={tab} counts={counts} onChange={t => setUrl({ tab: t })} signedIn={signedIn} />
 
@@ -221,7 +264,10 @@ export default function ContestList() {
           {!loading && visible.length > 0 && (
             <div className="ct-grid">
               {visible.map(c => (
-                <ContestCard key={c.id} c={c} onRegister={register} registering={busyId === c.id} />
+                <ContestCard
+                  key={c.id} c={c} onRegister={register} registering={busyId === c.id}
+                  showExam={exams.length > 1 && examFilter === 'ALL'}
+                />
               ))}
             </div>
           )}

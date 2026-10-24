@@ -1,6 +1,9 @@
 /** Every examination the platform runs papers for. */
 export type Exam = 'SSC_CGL' | 'CAT'
 
+/** Every exam, in the order catalogues list them. */
+export const EXAM_KEYS: Exam[] = ['SSC_CGL', 'CAT']
+
 /**
  * Sections, across every exam. SECTIONS below is SSC's order, which is what
  * the SSC exam room walks through; a CAT paper's sections come from the paper
@@ -131,7 +134,9 @@ export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD'
 export interface MockTestListItem {
   id: string
   title: string
-  subject: 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK'
+  /** Any exam's section — the API has returned CAT's since the exam landed. */
+  subject: Section
+  exam?: Exam
   durationMinutes: number
   negativeMarks: number
   questionCount: number

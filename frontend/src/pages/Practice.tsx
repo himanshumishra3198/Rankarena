@@ -83,7 +83,7 @@ function pageWindow(page: number, pageCount: number): (number | null)[] {
 export default function Practice() {
   usePageMeta(
     'Problemset — RankArenas',
-    'Every question from past SSC contests and mock tests, browsable by subject, topic and difficulty. Untimed, unrated.'
+    'Every question from past contests and mock tests, browsable by section, topic and difficulty. Untimed, unrated.'
   )
   const [params, setParams] = useSearchParams()
   const [language, setLanguage] = useState<Language>(getPreferredLanguage())

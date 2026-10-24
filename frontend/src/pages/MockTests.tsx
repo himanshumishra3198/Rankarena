@@ -14,7 +14,8 @@ import FullLengthTests from '../components/mocks/FullLengthTests'
 import MocksCTA from '../components/mocks/MocksCTA'
 import FilterPanel, { DEFAULT_FILTERS, type Filters } from '../components/mocks/FilterPanel'
 import { readDrafts, type MockDraft } from '../lib/mockDrafts'
-import { isSection, type Contest, type MockTestListItem } from '../lib/types'
+import { EXAM_KEYS, isSection, type Contest, type Exam, type MockTestListItem } from '../lib/types'
+import { examLabel } from '../components/ExamBadge'
 
 const PAGE = 9
 const DIFF_ORDER: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 }
@@ -34,7 +35,7 @@ const DIFF_ORDER: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 }
 export default function MockTests() {
   usePageMeta(
     'Mock Tests — RankArena',
-    'Subject-wise SSC CGL mock tests with timed papers, accuracy tracking and ranking against other aspirants.',
+    'Subject-wise mock tests for SSC CGL and CAT — timed papers, accuracy tracking and ranking against other aspirants.',
   )
 
   const signedIn = Boolean(localStorage.getItem('token'))
@@ -58,6 +59,15 @@ export default function MockTests() {
   useEffect(() => setDraft(search), [search])
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  // 'ALL' until the catalogue actually holds more than one exam, at which
+  // point the switch above appears and this is what it drives.
+  const [examFilter, setExamFilter] = useState<'ALL' | Exam>('ALL')
+
+  // The exams with papers behind them, in a stable order.
+  const exams = useMemo(
+    () => EXAM_KEYS.filter(e => mocks.some(m => (m.exam ?? 'SSC_CGL') === e)),
+    [mocks],
+  )
 
   function setUrl(next: { subject?: string; q?: string }) {
     const merged = { subject, q: search, ...next }
@@ -102,15 +112,22 @@ export default function MockTests() {
     return () => { cancelled = true }
   }, [signedIn])
 
+  // Scoped to the chosen exam, so switching to CAT does not leave four SSC
+  // tabs sitting above a CAT-only catalogue.
+  const inExam = useMemo(
+    () => examFilter === 'ALL' ? mocks : mocks.filter(m => (m.exam ?? 'SSC_CGL') === examFilter),
+    [mocks, examFilter],
+  )
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
-    for (const m of mocks) c[m.subject] = (c[m.subject] ?? 0) + 1
+    for (const m of inExam) c[m.subject] = (c[m.subject] ?? 0) + 1
     return c
-  }, [mocks])
+  }, [inExam])
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
     const out = mocks.filter(m => {
+      if (examFilter !== 'ALL' && (m.exam ?? 'SSC_CGL') !== examFilter) return false
       if (subject !== 'ALL' && m.subject !== subject) return false
       if (filters.difficulty !== 'all' && m.difficulty !== filters.difficulty) return false
       if (filters.status === 'new' && m.attempted) return false
@@ -133,7 +150,7 @@ export default function MockTests() {
     })
     if (filters.sort === 'newest') out.reverse()
     return out
-  }, [mocks, subject, search, filters])
+  }, [mocks, subject, search, filters, examFilter])
 
   const activeCount = [
     filters.difficulty !== 'all', filters.status !== 'all', filters.sort !== 'recommended',
@@ -156,19 +173,44 @@ export default function MockTests() {
 
       <main className="lp-shell">
         <header className="mk-head">
-          <span className="mk-badge">SSC CGL • MOCK TESTS</span>
+          {/* Names the exam only while there is one. Claiming "SSC CGL" over a
+              catalogue that also holds CAT papers is worse than saying
+              nothing. */}
+          <span className="mk-badge">
+            {exams.length === 1 ? `${examLabel(exams[0])} • MOCK TESTS` : 'MOCK TESTS'}
+          </span>
           <h1 className="mk-title">Practice. Improve. <span className="lp-grad">Dominate.</span></h1>
           <p className="mk-sub">
-            Sharpen your SSC CGL preparation with subject-wise mock tests designed to
-            help you identify weaknesses and improve your rank.
+            {exams.length === 1
+              ? `Sharpen your ${examLabel(exams[0])} preparation with subject-wise mock tests designed to help you identify weaknesses and improve your rank.`
+              : 'Subject-wise mock tests across every examination we run — timed, scored, and ranked against everyone else sitting them.'}
           </p>
+          {exams.length > 1 && (
+            <div className="exam-switch" role="group" aria-label="Examination">
+              <button
+                className={`exam-switch-btn exam-all ${examFilter === 'ALL' ? 'is-active' : ''}`}
+                onClick={() => { setExamFilter('ALL'); setUrl({ subject: 'ALL' }) }}
+              >
+                All exams
+              </button>
+              {exams.map(e => (
+                <button
+                  key={e}
+                  className={`exam-switch-btn exam-${e.toLowerCase()} ${examFilter === e ? 'is-active' : ''}`}
+                  onClick={() => { setExamFilter(e); setUrl({ subject: 'ALL' }) }}
+                >
+                  {examLabel(e)}
+                </button>
+              ))}
+            </div>
+          )}
         </header>
 
-        <StatsOverview mocks={mocks} signedIn={signedIn} />
+        <StatsOverview mocks={inExam} signedIn={signedIn} />
 
         <ContinuePracticing drafts={drafts} mocks={mocks} onDiscard={() => setDrafts(readDrafts())} />
 
-        <SubjectCards mocks={mocks} onPick={s => setUrl({ subject: s })} />
+        <SubjectCards mocks={inExam} onPick={s => setUrl({ subject: s })} />
 
         <section className="mk-section" id="all-tests">
           <header className="mk-section-head">
@@ -210,6 +252,7 @@ export default function MockTests() {
           <MockTestGrid
             items={visible.slice(0, shown)}
             loading={loading}
+            showExam={exams.length > 1 && examFilter === 'ALL'}
             emptyTitle={subjectIsBare ? 'More tests are coming soon.' : 'No mock tests found.'}
             emptyBody={subjectIsBare
               ? "We're preparing new challenges for this subject."
@@ -228,7 +271,7 @@ export default function MockTests() {
           )}
         </section>
 
-        {!loading && <RecommendedTests mocks={mocks} subjectStats={subjectStats} signedIn={signedIn} />}
+        {!loading && <RecommendedTests mocks={inExam} subjectStats={subjectStats} signedIn={signedIn} />}
 
         <FullLengthTests contest={contest} />
 

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { splitDuration, useCountdown } from '../landing/hooks'
 import { contestPhase, type Contest } from '../../lib/types'
+import ExamBadge from '../ExamBadge'
 
 /**
  * One contest, in whatever state it happens to be in.
@@ -15,11 +16,13 @@ import { contestPhase, type Contest } from '../../lib/types'
  * exist.
  */
 export default function ContestCard({
-  c, onRegister, registering,
+  c, onRegister, registering, showExam,
 }: {
   c: Contest
   onRegister: (c: Contest) => void
   registering: boolean
+  /** Set when the list spans more than one exam; noise otherwise. */
+  showExam?: boolean
 }) {
   const navigate = useNavigate()
   const phase = contestPhase(c)
@@ -47,6 +50,7 @@ export default function ContestCard({
       </div>
 
       <h3 className="ct-card-title">{c.title}</h3>
+      {showExam && <ExamBadge exam={c.exam} />}
 
       <dl className="ct-facts">
         <div><dt>When</dt><dd>{when}</dd></div>

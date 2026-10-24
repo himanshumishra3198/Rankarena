@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { getTier } from '../../lib/tiers'
 import { splitDuration, useCountdown } from '../landing/hooks'
-import { contestPhase, type Contest } from '../../lib/types'
+import { contestPhase, type Contest, type Exam } from '../../lib/types'
+import { examLabel } from '../ExamBadge'
 import type { RankedUser } from '../landing/types'
 
 /**
@@ -72,8 +73,10 @@ function ArenaPanel({ contest, leaders, loading }: {
   )
 }
 
-export default function ContestHero({ contest, leaders, loading }: {
+export default function ContestHero({ contest, leaders, loading, soleExam }: {
   contest: Contest | null; leaders: RankedUser[]; loading: boolean
+  /** The only exam running contests, or null when more than one is. */
+  soleExam?: Exam | null
 }) {
   return (
     <section className="ct-hero">
@@ -82,11 +85,12 @@ export default function ContestHero({ contest, leaders, loading }: {
       </div>
       <div className="ct-hero-inner">
         <div>
-          <span className="mk-badge">RATED SSC CGL CONTESTS</span>
+          <span className="mk-badge">{soleExam ? `RATED ${examLabel(soleExam)} CONTESTS` : 'RATED CONTESTS'}</span>
           <h1 className="ct-hero-title">Enter the Arena.<br /><span className="lp-grad">Prove Your Rank.</span></h1>
           <p className="ct-hero-sub">
-            Compete in timed SSC CGL contests, climb the leaderboard, and build your
-            rating with every battle.
+            {soleExam
+              ? `Compete in timed ${examLabel(soleExam)} contests, climb the leaderboard, and build your rating with every battle.`
+              : 'Compete in timed contests across every examination we run, climb the leaderboard, and build your rating with every battle.'}
           </p>
           <div className="lp-hero-cta">
             <a href="#contest-list" className="lp-btn lp-btn-primary lp-btn-lg">
