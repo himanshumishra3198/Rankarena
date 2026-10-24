@@ -87,6 +87,10 @@ const contestSchema = z.object({
   durationMinutes: z.number().int().min(1).max(1440),
   negativeMarks: z.number().min(0).default(0.5),
   sectionLimits: sectionLimitsSchema,
+  // Opt-in. A contest is silent unless the admin says otherwise, because
+  // most of the ones created in a week are tests and the announcement goes
+  // to every verified account that has not unsubscribed.
+  announceByEmail: z.boolean().default(false),
 });
 
 /**

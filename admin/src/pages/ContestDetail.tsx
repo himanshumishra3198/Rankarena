@@ -155,6 +155,28 @@ export default function ContestDetail() {
   const [editingDetails, setEditingDetails] = useState(false)
   const [detailsForm, setDetailsForm] = useState({ title: '', startTime: '', durationMinutes: 60 })
   const [savingDetails, setSavingDetails] = useState(false)
+  const [announcing, setAnnouncing] = useState(false)
+
+  /**
+   * Hand this contest to the mailer.
+   *
+   * Only ever turns the flag on. Turning it back off after the sweep has run
+   * would un-tick a box while thirty people already had the mail, so once
+   * `announcedAt` is set the control goes away entirely rather than offering
+   * an undo that does not exist.
+   */
+  async function announceNow() {
+    if (!contest) return
+    setAnnouncing(true); setDetailsError('')
+    try {
+      await api.put(`/admin/contests/${id}`, { announceByEmail: true })
+      await load()
+    } catch (err: any) {
+      setDetailsError(errStr(err, 'Could not queue the announcement.'))
+    } finally {
+      setAnnouncing(false)
+    }
+  }
   const [detailsError, setDetailsError] = useState('')
 
   // Everything on this page is scoped to the contest's examination: the
@@ -523,6 +545,34 @@ export default function ContestDetail() {
               </div>
             </div>
             <button className="btn btn-ghost btn-sm" onClick={openEditDetails} style={{ flexShrink: 0 }}>✎ Edit details</button>
+          </div>
+        )}
+
+        {/* Who has been told, and the one action available. Shown plainly
+            rather than hidden in the edit form, because "did this go out?"
+            is the question an admin asks about a contest they just made. */}
+        {contest && (
+          <div className={`announce-state ${contest.announcedAt ? 'is-sent' : contest.announceByEmail ? 'is-queued' : 'is-silent'}`}>
+            {contest.announcedAt ? (
+              <span>
+                <strong>Announced</strong> on{' '}
+                {new Date(contest.announcedAt).toLocaleString('en-IN', {
+                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                })} — everyone has been emailed.
+              </span>
+            ) : contest.announceByEmail ? (
+              <span><strong>Announcement queued</strong> — it goes out within a minute.</span>
+            ) : (
+              <>
+                <span>
+                  <strong>Nobody has been emailed.</strong> Test contests stay silent;
+                  announce when the paper is ready.
+                </span>
+                <button className="btn btn-sm" disabled={announcing} onClick={announceNow}>
+                  {announcing ? 'Queueing…' : 'Announce by email'}
+                </button>
+              </>
+            )}
           </div>
         )}
 

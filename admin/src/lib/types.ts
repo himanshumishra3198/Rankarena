@@ -57,6 +57,10 @@ export interface Contest {
   negativeMarks: number
   sectionLimits: Partial<Record<Section, number>> | null
   status: 'SCHEDULED' | 'LIVE' | 'ENDED'
+  /** Whether everyone is emailed about this contest. Off for test papers. */
+  announceByEmail?: boolean
+  /** When the announcement went out; null until it has. */
+  announcedAt?: string | null
 }
 
 export type QuestionType =

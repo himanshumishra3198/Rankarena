@@ -106,7 +106,15 @@ async function mailableUsers(where: object = {}) {
 export async function announceNewContests(): Promise<void> {
   const now = new Date();
   const pending = await prisma.contest.findMany({
-    where: { announcedAt: null, startTime: { gt: now }, status: { not: "ENDED" } },
+    // `announceByEmail` is the admin saying this one is real. Without it the
+    // sweep broadcast every contest ever created, test papers included, to
+    // every verified account that had not opted out.
+    where: {
+      announceByEmail: true,
+      announcedAt: null,
+      startTime: { gt: now },
+      status: { not: "ENDED" },
+    },
     include: { _count: { select: { contestQuestions: true } } },
     orderBy: { startTime: "asc" },
     take: 5,
@@ -131,6 +139,13 @@ export async function announceNewContests(): Promise<void> {
 
 /**
  * Remind people registered for a contest starting within the hour.
+ *
+ * Deliberately not gated by `announceByEmail`: that flag governs the
+ * broadcast to everybody, while this only ever reaches people who chose to
+ * register. Somebody who signed up for a contest wants to be told it is
+ * starting, whether or not it was advertised. A test contest sends nothing
+ * here anyway — admin registrations are marked `isTest` and excluded, so
+ * with nobody else signed up there is no one to remind.
  *
  * Nothing goes out once the contest has started: a reminder that arrives
  * mid-paper is noise, and one that arrives after it ended is worse.

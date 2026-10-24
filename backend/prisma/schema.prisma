@@ -239,6 +239,14 @@ model Contest {
   sectionLimits   Json?         @map("section_limits")
   exam            Exam          @default(SSC_CGL)
   status          ContestStatus @default(SCHEDULED)
+  // Whether to tell everyone about this contest by email.
+  //
+  // Off by default, because most contests created in a given week are tests
+  // and a broadcast reaches every verified account that has not opted out.
+  // An announcement that should go out is a deliberate act, so it is ticked
+  // deliberately — and it can be ticked later, which is the better order
+  // anyway: create the paper, add its questions, then announce it.
+  announceByEmail Boolean       @default(false) @map("announce_by_email")
   // When the "a new contest is scheduled" mail went out. Null means it has not
   // been announced yet, which is what the sweep looks for — so a crash halfway
   // through a send is picked up on the next pass instead of being lost or

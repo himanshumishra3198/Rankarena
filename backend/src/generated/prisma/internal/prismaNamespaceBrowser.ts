@@ -221,6 +221,7 @@ export const ContestScalarFieldEnum = {
   sectionLimits: 'sectionLimits',
   exam: 'exam',
   status: 'status',
+  announceByEmail: 'announceByEmail',
   announcedAt: 'announcedAt',
   createdAt: 'createdAt'
 } as const

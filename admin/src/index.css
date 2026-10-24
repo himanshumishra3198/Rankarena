@@ -697,3 +697,32 @@ tr:hover td { background: var(--surface-raised); }
 .set-banner strong { font-weight: 700; }
 .set-banner .set-count { color: var(--primary); font-weight: 700; }
 .set-banner button { margin-left: auto; }
+
+/* ── Contest announcement state ───────────────────────────────────────────
+   "Has this gone out?" is the first thing an admin wants to know about a
+   contest they just made, so it is stated on the page rather than implied by
+   a checkbox inside a collapsed form. Three states, three colours: silent,
+   queued, sent. */
+.announce-state {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  flex-wrap: wrap; margin-bottom: 16px; padding: 10px 14px;
+  border-radius: 8px; font-size: 13.5px; line-height: 1.6;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text);
+}
+.announce-state strong { color: var(--heading); }
+.announce-state.is-silent { border-color: var(--border); }
+.announce-state.is-queued { border-color: var(--primary); background: var(--primary-light); }
+.announce-state.is-queued strong { color: var(--primary); }
+.announce-state.is-sent { border-color: var(--success); background: var(--success-light); }
+.announce-state.is-sent strong { color: var(--success); }
+
+/* The opt-in on the create form. Deliberately plain — it is a decision, not
+   a feature to sell. */
+.announce-box {
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; margin-bottom: 16px; background: var(--bg);
+}
+.announce-row { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.announce-row input { margin-top: 3px; flex-shrink: 0; }
+.announce-row > span { display: flex; flex-direction: column; gap: 3px; }
+.announce-hint { font-size: 12.5px; color: var(--text-muted); font-weight: 400; line-height: 1.6; }

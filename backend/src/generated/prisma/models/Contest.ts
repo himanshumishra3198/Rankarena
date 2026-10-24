@@ -44,6 +44,7 @@ export type ContestMinAggregateOutputType = {
   negativeMarks: runtime.Decimal | null
   exam: $Enums.Exam | null
   status: $Enums.ContestStatus | null
+  announceByEmail: boolean | null
   announcedAt: Date | null
   createdAt: Date | null
 }
@@ -56,6 +57,7 @@ export type ContestMaxAggregateOutputType = {
   negativeMarks: runtime.Decimal | null
   exam: $Enums.Exam | null
   status: $Enums.ContestStatus | null
+  announceByEmail: boolean | null
   announcedAt: Date | null
   createdAt: Date | null
 }
@@ -69,6 +71,7 @@ export type ContestCountAggregateOutputType = {
   sectionLimits: number
   exam: number
   status: number
+  announceByEmail: number
   announcedAt: number
   createdAt: number
   _all: number
@@ -93,6 +96,7 @@ export type ContestMinAggregateInputType = {
   negativeMarks?: true
   exam?: true
   status?: true
+  announceByEmail?: true
   announcedAt?: true
   createdAt?: true
 }
@@ -105,6 +109,7 @@ export type ContestMaxAggregateInputType = {
   negativeMarks?: true
   exam?: true
   status?: true
+  announceByEmail?: true
   announcedAt?: true
   createdAt?: true
 }
@@ -118,6 +123,7 @@ export type ContestCountAggregateInputType = {
   sectionLimits?: true
   exam?: true
   status?: true
+  announceByEmail?: true
   announcedAt?: true
   createdAt?: true
   _all?: true
@@ -218,6 +224,7 @@ export type ContestGroupByOutputType = {
   sectionLimits: runtime.JsonValue | null
   exam: $Enums.Exam
   status: $Enums.ContestStatus
+  announceByEmail: boolean
   announcedAt: Date | null
   createdAt: Date
   _count: ContestCountAggregateOutputType | null
@@ -254,6 +261,7 @@ export type ContestWhereInput = {
   sectionLimits?: Prisma.JsonNullableFilter<"Contest">
   exam?: Prisma.EnumExamFilter<"Contest"> | $Enums.Exam
   status?: Prisma.EnumContestStatusFilter<"Contest"> | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFilter<"Contest"> | boolean
   announcedAt?: Prisma.DateTimeNullableFilter<"Contest"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Contest"> | Date | string
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
@@ -271,6 +279,7 @@ export type ContestOrderByWithRelationInput = {
   sectionLimits?: Prisma.SortOrderInput | Prisma.SortOrder
   exam?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announceByEmail?: Prisma.SortOrder
   announcedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   contestQuestions?: Prisma.ContestQuestionOrderByRelationAggregateInput
@@ -291,6 +300,7 @@ export type ContestWhereUniqueInput = Prisma.AtLeast<{
   sectionLimits?: Prisma.JsonNullableFilter<"Contest">
   exam?: Prisma.EnumExamFilter<"Contest"> | $Enums.Exam
   status?: Prisma.EnumContestStatusFilter<"Contest"> | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFilter<"Contest"> | boolean
   announcedAt?: Prisma.DateTimeNullableFilter<"Contest"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Contest"> | Date | string
   contestQuestions?: Prisma.ContestQuestionListRelationFilter
@@ -308,6 +318,7 @@ export type ContestOrderByWithAggregationInput = {
   sectionLimits?: Prisma.SortOrderInput | Prisma.SortOrder
   exam?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announceByEmail?: Prisma.SortOrder
   announcedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ContestCountOrderByAggregateInput
@@ -329,6 +340,7 @@ export type ContestScalarWhereWithAggregatesInput = {
   sectionLimits?: Prisma.JsonNullableWithAggregatesFilter<"Contest">
   exam?: Prisma.EnumExamWithAggregatesFilter<"Contest"> | $Enums.Exam
   status?: Prisma.EnumContestStatusWithAggregatesFilter<"Contest"> | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolWithAggregatesFilter<"Contest"> | boolean
   announcedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Contest"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Contest"> | Date | string
 }
@@ -342,6 +354,7 @@ export type ContestCreateInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
@@ -359,6 +372,7 @@ export type ContestUncheckedCreateInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
@@ -376,6 +390,7 @@ export type ContestUpdateInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
@@ -393,6 +408,7 @@ export type ContestUncheckedUpdateInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
@@ -410,6 +426,7 @@ export type ContestCreateManyInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
 }
@@ -423,6 +440,7 @@ export type ContestUpdateManyMutationInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -436,6 +454,7 @@ export type ContestUncheckedUpdateManyInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -454,6 +473,7 @@ export type ContestCountOrderByAggregateInput = {
   sectionLimits?: Prisma.SortOrder
   exam?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announceByEmail?: Prisma.SortOrder
   announcedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -471,6 +491,7 @@ export type ContestMaxOrderByAggregateInput = {
   negativeMarks?: Prisma.SortOrder
   exam?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announceByEmail?: Prisma.SortOrder
   announcedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -483,6 +504,7 @@ export type ContestMinOrderByAggregateInput = {
   negativeMarks?: Prisma.SortOrder
   exam?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  announceByEmail?: Prisma.SortOrder
   announcedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -580,6 +602,7 @@ export type ContestCreateWithoutNotificationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
@@ -596,6 +619,7 @@ export type ContestUncheckedCreateWithoutNotificationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
@@ -628,6 +652,7 @@ export type ContestUpdateWithoutNotificationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
@@ -644,6 +669,7 @@ export type ContestUncheckedUpdateWithoutNotificationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
@@ -660,6 +686,7 @@ export type ContestCreateWithoutContestQuestionsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   participations?: Prisma.ParticipationCreateNestedManyWithoutContestInput
@@ -676,6 +703,7 @@ export type ContestUncheckedCreateWithoutContestQuestionsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   participations?: Prisma.ParticipationUncheckedCreateNestedManyWithoutContestInput
@@ -708,6 +736,7 @@ export type ContestUpdateWithoutContestQuestionsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUpdateManyWithoutContestNestedInput
@@ -724,6 +753,7 @@ export type ContestUncheckedUpdateWithoutContestQuestionsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participations?: Prisma.ParticipationUncheckedUpdateManyWithoutContestNestedInput
@@ -740,6 +770,7 @@ export type ContestCreateWithoutParticipationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
@@ -756,6 +787,7 @@ export type ContestUncheckedCreateWithoutParticipationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
@@ -788,6 +820,7 @@ export type ContestUpdateWithoutParticipationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
@@ -804,6 +837,7 @@ export type ContestUncheckedUpdateWithoutParticipationsInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
@@ -820,6 +854,7 @@ export type ContestCreateWithoutRatingHistoryInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionCreateNestedManyWithoutContestInput
@@ -836,6 +871,7 @@ export type ContestUncheckedCreateWithoutRatingHistoryInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: $Enums.Exam
   status?: $Enums.ContestStatus
+  announceByEmail?: boolean
   announcedAt?: Date | string | null
   createdAt?: Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedCreateNestedManyWithoutContestInput
@@ -868,6 +904,7 @@ export type ContestUpdateWithoutRatingHistoryInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUpdateManyWithoutContestNestedInput
@@ -884,6 +921,7 @@ export type ContestUncheckedUpdateWithoutRatingHistoryInput = {
   sectionLimits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   exam?: Prisma.EnumExamFieldUpdateOperationsInput | $Enums.Exam
   status?: Prisma.EnumContestStatusFieldUpdateOperationsInput | $Enums.ContestStatus
+  announceByEmail?: Prisma.BoolFieldUpdateOperationsInput | boolean
   announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contestQuestions?: Prisma.ContestQuestionUncheckedUpdateManyWithoutContestNestedInput
@@ -958,6 +996,7 @@ export type ContestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   sectionLimits?: boolean
   exam?: boolean
   status?: boolean
+  announceByEmail?: boolean
   announcedAt?: boolean
   createdAt?: boolean
   contestQuestions?: boolean | Prisma.Contest$contestQuestionsArgs<ExtArgs>
@@ -976,6 +1015,7 @@ export type ContestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   sectionLimits?: boolean
   exam?: boolean
   status?: boolean
+  announceByEmail?: boolean
   announcedAt?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["contest"]>
@@ -989,6 +1029,7 @@ export type ContestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   sectionLimits?: boolean
   exam?: boolean
   status?: boolean
+  announceByEmail?: boolean
   announcedAt?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["contest"]>
@@ -1002,11 +1043,12 @@ export type ContestSelectScalar = {
   sectionLimits?: boolean
   exam?: boolean
   status?: boolean
+  announceByEmail?: boolean
   announcedAt?: boolean
   createdAt?: boolean
 }
 
-export type ContestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "startTime" | "durationMinutes" | "negativeMarks" | "sectionLimits" | "exam" | "status" | "announcedAt" | "createdAt", ExtArgs["result"]["contest"]>
+export type ContestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "startTime" | "durationMinutes" | "negativeMarks" | "sectionLimits" | "exam" | "status" | "announceByEmail" | "announcedAt" | "createdAt", ExtArgs["result"]["contest"]>
 export type ContestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   contestQuestions?: boolean | Prisma.Contest$contestQuestionsArgs<ExtArgs>
   participations?: boolean | Prisma.Contest$participationsArgs<ExtArgs>
@@ -1034,6 +1076,7 @@ export type $ContestPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     sectionLimits: runtime.JsonValue | null
     exam: $Enums.Exam
     status: $Enums.ContestStatus
+    announceByEmail: boolean
     announcedAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["contest"]>
@@ -1471,6 +1514,7 @@ export interface ContestFieldRefs {
   readonly sectionLimits: Prisma.FieldRef<"Contest", 'Json'>
   readonly exam: Prisma.FieldRef<"Contest", 'Exam'>
   readonly status: Prisma.FieldRef<"Contest", 'ContestStatus'>
+  readonly announceByEmail: Prisma.FieldRef<"Contest", 'Boolean'>
   readonly announcedAt: Prisma.FieldRef<"Contest", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Contest", 'DateTime'>
 }

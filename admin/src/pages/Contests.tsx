@@ -101,6 +101,9 @@ export default function Contests() {
   const [duration, setDuration] = useState(90)
   const [negMarks, setNegMarks] = useState(0.5)
   const [exam, setExam] = useState<Exam>('SSC_CGL')
+  // Off unless asked for: a broadcast reaches every verified account that has
+  // not unsubscribed, and most contests made in a week are tests.
+  const [announce, setAnnounce] = useState(false)
   const [sectionLimits, setSectionLimits] = useState<Partial<Record<Section, number>>>(
     defaultSectionLimits(90, SECTIONS),
   )
@@ -160,6 +163,7 @@ export default function Contests() {
       await api.post('/admin/contests', {
         title,
         exam,
+        announceByEmail: announce,
         startTime: new Date(startTime).toISOString(),
         durationMinutes: Number(duration),
         negativeMarks: Number(negMarks),
@@ -168,6 +172,7 @@ export default function Contests() {
       setShowForm(false)
       setTitle(''); setStartTime(''); setDuration(90); setNegMarks(0.5)
       setExam('SSC_CGL')
+      setAnnounce(false)
       setSectionLimits(defaultSectionLimits(90, SECTIONS))
       load()
     } catch (err: any) {
@@ -310,8 +315,23 @@ export default function Contests() {
                 </div>
               </div>
 
+              <div className="announce-box">
+                <label className="announce-row">
+                  <input type="checkbox" checked={announce}
+                    onChange={e => setAnnounce(e.target.checked)} />
+                  <span>
+                    <strong>Email everyone about this contest</strong>
+                    <span className="announce-hint">
+                      {announce
+                        ? 'An announcement goes out to every verified account that has not unsubscribed, within a minute of creating it.'
+                        : 'Nothing is sent. Leave this off for test contests — you can turn it on later from the contest page, which is the better order anyway: add the questions first, then announce.'}
+                    </span>
+                  </span>
+                </label>
+              </div>
+
               <button className="btn btn-primary" type="submit" disabled={saving}>
-                {saving ? 'Creating...' : 'Create Contest'}
+                {saving ? 'Creating...' : announce ? 'Create & Announce' : 'Create Contest'}
               </button>
             </form>
           </div>
