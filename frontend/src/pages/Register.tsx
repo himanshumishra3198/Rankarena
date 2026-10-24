@@ -7,7 +7,7 @@ import api from '../lib/api'
 import { usePageMeta } from '../lib/seo'
 
 export default function Register() {
-  usePageMeta('Sign up — RankArenas', 'Create a free RankArenas account to compete in rated SSC mock contests for CGL, CHSL, MTS, CPO and GD.')
+  usePageMeta('Sign up — RankArenas', 'Create a free RankArenas account to compete in rated mock contests for SSC CGL and CAT.')
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

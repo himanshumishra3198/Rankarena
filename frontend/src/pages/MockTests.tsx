@@ -59,9 +59,14 @@ export default function MockTests() {
   useEffect(() => setDraft(search), [search])
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
-  // 'ALL' until the catalogue actually holds more than one exam, at which
-  // point the switch above appears and this is what it drives.
-  const [examFilter, setExamFilter] = useState<'ALL' | Exam>('ALL')
+  // In the URL, not in state: the front page links straight to
+  // /mocks?exam=CAT, and a filtered catalogue should be a shareable link
+  // like the subject and the search already are.
+  const rawExam = (params.get('exam') ?? 'ALL').toUpperCase()
+  const examFilter: 'ALL' | Exam = (EXAM_KEYS as string[]).includes(rawExam)
+    ? (rawExam as Exam)
+    : 'ALL'
+  const setExamFilter = (e: 'ALL' | Exam) => setUrl({ exam: e, subject: 'ALL' })
 
   // The exams with papers behind them, in a stable order.
   const exams = useMemo(
@@ -69,9 +74,10 @@ export default function MockTests() {
     [mocks],
   )
 
-  function setUrl(next: { subject?: string; q?: string }) {
-    const merged = { subject, q: search, ...next }
+  function setUrl(next: { subject?: string; q?: string; exam?: string }) {
+    const merged = { subject, q: search, exam: params.get('exam') ?? 'ALL', ...next }
     const p = new URLSearchParams()
+    if (merged.exam && merged.exam !== 'ALL') p.set('exam', merged.exam)
     if (merged.subject !== 'ALL') p.set('subject', merged.subject)
     if (merged.q) p.set('q', merged.q)
     setParams(p, { replace: true })
@@ -189,7 +195,7 @@ export default function MockTests() {
             <div className="exam-switch" role="group" aria-label="Examination">
               <button
                 className={`exam-switch-btn exam-all ${examFilter === 'ALL' ? 'is-active' : ''}`}
-                onClick={() => { setExamFilter('ALL'); setUrl({ subject: 'ALL' }) }}
+                onClick={() => setExamFilter('ALL')}
               >
                 All exams
               </button>
@@ -197,7 +203,7 @@ export default function MockTests() {
                 <button
                   key={e}
                   className={`exam-switch-btn exam-${e.toLowerCase()} ${examFilter === e ? 'is-active' : ''}`}
-                  onClick={() => { setExamFilter(e); setUrl({ subject: 'ALL' }) }}
+                  onClick={() => setExamFilter(e)}
                 >
                   {examLabel(e)}
                 </button>

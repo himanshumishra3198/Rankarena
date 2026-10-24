@@ -89,7 +89,7 @@ export default function PracticeProblem() {
 
   usePageMeta(
     problem ? `${problem.topic ?? SUBJECT_SHORT[problem.subject] ?? 'Practice'} — RankArenas` : 'Practice — RankArenas',
-    'Attempt a question from a past SSC contest or mock test, with the answer and solution.'
+    'Attempt a question from a past contest or mock test, with the answer and solution.'
   )
 
   // The filter the problemset was showing, carried through so "back" and

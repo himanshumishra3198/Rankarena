@@ -49,7 +49,18 @@ export default function ContestList() {
   const [sheet, setSheet] = useState(false)
   const [day, setDay] = useState<string | null>(null)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
-  const [examFilter, setExamFilter] = useState<'ALL' | Exam>('ALL')
+  // In the URL for the same reason as the mock catalogue: the front page
+  // links to /contests?exam=CAT.
+  const rawExam = (params.get('exam') ?? 'ALL').toUpperCase()
+  const examFilter: 'ALL' | Exam = (EXAM_KEYS as string[]).includes(rawExam)
+    ? (rawExam as Exam)
+    : 'ALL'
+  const setExamFilter = (e: 'ALL' | Exam) => {
+    const p = new URLSearchParams(params)
+    if (e === 'ALL') p.delete('exam')
+    else p.set('exam', e)
+    setParams(p, { replace: true })
+  }
 
   // The exams actually running contests. One of them means the switch is
   // hidden and the hero can name it; more than one means neither.

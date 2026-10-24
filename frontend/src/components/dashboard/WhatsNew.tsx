@@ -4,10 +4,14 @@ import { Link } from 'react-router-dom'
  * A short read of the roadmap. The full version lives on the public page,
  * and these three mirror its Phase 2 and 3 so there is one place to edit
  * when the plan moves — deliberately a summary, not a second roadmap.
+ *
+ * CAT leads it because it is the change a returning candidate is most
+ * likely to want and least likely to find on their own: nothing on their
+ * dashboard would otherwise mention that a second examination exists.
  */
 const ITEMS = [
+  { icon: '🎓', name: 'CAT — VARC, DILR & QA', state: 'In progress' },
   { icon: '🚧', name: 'Hindi mock tests', state: 'In progress' },
-  { icon: '📊', name: 'Detailed performance analytics', state: 'In progress' },
   { icon: '🏆', name: 'Weekly championships', state: 'Coming soon' },
 ]
 

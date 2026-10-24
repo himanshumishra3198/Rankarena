@@ -4,6 +4,7 @@ import { usePageMeta } from '../lib/seo'
 import LandingNav from '../components/landing/LandingNav'
 import Hero from '../components/landing/Hero'
 import Stats from '../components/landing/Stats'
+import Exams from '../components/landing/Exams'
 import WhyRankArena from '../components/landing/WhyRankArena'
 import HowItWorks from '../components/landing/HowItWorks'
 import ContestPreview from '../components/landing/ContestPreview'
@@ -31,7 +32,7 @@ import type { LandingContest, PublicStats, RankedUser } from '../components/land
 export default function Landing() {
   usePageMeta(
     'RankArena — Don’t Just Prepare. Compete.',
-    'Rated SSC CGL contests, live leaderboards and a competitive rating system. Practice the way the real exam feels — timed, ranked, and against other aspirants.',
+    'Rated SSC CGL and CAT contests, live leaderboards and a competitive rating system. Practice the way the real exam feels — timed, ranked, and against other aspirants.',
   )
 
   const [stats, setStats] = useState<PublicStats | null>(null)
@@ -99,6 +100,7 @@ export default function Landing() {
       <main>
         <Hero contest={contest} leaders={leaders} aspirants={stats?.aspirants ?? null} loading={loading} />
         <Stats stats={stats} />
+        <Exams exams={stats?.exams} />
         <WhyRankArena />
         <HowItWorks />
         <ContestPreview contest={contest} />

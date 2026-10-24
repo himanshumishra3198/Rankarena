@@ -11,11 +11,11 @@ const PHASES: {
   },
   {
     phase: 'Phase 2', name: 'Level Up', status: 'active', label: 'In Progress', pct: 65,
-    items: ['Hindi + English Questions', 'Improved Contest Experience', 'Detailed Performance Analytics', 'Topic-wise Performance', 'Contest History', 'Rating History'],
+    items: ['Hindi + English Questions', 'CAT: VARC, DILR & QA', 'Multiple-correct & type-in answers', 'Maths typesetting', 'Detailed Performance Analytics', 'Contest & Rating History'],
   },
   {
     phase: 'Phase 3', name: 'Expand the Arena', status: 'soon', label: 'Coming Soon', pct: 0,
-    items: ['More SSC Exams', 'More Question Categories', 'Advanced Rankings', 'Weekly Competitions', 'Achievement System', 'Badges & Streaks'],
+    items: ['CAT Mock Tests & Contests', 'More SSC Exams', 'Advanced Rankings', 'Weekly Competitions', 'Achievement System', 'Badges & Streaks'],
   },
   {
     phase: 'Phase 4', name: 'The Bigger Arena', status: 'future', label: 'Future', pct: 0,

@@ -1,5 +1,6 @@
 import { Router, Response } from "express";
 import prisma from "../lib/prisma";
+import { EXAM_KEYS, examSpec } from "../lib/exams";
 
 const router = Router();
 
@@ -17,12 +18,32 @@ router.get("/public", async (_req, res: Response) => {
       prisma.participation.count({ where: { submittedAt: { not: null }, isTest: false } }),
     ]);
 
+  /**
+   * What exists for each examination, so the front page can describe them
+   * from the catalogue rather than from a copywriter's hopes.
+   *
+   * An exam with nothing published yet reports zeroes and the page says so.
+   * Claiming a CAT catalogue that is not there would cost more than the
+   * visit it won: somebody signs up, looks for the papers, and finds none.
+   */
+  const byExam = await Promise.all(
+    EXAM_KEYS.map(async (exam) => ({
+      exam,
+      label: examSpec(exam).label,
+      sections: examSpec(exam).sections.map((s) => s.short),
+      mockTests: await prisma.mockTest.count({ where: { exam, isPublished: true } }),
+      questions: await prisma.question.count({ where: { exam } }),
+      contests: await prisma.contest.count({ where: { exam } }),
+    })),
+  );
+
   res.json({
     aspirants,
     mockTests,
     questions,
     contests,
     testsTaken: mockSubs + contestSubs,
+    exams: byExam,
   });
 });
 

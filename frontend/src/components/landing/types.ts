@@ -7,12 +7,23 @@ export interface RankedUser {
   rating: number
 }
 
+export interface ExamStats {
+  exam: 'SSC_CGL' | 'CAT'
+  label: string
+  sections: string[]
+  mockTests: number
+  questions: number
+  contests: number
+}
+
 export interface PublicStats {
   aspirants: number
   mockTests: number
   questions: number
   contests: number
   testsTaken: number
+  /** What exists for each examination. Absent on an older API. */
+  exams?: ExamStats[]
 }
 
 export interface LandingContest {

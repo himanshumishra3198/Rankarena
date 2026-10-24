@@ -46,7 +46,7 @@ function pageWindow(page: number, count: number): (number | null)[] {
 export default function Leaderboard() {
   usePageMeta(
     'Leaderboard — RankArena',
-    'Live SSC CGL rankings: ratings, tiers and contest performance across every rated aspirant.',
+    'Live SSC CGL and CAT rankings — a separate ladder per exam, with ratings, tiers and contest performance.',
   )
   const signedIn = Boolean(localStorage.getItem('token'))
   const [params, setParams] = useSearchParams()

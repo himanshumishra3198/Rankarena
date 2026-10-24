@@ -7,7 +7,7 @@ import api from '../lib/api'
 import { usePageMeta } from '../lib/seo'
 
 export default function Login() {
-  usePageMeta('Log in — RankArenas', 'Log in to RankArenas to take SSC mock contests and sectional tests.')
+  usePageMeta('Log in — RankArenas', 'Log in to RankArenas to take SSC CGL and CAT mock contests and sectional tests.')
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

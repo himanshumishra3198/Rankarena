@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import ArenaPanel from './ArenaPanel'
 import type { LandingContest, RankedUser } from './types'
 
-const SIGNALS = ['Rated Contests', 'Live Leaderboards', 'Performance Tracking', 'SSC CGL Focused']
+const SIGNALS = ['Rated Contests', 'Live Leaderboards', 'Performance Tracking', 'SSC CGL & CAT']
 
 export default function Hero({
   contest, leaders, aspirants, loading,
@@ -24,7 +24,7 @@ export default function Hero({
         <div className="lp-hero-copy">
           <span className="lp-eyebrow">
             <i className="lp-pulse" aria-hidden="true" />
-            Rated SSC CGL contests
+            Rated SSC CGL &amp; CAT contests
           </span>
 
           <h1 className="lp-hero-title">
@@ -33,8 +33,8 @@ export default function Hero({
           </h1>
 
           <p className="lp-hero-sub">
-            Practice SSC CGL with rated contests, live leaderboards, and a competitive
-            ranking system built to make preparation more engaging.
+            Practice SSC CGL and CAT with rated contests, live leaderboards, and a
+            competitive ranking system built to make preparation more engaging.
           </p>
 
           <div className="lp-hero-cta">

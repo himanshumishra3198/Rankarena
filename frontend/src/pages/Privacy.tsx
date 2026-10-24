@@ -26,7 +26,7 @@ export default function Privacy() {
         <p className="legal-updated">Last updated {LEGAL_UPDATED}</p>
 
         <p className="legal-lede">
-          RankArenas is a practice platform for SSC exam aspirants. This page explains
+          RankArenas is a practice platform for SSC and CAT aspirants. This page explains
           exactly what we collect, why we hold it, and what you can ask us to do with it.
         </p>
 

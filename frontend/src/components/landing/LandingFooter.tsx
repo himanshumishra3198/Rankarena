@@ -50,7 +50,7 @@ export default function LandingFooter() {
 
       <div className="lp-shell lp-footer-bar">
         <span>© {new Date().getFullYear()} RankArenas</span>
-        <span>SSC CGL · CHSL · MTS · CPO · GD</span>
+        <span>SSC CGL · CHSL · MTS · CPO · GD &nbsp;·&nbsp; CAT</span>
       </div>
     </footer>
   )
