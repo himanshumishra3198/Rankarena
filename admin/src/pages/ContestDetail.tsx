@@ -18,6 +18,7 @@ import AnswerKeyEditor, {
 import TagPicker from '../components/TagPicker'
 import PassagePicker from '../components/PassagePicker'
 import PassageForm from '../components/PassageForm'
+import PassageSetPanel from '../components/PassageSetPanel'
 import { DragHandle, MoveButtons, useRowDrag } from '../components/OrderableRows'
 import { moveTo, saveOrder, splitPassageSets } from '../lib/reorder'
 import QuestionPreview from '../components/QuestionPreview'
@@ -218,6 +219,16 @@ export default function ContestDetail() {
   const [addError, setAddError] = useState('')
 
   const [newQ, setNewQ] = useState(emptyQ)
+
+  // The passage being written against, and what is already on it. Read from
+  // the paper rather than tracked separately, so removing a question is
+  // reflected without a second source of truth to keep in step.
+  const setPassage = newQ.passageId
+    ? passages.find(p => p.id === newQ.passageId) ?? null
+    : null
+  const setQuestions = setPassage
+    ? cqs.filter(r => r.question.passage?.id === setPassage.id).map(r => r.question)
+    : []
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   // Lifted out of the editor so a failed save can put the admin on the tab
@@ -786,6 +797,19 @@ export default function ContestDetail() {
                 </form>
               )}
             </>
+          )}
+
+          {/* The set, above the editor that extends it. */}
+          {tab === 'create' && !editingQid && setPassage && (
+            <PassageSetPanel
+              passage={setPassage}
+              questions={setQuestions}
+              nextNumber={setQuestions.length + 1}
+              onEditPassage={() => setWritingPassage(true)}
+              onEditQuestion={editQuestion}
+              onRemoveQuestion={removeQuestion}
+              onFinish={() => setNewQ(f => ({ ...f, passageId: '' }))}
+            />
           )}
 
           {tab === 'create' && (

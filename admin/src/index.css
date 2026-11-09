@@ -750,3 +750,77 @@ tr:hover td { background: var(--surface-raised); }
 .pf-compact .form-group { margin-bottom: 12px; }
 
 .pf-write-btn { margin-top: 8px; }
+
+/* ── A passage and its questions, while the set is being written ──────────
+   Sits above the editor so the passage stays readable and the questions
+   already on it are visible as a numbered sequence — the editor below is
+   plainly the next one, rather than a form that happens to reopen. */
+.ps-set {
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.ps-set-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--primary-light);
+  border-bottom: 1px solid var(--border);
+}
+.ps-set-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.ps-set-kind {
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--primary); flex-shrink: 0;
+}
+.ps-set-title strong { color: var(--heading); font-size: 15px; }
+.ps-set-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.ps-set-bodywrap { padding: 10px 14px 0; }
+.ps-set-toggle {
+  border: 0; background: none; color: var(--text-muted);
+  font-size: 12px; cursor: pointer; padding: 0 0 6px;
+}
+.ps-set-toggle:hover { color: var(--primary); }
+.ps-set-body {
+  font-size: 13.5px; line-height: 1.7; color: var(--text);
+  /* Long comprehensions scroll rather than pushing the editor off screen. */
+  max-height: 190px; overflow-y: auto;
+  padding-right: 6px;
+}
+.ps-set-tablewrap { overflow-x: auto; max-height: 190px; }
+.ps-set-table { border-collapse: collapse; font-size: 12.5px; }
+.ps-set-table th, .ps-set-table td {
+  border: 1px solid var(--border); padding: 3px 9px; white-space: nowrap; text-align: left;
+}
+.ps-set-table th { background: var(--bg); font-weight: 700; }
+
+.ps-set-qs { padding: 12px 14px 14px; }
+.ps-set-qs-head {
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 8px;
+}
+.ps-set-q {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-top: 1px solid var(--border); font-size: 13.5px;
+}
+.ps-set-q-n {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--primary-light); color: var(--primary);
+  font-size: 11px; font-weight: 700; display: grid; place-items: center;
+}
+.ps-set-q-text {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--heading);
+}
+.ps-set-q-ans {
+  flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--success);
+  font-variant-numeric: tabular-nums;
+}
+.ps-set-q-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.ps-set-q-rm { color: var(--danger); }
+.ps-set-next {
+  margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--border);
+  font-size: 12.5px; font-weight: 600; color: var(--primary);
+}

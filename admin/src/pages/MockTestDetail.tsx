@@ -18,6 +18,7 @@ import AnswerKeyEditor, {
 import TagPicker from '../components/TagPicker'
 import PassagePicker from '../components/PassagePicker'
 import PassageForm from '../components/PassageForm'
+import PassageSetPanel from '../components/PassageSetPanel'
 import { DragHandle, MoveButtons, useRowDrag } from '../components/OrderableRows'
 import { moveTo, saveOrder, splitPassageSets } from '../lib/reorder'
 import QuestionPreview from '../components/QuestionPreview'
@@ -93,6 +94,18 @@ export default function MockTestDetail() {
   const [activeLang, setActiveLang] = useState<Language>('EN')
   const [tab, setTab] = useState<'bank' | 'create'>('bank')
   const [cForm, setCForm] = useState(emptyCreate)
+
+  // The passage currently being written against, and what is already on it.
+  // Read from the paper rather than tracked separately, so removing a
+  // question or reordering the paper is reflected without a second source of
+  // truth to keep in step.
+  const setPassage = cForm.passageId
+    ? passages.find(p => p.id === cForm.passageId) ?? null
+    : null
+  const setQuestions = setPassage
+    ? mtqs.filter(r => r.question.passage?.id === setPassage.id).map(r => r.question)
+    : []
+
   const [creating, setCreating] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [editingQid, setEditingQid] = useState<string | null>(null)
@@ -475,6 +488,18 @@ export default function MockTestDetail() {
             </>
           )}
 
+          {/* The set, above the editor that extends it. */}
+          {tab === 'create' && !editingQid && setPassage && (
+            <PassageSetPanel
+              passage={setPassage}
+              questions={setQuestions}
+              nextNumber={setQuestions.length + 1}
+              onEditPassage={() => setWritingPassage(true)}
+              onEditQuestion={editQuestion}
+              onRemoveQuestion={removeQuestion}
+              onFinish={() => setCForm(f => ({ ...f, passageId: '' }))}
+            />
+          )}
           {tab === 'create' && (
             <form onSubmit={saveQuestion}>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
@@ -506,25 +531,6 @@ export default function MockTestDetail() {
               {/* Passage/Table selector */}
               {(cForm.questionType === 'PASSAGE' || cForm.questionType === 'TABLE') && (
                 <div className="form-group">
-                  {/* The set being written, and how far along it is. Without
-                      this the form looks identical whether the passage
-                      carried over from the last save or not. */}
-                  {cForm.passageId && !editingQid && (() => {
-                    const already = mtqs.filter(r => r.question.passage?.id === cForm.passageId).length
-                    return (
-                      <div className="set-banner">
-                        <span>
-                          Adding to <strong>{passages.find(p => p.id === cForm.passageId)?.title || 'this passage'}</strong>
-                          {' — '}
-                          <span className="set-count">{already} question{already === 1 ? '' : 's'}</span> on it so far.
-                        </span>
-                        <button type="button" className="btn btn-sm btn-ghost"
-                          onClick={() => setCForm(f => ({ ...f, passageId: '' }))}>
-                          Finish set
-                        </button>
-                      </div>
-                    )
-                  })()}
                   <label>Link to Passage / Table</label>
                   {writingPassage ? (
                     <div className="pf-inline">
