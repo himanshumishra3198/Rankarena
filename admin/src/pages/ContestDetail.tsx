@@ -17,6 +17,7 @@ import AnswerKeyEditor, {
 } from '../components/AnswerKeyEditor'
 import TagPicker from '../components/TagPicker'
 import PassagePicker from '../components/PassagePicker'
+import PassageForm from '../components/PassageForm'
 import { DragHandle, MoveButtons, useRowDrag } from '../components/OrderableRows'
 import { moveTo, saveOrder, splitPassageSets } from '../lib/reorder'
 import QuestionPreview from '../components/QuestionPreview'
@@ -149,6 +150,14 @@ export default function ContestDetail() {
   const [cqs, setCqs] = useState<ContestQuestion[]>([])
   const [bank, setBank] = useState<Question[]>([])
   const [passages, setPassages] = useState<Passage[]>([])
+  /**
+   * Writing a passage without leaving the paper.
+   *
+   * Attaching a comprehension used to mean going to the question bank,
+   * creating it there, coming back, and picking it out of a list — for
+   * something that exists only to carry the questions being written here.
+   */
+  const [writingPassage, setWritingPassage] = useState(false)
   const [loading, setLoading] = useState(true)
 
   // Contest details editing (title / start time / duration)
@@ -831,13 +840,39 @@ export default function ContestDetail() {
                       </div>
                     )
                   })()}
-                  <label>Link to Passage / Table</label>
-                    <PassagePicker
-                      passages={passages}
-                      type={newQ.questionType === 'TABLE' ? 'TABLE' : 'TEXT'}
-                      value={newQ.passageId}
-                      onChange={id => setNewQ(f => ({ ...f, passageId: id }))}
-                    />
+                    <label>Link to Passage / Table</label>
+                    {writingPassage ? (
+                      <div className="pf-inline">
+                        <div className="pf-inline-head">Writing a new passage — it joins the bank, and this question attaches to it.</div>
+                        <PassageForm
+                          compact
+                          onSaved={p => {
+                            // Straight into the list and selected, so the next thing
+                            // typed is the first question on it.
+                            setPassages(prev => [p, ...prev])
+                            setNewQ(f => ({ ...f, passageId: p.id }))
+                            setWritingPassage(false)
+                          }}
+                          onCancel={() => setWritingPassage(false)}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <PassagePicker
+                          passages={passages}
+                          type={newQ.questionType === 'TABLE' ? 'TABLE' : 'TEXT'}
+                          value={newQ.passageId}
+                          onChange={id => setNewQ(f => ({ ...f, passageId: id }))}
+                          onCreateNew={() => setWritingPassage(true)}
+                        />
+                        {!newQ.passageId && (
+                          <button type="button" className="btn btn-sm btn-ghost pf-write-btn"
+                            onClick={() => setWritingPassage(true)}>
+                            + Write a new {newQ.questionType === 'TABLE' ? 'table' : 'passage'}
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 
