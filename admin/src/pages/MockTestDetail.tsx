@@ -109,6 +109,9 @@ export default function MockTestDetail() {
   const [creating, setCreating] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [editingQid, setEditingQid] = useState<string | null>(null)
+  // A set is in progress: a passage is chosen, and this is a new question
+  // rather than an edit of one already on the paper.
+  const inSet = tab === 'create' && !editingQid && !!setPassage
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
   const [editDetails, setEditDetails] = useState(false)
   const [mForm, setMForm] = useState({ title: '', subject: 'GK' as MockTest['subject'], durationMinutes: 15, negativeMarks: 0.5 })
@@ -362,7 +365,7 @@ export default function MockTestDetail() {
   return (
     <>
       <Navbar />
-      <div className="page">
+      <div className={`page ${inSet ? 'page-wide' : ''}`}>
         <button className="btn btn-ghost btn-sm" style={{ marginBottom: 14 }} onClick={() => navigate('/mocks')}>← Mock Tests</button>
 
         <div className="card" style={{ marginBottom: 16 }}>
@@ -488,18 +491,24 @@ export default function MockTestDetail() {
             </>
           )}
 
-          {/* The set, above the editor that extends it. */}
-          {tab === 'create' && !editingQid && setPassage && (
-            <PassageSetPanel
-              passage={setPassage}
-              questions={setQuestions}
-              nextNumber={setQuestions.length + 1}
-              onEditPassage={() => setWritingPassage(true)}
-              onEditQuestion={editQuestion}
-              onRemoveQuestion={removeQuestion}
-              onFinish={() => setCForm(f => ({ ...f, passageId: '' }))}
-            />
-          )}
+          {/* Two columns while a set is being written: the passage stays put
+              on the left and the questions go down the right, which is also
+              the order the candidate will meet them in. One column otherwise. */}
+          <div className={inSet ? 'ps-split' : undefined}>
+            {inSet && (
+              <aside className="ps-split-left">
+                <PassageSetPanel
+                  passage={setPassage!}
+                  questions={setQuestions}
+                  nextNumber={setQuestions.length + 1}
+                  onEditPassage={() => setWritingPassage(true)}
+                  onEditQuestion={editQuestion}
+                  onRemoveQuestion={removeQuestion}
+                  onFinish={() => setCForm(f => ({ ...f, passageId: '' }))}
+                />
+              </aside>
+            )}
+            <div className={inSet ? 'ps-split-right' : undefined}>
           {tab === 'create' && (
             <form onSubmit={saveQuestion}>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
@@ -528,8 +537,10 @@ export default function MockTestDetail() {
                 </div>
               </div>
 
-              {/* Passage/Table selector */}
-              {(cForm.questionType === 'PASSAGE' || cForm.questionType === 'TABLE') && (
+              {/* Passage/Table selector. Hidden inside a set: the passage is
+                  already on the left with its own Edit, and a second place to
+                  change it is how a half-written question loses its passage. */}
+              {!inSet && (cForm.questionType === 'PASSAGE' || cForm.questionType === 'TABLE') && (
                 <div className="form-group">
                   <label>Link to Passage / Table</label>
                   {writingPassage ? (
@@ -697,6 +708,8 @@ export default function MockTestDetail() {
               </div>
             </form>
           )}
+            </div>
+          </div>
         </div>
 
         {/* Added questions */}

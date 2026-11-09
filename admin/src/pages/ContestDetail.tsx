@@ -236,6 +236,9 @@ export default function ContestDetail() {
   const [activeLang, setActiveLang] = useState<Language>('EN')
   const [uploading, setUploading] = useState(false)
   const [editingQid, setEditingQid] = useState<string | null>(null)
+  // A set is in progress: a passage is chosen, and this is a new question
+  // rather than an edit of one already on the paper.
+  const inSet = tab === 'create' && !editingQid && !!setPassage
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
 
   async function load() {
@@ -549,7 +552,7 @@ export default function ContestDetail() {
   return (
     <>
       <Navbar />
-      <div className="page">
+      <div className={`page ${inSet ? 'page-wide' : ''}`}>
         <div style={{ marginBottom: 16 }}>
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>← Back to Contests</button>
         </div>
@@ -799,19 +802,24 @@ export default function ContestDetail() {
             </>
           )}
 
-          {/* The set, above the editor that extends it. */}
-          {tab === 'create' && !editingQid && setPassage && (
-            <PassageSetPanel
-              passage={setPassage}
-              questions={setQuestions}
-              nextNumber={setQuestions.length + 1}
-              onEditPassage={() => setWritingPassage(true)}
-              onEditQuestion={editQuestion}
-              onRemoveQuestion={removeQuestion}
-              onFinish={() => setNewQ(f => ({ ...f, passageId: '' }))}
-            />
-          )}
-
+          {/* Two columns while a set is being written: the passage stays put
+              on the left and the questions go down the right, which is also
+              the order the candidate will meet them in. One column otherwise. */}
+          <div className={inSet ? 'ps-split' : undefined}>
+            {inSet && (
+              <aside className="ps-split-left">
+                <PassageSetPanel
+                  passage={setPassage!}
+                  questions={setQuestions}
+                  nextNumber={setQuestions.length + 1}
+                  onEditPassage={() => setWritingPassage(true)}
+                  onEditQuestion={editQuestion}
+                  onRemoveQuestion={removeQuestion}
+                  onFinish={() => setNewQ(f => ({ ...f, passageId: '' }))}
+                />
+              </aside>
+            )}
+            <div className={inSet ? 'ps-split-right' : undefined}>
           {tab === 'create' && (
             <>
               {createError && <div className="alert alert-error">{createError}</div>}
@@ -842,8 +850,10 @@ export default function ContestDetail() {
                   </div>
                 </div>
 
-                {/* Passage/Table selector */}
-                {(newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE') && (
+                {/* Passage/Table selector. Hidden inside a set: the passage is
+                    already on the left with its own Edit, and a second place to
+                    change it is how a half-written question loses its passage. */}
+                {!inSet && (newQ.questionType === 'PASSAGE' || newQ.questionType === 'TABLE') && (
                   <div className="form-group">
                     {/* The set being written, and how far along it is. Without
                       this the form looks identical whether the passage
@@ -1044,6 +1054,8 @@ export default function ContestDetail() {
               </form>
             </>
           )}
+            </div>
+          </div>
         </div>
 
         {/* ── Questions in contest ─────────────────────────────────────── */}

@@ -824,3 +824,40 @@ tr:hover td { background: var(--surface-raised); }
   margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--border);
   font-size: 12.5px; font-weight: 600; color: var(--primary);
 }
+
+/* ── Writing a set: passage left, questions right ─────────────────────────
+   The same arrangement the candidate meets, which makes it easier to judge
+   whether a question reads correctly against the text. The passage column
+   is sticky so it stays put while the editor on the right scrolls. */
+.ps-split {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 20px;
+  align-items: start;
+}
+.ps-split-left { position: sticky; top: 12px; min-width: 0; }
+.ps-split-right { min-width: 0; }
+
+/* In a column the panel is the whole left side, so it loses the outer
+   margin it needs when stacked. */
+.ps-split-left .ps-set { margin-bottom: 0; }
+/* More room for the text when it is not competing with the editor for
+   width, and the question list below it stays visible. */
+.ps-split-left .ps-set-body,
+.ps-split-left .ps-set-tablewrap { max-height: 320px; }
+
+@media (max-width: 1100px) {
+  /* Below this the two columns are too narrow to write in, so the passage
+     goes back above the editor. */
+  .ps-split { grid-template-columns: 1fr; gap: 0; }
+  .ps-split-left { position: static; }
+  .ps-split-left .ps-set { margin-bottom: 18px; }
+  .ps-split-left .ps-set-body,
+  .ps-split-left .ps-set-tablewrap { max-height: 190px; }
+}
+
+/* Writing a set needs two usable columns, which 960px cannot give: the
+   option editors end up with their toolbars wrapped onto three rows. Only
+   while composing — every other screen is designed around the narrower
+   measure and reads worse stretched. */
+.page-wide { max-width: 1400px; }
