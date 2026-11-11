@@ -111,7 +111,7 @@ export default function MockTestDetail() {
   const [editingQid, setEditingQid] = useState<string | null>(null)
   // A set is in progress: a passage is chosen, and this is a new question
   // rather than an edit of one already on the paper.
-  const inSet = tab === 'create' && !editingQid && !!setPassage
+  const inSet = tab === 'create' && !!setPassage
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
   const [editDetails, setEditDetails] = useState(false)
   const [mForm, setMForm] = useState({ title: '', subject: 'GK' as MockTest['subject'], durationMinutes: 15, negativeMarks: 0.5 })
@@ -504,7 +504,9 @@ export default function MockTestDetail() {
                   onEditPassage={() => setWritingPassage(true)}
                   onEditQuestion={editQuestion}
                   onRemoveQuestion={removeQuestion}
+                  editingId={editingQid}
                   onFinish={() => setCForm(f => ({ ...f, passageId: '' }))}
+                  onDetach={() => setCForm(f => ({ ...f, passageId: '' }))}
                 />
               </aside>
             )}

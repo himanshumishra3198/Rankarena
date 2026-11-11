@@ -13,9 +13,13 @@ import type { Passage, Question } from '../lib/types'
  * question looked like a fresh start and there was nothing to show how far
  * along the set was, or to reread without leaving the page.
  *
- * Shows, never edits: the editor below owns the question being written, and
- * the passage is edited through its own form. Keeping the two apart is what
- * stops a half-typed question being lost to a passage edit.
+ * Shows, never edits: the editor beside it owns the question being written,
+ * and the passage is edited through its own form. Keeping the two apart is
+ * what stops a half-typed question being lost to a passage edit.
+ *
+ * Present while editing an existing question too, which is when the passage
+ * and the rest of the set matter most — rewriting question 2 of 5 without
+ * being able to see the text it is about was the whole problem.
  */
 
 function preview(p: Passage): string {
@@ -26,17 +30,23 @@ function preview(p: Passage): string {
 }
 
 export default function PassageSetPanel({
-  passage, questions, nextNumber, onEditPassage, onEditQuestion, onRemoveQuestion, onFinish,
+  passage, questions, nextNumber, editingId,
+  onEditPassage, onEditQuestion, onRemoveQuestion, onFinish, onDetach,
 }: {
   passage: Passage
   /** Those already on this paper and this passage, in paper order. */
   questions: Question[]
-  /** What the editor below is about to write. */
+  /** What the editor beside it is about to write. */
   nextNumber: number
+  /** The one being edited, if any — marked in the list rather than offered. */
+  editingId?: string | null
   onEditPassage: () => void
   onEditQuestion: (q: Question) => void
   onRemoveQuestion: (questionId: string) => void
+  /** Stop adding to this set. Offered only while writing a new question. */
   onFinish: () => void
+  /** Unlink the question being edited, to move it to another passage. */
+  onDetach: () => void
 }) {
   // Long comprehensions push the editor off screen, so the text collapses —
   // open to begin with, because the first thing you do is read it.
@@ -52,7 +62,12 @@ export default function PassageSetPanel({
         </div>
         <div className="ps-set-actions">
           <button type="button" className="btn btn-sm btn-ghost" onClick={onEditPassage}>Edit passage</button>
-          <button type="button" className="btn btn-sm btn-ghost" onClick={onFinish}>Finish set</button>
+          {/* "Finish set" means stop adding to it, which says nothing while
+              one of its questions is open — there the useful action is to
+              move that question somewhere else. */}
+          {editingId
+            ? <button type="button" className="btn btn-sm btn-ghost" onClick={onDetach}>Change passage</button>
+            : <button type="button" className="btn btn-sm btn-ghost" onClick={onFinish}>Finish set</button>}
         </div>
       </header>
 
@@ -81,28 +96,38 @@ export default function PassageSetPanel({
       <div className="ps-set-qs">
         <div className="ps-set-qs-head">
           {questions.length === 0
-            ? 'No questions on it yet — the first one is below.'
+            ? 'No questions on it yet — the first one is beside this.'
             : `${questions.length} question${questions.length === 1 ? '' : 's'} on this passage`}
         </div>
 
         {questions.map((q, i) => (
-          <div key={q.id} className="ps-set-q">
+          <div key={q.id} className={`ps-set-q ${q.id === editingId ? 'is-editing' : ''}`}>
             <span className="ps-set-q-n">{i + 1}</span>
             <span className="ps-set-q-text">
               {stripHtml(q.text) ? <RichText html={q.text} /> : <em>(no stem)</em>}
             </span>
             <span className="ps-set-q-ans">{answerLabel(q)}</span>
             <span className="ps-set-q-actions">
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => onEditQuestion(q)}>Edit</button>
-              <button type="button" className="btn btn-sm btn-ghost ps-set-q-rm"
-                onClick={() => onRemoveQuestion(q.id)}>Remove</button>
+              {q.id === editingId
+                ? <span className="ps-set-q-here">editing →</span>
+                : (
+                  <>
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={() => onEditQuestion(q)}>Edit</button>
+                    <button type="button" className="btn btn-sm btn-ghost ps-set-q-rm"
+                      onClick={() => onRemoveQuestion(q.id)}>Remove</button>
+                  </>
+                )}
             </span>
           </div>
         ))}
 
         {/* Names what the editor underneath is for, so the set reads as a
             numbered sequence rather than as a form that happens to reopen. */}
-        <div className="ps-set-next">Question {nextNumber} — being written below</div>
+        <div className="ps-set-next">
+          {editingId
+            ? 'Editing one of these — the changes apply everywhere it is used.'
+            : `Question ${nextNumber} — being written alongside`}
+        </div>
       </div>
     </section>
   )

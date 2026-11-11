@@ -238,7 +238,7 @@ export default function ContestDetail() {
   const [editingQid, setEditingQid] = useState<string | null>(null)
   // A set is in progress: a passage is chosen, and this is a new question
   // rather than an edit of one already on the paper.
-  const inSet = tab === 'create' && !editingQid && !!setPassage
+  const inSet = tab === 'create' && !!setPassage
   const [similar, setSimilar] = useState<{ id: string; text: string; subject: string; score: number }[]>([])
 
   async function load() {
@@ -815,7 +815,9 @@ export default function ContestDetail() {
                   onEditPassage={() => setWritingPassage(true)}
                   onEditQuestion={editQuestion}
                   onRemoveQuestion={removeQuestion}
+                  editingId={editingQid}
                   onFinish={() => setNewQ(f => ({ ...f, passageId: '' }))}
+                  onDetach={() => setNewQ(f => ({ ...f, passageId: '' }))}
                 />
               </aside>
             )}

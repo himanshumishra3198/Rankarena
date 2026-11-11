@@ -861,3 +861,12 @@ tr:hover td { background: var(--surface-raised); }
    while composing — every other screen is designed around the narrower
    measure and reads worse stretched. */
 .page-wide { max-width: 1400px; }
+
+/* The question currently open in the editor, marked in the set list so it is
+   obvious which of them the fields beside it belong to. */
+.ps-set-q.is-editing { background: var(--primary-light); border-radius: 6px; }
+.ps-set-q.is-editing .ps-set-q-text { font-weight: 600; }
+.ps-set-q-here {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--primary); padding: 0 6px; white-space: nowrap;
+}
